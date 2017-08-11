@@ -1,0 +1,4 @@
+build*Priot*Debug
+.git
+*.pro.user
+.qmake.stash
