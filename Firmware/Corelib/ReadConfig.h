@@ -92,13 +92,13 @@ const char * ReadConfig_readOctetStringConst(const char *readfrom,
                                                     u_char ** str,
                                                     size_t * len);
 
-char *       ReadConfig_readObjid(char *readfrom, _oid ** objid,
+char *       ReadConfig_readObjid(char *readfrom, oid ** objid,
                                        size_t * len);
 const char * ReadConfig_readObjidConst(const char *readfrom,
-                                             _oid ** objid,
+                                             oid ** objid,
                                              size_t * len);
 
-char *       ReadConfig_saveObjid(char *saveto, _oid * objid,
+char *       ReadConfig_saveObjid(char *saveto, oid * objid,
                                        size_t len);
 
 char *       ReadConfig_readData(int type, char *readfrom,
@@ -127,11 +127,11 @@ struct ReadConfig_ConfigLine_s * ReadConfig_getHandlers(const char *type);
 /*
  * external memory list handlers
  */
-void ReadConfig_rememberInList(char *line, struct read_config_memory **mem);
+void ReadConfig_rememberInList(char *line, struct ReadConfig_Memory_s **mem);
 
-void ReadConfig_processMemoryList(struct read_config_memory **mem, int, int);
+void ReadConfig_processMemoryList(struct ReadConfig_Memory_s **mem, int, int);
 
-void ReadConfig_rememberFreeList(struct read_config_memory **mem);
+void ReadConfig_rememberFreeList(struct ReadConfig_Memory_s **mem);
 
 void ReadConfig_setConfigurationDirectory(const char *dir);
 
@@ -168,5 +168,9 @@ ReadConfig_registerPrenetMibHandler(const char *type,
                                     void (*releaser) (void), const char *help);
 
 void ReadConfig_printUsage(const char *lead);
+
+void ReadConfig_unregisterAppConfigHandler(const char *token);
+
+void ReadConfig_configPwarn(const char *str);
 
 #endif // READCONFIG_H

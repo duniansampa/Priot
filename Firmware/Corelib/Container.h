@@ -310,7 +310,7 @@ void  Container_simpleFree(void *data, void *context);
  */
 #define CONTAINER_FIRST(x)          (x)->findNext(x,NULL)
 #define CONTAINER_FIND(x,k)         (x)->find(x,k)
-#define CONTAINER_NEXT(x,k)         (x)->find_next(x,k)
+#define CONTAINER_NEXT(x,k)         (x)->findNext(x,k)
 /*
 * GET_SUBSET returns allocated memory (netsnmp_void_array). User is responsible
 * for releasing this memory (free(array->array), free(array)).

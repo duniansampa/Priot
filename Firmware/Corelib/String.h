@@ -2,6 +2,8 @@
 #ifndef STRING_H_
 #define STRING_H_
 
+#include "Generals.h"
+
 /*!
  * \brief     String class.
  * \details   A class to define String operations.
@@ -14,82 +16,84 @@
  * \copyright DSPX LTDA.
  */
 
-#include "Settings.h"
 #include "Generals.h"
 
+struct String_Compare_s{
+    //Either the value of the first character that does not match is lower in the compared string,
+    //or all compared characters match but the compared string is shorter.
+    int LOWER;
 
-//They compare equal
-const _i32 STRING_COMPARE_EQUAL = 0;
+    //They compare equal
+    int EQUAL;
 
-//Either the value of the first character that does not match is lower in the compared string,
-//or all compared characters match but the compared string is shorter.
-const _i32 STRING_COMPARE_LOWER = -1;
+    //EiSTRING_COMPAREther the value of the first character that does not match is greater in the compared string,
+    //or all compared characters match but the compared string is longer.
+    int GREATER;
+};
 
-//Either the value of the first character that does not match is greater in the compared string,
-//or all compared characters match but the compared string is longer.
-const _i32 STRING_COMPARE_GREATER = 1;
+extern const struct String_Compare_s STRING_COMPARE;
 
 //Tests if this string begin with the specified prefix.
-_bool String_beginsWith(const _s8 * s, const _s8 * prefix);
+bool String_beginsWith(const char * s, const char * prefix);
 
 //Appends a copy of the source string to the destination string.
 //The terminating null character in destination is overwritten by the first character of source,
 //and a null-character is included at the end of the new string formed by the concatenation of
 //both in destination
-_s8 * String_concat(_s8 * destination, const _s8 * source);
+char * String_concat(char * destination, const char * source);
 
 //Compares two strings lexicographically.
-_i32 String_compare(const _s8 * s1, const _s8 * s2);
+int String_compare(const char * s1, const char * s2);
 
 //Tests if this string ends with the specified suffix.
-_bool String_endsWith(const _s8 * s, const _s8 * suffix);
+bool String_endsWith(const char * s, const char * suffix);
 
 //Compares this String to another String, ignoring case considerations.
-_bool String_equalsIgnoreCase(const _s8 * s1, const _s8 * s2);
+bool String_equalsIgnoreCase(const char * s1, const char * s2);
 
 //Compares this String to another String
-_bool String_equals(const _s8 * s1, const _s8 * s2);
+bool String_equals(const char * s1, const char * s2);
 
 //Returns a formatted string using the specified locale, format string, and arguments.
-_s8 * String_format(const _s8 * format, ...);
+char * String_format(const char * format, ...);
 
 //Converts all of the characters in this string to lower case.
-_s8 * String_toLowerCase(const _s8 * s);
+char * String_toLowerCase(const char * s);
 
 //Converts all of the characters in this String to upper;
-_s8 * String_toUpperCase(const _s8 * s);
+char * String_toUpperCase(const char * s);
 
 //Returns a string representation of the string argument as an string in base 16.
-_s8 * String_toHexString(const _s8 * s);
+char * String_toHexString(const char * s);
 
 //Returns the string, with leading and trailing whitespace omitted.
 // returned string is equal to s after function call.
-_s8 * String_trim(_s8 * s);
+char * String_trim(char * s);
 
-//Returns the string representation of the _s64 argument.
-_s8 * String_valueOf(_s64 b);
+//Returns the string representation of the int64 argument.
+char * String_valueOfS64(int64 b);
 
 //Returns the string representation of the boolean argument.
-_s8 * String_valueOf(_bool b);
+char * String_valueOfB(bool b);
 
 //Returns the string representation of the byte argument.
-_s8 * String_valueOf(_ubyte b);
+char * String_valueOfBt(ubyte b);
 
 
 //Returns the string representation of the double argument.
-_s8 * String_valueOf(double d);
+char * String_valueOfD(double d);
 
 //Returns the string representation of the float argument.
-_s8 * String_valueOf(float f);
+char * String_valueOfF(float f);
 
 //Returns the string representation of the int argument.
-_s8 * String_valueOf(_i32 i);
+char * String_valueOfI32(int i);
 
 //Returns the string representation of the long argument.
-_s8 * String_valueOf(_s32 l);
+char * String_valueOfS32(long l);
 
 //Returns the string representation of the short argument.
-_s8 * String_valueOf(_s16 i);
+char * String_valueOfS16(short i);
 
 
 #endif /* STRING_H_ */

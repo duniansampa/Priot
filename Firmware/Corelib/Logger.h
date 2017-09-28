@@ -102,7 +102,7 @@ void Logger_disableLog(void);
 void Logger_disableFilelogEntry(Logger_LogHandler *logh);
 void Logger_enableSyslogIdent(const char *ident, const int facility);
 void Logger_logPerror(const char *s);
-void Logger_enableFilelog(const char *logfilename, int dont_zero_log);
+void Logger_enableFilelog2(const char *logfilename, int dont_zero_log);
 int  Logger_logHandlerStdouterr( Logger_LogHandler * logh, int pri, const char *str);
 int  Logger_logHandlerSyslog(  Logger_LogHandler * logh, int pri, const char *str);
 int  Logger_logHandlerFile(Logger_LogHandler * logh, int pri, const char *str);

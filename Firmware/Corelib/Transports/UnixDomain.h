@@ -3,8 +3,11 @@
 
 #include "../Transport.h"
 
+#include <sys/un.h>
+
 
 #define TRANSPORT_DOMAIN_LOCAL	1,3,6,1,2,1,100,1,13
+extern oid unixDomain_priotUnixDomain[];
 
 Transport_Transport *   UnixDomain_transport(struct sockaddr_un *addr, int local);
 

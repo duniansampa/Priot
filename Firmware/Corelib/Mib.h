@@ -115,32 +115,32 @@ void            Mib_mibindexLoad( void );
 char *          Mib_mibindexLookup( const char * );
 FILE *          Mib_mibindexNew( const char * );
 int             Mib_sprintReallocDescription(u_char ** buf, size_t * buf_len, size_t * out_len, int allow_realloc,
-                                             _oid * objid, size_t objidlen, int width);
+                                             oid * objid, size_t objidlen, int width);
 
-int             Mib_getWildNode(const char *, _oid *, size_t *);
+int             Mib_getWildNode(const char *, oid *, size_t *);
 
-int             Mib_getNode(const char *, _oid *, size_t *);
+int             Mib_getNode(const char *, oid *, size_t *);
 
-struct Parse_Tree_s *   Mib_getTree(const _oid *, size_t, struct Parse_Tree_s *);
+struct Parse_Tree_s *   Mib_getTree(const oid *, size_t, struct Parse_Tree_s *);
 
 struct Parse_Tree_s *   Mib_getTreeHead(void);
 
 void            Mib_setFunction(struct Parse_Tree_s *);
 
 
-int             Mib_parseOneOidIndex(_oid ** oidStart, size_t * oidLen,
+int             Mib_parseOneOidIndex(oid ** oidStart, size_t * oidLen,
                                     Types_VariableList * data,
                                     int complete);
 
-int             Mib_parseOidIndexes(_oid * oidIndex, size_t oidLen,
+int             Mib_parseOidIndexes(oid * oidIndex, size_t oidLen,
                                   Types_VariableList * data);
 
-int             Mib_buildOidNoalloc(_oid * in, size_t in_len,
-                                  size_t * out_len, _oid * prefix,
+int             Mib_buildOidNoalloc(oid * in, size_t in_len,
+                                  size_t * out_len, oid * prefix,
                                   size_t prefix_len,
                                   Types_VariableList * indexes);
 
-int             Mib_buildOid(_oid ** out, size_t * out_len, _oid * prefix,
+int             Mib_buildOid(oid ** out, size_t * out_len, oid * prefix,
                              size_t prefix_len,
                              Types_VariableList * indexes);
 
@@ -149,7 +149,7 @@ int             Mib_buildOidSegment(Types_VariableList * var);
 
 int             Mib_sprintReallocVariable(u_char ** buf, size_t * buf_len,
                                size_t * out_len, int allow_realloc,
-                               const _oid * objid, size_t objidlen,
+                               const oid * objid, size_t objidlen,
                                const Types_VariableList * variable);
 
 
@@ -158,7 +158,7 @@ struct Parse_Tree_s *  Mib_sprintReallocObjidTree(u_char ** buf,
                                                   size_t * out_len,
                                                   int allow_realloc,
                                                   int *buf_overflow,
-                                                  const _oid * objid,
+                                                  const oid * objid,
                                                   size_t objidlen);
 
 void            Mib_sprintReallocObjid(u_char ** buf,
@@ -166,18 +166,18 @@ void            Mib_sprintReallocObjid(u_char ** buf,
                                              size_t * out_len,
                                              int allow_realloc,
                                              int *buf_overflow,
-                                             const _oid * objid,
+                                             const oid * objid,
                                              size_t objidlen);
 
 
 int             Mib_sprintReallocValue(u_char ** buf, size_t * buf_len,
                              size_t * out_len, int allow_realloc,
-                             const _oid * objid, size_t objidlen,
+                             const oid * objid, size_t objidlen,
                              const Types_VariableList * variable);
 
-int             Mib_sprintReallocObjid(u_char ** buf, size_t * buf_len,
+int             Mib_sprintReallocObjid2(u_char ** buf, size_t * buf_len,
                              size_t * out_len, int allow_realloc,
-                             const _oid * objid, size_t objidlen);
+                             const oid * objid, size_t objidlen);
 
 
 int             Mib_sprintReallocByType(u_char ** buf, size_t * buf_len,
@@ -449,19 +449,19 @@ void            Mib_inToggleOptionsUsage(const char *, FILE *);
 u_char          Mib_toAsnType(int mib_type);
 
 
-int             Mib_str2oid(const char *S, _oid * O, int L);
+int             Mib_str2oid(const char *S, oid * O, int L);
 
 void            Mib_mibIndexLoad( void );
 
-void            Mib_fprintObjid(FILE * f, const _oid * objid, size_t objidlen);
+void            Mib_fprintObjid(FILE * f, const oid * objid, size_t objidlen);
 
-void            Mib_fprintVariable(FILE * f, const _oid * objid,
+void            Mib_fprintVariable(FILE * f, const oid * objid,
                                    size_t objidlen, const Types_VariableList * variable);
 
-void            Mib_fprintValue(FILE * f, const _oid * objid,
+void            Mib_fprintValue(FILE * f, const oid * objid,
                      size_t objidlen, const Types_VariableList * variable);
 
-void            Mib_fprintDescription(FILE * f, _oid * objid, size_t objidlen, int width);
+void            Mib_fprintDescription(FILE * f, oid * objid, size_t objidlen, int width);
 
 char *          Mib_uptimeStringN(u_long timeticks, char *buf, size_t buflen);
 
@@ -469,8 +469,10 @@ char *          Mib_mibIndexLookup( const char *dirname );
 
 FILE *          Mib_mibIndexNew( const char *dirname );
 
-int             Mib_readObjid(const char *input, _oid * output, size_t * out_len);
+int             Mib_readObjid(const char *input, oid * output, size_t * out_len);
 
-_oid *          Mib_parseOid(const char *argv, _oid * root, size_t * rootlen);
+oid *          Mib_parseOid(const char *argv, oid * root, size_t * rootlen);
+
+int           Mib_snprintObjid(char *buf, size_t buf_len, const oid * objid, size_t objidlen);
 
 #endif // MIB_H

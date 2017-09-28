@@ -105,7 +105,7 @@ struct Vacm_AccessEntry_s {
 
 struct Vacm_ViewEntry_s {
     char            viewName[VACM_VACMSTRINGLEN];
-    _oid            viewSubtree[TYPES_MAX_OID_LEN];
+    oid            viewSubtree[TYPES_MAX_OID_LEN];
     size_t          viewSubtreeLen;
     u_char          viewMask[VACM_VACMSTRINGLEN];
     size_t          viewMaskLen;
@@ -120,7 +120,7 @@ struct Vacm_ViewEntry_s {
 };
 
 
-void            Vacm_destroyViewEntry(const char *, _oid *, size_t);
+void            Vacm_destroyViewEntry(const char *, oid *, size_t);
 
 void            Vacm_destroyAllViewEntries(void);
 
@@ -128,7 +128,7 @@ void            Vacm_destroyAllViewEntries(void);
 #define VACM_MODE_IGNORE_MASK         1
 #define VACM_MODE_CHECK_SUBTREE       2
 
-struct Vacm_ViewEntry_s * Vacm_getViewEntry(const char *, _oid *, size_t, int);
+struct Vacm_ViewEntry_s * Vacm_getViewEntry(const char *, oid *, size_t, int);
 /*
  * Returns a pointer to the viewEntry with the
  * same viewName and viewSubtree
@@ -138,7 +138,7 @@ struct Vacm_ViewEntry_s * Vacm_getViewEntry(const char *, _oid *, size_t, int);
 
 void Vacm_initVacm();
 
-int Vacm_checkSubtree(const char *, _oid *, size_t);
+int Vacm_checkSubtree(const char *, oid *, size_t);
 
 /*
  * Check to see if everything within a subtree is in view, not in view,
@@ -174,7 +174,7 @@ struct Vacm_ViewEntry_s * Vacm_scanViewNext(void);
  */
 
 
-struct Vacm_ViewEntry_s * Vacm_createViewEntry(const char *, _oid *, size_t);
+struct Vacm_ViewEntry_s * Vacm_createViewEntry(const char *, oid *, size_t);
 /*
  * Creates a viewEntry with the given index
  * and returns a pointer to it.
@@ -241,7 +241,7 @@ int             Vacm_storeVacm(int majorID, int minorID, void *serverarg,
 
 struct Vacm_ViewEntry_s * Vacm_viewGet(struct Vacm_ViewEntry_s *head,
                                         const char *viewName,
-                                        _oid * viewSubtree,
+                                        oid * viewSubtree,
                                         size_t viewSubtreeLen, int mode);
 
 

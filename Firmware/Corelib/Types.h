@@ -5,13 +5,14 @@
  *  Definitions of data structures, used within the library API.
 */
 
+#include "Generals.h"
+
 #include "Asn01.h"
 
 #include <stdio.h>
 #include <time.h>
 #include <sys/types.h>
 
-#include "Generals.h"
 
 //#include <siglog/library/oid.h>
 
@@ -47,7 +48,7 @@ typedef unsigned long int Types_NfdsT;
 typedef union {
     long           *integer;
     u_char         *string;
-    _oid            *objid;
+    oid            *objid;
     u_char         *bitstring;
     Asn01_Counter64 *counter64;
     float          *floatVal;
@@ -71,7 +72,7 @@ typedef struct Types_VariableList_s {
    /** NULL for last variable */
    struct Types_VariableList_s *nextVariable;
    /** Object identifier of variable */
-   _oid            *name;
+   oid            *name;
    /** number of subid's in name */
    size_t          nameLength;
    /** ASN type of variable */
@@ -81,7 +82,7 @@ typedef struct Types_VariableList_s {
    /** the length of the value to be copied into buf */
    size_t          valLen;
    /** buffer to hold the OID */
-   _oid             nameLoc[TYPES_MAX_OID_LEN];
+   oid             nameLoc[TYPES_MAX_OID_LEN];
    /** 90 percentile < 40. */
    u_char          buf[40];
    /** (Opaque) hook for additional data */
@@ -142,7 +143,7 @@ typedef struct Types_Pdu_s {
      * The actual transport domain.  This SHOULD NOT BE FREE()D.
      */
 
-    const _oid      *tDomain;
+    const oid      *tDomain;
     size_t          tDomainLen;
 
     Types_VariableList *variables;
@@ -160,7 +161,7 @@ typedef struct Types_Pdu_s {
      * Trap information
      */
     /** System OID */
-    _oid            *enterprise;
+    oid            *enterprise;
     size_t          enterpriseLength;
     /** trap type */
     long            trapType;
@@ -295,7 +296,7 @@ typedef struct Types_Session_s {
     size_t          securityNameLen;
 
     /** auth protocol oid */
-    _oid            *securityAuthProto;
+    oid            *securityAuthProto;
     /** Length of auth protocol oid */
     size_t          securityAuthProtoLen;
     /** Ku for auth protocol XXX */
@@ -308,7 +309,7 @@ typedef struct Types_Session_s {
     size_t          securityAuthLocalKeyLen;
 
     /** priv protocol oid */
-    _oid            *securityPrivProto;
+    oid            *securityPrivProto;
     /** Length of priv protocol oid */
     size_t          securityPrivProtoLen;
     /** Ku for privacy protocol XXX */
@@ -349,7 +350,7 @@ typedef struct Types_Session_s {
 
 typedef struct Types_Index_s {
     size_t          len;
-    _oid            *oids;
+    oid            *oids;
 } Types_Index;
 
 typedef struct Types_VoidArray_s {
@@ -365,15 +366,15 @@ typedef struct Types_RefVoid_s {
 } Types_RefVoid;
 
 typedef union {
-    _u32            ul;
-    _u32            ui;
-    _u16            us;
-    _u8             uc;
-    _s32            sl;
-    _i32            si;
-    _s16            ss;
-    _s8             sc;
-    _s8            *cp;
+    uint            ul;
+    uint            ui;
+    ushort            us;
+    uchar             uc;
+    long            sl;
+    int            si;
+    short            ss;
+    char             sc;
+    char            *cp;
     void           *vp;
 } Types_CValue;
 

@@ -20,15 +20,6 @@ Transport_Transport *   UDPDomain_transport(struct sockaddr_in *addr, int local)
 //Register any configuration tokens specific to the agent.
 void                UDPDomain_agentConfigTokensRegister(void);
 
-void                UDPDomain_parseSecurity(const char *token, char *param);
-
-int                 UDPDomain_getSecName(void *opaque, int olength,
-                                       const char *community,
-                                       size_t community_len,
-                                       const char **secname,
-                                       const char **contextName);
-
-void                UDPDomain_com2SecListFree(void);
 
 Transport_Transport *   UDPDomain_createTstring(const char *str, int local,
                                              const char *default_target);

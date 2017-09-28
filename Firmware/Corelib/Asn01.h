@@ -19,7 +19,7 @@
 #define ASN01_MAX_NAME_LEN	     ASN01_MAX_OID_LEN /* obsolete. use MAX_OID_LEN */
 
 
-#define ASN01_OID_LENGTH(x)       (sizeof(x)/sizeof(_oid))
+#define ASN01_OID_LENGTH(x)       (sizeof(x)/sizeof(oid))
 
 
 #define ASN01_BOOLEAN         ((u_char)0x01)
@@ -47,8 +47,8 @@
 #define ASN01_IS_EXTENSION_ID(byte)	(((byte) & ASN01_EXTENSION_ID) == ASN01_EXTENSION_ID)
 
 typedef struct Asn01_Counter64_s {
-    _u32          high;
-    _u32          low;
+    uint          high;
+    uint          low;
 }Asn01_Counter64;
 
 
@@ -203,9 +203,9 @@ u_char * Asn01_parseLength(u_char *, u_long *);
 
 u_char * Asn01_buildLength(u_char *, size_t *, size_t);
 
-u_char * Asn01_parseObjid(u_char *, size_t *, u_char *, _oid *, size_t *);
+u_char * Asn01_parseObjid(u_char *, size_t *, u_char *, oid *, size_t *);
 
-u_char * Asn01_buildObjid(u_char *, size_t *, u_char, _oid *, size_t);
+u_char * Asn01_buildObjid(u_char *, size_t *, u_char, oid *, size_t);
 
 u_char * Asn01_parseNull(u_char *, size_t *, u_char *);
 
@@ -389,7 +389,7 @@ int             Asn01_reallocRbuildObjid(u_char ** pkt,
                                          size_t * pkt_len,
                                          size_t * offset,
                                          int allow_realloc,
-                                         u_char type, const _oid *,
+                                         u_char type, const oid *,
                                          size_t);
 
 int             Asn01_reallocRbuildNull(u_char ** pkt,

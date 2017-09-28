@@ -57,14 +57,14 @@ int         Debug_isTokenRegistered(const char *token);
 
 void        Debug_msg(const char *token, const char *format, ...);
 
-void        Debug_msgOid(const char *token, const _oid * theoid, size_t len);
+void        Debug_msgOid(const char *token, const oid * theoid, size_t len);
 
-void        Debug_msgSuboid(const char *token, const _oid * theoid, size_t len);
+void        Debug_msgSuboid(const char *token, const oid * theoid, size_t len);
 
 void        Debug_msgVar(const char *token, Types_VariableList * var);
 
-void        Debug_msgOidRange(const char *token, const _oid * theoid, size_t len,
-                              size_t var_subid, _oid range_ubound);
+void        Debug_msgOidRange(const char *token, const oid * theoid, size_t len,
+                              size_t var_subid, oid range_ubound);
 
 void        Debug_msgHex(const char *token, const u_char * thedata, size_t len);
 
@@ -146,7 +146,7 @@ void        Debug_debugInit(void);
 
 /******************* Start private macros ************************/
 #define _DBG_IF_            Debug_getDoDebugging()
-#define  DEBUG_IF(x)         if (_DBG_IF_ && Debug_isTokenRegistered(x) == API_ERR_SUCCESS)
+#define  DEBUG_IF(x)         if (_DBG_IF_ && Debug_isTokenRegistered(x) == ErrorCode_SUCCESS)
 
 #define __DBGMSGT(x)     Debug_msgToken x,  Debug_msg x
 #define __DBGMSG_NC(x)   Debug_msg x
@@ -175,10 +175,10 @@ void        Debug_debugInit(void);
 #define __DBGDUMPHEADER(token,x) \
         __DBGPRINTINDENT("dumph_" token); \
         Debug_msg("dumph_" token,x); \
-        if (Debug_isTokenRegistered("dumpx" token) == API_ERR_SUCCESS ||    \
-             Debug_isTokenRegistered("dumpv" token) == API_ERR_SUCCESS ||    \
-            (Debug_isTokenRegistered("dumpx_" token) != API_ERR_SUCCESS &&  \
-             Debug_isTokenRegistered("dumpv_" token) != API_ERR_SUCCESS)) { \
+        if (Debug_isTokenRegistered("dumpx" token) == ErrorCode_SUCCESS ||    \
+             Debug_isTokenRegistered("dumpv" token) == ErrorCode_SUCCESS ||    \
+            (Debug_isTokenRegistered("dumpx_" token) != ErrorCode_SUCCESS &&  \
+             Debug_isTokenRegistered("dumpv_" token) != ErrorCode_SUCCESS)) { \
             Debug_msg("dumph_" token,"\n"); \
         } else { \
             Debug_msg("dumph_" token,"  "); \
@@ -194,8 +194,8 @@ void        Debug_debugInit(void);
 #define __DBGDUMPSETUP(token,buf,len) \
         Debug_msg("dumpx" token, "dumpx_%s:%*s", token, __DBGINDENT(), ""); \
         __DBGMSGHEX(("dumpx_" token,buf,len)); \
-        if (Debug_isTokenRegistered("dumpv" token) == API_ERR_SUCCESS || \
-            Debug_isTokenRegistered("dumpv_" token) != API_ERR_SUCCESS) { \
+        if (Debug_isTokenRegistered("dumpv" token) == ErrorCode_SUCCESS || \
+            Debug_isTokenRegistered("dumpv_" token) != ErrorCode_SUCCESS) { \
             Debug_msg("dumpx_" token,"\n"); \
         } else { \
             Debug_msg("dumpx_" token,"  "); \

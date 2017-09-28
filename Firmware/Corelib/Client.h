@@ -34,7 +34,7 @@ Types_VariableList * Client_findVarbindOfType(Types_VariableList *
                                             var_ptr, u_char type);
 
 Types_VariableList * Client_findVarbindInList(Types_VariableList *vblist,
-                                            const _oid *name, size_t len);
+                                            const oid *name, size_t len);
 
 Types_Pdu    * Client_splitPdu(Types_Pdu *, int skipCount,
                                int copyCount);
@@ -75,11 +75,11 @@ int Client_querySet(     Types_VariableList *, Types_Session *);
 */
 /** forward declare */
 struct Client_StateMachineStep_s;
-struct Client_stateMachineInput_s;
+struct Client_StateMachineInput_s;
 
 /** state machine process */
 typedef int (Client_StateMachineFT)(struct Client_StateMachineInput_s *input,
-                                         struct Client_StateMachineStep_s *step);
+                                    struct Client_StateMachineStep_s *step);
 
 typedef struct Client_StateMachineStep_s {
 
@@ -87,7 +87,7 @@ typedef struct Client_StateMachineStep_s {
     u_int         sm_flags;
 
     Client_StateMachineFT *run;
-    int                         result; /* return code for this step */
+    int                    result; /* return code for this step */
 
 
     struct Client_StateMachineStep_s *on_success;
@@ -124,14 +124,20 @@ int Client_rowCreate(Types_Session *sess, Types_VariableList *vars,
 Types_Pdu * Client_pduCreate(int command);
 
 Types_VariableList *
-Client_addNullVar(Types_Pdu *pdu, const _oid * name, size_t name_length);
+Client_addNullVar(Types_Pdu *pdu, const oid * name, size_t name_length);
 
 int Client_sessSynchResponse(void *sessp, Types_Pdu *pdu, Types_Pdu **response);
 
 Types_Pdu * Client_clonePdu(Types_Pdu *pdu);
 
-int Client_setVarObjid(Types_VariableList * vp, const _oid * objid, size_t name_length);
+int Client_setVarObjid(Types_VariableList * vp, const oid * objid, size_t name_length);
 
 int Client_setVarValue(Types_VariableList * vars, const void * value, size_t len);
+
+Types_VariableList * Client_cloneVarbind(Types_VariableList * varlist);
+
+int
+Client_setVarTypedValue(Types_VariableList * newvar, u_char type,
+                         const void * val_str, size_t valLen);
 
 #endif // CLIENT_H

@@ -10,7 +10,7 @@
  */
 
 #define TRANSPORT_DOMAIN_ALIAS_IP		1,3,6,1,2,1,100,1,5
-extern _oid aliasDomain_priotALIASDomain[];
+extern oid aliasDomain_priotALIASDomain[];
 
 /*
  * "Constructor" for transport domain object.

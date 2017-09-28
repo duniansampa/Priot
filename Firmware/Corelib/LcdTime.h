@@ -61,13 +61,13 @@ typedef struct LcdTime_Enginetime_s {
  *              tuple of <0,0>.  ALWAYS succeeds -- except in case of a
  *              fatal internal error.
  *      Returns:
- *              API_ERR_SUCCESS On success;
- *              API_ERR_GENERR  Otherwise.
+ *              ErrorCode_SUCCESS On success;
+ *              ErrorCode_GENERR  Otherwise.
  *
  *  MAKENEW_ENGINE_RECORD(e, e_l)
  *      Returns:
- *              API_ERR_SUCCESS If engineID already exists in the EngineID List;
- *              API_ERR_GENERR  Otherwise -and- invokes ENSURE_ENGINE_RECORD()
+ *              ErrorCode_SUCCESS If engineID already exists in the EngineID List;
+ *              ErrorCode_GENERR  Otherwise -and- invokes ENSURE_ENGINE_RECORD()
  *                                      to add an entry to the EngineID List.
  *
  * XXX  Requres the following declaration in modules calling ISENGINEKNOWN():
@@ -75,19 +75,19 @@ typedef struct LcdTime_Enginetime_s {
  */
 #define LCDTIME_ISENGINEKNOWN(e, e_l)                       \
 ( (LcdTime_getEnginetime(e, e_l,                            \
-    &usm_dummyEboot, &usm_dummyEtime, TRUE) == API_ERR_SUCCESS)	\
+    &usm_dummyEboot, &usm_dummyEtime, TRUE) == ErrorCode_SUCCESS)	\
     ? TRUE                                                  \
     : FALSE )
 
 #define LCDTIME_ENSURE_ENGINE_RECORD(e, e_l)				\
-( (LcdTime_setEnginetime(e, e_l, 0, 0, FALSE) == API_ERR_SUCCESS)	\
-    ? API_ERR_SUCCESS                                       \
-    : API_ERR_GENERR )
+( (LcdTime_setEnginetime(e, e_l, 0, 0, FALSE) == ErrorCode_SUCCESS)	\
+    ? ErrorCode_SUCCESS                                       \
+    : ErrorCode_GENERR )
 
 #define LCDTIME_MAKENEW_ENGINE_RECORD(e, e_l)				\
 ( (LCDTIME_ISENGINEKNOWN(e, e_l) == TRUE)                   \
-    ? API_ERR_SUCCESS                                       \
-    : (LCDTIME_ENSURE_ENGINE_RECORD(e, e_l), API_ERR_GENERR) )
+    ? ErrorCode_SUCCESS                                       \
+    : (LCDTIME_ENSURE_ENGINE_RECORD(e, e_l), ErrorCode_GENERR) )
 
 
 

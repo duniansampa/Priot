@@ -26,15 +26,15 @@
  * The standard SNMP domains.
  */
 
-extern _oid             transport_uDPDomain[];   //  { 1, 3, 6, 1, 6, 1, 1 };
+extern oid             transport_uDPDomain[];   //  { 1, 3, 6, 1, 6, 1, 1 };
 extern size_t           transport_uDPDomainLen;  //  ASN01_OID_LENGTH(transport_uDPDomain);
-extern _oid             transport_cLNSDomain[];  //  { 1, 3, 6, 1, 6, 1, 2 };
+extern oid             transport_cLNSDomain[];  //  { 1, 3, 6, 1, 6, 1, 2 };
 extern size_t           transport_cLNSDomainLen; //  ASN01_OID_LENGTH(transport_cLNSDomain);
-extern _oid             transport_cONSDomain[];  //  { 1, 3, 6, 1, 6, 1, 3 };
+extern oid             transport_cONSDomain[];  //  { 1, 3, 6, 1, 6, 1, 3 };
 extern size_t           transport_cONSDomainLen; //  ASN01_OID_LENGTH(transport_cONSDomain);
-extern _oid             transport_dDPDomain[];   //  { 1, 3, 6, 1, 6, 1, 4 };
+extern oid             transport_dDPDomain[];   //  { 1, 3, 6, 1, 6, 1, 4 };
 extern size_t           transport_dDPDomainLen;  //  ASN01_OID_LENGTH(transport_dDPDomain);
-extern _oid             transport_iPXDomain[];   //  { 1, 3, 6, 1, 6, 1, 5 };
+extern oid             transport_iPXDomain[];   //  { 1, 3, 6, 1, 6, 1, 5 };
 extern size_t           transport_iPXDomainLen;  //  ASN01_OID_LENGTH(transport_iPXDomain);
 
 
@@ -63,7 +63,7 @@ typedef struct Transport_IndexedAddrPair_s {
 } Transport_IndexedAddrPair;
 
 typedef struct Transport_TmStateReference_s {
-   _oid    transportDomain[TYPES_MAX_OID_LEN];
+   oid    transportDomain[TYPES_MAX_OID_LEN];
    size_t transportDomainLen;
    char   securityName[TRANSPORT_TM_MAX_SECNAME];
    size_t securityNameLen;
@@ -83,7 +83,7 @@ typedef struct Transport_TmStateReference_s {
 typedef struct Transport_Transport_s {
     /*  The transport domain object identifier.  */
 
-    const _oid      *domain;
+    const oid      *domain;
     int             domain_length;  /*  In sub-IDs, not octets.  */
 
     /*  Local transport address (in relevant SNMP-style encoding).  */
@@ -163,7 +163,7 @@ typedef struct Transport_TransportList_s {
 } Transport_TransportList;
 
 typedef struct Transport_Tdomain_s {
-    const _oid      *name;
+    const oid      *name;
     size_t          name_length;
     const char    **prefix;
 
@@ -233,8 +233,8 @@ void Transport_free(Transport_Transport *t);
  */
 
 
-int Transport_tdomainSupport(const _oid *in_oid, size_t in_len,
-                    const _oid **out_oid, size_t *out_len);
+int Transport_tdomainSupport(const oid *in_oid, size_t in_len,
+                    const oid **out_oid, size_t *out_len);
 
 int Transport_tdomainRegister(Transport_Tdomain *domain);
 
@@ -259,7 +259,7 @@ Transport_Transport * Transport_tdomainTransportFull(const char *application,
 
 
 Transport_Transport *
-Transport_tdomainTransportOid( const _oid *   dom,
+Transport_tdomainTransportOid( const oid *   dom,
                                size_t         dom_len,
                                const u_char * o,
                                size_t         o_len,

@@ -16,10 +16,10 @@ int main(int argc, char *argv[])
 {
 
 
-    DefaultStore_setString(DEFAULTSTORE_STORAGE::LIBRARY_ID, DEFAULTSTORE_LIB_STRING::CONTEXT, "ola mundo!");
+//    DefaultStore_setString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CONTEXT, "ola mundo!");
 
-    char * value = DefaultStore_getString(DEFAULTSTORE_STORAGE::LIBRARY_ID, DEFAULTSTORE_LIB_STRING::CONTEXT);
+//    char * value = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CONTEXT);
 
-    cout << "Value: " << value << endl;
+//    cout << "Value: " << value << endl;
     return 0;
 }

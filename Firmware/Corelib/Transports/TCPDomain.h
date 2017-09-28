@@ -10,7 +10,7 @@
 
 #define TRANSPORT_DOMAIN_TCP_IP		1,3,6,1,2,1,100,1,5
 
-extern _oid tPCDomain_priotTCPDomain[];
+extern oid tPCDomain_priotTCPDomain[];
 
 Transport_Transport *   TPCDomain_transport(struct sockaddr_in *addr, int local);
 

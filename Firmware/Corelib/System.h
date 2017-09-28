@@ -7,18 +7,18 @@
 #include <netdb.h>
 
 
-void                System_daemonPrep(_i32 stderr_log);
-_i32                System_daemonize(_i32 quit_immediately, _i32 stderr_log);
-struct hostent *    System_gethostbyaddr(const void *addr, socklen_t len, _i32 type);
-_s32                System_getUptime(void);
-_i32                System_gethostbynameV4(const _s8 * name, in_addr_t *addr_out);
-_i32                System_getaddrinfo(const _s8 *name, const _s8 *service, const struct addrinfo *h_i32s, struct addrinfo **res);
-struct hostent *    System_gethostbyname(const _s8 *name);
-_i32                System_calculateTimeDiff(const struct timeval *now, const struct timeval *then);
-_u32                System_calculateSectimeDiff(const struct timeval *now, const struct timeval *then);
-_i32                System_mkdirhier(const _s8 *pathname, mode_t mode, _i32 skiplast);
-_i32                System_strToUid(const _s8 *useroruid);
-_i32                System_strToGid(const _s8 *grouporgid);
+void                System_daemonPrep(int stderr_log);
+int                System_daemonize(int quit_immediately, int stderr_log);
+struct hostent *    System_gethostbyaddr(const void *addr, socklen_t len, int type);
+long                System_getUptime(void);
+int                System_gethostbynameV4(const char * name, in_addr_t *addr_out);
+int                System_getaddrinfo(const char *name, const char *service, const struct addrinfo *h_i32s, struct addrinfo **res);
+struct hostent *    System_gethostbyname(const char *name);
+int                System_calculateTimeDiff(const struct timeval *now, const struct timeval *then);
+uint                System_calculateSectimeDiff(const struct timeval *now, const struct timeval *then);
+int                System_mkdirhier(const char *pathname, mode_t mode, int skiplast);
+int                System_strToUid(const char *useroruid);
+int                System_strToGid(const char *grouporgid);
 in_addr_t           System_getMyAddr(void);
 
 

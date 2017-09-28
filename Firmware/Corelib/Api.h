@@ -21,9 +21,6 @@
  * @{
  */
 
-extern int api_priotErrno;
-#define API_SET_PRIOT_ERROR(x) api_priotErrno=(x)
-
     /*
      * Set fields in session and pdu to the following to get a default or unconfigured value.
      */
@@ -122,80 +119,86 @@ extern int api_priotErrno;
  * XXX  These should be merged with SNMP_ERR_* defines and confined
  *      to values < 0.  ???
  */
-#define API_ERR_SUCCESS			(0)     /* XXX  Non-PDU "success" code. */
-#define API_ERR_GENERR			(-1)
-#define API_ERR_BAD_LOCPORT		(-2)
-#define API_ERR_BAD_ADDRESS		(-3)
-#define API_ERR_BAD_SESSION		(-4)
-#define API_ERR_TOO_LONG		(-5)
-#define API_ERR_NO_SOCKET		(-6)
-#define API_ERR_V2_IN_V1		(-7)
-#define API_ERR_V1_IN_V2		(-8)
-#define API_ERR_BAD_REPEATERS		(-9)
-#define API_ERR_BAD_REPETITIONS		(-10)
-#define API_ERR_BAD_ASN1_BUILD		(-11)
-#define API_ERR_BAD_SENDTO		(-12)
-#define API_ERR_BAD_PARSE		(-13)
-#define API_ERR_BAD_VERSION		(-14)
-#define API_ERR_BAD_SRC_PARTY		(-15)
-#define API_ERR_BAD_DST_PARTY		(-16)
-#define API_ERR_BAD_CONTEXT		(-17)
-#define API_ERR_BAD_COMMUNITY		(-18)
-#define API_ERR_NOAUTH_DESPRIV		(-19)
-#define API_ERR_BAD_ACL			(-20)
-#define API_ERR_BAD_PARTY		(-21)
-#define API_ERR_ABORT			(-22)
-#define API_ERR_UNKNOWN_PDU		(-23)
-#define API_ERR_TIMEOUT 		(-24)
-#define API_ERR_BAD_RECVFROM 		(-25)
-#define API_ERR_BAD_ENG_ID 		(-26)
-#define API_ERR_BAD_SEC_NAME 		(-27)
-#define API_ERR_BAD_SEC_LEVEL 		(-28)
-#define API_ERR_ASN_PARSE_ERR           (-29)
-#define API_ERR_UNKNOWN_SEC_MODEL 	(-30)
-#define API_ERR_INVALID_MSG             (-31)
-#define API_ERR_UNKNOWN_ENG_ID          (-32)
-#define API_ERR_UNKNOWN_USER_NAME 	(-33)
-#define API_ERR_UNSUPPORTED_SEC_LEVEL 	(-34)
-#define API_ERR_AUTHENTICATION_FAILURE 	(-35)
-#define API_ERR_NOT_IN_TIME_WINDOW 	(-36)
-#define API_ERR_DECRYPTION_ERR          (-37)
-#define API_ERR_SC_GENERAL_FAILURE	(-38)
-#define API_ERR_SC_NOT_CONFIGURED	(-39)
-#define API_ERR_KT_NOT_AVAILABLE	(-40)
-#define API_ERR_UNKNOWN_REPORT          (-41)
-#define API_ERR_USM_GENERICERROR		(-42)
-#define API_ERR_USM_UNKNOWNSECURITYNAME		(-43)
-#define API_ERR_USM_UNSUPPORTEDSECURITYLEVEL	(-44)
-#define API_ERR_USM_ENCRYPTIONERROR		(-45)
-#define API_ERR_USM_AUTHENTICATIONFAILURE	(-46)
-#define API_ERR_USM_PARSEERROR			(-47)
-#define API_ERR_USM_UNKNOWNENGINEID		(-48)
-#define API_ERR_USM_NOTINTIMEWINDOW		(-49)
-#define API_ERR_USM_DECRYPTIONERROR		(-50)
-#define API_ERR_NOMIB			(-51)
-#define API_ERR_RANGE			(-52)
-#define API_ERR_MAX_SUBID		(-53)
-#define API_ERR_BAD_SUBID		(-54)
-#define API_ERR_LONG_OID		(-55)
-#define API_ERR_BAD_NAME		(-56)
-#define API_ERR_VALUE			(-57)
-#define API_ERR_UNKNOWN_OBJID		(-58)
-#define API_ERR_NULL_PDU		(-59)
-#define API_ERR_NO_VARS			(-60)
-#define API_ERR_VAR_TYPE		(-61)
-#define API_ERR_MALLOC			(-62)
-#define API_ERR_KRB5			(-63)
-#define API_ERR_PROTOCOL		(-64)
-#define API_ERR_OID_NONINCREASING       (-65)
-#define API_ERR_JUST_A_CONTEXT_PROBE    (-66)
-#define API_ERR_TRANSPORT_NO_CONFIG     (-67)
-#define API_ERR_TRANSPORT_CONFIG_ERROR  (-68)
-#define API_ERR_TLS_NO_CERTIFICATE      (-69)
 
-#define API_ERR_MAX			(-69)
+//Error codes (the value of the field error-status in PDUs)
+enum ErrorCode_e {
+    ErrorCode_TLS_NO_CERTIFICATE      = -69,
+    ErrorCode_TRANSPORT_CONFIG_ERROR,
+    ErrorCode_TRANSPORT_NO_CONFIG,
+    ErrorCode_JUST_A_CONTEXT_PROBE,
+    ErrorCode_OID_NONINCREASING,
+    ErrorCode_PROTOCOL,
+    ErrorCode_KRB5,
+    ErrorCode_MALLOC,
+    ErrorCode_VAR_TYPE,
+    ErrorCode_NO_VARS,
+    ErrorCode_NULL_PDU,
+    ErrorCode_UNKNOWN_OBJID,
+    ErrorCode_VALUE,
+    ErrorCode_BAD_NAME,
+    ErrorCode_LONG_OID,
+    ErrorCode_BAD_SUBID,
+    ErrorCode_MAX_SUBID,
+    ErrorCode_RANGE,
+    ErrorCode_NOMIB,
+    ErrorCode_USM_DECRYPTIONERROR,
+    ErrorCode_USM_NOTINTIMEWINDOW,
+    ErrorCode_USM_UNKNOWNENGINEID,
+    ErrorCode_USM_PARSEERROR,
+    ErrorCode_USM_AUTHENTICATIONFAILURE,
+    ErrorCode_USM_ENCRYPTIONERROR,
+    ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL,
+    ErrorCode_USM_UNKNOWNSECURITYNAME,
+    ErrorCode_USM_GENERICERROR,
+    ErrorCode_UNKNOWN_REPORT,
+    ErrorCode_KT_NOT_AVAILABLE,
+    ErrorCode_SC_NOT_CONFIGURED,
+    ErrorCode_SC_GENERAL_FAILURE,
+    ErrorCode_DECRYPTION_ERR,
+    ErrorCode_NOT_IN_TIME_WINDOW,
+    ErrorCode_AUTHENTICATION_FAILURE,
+    ErrorCode_UNSUPPORTED_SEC_LEVEL,
+    ErrorCode_UNKNOWN_USER_NAME,
+    ErrorCode_UNKNOWN_ENG_ID,
+    ErrorCode_INVALID_MSG,
+    ErrorCode_UNKNOWN_SEC_MODEL,
+    ErrorCode_ASN_PARSE_ERR,
+    ErrorCode_BAD_SEC_LEVEL,
+    ErrorCode_BAD_SEC_NAME,
+    ErrorCode_BAD_ENG_ID,
+    ErrorCode_BAD_RECVFROM,
+    ErrorCode_TIMEOUT,
+    ErrorCode_UNKNOWN_PDU,
+    ErrorCode_ABORT,
+    ErrorCode_BAD_PARTY,
+    ErrorCode_BAD_ACL,
+    ErrorCode_NOAUTH_DESPRIV,
+    ErrorCode_BAD_COMMUNITY,
+    ErrorCode_BAD_CONTEXT,
+    ErrorCode_BAD_DST_PARTY,
+    ErrorCode_BAD_SRC_PARTY,
+    ErrorCode_BAD_VERSION,
+    ErrorCode_BAD_PARSE,
+    ErrorCode_BAD_SENDTO,
+    ErrorCode_BAD_ASN1_BUILD,
+    ErrorCode_BAD_REPETITIONS,
+    ErrorCode_BAD_REPEATERS,
+    ErrorCode_V1_IN_V2,
+    ErrorCode_V2_IN_V1,
+    ErrorCode_NO_SOCKET,
+    ErrorCode_TOO_LONG,
+    ErrorCode_BAD_SESSION,
+    ErrorCode_BAD_ADDRESS,
+    ErrorCode_BAD_LOCPORT,
+    ErrorCode_GENERR,
+    ErrorCode_SUCCESS = 0  // must be = 0
+};
 
+#define ErrorCode_MAX (-69)
 
+extern int api_priotErrno;
+
+#define API_SET_PRIOT_ERROR(x) api_priotErrno=(x)
 
 #define API_CALLBACK_OP_RECEIVED_MESSAGE	1
 #define API_CALLBACK_OP_TIMED_OUT		    2
@@ -309,8 +312,8 @@ extern int api_priotErrno;
 
 
 
-typedef struct Api_requestList_s {
-    struct Api_requestList_s *next_request;
+typedef struct Api_RequestList_s {
+    struct Api_RequestList_s *next_request;
     long            request_id;     /* request id */
     long            message_id;     /* message id */
     Types_CallbackFT callback;      /* user callback per request (NULL if unused) */
@@ -322,7 +325,7 @@ typedef struct Api_requestList_s {
     struct Types_Session_s *session;
     Types_Pdu    *pdu;    /* The pdu for this request
                  * (saved so it can be retransmitted */
-} Api_requestList;
+} Api_RequestList;
 
 struct Api_SessionList_s {
    struct Api_SessionList_s *next;
@@ -359,11 +362,9 @@ int  Api_close(Types_Session * session);
 void Api_sessInit(Types_Session * session);
 int  Api_send(Types_Session * session, Types_Pdu *pdu);
 void Api_read(fd_set * fdset);
-void Api_read2(Types_LargeFdSet * fdset);
 int  Api_selectInfo(int *numfds, fd_set *fdset, struct timeval *timeout, int *block);
 int  Api_selectInfo2(int *numfds, Types_LargeFdSet *fdset, struct timeval *timeout, int *block);
 void Api_timeout(void);
-int  Api_sessSend(void *, Types_Pdu *);
 Types_Session * Api_sessSession(void *sessp);
 Types_Session * Api_sessSessionLookup(void *sessp);
 int Api_sessRead(void *sessp, fd_set * fdset);
@@ -413,30 +414,30 @@ long            Api_getNextTransid(void);
 
 void *          Api_sessOpen(Types_Session * pss);
 
-int             Api_oidCompare(const _oid *, size_t, const _oid *,
+int             Api_oidCompare(const oid *, size_t, const oid *,
                                  size_t);
-int             Api_oidNcompare(const _oid *, size_t, const _oid *,
+int             Api_oidNcompare(const oid *, size_t, const oid *,
                                   size_t, size_t);
 
-int             Api_oidtreeCompare(const _oid *, size_t, const _oid *,
+int             Api_oidtreeCompare(const oid *, size_t, const oid *,
                                      size_t);
 
-int             Api_oidsubtreeCompare(const _oid *, size_t, const _oid *,
+int             Api_oidsubtreeCompare(const oid *, size_t, const oid *,
                                      size_t);
 
-int             Api_oidCompareLl(const _oid * in_name1,
-                                       size_t len1, const _oid * in_name2,
+int             Api_oidCompareLl(const oid * in_name1,
+                                       size_t len1, const oid * in_name2,
                                        size_t len2, size_t *offpt);
 
-int             Api_oidEquals(const _oid *, size_t, const _oid *,
+int             Api_oidEquals(const oid *, size_t, const oid *,
                                    size_t);
 
 
-int             Api_oidIsSubtree(const _oid *, size_t, const _oid *,
+int             Api_oidIsSubtree(const oid *, size_t, const oid *,
                                        size_t);
 
-int             Api_oidFindPrefix(const _oid * in_name1, size_t len1,
-                                        const _oid * in_name2, size_t len2);
+int             Api_oidFindPrefix(const oid * in_name1, size_t len1,
+                                        const oid * in_name2, size_t len2);
 
 void            Api_init(const char *);
 u_char *        Api_pduBuild(Types_Pdu *, u_char *, size_t *);
@@ -468,10 +469,10 @@ void            Api_store(const char *type);
 
 void            Api_shutdown(const char *type);
 
-int             Api_addVar(Types_Pdu *, const _oid *, size_t, char,
+int             Api_addVar(Types_Pdu *, const oid *, size_t, char,
                              const char *);
 
-_oid *          Api_duplicateObjid(const _oid * objToCopy, size_t);
+oid *          Api_duplicateObjid(const oid * objToCopy, size_t);
 
 u_int           Api_incrementStatistic(int which);
 
@@ -606,7 +607,7 @@ int Api_sessAsyncSend(void *sessp,
 
 Types_VariableList *
 Api_pduAddVariable(Types_Pdu *pdu,
-                      const _oid * name,
+                      const oid * name,
                       size_t name_length,
                       u_char type, const void * value, size_t len);
 
@@ -629,11 +630,17 @@ int Api_sessSelectInfo(void *sessp, int *numfds, fd_set *fdset,
 
 Types_VariableList *
 Api_varlistAddVariable(Types_VariableList ** varlist,
-                          const _oid * name,
+                          const oid * name,
                           size_t name_length,
                           u_char type, const void * value, size_t len);
 
 
 void Api_freeVar(Types_VariableList * var);
+
+void Api_sessPerror(const char *prog_string, Types_Session * ss);
+
+void
+Api_error(Types_Session * psess,
+           int *p_errno, int *p_snmp_errno, char **p_str);
 
 #endif // API_H

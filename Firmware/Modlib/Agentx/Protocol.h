@@ -1,6 +1,8 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#include "Types.h"
+
 /*
  *  Definitions for Agent Extensibility Protocol (RFC 2257)
  *
@@ -9,12 +11,12 @@
 #define AGENTX_PORT	705
 #define NETSNMP_AGENTX_SOCKET	"/var/agentx/master"
 
-    /*
-     * AgentX versions 
-     */
-    /*
-     * Use values distinct from those used to represent SNMP versions 
-     */
+/*
+ * AgentX versions
+ */
+/*
+ * Use values distinct from those used to represent SNMP versions
+ */
 
 #define AGENTX_VERSION_BASE	192     /* Binary: 11xxxxxx */
 #define AGENTX_VERSION_1	(AGENTX_VERSION_BASE | 0x1)
@@ -62,14 +64,14 @@
     /*
      * added in 1999 revision 
      */
-#define AGENTX_ERR_NOERROR		SNMP_ERR_NOERROR
+#define AGENTX_ERR_NOERROR		PRIOT_ERR_NOERROR
 #define AGENTX_ERR_PARSE_FAILED         (266)
 #define AGENTX_ERR_REQUEST_DENIED       (267)
 #define AGENTX_ERR_PROCESSING_ERROR     (268)
 
-    /*
-     * Message processing models 
-     */
+/*
+ * Message processing models
+ */
 #define AGENTX_MP_MODEL_AGENTXv1        (257)
 
 
@@ -84,9 +86,26 @@
 
 #define AGENTX_MSG_FLAGS_MASK                 0xff
 
-    /*
-     * Session Flags - see also 'UCD_FLAGS_xxx' in snmp.h 
-     */
+/*
+ * Session Flags - see also 'UCD_FLAGS_xxx' in snmp.h
+ */
 #define AGENTX_FLAGS_NETWORK_BYTE_ORDER       AGENTX_MSG_FLAG_NETWORK_BYTE_ORDER
+
+
+int
+Protocol_reallocBuild(  Types_Session * session,
+                              Types_Pdu *pdu,
+                              u_char ** buf,
+                              size_t * buf_len,
+                              size_t * out_len );
+
+int
+Protocol_parse( Types_Session *,
+                      Types_Pdu *,
+                      u_char *,
+                      size_t );
+int
+Protocol_checkPacket( u_char *,
+                            size_t );
 
 #endif                          /* PROTOCOL_H */

@@ -3,3 +3,9 @@ CONFIG  -= qt shared
 CONFIG  += shared
 TARGET   = mod
 TEMPLATE = lib
+
+HEADERS +=
+
+SOURCES +=
+
+SOURCES +=

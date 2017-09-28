@@ -4,13 +4,13 @@
 
 #include "../Transport.h"
 
-Transport_Transport *   UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, _i32 local);
+Transport_Transport *   UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int local);
 
-_i32                UDPIPv4BaseDomain_recvfrom(_i32 s, void *buf, _i32 len, struct sockaddr *from,
+int                UDPIPv4BaseDomain_recvfrom(int s, void *buf, int len, struct sockaddr *from,
                                                 socklen_t *fromlen, struct sockaddr *dstip,
-                                                socklen_t *dstlen, _i32 *if_index);
+                                                socklen_t *dstlen, int *if_index);
 
-_i32                UDPIPv4BaseDomain_sendto(_i32 fd, struct in_addr *srcip, _i32 if_index,
-                                             struct sockaddr *remote, void *data, _i32 len);
+int                UDPIPv4BaseDomain_sendto(int fd, struct in_addr *srcip, int if_index,
+                                             struct sockaddr *remote, void *data, int len);
 
 #endif // UDPIPV4BASEDOMAIN_H

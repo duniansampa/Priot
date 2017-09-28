@@ -100,8 +100,8 @@
  */
 #define TOOLS_QUITFUN(e, l)             \
 {                                       \
-    if ( (e) != API_ERR_SUCCESS) {      \
-        rval = API_ERR_GENERR;          \
+    if ( (e) != ErrorCode_SUCCESS) {      \
+        rval = ErrorCode_GENERR;          \
         goto l ;                        \
     }                                   \
 }
@@ -164,8 +164,8 @@
  */
 
 /** A pointer to an opaque time marker value. */
-typedef void   *marker_t;
-typedef const void* const_marker_t;
+typedef void *  markerT;
+typedef const void* constMarkerT;
 
 
 char *   Tools_strdup( const char * ptr);
@@ -173,13 +173,13 @@ void *   Tools_calloc(size_t nmemb, size_t size);
 void *   Tools_malloc(size_t size);
 void *   Tools_realloc( void * ptr, size_t size);
 void     Tools_free( void * ptr);
-int      Tools_realloc(u_char ** buf, size_t * buf_len);
+int      Tools_realloc2(u_char ** buf, size_t * buf_len);
 int      Tools_strcat(u_char ** buf, size_t * buf_len, size_t * out_len, int allow_realloc, const u_char * s);
 void     Tools_freeZero(void *buf, size_t size);
 u_char * Tools_mallocRandom(size_t * size);
 void *   Tools_memdup(const void *from, size_t size);
 char *   Tools_strdupAndNull(const u_char * from, size_t from_len);
-u_int    Tools_binaryToHex(u_char ** dest, size_t *dest_len, int allow_realloc, const u_char * input, size_t len);
+u_int    Tools_binaryToHex2(u_char ** dest, size_t *dest_len, int allow_realloc, const u_char * input, size_t len);
 u_int    Tools_binaryToHex(const u_char * input, size_t len, char **output);
 int      Tools_decimalToBinary(u_char ** buf, size_t * buf_len, size_t * out_len,int allow_realloc, const char *decimal);
 int      Tools_hexToBinary(u_char ** buf, size_t * buf_len, size_t * offset, int allow_realloc, const char *hex, const char *delim);
@@ -187,17 +187,17 @@ int      Tools_hexToBinary1(u_char ** buf, size_t * buf_len, size_t * offset, in
 int      Tools_hexToBinary2(const u_char * input, size_t len, char **output);
 
 void     Tools_dumpChunk(const char *debugtoken, const char *title, const u_char * buf, int size);
-marker_t Tools_atimeNewMarker(void);
-void     Tools_atimeSetMarker(marker_t pm);
+markerT  Tools_atimeNewMarker(void);
+void     Tools_atimeSetMarker(markerT pm);
 void     Tools_getMonotonicClock(struct timeval* tv);
-void     Tools_setMonotonicMarker(marker_t *pm);
-long     Tools_atimeDiff(const_marker_t first, const_marker_t second);
-u_long   Tools_uatimeDiff(const_marker_t first, const_marker_t second);
-u_long   Tools_uatimeHdiff(const_marker_t first, const_marker_t second);
-int      Tools_atimeReady(const_marker_t pm, int delta_ms);
-int      Tools_uatimeReady(const_marker_t pm, unsigned int delta_ms);
-int      Tools_readyMonotonic(const_marker_t pm, int delta_ms);
-int      Tools_markerTticks(const_marker_t pm);
+void     Tools_setMonotonicMarker(markerT *pm);
+long     Tools_atimeDiff(constMarkerT first, constMarkerT second);
+u_long   Tools_uatimeDiff(constMarkerT first, constMarkerT second);
+u_long   Tools_uatimeHdiff(constMarkerT first, constMarkerT second);
+int      Tools_atimeReady(constMarkerT pm, int delta_ms);
+int      Tools_uatimeReady(constMarkerT pm, unsigned int delta_ms);
+int      Tools_readyMonotonic(constMarkerT pm, int delta_ms);
+int      Tools_markerTticks(constMarkerT pm);
 int      Tools_timevalTticks(const struct timeval *tv);
 char *   Tools_getenv(const char *name);
 int      Tools_setenv(const char *envname, const char *envval, int overwrite);

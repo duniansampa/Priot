@@ -26,3 +26,6 @@ unix {
    message ("Unknown configuration")
 }
 
+SUBDIRS += \
+    PL
+

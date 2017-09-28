@@ -6,90 +6,91 @@ TEMPLATE = lib
 LIBS    += -lcrypto
 
 VERSION  = 1.0.0    # major.minor.patch
-QMAKE_CFLAGS += -fno-strict-aliasing -g -O2
-DEFINES += PRIOT_CORELIB
+QMAKE_CFLAGS += -fno-strict-aliasing -g -O2 -Werror=implicit-function-declaration
+DEFINES += PRIOT_CORELIB_LIBRARY
 INCLUDEPATH += "$$PWD"
-#DESTDIR = $$PWD/../lib
+#DESTDIR = "/home/dsampa/Documents/workspace/pessoal/lib"
 #LIBS +=  -L$$DESTDIR
-
 
 message("message: $$LIBS")
 
 SOURCES += \
-    String.cpp \
-    Numbers/BigLong.cpp \
-    Numbers/Byte.cpp \
-    Numbers/Double.cpp \
-    Numbers/Float.cpp \
-    Numbers/Integer.cpp \
-    Numbers/Long.cpp \
-    Numbers/Short.cpp \
-    DefaultStore.cpp \
-    Transports/IPv4BaseDomain.cpp \
-    Transport.cpp \
-    System.cpp \
-    Transports/SocketBaseDomain.cpp \
-    Transports/TCPBaseDomain.cpp \
-    Transports/UDPBaseDomain.cpp \
-    Transports/UDPIPv4BaseDomain.cpp \
-    Transports/TCPDomain.cpp \
-    Transports/UDPDomain.cpp \
-    Transports/UnixDomain.cpp \
-    Debug.cpp \
-    Logger.cpp \
-    Tools.cpp \
-    Container.cpp \
-    Factory.cpp \
-    ContainerBinaryArray.cpp \
-    ContainerIterator.cpp \
-    Priot.cpp \
-    ContainerListSsll.cpp \
-    ContainerNull.cpp \
-    DataList.cpp \
-    Callback.cpp \
-    DirUtils.cpp \
-    FileUtils.cpp \
-    LargeFdSet.cpp \
-    Int64.cpp \
-    Keytools.cpp \
-    LcdTime.cpp \
-    Md5.cpp \
-    Mib.cpp \
-    Asn01.cpp \
-    Parse.cpp \
-    MtSupport.cpp \
-    OidStash.cpp \
-    ReadConfig.cpp \
-    Scapi.cpp \
-    Alarm.cpp \
-    Tc.cpp \
-    Api.cpp \
-    Auth.cpp \
-    Enum.cpp \
-    ParseArgs.cpp \
-    Secmod.cpp \
-    Service.cpp \
-    Version.cpp \
-    Usm.cpp \
-    V3.cpp \
-    Strlcat.cpp \
-    Strlcpy.cpp \
-    TextUtils.cpp \
-    UcdCompat.cpp \
-    Vacm.cpp \
-    Client.cpp \
-    Session.cpp \
-    Transports/AliasDomain.cpp
+    DefaultStore.c \
+    Util/BigLong.c \
+    Util/Byte.c \
+    Util/Double.c \
+    Util/Float.c \
+    Util/Integer.c \
+    Util/Long.c \
+    Util/Short.c \
+    Transports/AliasDomain.c \
+    Transports/IPv4BaseDomain.c \
+    Transports/SocketBaseDomain.c \
+    Transports/TCPBaseDomain.c \
+    Transports/TCPDomain.c \
+    Transports/UDPBaseDomain.c \
+    Transports/UDPDomain.c \
+    Transports/UDPIPv4BaseDomain.c \
+    Transports/UnixDomain.c \
+    String.c \
+    Alarm.c \
+    Api.c \
+    Asn01.c \
+    Callback.c \
+    Client.c \
+    Container.c \
+    ContainerBinaryArray.c \
+    ContainerIterator.c \
+    ContainerListSsll.c \
+    ContainerNull.c \
+    DataList.c \
+    Debug.c \
+    DirUtils.c \
+    Enum.c \
+    Factory.c \
+    FileUtils.c \
+    Int64.c \
+    Keytools.c \
+    LargeFdSet.c \
+    LcdTime.c \
+    Logger.c \
+    Md5.c \
+    Mib.c \
+    MtSupport.c \
+    OidStash.c \
+    Parse.c \
+    ParseArgs.c \
+    Priot.c \
+    ReadConfig.c \
+    Scapi.c \
+    Secmod.c \
+    Service.c \
+    Session.c \
+    Strlcat.c \
+    Strlcpy.c \
+    System.c \
+    Tc.c \
+    TextUtils.c \
+    Tools.c \
+    Transport.c \
+    UcdCompat.c \
+    Usm.c \
+    V3.c \
+    Vacm.c \
+    Version.c \
+    DsLib.cpp \
+    Transports/CallbackDomain.c \
+    Util/Convert.c
 
 HEADERS += \
     String.h \
-    Numbers/BigLong.h \
-    Numbers/Byte.h \
-    Numbers/Double.h \
-    Numbers/Float.h \
-    Numbers/Integer.h \
-    Numbers/Long.h \
-    Numbers/Short.h \
+    Util/BigLong.h \
+    Util/Byte.h \
+    Util/Double.h \
+    Util/Float.h \
+    Util/Integer.h \
+    Util/Long.h \
+    Util/Short.h \
     DataType.h \
     DefaultStore.h \
     Generals.h \
@@ -133,7 +134,6 @@ HEADERS += \
     Alarm.h \
     Tc.h \
     Api.h \
-    Auth.h \
     Enum.h \
     ParseArgs.h \
     Secmod.h \
@@ -153,4 +153,8 @@ HEADERS += \
     Session.h \
     Transports/AliasDomain.h \
     Settings.h \
-    ../Modlib/Agentx/Protocol.h
+    ../Modlib/Agentx/Protocol.h \
+    Util/Integer \
+    DsLib.h \
+    Transports/CallbackDomain.h \
+    Util/Convert.h

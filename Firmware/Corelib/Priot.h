@@ -22,26 +22,23 @@
 /*
  * versions based on version field
  */
-#define PRIOT_VERSION_1	    0
-#define PRIOT_VERSION_2c    1
-#define PRIOT_VERSION_2u    2    /* not (will never be) supported by this code */
 #define PRIOT_VERSION_3     3
 
 /*
  * versions not based on a version field
  */
-#define PRIOT_VERSION_sec   128  /* not (will never be) supported by this code */
-#define PRIOT_VERSION_2p	129  /* no longer supported by this code (> 4.0) */
-#define PRIOT_VERSION_2star 130  /* not (will never be) supported by this code */
+//#define PRIOT_VERSION_sec   128  /* not (will never be) supported by this code */
+//#define PRIOT_VERSION_2p	129  /* no longer supported by this code (> 4.0) */
+//#define PRIOT_VERSION_2star 130  /* not (will never be) supported by this code */
 
 
 /*
  * versions based on version field
  */
 
-#define PRIOT_VERSION_1	    0
-#define PRIOT_VERSION_2c    1
-#define PRIOT_VERSION_2u    2    /* not (will never be) supported by this code */
+//#define PRIOT_VERSION_1	    0
+//#define PRIOT_VERSION_2c    1
+//#define PRIOT_VERSION_2u    2    /* not (will never be) supported by this code */
 #define PRIOT_VERSION_3     3
 
 
@@ -258,10 +255,10 @@
 
 void    Priot_xdump(const void *, size_t, const char *);
 
-u_char * Priot_parseVarOp(u_char *, _oid *, size_t *, u_char *,
+u_char * Priot_parseVarOp(u_char *, oid *, size_t *, u_char *,
                                   size_t *, u_char **, size_t *);
 
-u_char * Priot_buildVarOp(u_char *, _oid *, size_t *, u_char,
+u_char * Priot_buildVarOp(u_char *, oid *, size_t *, u_char,
                                   size_t, u_char *, size_t *);
 
 
@@ -269,7 +266,7 @@ int Priot_reallocRbuildVarOp(u_char ** pkt,
                                size_t * pkt_len,
                                size_t * offset,
                                int allow_realloc,
-                               const _oid * name,
+                               const oid * name,
                                size_t * name_len,
                                u_char value_type,
                                u_char * value,

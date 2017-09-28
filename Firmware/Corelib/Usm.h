@@ -26,13 +26,13 @@
 #define USM_SEC_MODEL_NUMBER        PRIOT_SEC_MODEL_USM
 
 
-extern _oid             usm_noAuthProtocol[10];
-extern _oid             usm_hMACMD5AuthProtocol[10];
-extern _oid             usm_hMACSHA1AuthProtocol[10];
-extern _oid             usm_noPrivProtocol[10];
-extern _oid             usm_dESPrivProtocol[10];
-extern _oid             usm_aESPrivProtocol[10];
-extern _oid *           usm_aES128PrivProtocol;
+extern oid             usm_noAuthProtocol[10];
+extern oid             usm_hMACMD5AuthProtocol[10];
+extern oid             usm_hMACSHA1AuthProtocol[10];
+extern oid             usm_noPrivProtocol[10];
+extern oid             usm_dESPrivProtocol[10];
+extern oid             usm_aESPrivProtocol[10];
+extern oid *           usm_aES128PrivProtocol;
 
 
 
@@ -52,11 +52,11 @@ struct Usm_StateReference_s {
     size_t          usr_name_length;
     u_char         *usr_engine_id;
     size_t          usr_engine_id_length;
-    _oid           *usr_auth_protocol;
+    oid           *usr_auth_protocol;
     size_t          usr_auth_protocol_length;
     u_char         *usr_auth_key;
     size_t          usr_auth_key_length;
-    _oid           *usr_priv_protocol;
+    oid           *usr_priv_protocol;
     size_t          usr_priv_protocol_length;
     u_char         *usr_priv_key;
     size_t          usr_priv_key_length;
@@ -77,13 +77,13 @@ struct Usm_User_s {
     size_t          engineIDLen;
     char           *name;
     char           *secName;
-    _oid            *cloneFrom;
+    oid            *cloneFrom;
     size_t          cloneFromLen;
-    _oid            *authProtocol;
+    oid            *authProtocol;
     size_t          authProtocolLen;
     u_char         *authKey;
     size_t          authKeyLen;
-    _oid            *privProtocol;
+    oid            *privProtocol;
     size_t          privProtocolLen;
     u_char         *privKey;
     size_t          privKeyLen;
@@ -121,7 +121,7 @@ int             Usm_setUsmStateReferenceEngineId(struct
 int             Usm_setUsmStateReferenceAuthProtocol(struct
                                                         Usm_StateReference_s
                                                         *ref,
-                                                        _oid *
+                                                        oid *
                                                         auth_protocol,
                                                         size_t
                                                         auth_protocol_len);
@@ -136,7 +136,7 @@ int             Usm_setUsmStateReferenceAuthKey(struct
 int             Usm_setUsmStateReferencePrivProtocol(struct
                                                         Usm_StateReference_s
                                                         *ref,
-                                                        _oid *
+                                                        oid *
                                                         priv_protocol,
                                                         size_t
                                                         priv_protocol_len);
@@ -230,9 +230,9 @@ struct Usm_User_s * Usm_freeUser(struct Usm_User_s *user);
 struct Usm_User_s * Usm_createUser(void);
 
 struct Usm_User_s * Usm_createInitialUser(const char *name,
-                                        const _oid * authProtocol,
+                                        const oid * authProtocol,
                                         size_t authProtocolLen,
-                                        const _oid * privProtocol,
+                                        const oid * privProtocol,
                                         size_t privProtocolLen);
 
 struct Usm_User_s * Usm_cloneFromUser(struct Usm_User_s *from,
@@ -279,9 +279,9 @@ Secmod_PostDiscoveryFT Usm_createUserFromSessionHook;
 void            Usm_parseCreateUsmUser(const char *token,
                                          char *line);
 
-const _oid *    Usm_getDefaultAuthtype(size_t *);
+const oid *    Usm_getDefaultAuthtype(size_t *);
 
-const _oid *    Usm_getDefaultPrivtype(size_t *);
+const oid *    Usm_getDefaultPrivtype(size_t *);
 
 void            Usm_v3PrivtypeConf(const char *word, char *cptr);
 

@@ -44,8 +44,7 @@ size_t          V3_getEngineID(u_char * buf, size_t buflen);
 u_char  *       V3_generateEngineID(size_t *);
 
 u_long          V3_localEngineTime(void);
-//int             V3_getDefaultSecLevel(void);
-//void            V3_setEngineBootsAndTime(int boots, int ttime);
+
 int             V3_freeEngineID(int majorid, int minorid, void *serverarg,
                                  void *clientarg);
 

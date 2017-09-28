@@ -1,11 +1,10 @@
 #ifndef BaseIncludes_H_
 #define BaseIncludes_H_
 
+#include "Settings.h"
 
 //! \brief These are the default C++ includes.
-#include <iostream>         // For collections
 #include <stdio.h>          // printf
-#include <iomanip>          // setfill, setw
 #include <sys/types.h>      // mkdir, rmdir
 #include <sys/stat.h>       // mkdir
 #include <unistd.h>         // rmdir
@@ -22,39 +21,31 @@
 #include <termios.h>		// struct termios, tcgetattr, cfsetispeed, cfsetospeed, tcsetattr, IHFLOW, OHFLOW, IXOFF, IXON
 #include <fcntl.h>		    //fcntl
 #include <math.h>			//modf
-#include <cmath>
-#include <algorithm>        // std::sort
 #include <float.h>          //float.h
 #include <signal.h>         //signal
-
-
-#include "Settings.h"
-
-using namespace std;
+#include <ctype.h>          //isspace, toupper
 
 
 //#define GENERALS_NO_64BIT_SUPPORT
 
-typedef unsigned char       _u8;
-typedef unsigned short      _u16;
-typedef int                 _i32;
-typedef unsigned long       _u32;
-typedef char             	_s8;
-typedef short               _s16;
-typedef long                _s32;
-typedef unsigned char       _ubyte;
-typedef char                _sbyte;
-typedef time_t              _time;
-typedef bool                _bool;
-typedef float               _float;
-typedef _u32                _oid;
+typedef unsigned char       uchar;
+typedef unsigned short int  ushort;
+typedef unsigned int        uint;
+typedef unsigned long int   ulong;
+typedef uchar               ubyte;
+typedef char                byte;
+
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+typedef unsigned long       oid;
 
 #ifdef GENERALS_NO_64BIT_SUPPORT
-    typedef _u32                _u64;
-    typedef _s32                _s64;
+    typedef uint                uint64;
+    typedef long                int64;
 #else
-    typedef unsigned long long  _u64;
-    typedef long long           _s64;
+    typedef unsigned long long  uint64;
+    typedef long long           int64;
 #endif
 
 #endif // BaseIncludes_H_

@@ -20,7 +20,7 @@ typedef int     (OidStash_FuncStashDump) (char *, size_t,
 typedef void    (OidStash_FuncStashFreeNode) (void *);
 
 typedef struct OidStash_Node_s {
-    _oid             value;
+    oid             value;
     struct OidStash_Node_s **children;     /* array of children */
     size_t childrenSize;
     struct OidStash_Node_s *nextSibling;  /* cache too small links */
@@ -37,7 +37,7 @@ typedef struct OidStash_SaveInfo_s {
 } OidStash_SaveInfo;
 
 
-int  OidStash_addData(OidStash_Node **root, const _oid * lookup,
+int  OidStash_addData(OidStash_Node **root, const oid * lookup,
                                  size_t lookup_len,
                                  void *mydata);
 
@@ -46,16 +46,16 @@ Callback_CallbackFT OidStash_storeAll;
 
 OidStash_Node
     *OidStash_getNode(OidStash_Node *root,
-                      const _oid * lookup,
+                      const oid * lookup,
                       size_t lookup_len);
 
 void           *OidStash_getData(OidStash_Node *root,
-                                 const _oid * lookup,
+                                 const oid * lookup,
                                  size_t lookup_len);
 
 OidStash_Node *
 OidStash_getnextNode(OidStash_Node *root,
-                               _oid * lookup, size_t lookup_len);
+                               oid * lookup, size_t lookup_len);
 
 OidStash_Node *OidStash_createSizedNode(size_t
                                                             mysize);
@@ -64,7 +64,7 @@ OidStash_Node *OidStash_createNode(void);        /* returns a malloced node */
 void OidStash_store(OidStash_Node *root,
                              const char *tokenname,
                              OidStash_FuncStashDump *dumpfn,
-                             _oid *curoid, size_t curoid_len);
+                             oid *curoid, size_t curoid_len);
 
 /* frees all data in the stash and cleans it out.  Sets root = NULL */
 
