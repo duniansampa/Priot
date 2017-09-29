@@ -44,10 +44,10 @@ Transport_Transport * UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int 
     t = TOOLS_MALLOC_TYPEDEF(Transport_Transport);
     Assert_assertOrReturn(t != NULL, NULL);
 
-    DEBUG_IF("netsnmp_udpbase") {
+    DEBUG_IF("priotUdpbase") {
         char *str = UDPDomain_fmtaddr(NULL, (void *)&addr_pair,
                                         sizeof(struct Transport_IndexedAddrPair_s));
-        DEBUG_MSGTL(("netsnmp_udpbase", "open %s %s\n",
+        DEBUG_MSGTL(("priotUdpbase", "open %s %s\n",
                     local ? "local" : "remote", str));
         free(str);
     }
@@ -80,12 +80,12 @@ Transport_Transport * UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int 
         {
             int sockopt = 1;
             if (setsockopt(t->sock, SOL_IP, IP_PKTINFO, &sockopt, sizeof sockopt) == -1) {
-                DEBUG_MSGTL(("netsnmp_udpbase", "couldn't set IP_PKTINFO: %s\n",
+                DEBUG_MSGTL(("priotUdpbase", "couldn't set IP_PKTINFO: %s\n",
                     strerror(errno)));
                 Transport_free(t);
                 return NULL;
             }
-            DEBUG_MSGTL(("netsnmp_udpbase", "set IP_PKTINFO\n"));
+            DEBUG_MSGTL(("priotUdpbase", "set IP_PKTINFO\n"));
         }
 
         rc = bind(t->sock, (struct sockaddr *) addr,
@@ -110,11 +110,11 @@ Transport_Transport * UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int 
             struct sockaddr_in client_addr;
             IPv4BaseDomain_sockaddrIn2(&client_addr, client_socket, NULL);
             client_addr.sin_port = 0;
-            DEBUG_MSGTL(("netsnmp_udpbase", "binding socket: %d\n", t->sock));
+            DEBUG_MSGTL(("priotUdpbase", "binding socket: %d\n", t->sock));
             rc = bind(t->sock, (struct sockaddr *)&client_addr,
                   sizeof(struct sockaddr));
             if ( rc != 0 ) {
-                DEBUG_MSGTL(("netsnmp_udpbase", "failed to bind for clientaddr: %d %s\n",
+                DEBUG_MSGTL(("priotUdpbase", "failed to bind for clientaddr: %d %s\n",
                             errno, strerror(errno)));
                 SocketBaseDomain_close(t);
                 Transport_free(t);
@@ -126,10 +126,10 @@ Transport_Transport * UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int 
             Assert_assert(rc2 == 0);
         }
 
-        DEBUG_IF("netsnmp_udpbase") {
+        DEBUG_IF("priotUdpbase") {
             char *str = UDPDomain_fmtaddr(NULL, (void *)&addr_pair,
                                             sizeof(struct Transport_IndexedAddrPair_s));
-            DEBUG_MSGTL(("netsnmp_udpbase", "client open %s\n", str));
+            DEBUG_MSGTL(("priotUdpbase", "client open %s\n", str));
             free(str);
         }
 

@@ -147,7 +147,7 @@
 #define ONE_SEC         1000000L
 //============= these defines will be changed ==========//
 
-
+#define System_osPrematch(...) 1
 #define DSAGENT_INTERNAL_SECNAME  3    /* used by disman/mteTriggerTable. */
 
 

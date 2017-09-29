@@ -15,4 +15,6 @@ int     UDPBaseDomain_recv(Transport_Transport *t, void *buf, int size, void **o
 
 int     UDPBaseDomain_send(Transport_Transport *t, void *buf, int size, void **opaque, int *olength);
 
+void UDPBaseDomain_ctor(void);
+
 #endif // UDPBASEDOMAIN_H

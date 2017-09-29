@@ -7,7 +7,7 @@
 
 static Transport_TransportList *_callbackDomain_trlist = NULL;
 
-static int      _callbackDomain_count = 0;
+static int      _callbackDomain_callbackCount = 0;
 
 typedef struct CallbackHack_s {
     void           *orig_transport_data;
@@ -23,7 +23,7 @@ typedef struct CallbackQueue_s {
 CallbackQueue *callbackDomain_thequeue;
 
 static Transport_Transport *
-CallbackDomain_findTransportFromCallbackNum(int num)
+_CallbackDomain_findTransportFromCallbackNum(int num)
 {
     static Transport_TransportList *ptr;
     for (ptr = _callbackDomain_trlist; ptr; ptr = ptr->next)
@@ -34,7 +34,7 @@ CallbackDomain_findTransportFromCallbackNum(int num)
 }
 
 static void
-CallbackDomain_debugPdu(const char *ourstring, Types_Pdu *pdu)
+_CallbackDomain_debugPdu(const char *ourstring, Types_Pdu *pdu)
 {
     Types_VariableList *vb;
     int             i = 1;
@@ -66,8 +66,8 @@ CallbackDomain_pushQueue(int num, CallbackPass *item)
     } else {
         callbackDomain_thequeue = newitem;
     }
-    DEBUG_IF("dump_send_callback_transport") {
-        CallbackDomain_debugPdu("dump_send_callback_transport", item->pdu);
+    DEBUG_IF("dumpSendCallbackTransport") {
+        _CallbackDomain_debugPdu("dumpSendCallbackTransport", item->pdu);
     }
 }
 
@@ -89,8 +89,8 @@ CallbackDomain_popQueue(int num)
             }
             cp = ptr->item;
             TOOLS_FREE(ptr);
-            DEBUG_IF("dump_recv_callback_transport") {
-                CallbackDomain_debugPdu("dump_recv_callback_transport",
+            DEBUG_IF("dumpRecvCallbackTransport") {
+                _CallbackDomain_debugPdu("dumpRecvCallbackTransport",
                                    cp->pdu);
             }
             return cp;
@@ -139,7 +139,7 @@ CallbackDomain_recv(Transport_Transport *t, void *buf, int size,
     char newbuf[1];
     CallbackInfo *mystuff = (CallbackInfo *) t->data;
 
-    DEBUG_MSGTL(("transport_callback", "hook_recv enter\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_recv enter\n"));
 
     while (rc < 0) {
     rc = read(mystuff->pipefds[0], newbuf, 1);
@@ -163,7 +163,7 @@ CallbackDomain_recv(Transport_Transport *t, void *buf, int size,
         *opaque = returnnum;
         *olength = sizeof(int);
     }
-    DEBUG_MSGTL(("transport_callback", "hook_recv exit\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_recv exit\n"));
     return rc;
 }
 
@@ -186,7 +186,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
     *opaque = ch->orig_transport_data;
     TOOLS_FREE(ch);
 
-    DEBUG_MSGTL(("transport_callback", "hook_send enter\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_send enter\n"));
 
     cp = TOOLS_MALLOC_TYPEDEF(CallbackPass);
     if (!cp)
@@ -215,7 +215,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
          */
         cp->return_transport_num = mystuff->callback_num;
 
-        other_side = CallbackDomain_findTransportFromCallbackNum(mystuff->linkedto);
+        other_side = _CallbackDomain_findTransportFromCallbackNum(mystuff->linkedto);
         if (!other_side) {
             Api_freePdu(cp->pdu);
             TOOLS_FREE(cp);
@@ -244,7 +244,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
          * we don't need the transport data any more
          */
         TOOLS_FREE(*opaque);
-        other_side = CallbackDomain_findTransportFromCallbackNum(from);
+        other_side = _CallbackDomain_findTransportFromCallbackNum(from);
         if (!other_side) {
             Api_freePdu(cp->pdu);
             TOOLS_FREE(cp);
@@ -261,7 +261,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
         CallbackDomain_pushQueue(from, cp);
     }
 
-    DEBUG_MSGTL(("transport_callback", "hook_send exit\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_send exit\n"));
     return 0;
 }
 
@@ -272,7 +272,7 @@ CallbackDomain_close(Transport_Transport *t)
 {
     int             rc;
     CallbackInfo *mystuff = (CallbackInfo *) t->data;
-    DEBUG_MSGTL(("transport_callback", "hook_close enter\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_close enter\n"));
 
 
     rc  = close(mystuff->pipefds[0]);
@@ -280,7 +280,7 @@ CallbackDomain_close(Transport_Transport *t)
 
     rc |= Transport_removeFromList(&_callbackDomain_trlist, t);
 
-    DEBUG_MSGTL(("transport_callback", "hook_close exit\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_close exit\n"));
     return rc;
 }
 
@@ -289,8 +289,8 @@ CallbackDomain_close(Transport_Transport *t)
 int
 CallbackDomain_accept(Transport_Transport *t)
 {
-    DEBUG_MSGTL(("transport_callback", "hook_accept enter\n"));
-    DEBUG_MSGTL(("transport_callback", "hook_accept exit\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_accept enter\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_accept exit\n"));
     return -1;
 }
 
@@ -328,7 +328,7 @@ CallbackDomain_transport(int to)
         return NULL;
     }
     mydata->linkedto = to;
-    mydata->callback_num = ++_callbackDomain_count;
+    mydata->callback_num = ++_callbackDomain_callbackCount;
     mydata->data = NULL;
     t->data = mydata;
 
@@ -351,10 +351,10 @@ CallbackDomain_transport(int to)
     Transport_addToList(&_callbackDomain_trlist, t);
 
     if (to)
-        DEBUG_MSGTL(("transport_callback", "initialized %d linked to %d\n",
+        DEBUG_MSGTL(("transportCallback", "initialized %d linked to %d\n",
                     mydata->callback_num, to));
     else
-        DEBUG_MSGTL(("transport_callback",
+        DEBUG_MSGTL(("transportCallback",
                     "initialized master listening on %d\n",
                     mydata->callback_num));
     return t;
@@ -385,7 +385,7 @@ CallbackDomain_hookBuild(Types_Session * sp,
     CallbackHack  *ch = TOOLS_MALLOC_TYPEDEF(CallbackHack);
     if (ch == NULL)
         return -1;
-    DEBUG_MSGTL(("transport_callback", "hook_build enter\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_build enter\n"));
     ch->pdu = pdu;
     ch->orig_transport_data = pdu->transportData;
     pdu->transportData = ch;
@@ -438,7 +438,7 @@ CallbackDomain_hookBuild(Types_Session * sp,
     }
     ptk[0] = 0;
     *len = 1;
-    DEBUG_MSGTL(("transport_callback", "hook_build exit\n"));
+    DEBUG_MSGTL(("transportCallback", "hook_build exit\n"));
     return 1;
 }
 
@@ -521,7 +521,7 @@ CallbackDomain_clearCallbackList(void)
     Transport_TransportList *list = _callbackDomain_trlist, *next = NULL;
     Transport_Transport *tr = NULL;
 
-    DEBUG_MSGTL(("callback_clear", "called netsnmp_callback_clear_list()\n"));
+    DEBUG_MSGTL(("callbackClear", "called CallbackDomain_clearCallbackList()\n"));
     while (list != NULL) {
     next = list->next;
     tr = list->transport;

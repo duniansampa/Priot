@@ -27,7 +27,7 @@ int IPv4BaseDomain_sockaddrIn2(struct sockaddr_in *addr,
         return 0;
     }
 
-    DEBUG_MSGTL(("sockaddr_in",
+    DEBUG_MSGTL(("sockaddrIn",
                 "addr %p, inpeername \"%s\", default_target \"%s\"\n",
                 addr, inpeername ? inpeername : "[NIL]",
                 default_target ? default_target : "[NIL]"));
@@ -81,10 +81,10 @@ int IPv4BaseDomain_sockaddrIn2(struct sockaddr_in *addr,
             port = NULL;
 
         if (port != NULL) {
-            long l;
+            long int l;
             char * ep;
 
-            DEBUG_MSGTL(("sockaddr_in", "check user service %s\n",
+            DEBUG_MSGTL(("sockaddrIn", "check user service %s\n",
                         port));
 
             l = strtol(port, &ep, 10);
@@ -92,13 +92,13 @@ int IPv4BaseDomain_sockaddrIn2(struct sockaddr_in *addr,
                 addr->sin_port = htons((u_short)l);
             else {
                 if (host == NULL) {
-                    DEBUG_MSGTL(("sockaddr_in",
+                    DEBUG_MSGTL(("sockaddrIn",
                                 "servname not numeric, "
                                 "check if it really is a destination)\n"));
                     host = port;
                     port = NULL;
                 } else {
-                    DEBUG_MSGTL(("sockaddr_in", "servname not numeric\n"));
+                    DEBUG_MSGTL(("sockaddrIn", "servname not numeric\n"));
                     free(peername);
                     return 0;
                 }
@@ -112,23 +112,23 @@ int IPv4BaseDomain_sockaddrIn2(struct sockaddr_in *addr,
             host = NULL;
 
         if (host != NULL) {
-            DEBUG_MSGTL(("sockaddr_in", "check destination %s\n", host));
+            DEBUG_MSGTL(("sockaddrIn", "check destination %s\n", host));
 
 
             if (strcmp(peername, "255.255.255.255") == 0 ) {
                 /*
                  * The explicit broadcast address hack
                  */
-                DEBUG_MSGTL(("sockaddr_in", "Explicit UDP broadcast\n"));
+                DEBUG_MSGTL(("sockaddrIn", "Explicit UDP broadcast\n"));
                 addr->sin_addr.s_addr = INADDR_NONE;
             } else {
                 ret = System_gethostbynameV4(peername, &addr->sin_addr.s_addr);
                 if (ret < 0) {
-                    DEBUG_MSGTL(("sockaddr_in", "couldn't resolve hostname\n"));
+                    DEBUG_MSGTL(("sockaddrIn", "couldn't resolve hostname\n"));
                     free(peername);
                     return 0;
                 }
-                DEBUG_MSGTL(("sockaddr_in", "hostname (resolved okay)\n"));
+                DEBUG_MSGTL(("sockaddrIn", "hostname (resolved okay)\n"));
             }
         }
         free(peername);
@@ -138,7 +138,7 @@ int IPv4BaseDomain_sockaddrIn2(struct sockaddr_in *addr,
      * Finished
      */
 
-    DEBUG_MSGTL(("sockaddr_in", "return { AF_INET, %s:%hu }\n",
+    DEBUG_MSGTL(("sockaddrIn", "return { AF_INET, %s:%hu }\n",
                 inet_ntoa(addr->sin_addr), ntohs(addr->sin_port)));
     return 1;
 }

@@ -14,7 +14,7 @@ typedef struct Transport_IndexedAddrPair_s TPCDomain_UdpAddrPair;
 
 oid tPCDomain_priotTCPDomain[] = { TRANSPORT_DOMAIN_TCP_IP };
 
-static Transport_Tdomain tPCDomain_tcpDomain;
+static Transport_Tdomain _tCPDomain_tcpDomain;
 
 
 /*
@@ -22,12 +22,12 @@ static Transport_Tdomain tPCDomain_tcpDomain;
  * address if data is NULL.
  */
 
-static char * TPCDomain_fmtaddr(Transport_Transport *t, void *data, int len)
+static char * _TPCDomain_fmtaddr(Transport_Transport *t, void *data, int len)
 {
     return IPv4BaseDomain_fmtaddr("TCP", t, data, len);
 }
 
-static int TPCDomain_accept(Transport_Transport *t)
+static int _TPCDomain_accept(Transport_Transport *t)
 {
     struct sockaddr *farend = NULL;
     TPCDomain_UdpAddrPair *addr_pair = NULL;
@@ -39,7 +39,7 @@ static int TPCDomain_accept(Transport_Transport *t)
         /*
          * Indicate that the acceptance of this socket failed.
          */
-        DEBUG_MSGTL(("netsnmp_tcp", "accept: malloc failed\n"));
+         DEBUG_MSGTL(("priotTcp", "accept: malloc failed\n"));
         return -1;
     }
     memset(addr_pair, 0, sizeof *addr_pair);
@@ -49,7 +49,7 @@ static int TPCDomain_accept(Transport_Transport *t)
         newsock = accept(t->sock, farend, &farendlen);
 
         if (newsock < 0) {
-            DEBUG_MSGTL(("netsnmp_tcp", "accept failed rc %d errno %d \"%s\"\n",
+             DEBUG_MSGTL(("priotTcp", "accept failed rc %d errno %d \"%s\"\n",
             newsock, errno, strerror(errno)));
             free(addr_pair);
             return newsock;
@@ -61,9 +61,9 @@ static int TPCDomain_accept(Transport_Transport *t)
 
         t->data = addr_pair;
         t->data_length = sizeof(TPCDomain_UdpAddrPair);
-        DEBUG_IF("netsnmp_tcp") {
-            char *str = TPCDomain_fmtaddr(NULL, farend, farendlen);
-            DEBUG_MSGTL(("netsnmp_tcp", "accept succeeded (from %s)\n", str));
+        DEBUG_IF("priotTcp") {
+            char *str = _TPCDomain_fmtaddr(NULL, farend, farendlen);
+            DEBUG_MSGTL(("priotTcp", "accept succeeded (from %s)\n", str));
             free(str);
         }
 
@@ -72,7 +72,7 @@ static int TPCDomain_accept(Transport_Transport *t)
          */
 
         if (SocketBaseDomain_setNonBlockingMode(newsock, FALSE) < 0)
-            DEBUG_MSGTL(("netsnmp_tcp", "couldn't f_getfl of fd %d\n",
+            DEBUG_MSGTL(("priotTcp", "couldn't f_getfl of fd %d\n",
                         newsock));
 
         /*
@@ -192,9 +192,6 @@ TPCDomain_transport(struct sockaddr_in *addr, int local)
             return NULL;
         }
 
-        /*
-         * no buffer size on listen socket - doesn't make sense
-         */
     } else {
       t->remote = (u_char *)malloc(6);
         if (t->remote == NULL) {
@@ -241,8 +238,8 @@ TPCDomain_transport(struct sockaddr_in *addr, int local)
     t->f_recv     = TCPBaseDomain_recv;
     t->f_send     = TCPBaseDomain_send;
     t->f_close    = SocketBaseDomain_close;
-    t->f_accept   = TPCDomain_accept;
-    t->f_fmtaddr  = TPCDomain_fmtaddr;
+    t->f_accept   = _TPCDomain_accept;
+    t->f_fmtaddr  = _TPCDomain_fmtaddr;
 
     return t;
 }
@@ -283,14 +280,14 @@ TPCDomain_createOstring(const u_char * o, size_t o_len, int local)
 
 void TPCDomain_ctor(void)
 {
-    tPCDomain_tcpDomain.name = tPCDomain_priotTCPDomain;
-    tPCDomain_tcpDomain.name_length = sizeof(tPCDomain_priotTCPDomain) / sizeof(oid);
-    tPCDomain_tcpDomain.prefix = (const char **)calloc(2, sizeof(char *));
-    tPCDomain_tcpDomain.prefix[0] = "tcp";
+    _tCPDomain_tcpDomain.name = tPCDomain_priotTCPDomain;
+    _tCPDomain_tcpDomain.name_length = sizeof(tPCDomain_priotTCPDomain) / sizeof(oid);
+    _tCPDomain_tcpDomain.prefix = (const char **)calloc(2, sizeof(char *));
+    _tCPDomain_tcpDomain.prefix[0] = "tcp";
 
-    tPCDomain_tcpDomain.f_create_from_tstring     = NULL;
-    tPCDomain_tcpDomain.f_create_from_tstring_new = TPCDomain_createTstring;
-    tPCDomain_tcpDomain.f_create_from_ostring     = TPCDomain_createOstring;
+    _tCPDomain_tcpDomain.f_create_from_tstring     = NULL;
+    _tCPDomain_tcpDomain.f_create_from_tstring_new = TPCDomain_createTstring;
+    _tCPDomain_tcpDomain.f_create_from_ostring     = TPCDomain_createOstring;
 
-    Transport_tdomainRegister(&tPCDomain_tcpDomain);
+    Transport_tdomainRegister(&_tCPDomain_tcpDomain);
 }

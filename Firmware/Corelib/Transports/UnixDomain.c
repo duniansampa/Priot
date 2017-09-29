@@ -14,7 +14,7 @@
 
 
 oid unixDomain_priotUnixDomain[] = { TRANSPORT_DOMAIN_LOCAL };
-static Transport_Tdomain unixDomain_unixDomain;
+static Transport_Tdomain _unixDomain_unixDomain;
 
 
 /*
@@ -33,7 +33,7 @@ typedef struct UnixDomain_SockaddrUnPair_s {
  * address if data is NULL.
  */
 
-static char * UnixDomain_fmtaddr(Transport_Transport *t, void *data, int len)
+static char * _UnixDomain_fmtaddr(Transport_Transport *t, void *data, int len)
 {
     struct sockaddr_un *to = NULL;
 
@@ -73,7 +73,7 @@ static char * UnixDomain_fmtaddr(Transport_Transport *t, void *data, int len)
  * remember where a PDU came from, so that you can send a reply there...
  */
 
-static int UnixDomain_recv(Transport_Transport *t, void *buf, int size, void **opaque, int *olength)
+static int _UnixDomain_recv(Transport_Transport *t, void *buf, int size, void **opaque, int *olength)
 {
     int rc = -1;
     socklen_t       tolen = sizeof(struct sockaddr_un);
@@ -99,26 +99,26 @@ static int UnixDomain_recv(Transport_Transport *t, void *buf, int size, void **o
             rc = recvfrom(t->sock, buf, size, MSG_DONTWAIT, NULL, NULL);
 
             if (rc < 0 && errno != EINTR) {
-                DEBUG_MSGTL(("netsnmp_unix", "recv fd %d err %d (\"%s\")\n",
+                DEBUG_MSGTL(("priotUnix", "recv fd %d err %d (\"%s\")\n",
                             t->sock, errno, strerror(errno)));
                 return rc;
             }
             *opaque = (void*)to;
             *olength = sizeof(struct sockaddr_un);
         }
-        DEBUG_MSGTL(("netsnmp_unix", "recv fd %d got %d bytes\n", t->sock, rc));
+        DEBUG_MSGTL(("priotUnix", "recv fd %d got %d bytes\n", t->sock, rc));
     }
     return rc;
 }
 
 
 
-static int UnixDomain_send(Transport_Transport *t, void *buf, int size, void **opaque, int *olength)
+static int _UnixDomain_send(Transport_Transport *t, void *buf, int size, void **opaque, int *olength)
 {
     int rc = -1;
 
     if (t != NULL && t->sock >= 0) {
-        DEBUG_MSGTL(("netsnmp_unix", "send %d bytes to %p on fd %d\n",
+        DEBUG_MSGTL(("priotUnix", "send %d bytes to %p on fd %d\n",
                     size, buf, t->sock));
         while (rc < 0) {
             rc = sendto(t->sock, buf, size, 0, NULL, 0);
@@ -132,7 +132,7 @@ static int UnixDomain_send(Transport_Transport *t, void *buf, int size, void **o
 
 
 
-static int UnixDomain_close(Transport_Transport *t)
+static int _UnixDomain_close(Transport_Transport *t)
 {
     int rc = 0;
     UnixDomain_SockaddrUnPair *sup = (UnixDomain_SockaddrUnPair *) t->data;
@@ -143,13 +143,13 @@ static int UnixDomain_close(Transport_Transport *t)
         if (sup != NULL) {
             if (sup->local) {
                 if (sup->server.sun_path[0] != 0) {
-                  DEBUG_MSGTL(("netsnmp_unix", "close: server unlink(\"%s\")\n",
+                  DEBUG_MSGTL(("priotUnix", "close: server unlink(\"%s\")\n",
                               sup->server.sun_path));
                   unlink(sup->server.sun_path);
                 }
             } else {
                 if (sup->client.sun_path[0] != 0) {
-                  DEBUG_MSGTL(("netsnmp_unix", "close: client unlink(\"%s\")\n",
+                  DEBUG_MSGTL(("priotUnix", "close: client unlink(\"%s\")\n",
                               sup->client.sun_path));
                   unlink(sup->client.sun_path);
                 }
@@ -163,7 +163,7 @@ static int UnixDomain_close(Transport_Transport *t)
 
 
 
-static int UnixDomain_accept(Transport_Transport *t)
+static int _UnixDomain_accept(Transport_Transport *t)
 {
     struct sockaddr *farend = NULL;
     int             newsock = -1;
@@ -175,7 +175,7 @@ static int UnixDomain_accept(Transport_Transport *t)
         /*
          * Indicate that the acceptance of this socket failed.
          */
-        DEBUG_MSGTL(("netsnmp_unix", "accept: malloc failed\n"));
+        DEBUG_MSGTL(("priotUnix", "accept: malloc failed\n"));
         return -1;
     }
     memset(farend, 0, farendlen);
@@ -184,7 +184,7 @@ static int UnixDomain_accept(Transport_Transport *t)
         newsock = accept(t->sock, farend, &farendlen);
 
         if (newsock < 0) {
-            DEBUG_MSGTL(("netsnmp_unix","accept failed rc %d errno %d \"%s\"\n",
+            DEBUG_MSGTL(("priotUnix","accept failed rc %d errno %d \"%s\"\n",
                         newsock, errno, strerror(errno)));
             free(farend);
             return newsock;
@@ -194,7 +194,7 @@ static int UnixDomain_accept(Transport_Transport *t)
             free(t->data);
         }
 
-        DEBUG_MSGTL(("netsnmp_unix", "accept succeeded (farend %p len %d)\n",
+        DEBUG_MSGTL(("priotUnix", "accept succeeded (farend %p len %d)\n",
                     farend, (int) farendlen));
         t->data = farend;
         t->data_length = sizeof(struct sockaddr_un);
@@ -207,16 +207,16 @@ static int UnixDomain_accept(Transport_Transport *t)
     }
 }
 
-static int unixDomain_createPath = 0;
-static mode_t unixDomain_createMode;
+static int _unixDomain_createPath = 0;
+static mode_t _unixDomain_createMode;
 
 /** If trying to create unix sockets in nonexisting directories then
  *  try to create the directory with mask mode.
  */
  void UnixDomain_unixCreatePathWithMode(int mode)
 {
-    unixDomain_createPath = 1;
-    unixDomain_createMode = mode;
+    _unixDomain_createPath = 1;
+    _unixDomain_createMode = mode;
 }
 
 /** If trying to create unix sockets in nonexisting directories then
@@ -224,7 +224,7 @@ static mode_t unixDomain_createMode;
  */
 void UnixDomain_dontCreatePath(void)
 {
-    unixDomain_createPath = 0;
+    _unixDomain_createPath = 0;
 }
 
 /*
@@ -250,10 +250,10 @@ Transport_Transport * UnixDomain_transport(struct sockaddr_un *addr, int local)
         return NULL;
     }
 
-    DEBUG_IF("netsnmp_unix") {
-        char *str = UnixDomain_fmtaddr(NULL, (void *)addr,
+    DEBUG_IF("priotUnix") {
+        char *str = _UnixDomain_fmtaddr(NULL, (void *)addr,
                                          sizeof(struct sockaddr_un));
-        DEBUG_MSGTL(("netsnmp_unix", "open %s %s\n", local ? "local" : "remote",
+        DEBUG_MSGTL(("priotUnix", "open %s %s\n", local ? "local" : "remote",
                     str));
         free(str);
     }
@@ -298,20 +298,20 @@ Transport_Transport * UnixDomain_transport(struct sockaddr_un *addr, int local)
         unlink(addr->sun_path);
         rc = bind(t->sock, (struct sockaddr *) addr, SUN_LEN(addr));
 
-        if (rc != 0 && errno == ENOENT && unixDomain_createPath) {
-            rc = System_mkdirhier(addr->sun_path, unixDomain_createMode, 1);
+        if (rc != 0 && errno == ENOENT && _unixDomain_createPath) {
+            rc = System_mkdirhier(addr->sun_path, _unixDomain_createMode, 1);
             if (rc != 0) {
-                UnixDomain_close(t);
+                _UnixDomain_close(t);
                 Transport_free(t);
                 return NULL;
             }
             rc = bind(t->sock, (struct sockaddr *) addr, SUN_LEN(addr));
         }
         if (rc != 0) {
-            DEBUG_MSGTL(("netsnmp_unix_transport",
+            DEBUG_MSGTL(("priotUnixTransport",
                         "couldn't bind \"%s\", errno %d (%s)\n",
                         addr->sun_path, errno, strerror(errno)));
-            UnixDomain_close(t);
+            _UnixDomain_close(t);
             Transport_free(t);
             return NULL;
         }
@@ -331,10 +331,10 @@ Transport_Transport * UnixDomain_transport(struct sockaddr_un *addr, int local)
 
         rc = listen(t->sock, TRANSPORT_STREAM_QUEUE_LEN);
         if (rc != 0) {
-            DEBUG_MSGTL(("netsnmp_unix_transport",
+            DEBUG_MSGTL(("priotUnixTransport",
                         "couldn't listen to \"%s\", errno %d (%s)\n",
                         addr->sun_path, errno, strerror(errno)));
-            UnixDomain_close(t);
+            _UnixDomain_close(t);
             Transport_free(t);
             return NULL;
         }
@@ -351,10 +351,10 @@ Transport_Transport * UnixDomain_transport(struct sockaddr_un *addr, int local)
         rc = connect(t->sock, (struct sockaddr *) addr,
                      sizeof(struct sockaddr_un));
         if (rc != 0) {
-            DEBUG_MSGTL(("netsnmp_unix_transport",
+            DEBUG_MSGTL(("priotUnixTransport",
                         "couldn't connect to \"%s\", errno %d (%s)\n",
                         addr->sun_path, errno, strerror(errno)));
-            UnixDomain_close(t);
+            _UnixDomain_close(t);
             Transport_free(t);
             return NULL;
         }
@@ -377,11 +377,11 @@ Transport_Transport * UnixDomain_transport(struct sockaddr_un *addr, int local)
      */
 
     t->msgMaxSize = 0x7fffffff;
-    t->f_recv     = UnixDomain_recv;
-    t->f_send     = UnixDomain_send;
-    t->f_close    = UnixDomain_close;
-    t->f_accept   = UnixDomain_accept;
-    t->f_fmtaddr  = UnixDomain_fmtaddr;
+    t->f_recv     = _UnixDomain_recv;
+    t->f_send     = _UnixDomain_send;
+    t->f_close    = _UnixDomain_close;
+    t->f_accept   = _UnixDomain_accept;
+    t->f_fmtaddr  = _UnixDomain_fmtaddr;
 
     return t;
 }
@@ -432,16 +432,16 @@ Transport_Transport *   UnixDomain_createOstring(const u_char * o, size_t o_len,
 
 void UnixDomain_ctor(void)
 {
-    unixDomain_unixDomain.name = unixDomain_priotUnixDomain;
-    unixDomain_unixDomain.name_length = sizeof(unixDomain_priotUnixDomain) / sizeof(oid);
-    unixDomain_unixDomain.prefix = (const char**)calloc(2, sizeof(char *));
-    unixDomain_unixDomain.prefix[0] = "unix";
+    _unixDomain_unixDomain.name = unixDomain_priotUnixDomain;
+    _unixDomain_unixDomain.name_length = sizeof(unixDomain_priotUnixDomain) / sizeof(oid);
+    _unixDomain_unixDomain.prefix = (const char**)calloc(2, sizeof(char *));
+    _unixDomain_unixDomain.prefix[0] = "unix";
 
-    unixDomain_unixDomain.f_create_from_tstring     = NULL;
-    unixDomain_unixDomain.f_create_from_tstring_new = UnixDomain_createTstring;
-    unixDomain_unixDomain.f_create_from_ostring     = UnixDomain_createOstring;
+    _unixDomain_unixDomain.f_create_from_tstring     = NULL;
+    _unixDomain_unixDomain.f_create_from_tstring_new = UnixDomain_createTstring;
+    _unixDomain_unixDomain.f_create_from_ostring     = UnixDomain_createOstring;
 
-    Transport_tdomainRegister(&unixDomain_unixDomain);
+    Transport_tdomainRegister(&_unixDomain_unixDomain);
 }
 
 

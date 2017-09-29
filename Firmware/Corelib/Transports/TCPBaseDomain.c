@@ -15,11 +15,11 @@ int TCPBaseDomain_recv(Transport_Transport *t, void *buf, int size, void **opaqu
     while (rc < 0) {
         rc = recvfrom(t->sock, buf, size, 0, NULL, NULL);
         if (rc < 0 && errno != EINTR) {
-        DEBUG_MSGTL(("netsnmp_tcpbase", "recv fd %d err %d (\"%s\")\n",
+        DEBUG_MSGTL(("priotTcpbase", "recv fd %d err %d (\"%s\")\n",
                 t->sock, errno, strerror(errno)));
         break;
         }
-        DEBUG_MSGTL(("netsnmp_tcpbase", "recv fd %d got %d bytes\n",
+        DEBUG_MSGTL(("priotTcpbase", "recv fd %d got %d bytes\n",
             t->sock, rc));
     }
     } else {

@@ -24,7 +24,7 @@ int SocketBaseDomain_close(Transport_Transport *t) {
  * to the maximum allowable size by the OS (as close to
  * size as possible)
  */
-static int SocketBaseDomain_bufferMaximize(int s, int optname, const char *buftype, int size)
+static int _SocketBaseDomain_bufferMaximize(int s, int optname, const char *buftype, int size)
 {
     int            curbuf = 0;
     socklen_t      curbuflen = sizeof(int);
@@ -90,7 +90,7 @@ static int SocketBaseDomain_bufferMaximize(int s, int optname, const char *bufty
 }
 
 
-static const char * SocketBaseDomain_bufTypeGet(int optname, int local)
+static const char * _SocketBaseDomain_bufTypeGet(int optname, int local)
 {
     if (optname == SO_SNDBUF) {
         if (local)
@@ -117,12 +117,12 @@ static const char * SocketBaseDomain_bufTypeGet(int optname, int local)
  * In case a compile time buffer was specified, then use that one
  * if there was no runtime configuration override
  */
-static int SocketBaseDomain_bufferSizeGet(int optname, int local, const char **buftype)
+static int _SocketBaseDomain_bufferSizeGet(int optname, int local, const char **buftype)
 {
     int size;
 
     if (NULL != buftype)
-        *buftype = SocketBaseDomain_bufTypeGet(optname, local);
+        *buftype = _SocketBaseDomain_bufTypeGet(optname, local);
 
     if (optname == SO_SNDBUF) {
         if (local) {
@@ -170,9 +170,9 @@ int SocketBaseDomain_bufferSet(int s, int optname, int local, int size)
      * What is the requested buffer size ?
      */
     if (0 == size)
-        size = SocketBaseDomain_bufferSizeGet(optname, local, &buftype);
+        size = _SocketBaseDomain_bufferSizeGet(optname, local, &buftype);
     else {
-        buftype = SocketBaseDomain_bufTypeGet(optname, local);
+        buftype = _SocketBaseDomain_bufTypeGet(optname, local);
         DEBUG_MSGT(("verbose:socket:buffer", "Requested %s is %d\n",
                    buftype, size));
     }
@@ -228,7 +228,7 @@ int SocketBaseDomain_bufferSet(int s, int optname, int local, int size)
          *   request 110k, you end up with the default 8k :-(
          */
         if (curbuf < size) {
-            curbuf = SocketBaseDomain_bufferMaximize(s, optname, buftype, size);
+            curbuf = _SocketBaseDomain_bufferMaximize(s, optname, buftype, size);
             if(-1 != curbuf)
                 size = curbuf;
         }
@@ -246,7 +246,7 @@ int SocketBaseDomain_bufferSet(int s, int optname, int local, int size)
          */
         DEBUG_MSGTL(("socket:buffer", "couldn't set %s to %d\n", buftype, size));
 
-        curbuf = SocketBaseDomain_bufferMaximize(s, optname, buftype, size);
+        curbuf = _SocketBaseDomain_bufferMaximize(s, optname, buftype, size);
         if(-1 != curbuf)
             size = curbuf;
     }

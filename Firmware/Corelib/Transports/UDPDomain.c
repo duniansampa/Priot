@@ -11,7 +11,7 @@
 #include "ReadConfig.h"
 #include "Impl.h"
 
-static Transport_Tdomain uDPDomain_uDPDomain;
+static Transport_Tdomain _uDPDomain_uDPDomain;
 
 /*
  * needs to be in sync with the definitions in snmplib/snmpTCPDomain.c
@@ -117,14 +117,14 @@ Transport_Transport * UDPDomain_createOstring(const u_char * o, size_t o_len, in
 
 void UDPDomain_ctor(void)
 {
-    uDPDomain_uDPDomain.name = transport_uDPDomain;
-    uDPDomain_uDPDomain.name_length = transport_uDPDomainLen;
-    uDPDomain_uDPDomain.prefix = (const char**)calloc(2, sizeof(char *));
-    uDPDomain_uDPDomain.prefix[0] = "udp";
+    _uDPDomain_uDPDomain.name = transport_uDPDomain;
+    _uDPDomain_uDPDomain.name_length = transport_uDPDomainLen;
+    _uDPDomain_uDPDomain.prefix = (const char**)calloc(2, sizeof(char *));
+    _uDPDomain_uDPDomain.prefix[0] = "udp";
 
-    uDPDomain_uDPDomain.f_create_from_tstring     = NULL;
-    uDPDomain_uDPDomain.f_create_from_tstring_new = UDPDomain_createTstring;
-    uDPDomain_uDPDomain.f_create_from_ostring     = UDPDomain_createOstring;
+    _uDPDomain_uDPDomain.f_create_from_tstring     = NULL;
+    _uDPDomain_uDPDomain.f_create_from_tstring_new = UDPDomain_createTstring;
+    _uDPDomain_uDPDomain.f_create_from_ostring     = UDPDomain_createOstring;
 
-    Transport_tdomainRegister(&uDPDomain_uDPDomain);
+    Transport_tdomainRegister(&_uDPDomain_uDPDomain);
 }

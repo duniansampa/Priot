@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include "../Debug.h"
 #include "Assert.h"
+#include "System.h"
 
 
 
@@ -13,11 +14,18 @@ void UDPBaseDomain_sockOptSet(int fd, int local)
 {
 
     /*
-     * SO_REUSEADDR will allow multiple apps to open the same port at
-     * the same time. Only the last one to open the socket will get
-     * data. Obviously, for an agent, this is a bad thing. There should
-     * only be one listener.
+     * Patch for Linux.  Without this, UDP packets that fail get an ICMP
+     * response.  Linux turns the failed ICMP response into an error message
+     * and return value, unlike all other OS's.
      */
+    if (0 == System_osPrematch("Linux","2.4"))
+    {
+        int             one = 1;
+        DEBUG_MSGTL(("socket:option", "setting socket option SO_BSDCOMPAT\n"));
+        setsockopt(fd, SOL_SOCKET, SO_BSDCOMPAT, (void *) &one,
+                   sizeof(one));
+    }
+
 
     /*
      * Try to set the send and receive buffers to a reasonably large value, so
@@ -210,16 +218,16 @@ int UDPBaseDomain_recv(Transport_Transport *t, void *buf, int size, void **opaqu
         }
 
         if (rc >= 0) {
-            DEBUG_IF("netsnmp_udp") {
+            DEBUG_IF("priotUdp") {
                 char *str = UDPDomain_fmtaddr(
                             NULL, addr_pair, sizeof(struct Transport_IndexedAddrPair_s));
-                DEBUG_MSGTL(("netsnmp_udp",
+                DEBUG_MSGTL(("priotUdp",
                             "recvfrom fd %d got %d bytes (from %s)\n",
                             t->sock, rc, str));
                 free(str);
             }
         } else {
-            DEBUG_MSGTL(("netsnmp_udp", "recvfrom fd %d err %d (\"%s\")\n",
+            DEBUG_MSGTL(("priotUdp", "recvfrom fd %d err %d (\"%s\")\n",
                         t->sock, errno, strerror(errno)));
         }
         *opaque = (void *)addr_pair;
@@ -248,10 +256,10 @@ int UDPBaseDomain_send(Transport_Transport *t, void *buf, int size,
     to = &addr_pair->remote_addr.sa;
 
     if (to != NULL && t != NULL && t->sock >= 0) {
-        DEBUG_IF("netsnmp_udp") {
+        DEBUG_IF("priotUdp") {
             char *str = UDPDomain_fmtaddr(NULL, (void *) addr_pair,
                                             sizeof(struct Transport_IndexedAddrPair_s));
-            DEBUG_MSGTL(("netsnmp_udp", "send %d bytes from %p to %s on fd %d\n",
+            DEBUG_MSGTL(("priotUdp", "send %d bytes from %p to %s on fd %d\n",
                         size, buf, str, t->sock));
             free(str);
         }
@@ -262,11 +270,16 @@ int UDPBaseDomain_send(Transport_Transport *t, void *buf, int size,
                                     addr_pair ? addr_pair->if_index : 0, to, buf, size);
 
             if (rc < 0 && errno != EINTR) {
-                DEBUG_MSGTL(("netsnmp_udp", "sendto error, rc %d (errno %d)\n",
+                DEBUG_MSGTL(("priotUdp", "sendto error, rc %d (errno %d)\n",
                             rc, errno));
                 break;
             }
         }
     }
     return rc;
+}
+
+
+void UDPBaseDomain_ctor(void){
+
 }
