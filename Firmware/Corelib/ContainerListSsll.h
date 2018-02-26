@@ -3,7 +3,6 @@
 
 #include "Container.h"
 
-//Container_Container * ContainerListSsll_getSortedSinglyLinkedList(void);
 Container_Container * ContainerListSsll_getSinglyLinkedList(int fifo);
 
 void ContainerListSsll_init(void);

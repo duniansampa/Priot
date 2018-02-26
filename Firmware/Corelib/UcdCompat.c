@@ -15,50 +15,50 @@ UcdCompat_getErrno(void)
 void
 UcdCompat_setDumpPacket(int x)
 {
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.DUMP_PACKET, x);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_DUMP_PACKET, x);
 }
 
 int
 UcdCompat_getDumpPacket(void)
 {
-    return DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_BOOLEAN.DUMP_PACKET);
+    return DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                  DsBool_DUMP_PACKET);
 }
 
 void
 UcdCompat_setQuickPrint(int x)
 {
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.QUICK_PRINT, x);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_QUICK_PRINT, x);
 }
 
 int
 UcdCompat_getQuickPrint(void)
 {
-    return DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_BOOLEAN.QUICK_PRINT);
+    return DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                  DsBool_QUICK_PRINT);
 }
 
 
 void
 UcdCompat_setSuffixOnly(int x)
 {
-    DefaultStore_setInt(DSSTORAGE.LIBRARY_ID,
-               DSLIB_INTEGER.OID_OUTPUT_FORMAT, x);
+    DefaultStore_setInt(DsStorage_LIBRARY_ID,
+               DsInt_OID_OUTPUT_FORMAT, x);
 }
 
 int
 UcdCompat_getSuffixOnly(void)
 {
-    return DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_INTEGER.OID_OUTPUT_FORMAT);
+    return DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                  DsInt_OID_OUTPUT_FORMAT);
 }
 
 void
 UcdCompat_setFullObjid(int x)
 {
-    DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT,
+    DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
                                               MIB_OID_OUTPUT_FULL);
 }
 
@@ -66,42 +66,42 @@ int
 UcdCompat_getFullObjid(void)
 {
     return (MIB_OID_OUTPUT_FULL ==
-        DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT));
+        DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT));
 }
 
 void
 UcdCompat_setRandomAccess(int x)
 {
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.RANDOM_ACCESS, x);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_RANDOM_ACCESS, x);
 }
 
 int
 UcdCompat_getRandomAccess(void)
 {
-    return DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_BOOLEAN.RANDOM_ACCESS);
+    return DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                  DsBool_RANDOM_ACCESS);
 }
 
 void
 UcdCompat_setMibErrors(int err)
 {
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.MIB_ERRORS, err);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_MIB_ERRORS, err);
 }
 
 void
 UcdCompat_setMibWarnings(int warn)
 {
-    DefaultStore_setInt(DSSTORAGE.LIBRARY_ID,
-               DSLIB_INTEGER.MIB_WARNINGS, warn);
+    DefaultStore_setInt(DsStorage_LIBRARY_ID,
+               DsInt_MIB_WARNINGS, warn);
 }
 
 void
 UcdCompat_setSaveDescriptions(int save)
 {
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.SAVE_MIB_DESCRS, save);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_SAVE_MIB_DESCRS, save);
 }
 
 void
@@ -110,8 +110,8 @@ UcdCompat_setMibCommentTerm(int save)
     /*
      * 0=strict, 1=EOL terminated
      */
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.MIB_COMMENT_TERM, save);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_MIB_COMMENT_TERM, save);
 }
 
 void
@@ -120,8 +120,8 @@ UcdCompat_setMibParseLabel(int save)
     /*
      * 0=strict, 1=underscore OK in label
      */
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.MIB_PARSE_LABEL, save);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_MIB_PARSE_LABEL, save);
 }
 
 int

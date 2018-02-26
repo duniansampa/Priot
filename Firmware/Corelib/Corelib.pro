@@ -9,6 +9,7 @@ VERSION  = 1.0.0    # major.minor.patch
 QMAKE_CFLAGS += -fno-strict-aliasing -g -O2 -Werror=implicit-function-declaration
 DEFINES += PRIOT_CORELIB_LIBRARY
 INCLUDEPATH += "$$PWD"
+INCLUDEPATH +=  $$PWD/../Modlib/
 #DESTDIR = "/home/dsampa/Documents/workspace/pessoal/lib"
 #LIBS +=  -L$$DESTDIR
 
@@ -78,7 +79,6 @@ SOURCES += \
     V3.c \
     Vacm.c \
     Version.c \
-    DsLib.cpp \
     Transports/CallbackDomain.c \
     Util/Convert.c
 
@@ -155,6 +155,5 @@ HEADERS += \
     Settings.h \
     ../Modlib/Agentx/Protocol.h \
     Util/Integer \
-    DsLib.h \
     Transports/CallbackDomain.h \
     Util/Convert.h

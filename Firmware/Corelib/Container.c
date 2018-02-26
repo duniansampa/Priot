@@ -16,7 +16,7 @@
 
 /*------------------------------------------------------------------
  */
-static Container_Container * container_containers = NULL;
+static Container_Container * _container_containers = NULL;
 
 typedef struct Container_Type_s {
    const char             *name;
@@ -27,7 +27,7 @@ typedef struct Container_Type_s {
 
 /*------------------------------------------------------------------
  */
-static void Container_factoryFree(void *dat, void *context)
+static void _Container_factoryFree(void *dat, void *context)
 {
     Container_Type *data = (Container_Type *)dat;
     if (data == NULL)
@@ -48,16 +48,16 @@ static void Container_factoryFree(void *dat, void *context)
  */
 void Container_initList(void)
 {
-    if (NULL != container_containers)
+    if (NULL != _container_containers)
         return;
 
     /*
      * create a binary arry container to hold container
      * factories
      */
-    container_containers = ContainerBinaryArray_getBinaryArray();
-    container_containers->compare = Container_compareCstring;
-    container_containers->containerName = strdup("containerList");
+    _container_containers = ContainerBinaryArray_getBinaryArray();
+    _container_containers->compare = Container_compareCstring;
+    _container_containers->containerName = strdup("containerList");
 
     /*
      * register containers
@@ -85,33 +85,33 @@ void Container_freeList(void)
 {
     DEBUG_MSGTL(("container", "Container_freeList() called\n"));
 
-    if (container_containers == NULL)
+    if (_container_containers == NULL)
         return;
 
     /*
      * free memory used by each factory entry
      */
-    CONTAINER_FOR_EACH(container_containers, ((Container_FuncObjFunc *)Container_factoryFree), NULL);
+    CONTAINER_FOR_EACH(_container_containers, ((Container_FuncObjFunc *)_Container_factoryFree), NULL);
 
     /*
      * free factory container
      */
-    CONTAINER_FREE(container_containers);
+    CONTAINER_FREE(_container_containers);
 
-    container_containers = NULL;
+    _container_containers = NULL;
 }
 
 int Container_registerWithCompare(const char* name, Factory_Factory *f,  Container_FuncCompare  *c)
 {
     Container_Type *ct, tmp;
 
-    if (NULL == container_containers)
+    if (NULL == _container_containers)
         return -1;
 
     tmp.name = TOOLS_REMOVE_CONST(char *, name);
-    ct = (Container_Type *)CONTAINER_FIND(container_containers, &tmp);
+    ct = (Container_Type *)CONTAINER_FIND(_container_containers, &tmp);
     if (NULL!=ct) {
-        DEBUG_MSGT(("container_registry",
+        DEBUG_MSGT(("containerRegistry",
                    "replacing previous container factory\n"));
         ct->factory = f;
     }else {
@@ -121,9 +121,9 @@ int Container_registerWithCompare(const char* name, Factory_Factory *f,  Contain
         ct->name = strdup(name);
         ct->factory = f;
         ct->compare = c;
-        CONTAINER_INSERT(container_containers, ct);
+        CONTAINER_INSERT(_container_containers, ct);
     }
-    DEBUG_MSGT(("container_registry", "registered container factory %s (%s)\n",
+    DEBUG_MSGT(("containerRegistry", "registered container factory %s (%s)\n",
                ct->name, f->product));
 
     return 0;
@@ -140,11 +140,11 @@ Factory_Factory * Container_getFactory(const char *type)
 {
     Container_Type ct, *found;
 
-    if (NULL == container_containers)
+    if (NULL == _container_containers)
         return NULL;
 
     ct.name = type;
-    found = (Container_Type *)CONTAINER_FIND(container_containers, &ct);
+    found = (Container_Type *)CONTAINER_FIND(_container_containers, &ct);
 
     return found ? found->factory : NULL;
 }
@@ -173,18 +173,18 @@ Factory_Factory * Container_findFactory(const char *typeList)
 
 /*------------------------------------------------------------------
  */
-static Container_Type * Container_getCt(const char *type)
+static Container_Type * _Container_getCt(const char *type)
 {
     Container_Type ct;
 
-    if (NULL == container_containers)
+    if (NULL == _container_containers)
         return NULL;
 
     ct.name = type;
-    return (Container_Type *)CONTAINER_FIND(container_containers, &ct);
+    return (Container_Type *)CONTAINER_FIND(_container_containers, &ct);
 }
 
-static Container_Type * Container_FindCt(const char *type_list)
+static Container_Type * _Container_FindCt(const char *type_list)
 {
     Container_Type    *ct = NULL;
     char              *list, *entry;
@@ -196,7 +196,7 @@ static Container_Type * Container_FindCt(const char *type_list)
     list = strdup(type_list);
     entry = strtok_r(list, ":", &st);
     while(entry) {
-        ct = Container_getCt(entry);
+        ct = _Container_getCt(entry);
         if (NULL != ct)
             break;
         entry = strtok_r(NULL, ":", &st);
@@ -213,7 +213,7 @@ static Container_Type * Container_FindCt(const char *type_list)
 Container_Container * Container_get(const char *type)
 {
     Container_Container *c;
-    Container_Type *ct = Container_getCt(type);
+    Container_Type *ct = _Container_getCt(type);
     if (ct) {
         c = (Container_Container *)(ct->factory->produce());
         if (c && ct->compare)
@@ -228,7 +228,7 @@ Container_Container * Container_get(const char *type)
  */
 Container_Container * Container_find(const char *type)
 {
-    Container_Type *ct = Container_FindCt(type);
+    Container_Type *ct = _Container_FindCt(type);
     Container_Container *c = ct ? (Container_Container *)(ct->factory->produce()) : NULL;
 
     /*

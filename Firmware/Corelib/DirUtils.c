@@ -6,7 +6,7 @@
 #include "Strlcpy.h"
 
 
-static int DirUtils_insertNsfile( Container_Container *c, const char *name, struct stat *stats, u_int flags);
+static int _DirUtils_insertNsfile( Container_Container *c, const char *name, struct stat *stats, u_int flags);
 
 /*
  * read file names in a directory, with an optional filter
@@ -121,7 +121,7 @@ Container_Container * DirUtils_readSome(Container_Container *userContainer,
             DirUtils_read(container, path, flags);
         }
         else if (flags & DIRUTILS_DIR_NSFILE) {
-            if (DirUtils_insertNsfile( container, file->d_name,
+            if (_DirUtils_insertNsfile( container, file->d_name,
                                 filter ? &statbuf : NULL, flags ) < 0)
                 break;
         }
@@ -157,7 +157,7 @@ void DirUtils_free(Container_Container *container)
     CONTAINER_FREE(container);
 }
 
-static int DirUtils_insertNsfile( Container_Container *c, const char *name, struct stat *stats,
+static int _DirUtils_insertNsfile( Container_Container *c, const char *name, struct stat *stats,
                 u_int flags)
 {
     int           rc;

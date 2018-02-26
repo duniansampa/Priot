@@ -711,7 +711,7 @@ Agent_addrcacheAdd(const char *addr)
            agent_addrCache[unused].lastHitM = now;
        }
        else { /* Otherwise, replace oldest entry */
-           if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+           if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                       DsAgentBoolean_VERBOSE))
                Logger_log(LOGGER_PRIORITY_INFO, "Purging address from address cache: %s",
                         agent_addrCache[oldest].addr);
@@ -723,7 +723,7 @@ Agent_addrcacheAdd(const char *addr)
        rc = 1;
    }
    if ((agent_logAddresses && (1 == rc)) ||
-       DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+       DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                               DsAgentBoolean_VERBOSE)) {
        Logger_log(LOGGER_PRIORITY_INFO, "Received SNMP packet(s) from %s\n", addr);
     }
@@ -798,7 +798,7 @@ Agent_checkParse(Types_Session * session, Types_Pdu *pdu,
 {
    if (result == 0) {
        if (Logger_isDoLogging() &&
-       DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+       DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                   DsAgentBoolean_VERBOSE)) {
            Types_VariableList *var_ptr;
 
@@ -942,7 +942,7 @@ Agent_registerAgentNsap(Transport_Transport *t)
    s->version = API_DEFAULT_VERSION;
    s->callback = Agent_handlePriotPacket;
    s->authenticator = NULL;
-   s->flags = DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+   s->flags = DefaultStore_getInt(DsStorage_APPLICATION_ID,
                  DsAgentInterger_FLAGS);
    s->isAuthoritative = API_SESS_AUTHORITATIVE;
 
@@ -1093,7 +1093,7 @@ Agent_initMasterAgent(void)
    /* default to a default cache size */
    AgentRegistry_setLookupCacheSize(-1);
 
-   if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+   if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                   DsAgentBoolean_ROLE) != MASTER_AGENT) {
        DEBUG_MSGTL(("snmp_agent",
                    "Agent_initMasterAgent; not master agent\n"));
@@ -1106,7 +1106,7 @@ Agent_initMasterAgent(void)
    /*
     * Have specific agent ports been specified?
     */
-   cptr = DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+   cptr = DefaultStore_getString(DsStorage_APPLICATION_ID,
                 DsAgentString_PORTS);
 
    if (cptr) {
@@ -1173,7 +1173,7 @@ Agent_initMasterAgent(void)
    } while(st && *st != '\0');
    TOOLS_FREE(buf);
 
-   if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+   if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                   DsAgentBoolean_AGENTX_MASTER) == 1)
        Master_realInitMaster();
 
@@ -2019,10 +2019,10 @@ Agent_createSubtreeCache(AgentSession *asp)
            asp->bulkcache = NULL;
        } else {
            int           maxbulk =
-               DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+               DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                   DsAgentInterger_MAX_GETBULKREPEATS);
            int maxresponses =
-               DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+               DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                    DsAgentInterger_MAX_GETBULKRESPONSES);
 
            if (maxresponses == 0)

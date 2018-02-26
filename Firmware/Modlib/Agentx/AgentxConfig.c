@@ -18,7 +18,7 @@ void
 AgentxConfig_parseAgentxSocket(const char *token, char *cptr)
 {
     DEBUG_MSGTL(("agentx/config", "port spec: %s\n", cptr));
-    DefaultStore_setString(DSSTORAGE.APPLICATION_ID, DsAgentString_X_SOCKET, cptr);
+    DefaultStore_setString(DsStorage_APPLICATION_ID, DsAgentString_X_SOCKET, cptr);
 }
 
 /* ---------------------------------------------------------------------
@@ -43,7 +43,7 @@ AgentxConfig_parseMaster(const char *token, char *cptr)
     if (i < 0 || i > 1) {
     ReadConfig_error("master '%s' unrecognised", cptr);
     } else
-        DefaultStore_setBoolean(DSSTORAGE.APPLICATION_ID, DsAgentBoolean_AGENTX_MASTER, i);
+        DefaultStore_setBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_AGENTX_MASTER, i);
 }
 
 void
@@ -64,14 +64,14 @@ AgentxConfig_parseAgentxPerms(const char *token, char *cptr)
 
     if (socket_perm) {
         s_perm = strtol(socket_perm, NULL, 8);
-        DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_setInt(DsStorage_APPLICATION_ID,
                             DsAgentInterger_X_SOCK_PERM, s_perm);
         DEBUG_MSGTL(("agentx/config", "socket permissions: %o (%d)\n",
                     s_perm, s_perm));
     }
     if (dir_perm) {
         d_perm = strtol(dir_perm, NULL, 8);
-        DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_setInt(DsStorage_APPLICATION_ID,
                            DsAgentInterger_X_DIR_PERM, d_perm);
         DEBUG_MSGTL(("agentx/config", "directory permissions: %o (%d)\n",
                     d_perm, d_perm));
@@ -83,7 +83,7 @@ AgentxConfig_parseAgentxPerms(const char *token, char *cptr)
     if (socket_user) {
         uid = System_strToUid(socket_user);
         if ( uid != 0 )
-            DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+            DefaultStore_setInt(DsStorage_APPLICATION_ID,
                                DsAgentInterger_X_SOCK_USER, uid);
         DEBUG_MSGTL(("agentx/config", "socket owner: %s (%d)\n",
                     socket_user, uid));
@@ -95,7 +95,7 @@ AgentxConfig_parseAgentxPerms(const char *token, char *cptr)
     if (socket_group) {
         gid = System_strToGid(socket_group);
         if ( gid != 0 )
-            DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+            DefaultStore_setInt(DsStorage_APPLICATION_ID,
                                DsAgentInterger_X_SOCK_GROUP, gid);
         DEBUG_MSGTL(("agentx/config", "socket group: %s (%d)\n",
                     socket_group, gid));
@@ -111,7 +111,7 @@ AgentxConfig_parseAgentxTimeout(const char *token, char *cptr)
         ReadConfig_configPerror("Invalid timeout value");
         return;
     }
-    DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+    DefaultStore_setInt(DsStorage_APPLICATION_ID,
                        DsAgentInterger_AGENTX_TIMEOUT, x * ONE_SEC);
 }
 
@@ -120,7 +120,7 @@ AgentxConfig_parseAgentxRetries(const char *token, char *cptr)
 {
     int x = atoi(cptr);
     DEBUG_MSGTL(("agentx/config/retries", "%s\n", cptr));
-    DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+    DefaultStore_setInt(DsStorage_APPLICATION_ID,
                        DsAgentInterger_AGENTX_RETRIES, x);
 }
 
@@ -154,7 +154,7 @@ AgentxConfig_unregisterConfigHandler(const char *token)
 void
 AgentxConfig_init(void)
 {
-    int agent_role = DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    int agent_role = DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                              DsAgentBoolean_ROLE);
 
     /*
@@ -195,13 +195,13 @@ AgentxConfig_init(void)
          * set up callbacks to initiate master agent pings for this session
          */
         DefaultStore_registerConfig(ASN01_INTEGER,
-                                    DefaultStore_getString( DSSTORAGE.LIBRARY_ID,
-                                                            DSLIB_STRING.APPTYPE),
+                                    DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                            DsStr_APPTYPE),
                                    "agentxPingInterval",
-                                   DSSTORAGE.APPLICATION_ID,
+                                   DsStorage_APPLICATION_ID,
                                    DsAgentInterger_AGENTX_PING_INTERVAL);
         /* ping and/or reconnect by default every 15 seconds */
-        DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_setInt(DsStorage_APPLICATION_ID,
                             DsAgentInterger_AGENTX_PING_INTERVAL, 15);
 
     }

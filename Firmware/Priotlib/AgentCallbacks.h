@@ -2,7 +2,7 @@
 #define AGENTCALLBACKS_H
 
 
-enum PriotdCallback_s {
+enum PriotdCallback_e {
 
    PriotdCallback_ACM_CHECK              ,
    PriotdCallback_REGISTER_OID           ,

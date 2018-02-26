@@ -20,7 +20,7 @@
 /*
  * Prototype definitions
  */
-static int      Client_synchInput(int op, Types_Session * session,
+static int      _Client_synchInput(int op, Types_Session * session,
                                  int reqid, Types_Pdu *pdu, void *magic);
 
 Types_Pdu    *
@@ -60,7 +60,7 @@ Client_addNullVar(Types_Pdu *pdu, const oid * name, size_t name_length)
 
 
 static int
-Client_synchInput(int op,
+_Client_synchInput(int op,
                  Types_Session * session,
                  int reqid, Types_Pdu *pdu, void *magic)
 {
@@ -68,13 +68,13 @@ Client_synchInput(int op,
     int             rpt_type;
 
     if (reqid != state->reqid && pdu && pdu->command != PRIOT_MSG_REPORT) {
-        DEBUG_MSGTL(("snmp_synch", "Unexpected response (ReqID: %d,%d - Cmd %d)\n",
+        DEBUG_MSGTL(("priotSynch", "Unexpected response (ReqID: %d,%d - Cmd %d)\n",
                                    reqid, state->reqid, pdu->command ));
         return 0;
     }
 
     state->waiting = 0;
-    DEBUG_MSGTL(("snmp_synch", "Response (ReqID: %d - Cmd %d)\n",
+    DEBUG_MSGTL(("priotSynch", "Response (ReqID: %d - Cmd %d)\n",
                                reqid, (pdu ? pdu->command : -1)));
 
     if (op == API_CALLBACK_OP_RECEIVED_MESSAGE && pdu) {
@@ -241,7 +241,7 @@ Client_resetVarBuffers(Types_VariableList * var)
  */
 static
 Types_Pdu    *
-Client_clonePduHeader(Types_Pdu *pdu)
+_Client_clonePduHeader(Types_Pdu *pdu)
 {
     Types_Pdu    *newpdu;
     struct Secmod_Def_s *sptr;
@@ -312,7 +312,7 @@ Client_clonePduHeader(Types_Pdu *pdu)
 
 static
 Types_VariableList *
-Client_copyVarlist(Types_VariableList * var,      /* source varList */
+_Client_copyVarlist(Types_VariableList * var,      /* source varList */
               int errindex,     /* index of variable to drop (if any) */
               int copy_count)
 {                               /* !=0 number variables to copy */
@@ -378,7 +378,7 @@ Client_copyVarlist(Types_VariableList * var,      /* source varList */
  */
 static
 Types_Pdu    *
-Client_copyPduVars(Types_Pdu *pdu,        /* source PDU */
+_Client_copyPduVars(Types_Pdu *pdu,        /* source PDU */
                Types_Pdu *newpdu,     /* target PDU */
                int drop_err,    /* !=0 drop errored variable */
                int skip_count,  /* !=0 number of variables to skip */
@@ -400,7 +400,7 @@ Client_copyPduVars(Types_Pdu *pdu,        /* source PDU */
     while (var && (skip_count-- > 0))   /* skip over pdu variables */
         var = var->nextVariable;
 
-    newpdu->variables = Client_copyVarlist(var, drop_idx, copy_count);
+    newpdu->variables = _Client_copyVarlist(var, drop_idx, copy_count);
 
     return newpdu;
 }
@@ -416,11 +416,11 @@ Client_copyPduVars(Types_Pdu *pdu,        /* source PDU */
  */
 static
 Types_Pdu    *
-Client_clonePdu2(Types_Pdu *pdu, int drop_err)
+_Client_clonePdu(Types_Pdu *pdu, int drop_err)
 {
     Types_Pdu    *newpdu;
-    newpdu = Client_clonePduHeader(pdu);
-    newpdu = Client_copyPduVars(pdu, newpdu, drop_err, 0, 10000);   /* skip none, copy all */
+    newpdu = _Client_clonePduHeader(pdu);
+    newpdu = _Client_copyPduVars(pdu, newpdu, drop_err, 0, 10000);   /* skip none, copy all */
 
     return newpdu;
 }
@@ -435,7 +435,7 @@ Client_clonePdu2(Types_Pdu *pdu, int drop_err)
 Types_VariableList *
 Client_cloneVarbind(Types_VariableList * varlist)
 {
-    return Client_copyVarlist(varlist, 0, 10000);    /* skip none, copy all */
+    return _Client_copyVarlist(varlist, 0, 10000);    /* skip none, copy all */
 }
 
 /*
@@ -447,7 +447,7 @@ Client_cloneVarbind(Types_VariableList * varlist)
 Types_Pdu    *
 Client_clonePdu(Types_Pdu *pdu)
 {
-    return Client_clonePdu2(pdu, 0);  /* copies all variables */
+    return _Client_clonePdu(pdu, 0);  /* copies all variables */
 }
 
 
@@ -464,8 +464,8 @@ Types_Pdu    *
 Client_splitPdu(Types_Pdu *pdu, int skip_count, int copy_count)
 {
     Types_Pdu    *newpdu;
-    newpdu = Client_clonePduHeader(pdu);
-    newpdu = Client_copyPduVars(pdu, newpdu, 0,     /* don't drop any variables */
+    newpdu = _Client_clonePduHeader(pdu);
+    newpdu = _Client_copyPduVars(pdu, newpdu, 0,     /* don't drop any variables */
                             skip_count, copy_count);
 
     return newpdu;
@@ -497,7 +497,7 @@ Client_fixPdu(Types_Pdu *pdu, int command)
         return NULL;            /* pre-condition tests fail */
     }
 
-    newpdu = Client_clonePdu2(pdu, 1);        /* copies all except errored variable */
+    newpdu = _Client_clonePdu(pdu, 1);        /* copies all except errored variable */
     if (!newpdu)
         return NULL;
     if (!newpdu->variables) {
@@ -932,7 +932,7 @@ int
 Client_synchResponse(Types_Session * ss,
                     Types_Pdu *pdu, Types_Pdu **response)
 {
-    return Client_synchResponseCb(ss, pdu, response, Client_synchInput);
+    return Client_synchResponseCb(ss, pdu, response, _Client_synchInput);
 }
 
 int
@@ -957,7 +957,7 @@ Client_sessSynchResponse(void *sessp,
     state = &lstate;
     cbsav = ss->callback;
     cbmagsav = ss->callback_magic;
-    ss->callback = Client_synchInput;
+    ss->callback = _Client_synchInput;
     ss->callback_magic = (void *) state;
 
     if ((state->reqid = Api_sessSend(sessp, pdu)) == 0) {
@@ -1054,12 +1054,12 @@ Client_errstring(int errstat)
  *
  */
 
-static Types_Session *client_defQuerySession = NULL;
+static Types_Session *_client_defQuerySession = NULL;
 
 void
 Client_querySetDefaultSession( Types_Session *sess) {
     DEBUG_MSGTL(("iquery", "set default session %p\n", sess));
-    client_defQuerySession = sess;
+    _client_defQuerySession = sess;
 }
 
 /**
@@ -1067,8 +1067,8 @@ Client_querySetDefaultSession( Types_Session *sess) {
  */
 Types_Session *
 Client_queryGetDefaultSessionUnchecked( void ) {
-    DEBUG_MSGTL(("iquery", "get default session %p\n", client_defQuerySession));
-    return client_defQuerySession;
+    DEBUG_MSGTL(("iquery", "get default session %p\n", _client_defQuerySession));
+    return _client_defQuerySession;
 }
 
 /**
@@ -1079,8 +1079,8 @@ Types_Session *
 Client_queryGetDefaultSession( void ) {
     static int warning_logged = 0;
 
-    if (! client_defQuerySession && ! warning_logged) {
-        if (! DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+    if (! _client_defQuerySession && ! warning_logged) {
+        if (! DefaultStore_getString(DsStorage_APPLICATION_ID,
                                     DSAGENT_INTERNAL_SECNAME)) {
             Logger_log(LOGGER_PRIORITY_WARNING,
                      "iquerySecName has not been configured - internal queries will fail\n");
@@ -1098,7 +1098,7 @@ Client_queryGetDefaultSession( void ) {
 /*
  * Internal utility routine to actually send the query
  */
-static int Client_query(Types_VariableList *list,
+static int _Client_query(Types_VariableList *list,
                   int                    request,
                   Types_Session       *session) {
 
@@ -1112,11 +1112,11 @@ static int Client_query(Types_VariableList *list,
      * Clone the varbind list into the request PDU...
      */
     pdu->variables = Client_cloneVarbind( list );
-retry:
+goto_retry:
     if ( session )
         ret = Client_synchResponse(            session, pdu, &response );
-    else if (client_defQuerySession)
-        ret = Client_synchResponse( client_defQuerySession, pdu, &response );
+    else if (_client_defQuerySession)
+        ret = Client_synchResponse( _client_defQuerySession, pdu, &response );
     else {
         /* No session specified */
         Api_freePdu(pdu);
@@ -1160,7 +1160,7 @@ retry:
                 Api_freePdu( response );
                 response = NULL;
                 if ( pdu != NULL )
-                    goto retry;
+                    goto goto_retry;
             }
         } else {
             for (vb1 = response->variables, vb2 = list;
@@ -1191,19 +1191,19 @@ retry:
  */
 int Client_queryGet(Types_VariableList *list,
                       Types_Session       *session){
-    return Client_query( list, PRIOT_MSG_GET, session );
+    return _Client_query( list, PRIOT_MSG_GET, session );
 }
 
 
 int Client_queryGetnext(Types_VariableList *list,
                           Types_Session       *session){
-    return Client_query( list, PRIOT_MSG_GETNEXT, session );
+    return _Client_query( list, PRIOT_MSG_GETNEXT, session );
 }
 
 
 int Client_querySet(Types_VariableList *list,
                       Types_Session       *session){
-    return Client_query( list, PRIOT_MSG_SET, session );
+    return _Client_query( list, PRIOT_MSG_SET, session );
 }
 
 /*
@@ -1224,7 +1224,7 @@ int Client_queryWalk(Types_VariableList *list,
     /*
      * Now walk the tree as usual
      */
-    ret = Client_query( vb, PRIOT_MSG_GETNEXT, session );
+    ret = _Client_query( vb, PRIOT_MSG_GETNEXT, session );
     while ( ret == PRIOT_ERR_NOERROR &&
         Api_oidtreeCompare( list->name, list->nameLength,
                                 vb->name,   vb->nameLength ) == 0) {
@@ -1245,7 +1245,7 @@ int Client_queryWalk(Types_VariableList *list,
             res_list = Client_cloneVarbind( vb );
             res_last = res_list;
         }
-        ret = Client_query( vb, PRIOT_MSG_GETNEXT, session );
+        ret = _Client_query( vb, PRIOT_MSG_GETNEXT, session );
     }
     /*
      * Copy the first result back into the original varbind parameter,
@@ -1275,16 +1275,16 @@ Client_stateMachineRun( Client_StateMachineInput *input)
     Assert_requirePtrLRV( input->steps, ErrorCode_GENERR );
     last = current = input->steps;
 
-    DEBUG_MSGT(("state_machine:run", "starting step: %s\n", current->name));
+    DEBUG_MSGT(("stateMachine:run", "starting step: %s\n", current->name));
 
     while (current) {
 
         /*
          * log step and check for required data
          */
-        DEBUG_MSGT(("state_machine:run", "at step: %s\n", current->name));
+        DEBUG_MSGT(("stateMachine:run", "at step: %s\n", current->name));
         if (NULL == current->run) {
-            DEBUG_MSGT(("state_machine:run", "no run step\n"));
+            DEBUG_MSGT(("stateMachine:run", "no run step\n"));
             current->result = last->result;
             break;
         }
@@ -1292,7 +1292,7 @@ Client_stateMachineRun( Client_StateMachineInput *input)
         /*
          * run step
          */
-        DEBUG_MSGT(("state_machine:run", "running step: %s\n", current->name));
+        DEBUG_MSGT(("stateMachine:run", "running step: %s\n", current->name));
         current->result = (*current->run)( input, current );
         ++input->steps_so_far;
 
@@ -1300,12 +1300,12 @@ Client_stateMachineRun( Client_StateMachineInput *input)
          * log result and move to next step
          */
         input->last_run = current;
-        DEBUG_MSGT(("state_machine:run:result", "step %s returned %d\n",
+        DEBUG_MSGT(("stateMachine:run:result", "step %s returned %d\n",
                    current->name, current->result));
         if (ErrorCode_SUCCESS == current->result)
             current = current->on_success;
         else if (ErrorCode_ABORT == current->result) {
-            DEBUG_MSGT(("state_machine:run:result", "ABORT from %s\n",
+            DEBUG_MSGT(("stateMachine:run:result", "ABORT from %s\n",
                        current->name));
             break;
         }
@@ -1335,7 +1335,7 @@ typedef struct Client_RowcreateState_s {
 } Client_RowcreateState;
 
 static Types_VariableList *
-Client_getVbNum2(Types_VariableList *vars, int index)
+_Client_getVbNum(Types_VariableList *vars, int index)
 {
     for (; vars && index > 0; --index)
         vars = vars->nextVariable;
@@ -1351,7 +1351,7 @@ Client_getVbNum2(Types_VariableList *vars, int index)
  * cleanup
  */
 static int
-Client_rowStatusStateCleanup(Client_StateMachineInput *input,
+_Client_rowStatusStateCleanup(Client_StateMachineInput *input,
                  Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1359,7 +1359,7 @@ Client_rowStatusStateCleanup(Client_StateMachineInput *input,
     Assert_requirePtrLRV( input, ErrorCode_ABORT );
     Assert_requirePtrLRV( step, ErrorCode_ABORT );
 
-    DEBUG_MSGT(("row_create:called", "Client_rowStatusStateCleanup, last run step was %s rc %d\n",
+    DEBUG_MSGT(("rowCreate:called", "_Client_rowStatusStateCleanup, last run step was %s rc %d\n",
                step->name, step->result));
 
     ctx = (Client_RowcreateState *)input->input_context;
@@ -1373,7 +1373,7 @@ Client_rowStatusStateCleanup(Client_StateMachineInput *input,
  * send a request to activate the row
  */
 static int
-Client_rowStatusStateActivate(Client_StateMachineInput *input,
+_Client_rowStatusStateActivate(Client_StateMachineInput *input,
                   Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1386,12 +1386,12 @@ Client_rowStatusStateActivate(Client_StateMachineInput *input,
 
     ctx = (Client_RowcreateState *)input->input_context;
 
-    DEBUG_MSGT(("row_create:called", "called %s\n", step->name));
+    DEBUG_MSGT(("rowCreate:called", "called %s\n", step->name));
 
     /*
      * just send the rowstatus varbind
      */
-    rs_var = Client_getVbNum2(ctx->vars, ctx->row_status_index);
+    rs_var = _Client_getVbNum(ctx->vars, ctx->row_status_index);
     Assert_requirePtrLRV(rs_var, ErrorCode_GENERR);
 
     var = Api_varlistAddVariable(&var, rs_var->name, rs_var->nameLength,
@@ -1414,7 +1414,7 @@ Client_rowStatusStateActivate(Client_StateMachineInput *input,
  * send each non-row status column, one at a time
  */
 static int
-Client_rowStatusStateSingleValueCols(Client_StateMachineInput *input,
+_Client_rowStatusStateSingleValueCols(Client_StateMachineInput *input,
                                     Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1427,9 +1427,9 @@ Client_rowStatusStateSingleValueCols(Client_StateMachineInput *input,
 
     ctx = (Client_RowcreateState *)input->input_context;
 
-    DEBUG_MSGT(("row_create:called", "called %s\n", step->name));
+    DEBUG_MSGT(("rowCreate:called", "called %s\n", step->name));
 
-    row_status = Client_getVbNum2(ctx->vars, ctx->row_status_index);
+    row_status = _Client_getVbNum(ctx->vars, ctx->row_status_index);
     Assert_requirePtrLRV(row_status, ErrorCode_GENERR);
 
     /*
@@ -1460,7 +1460,7 @@ Client_rowStatusStateSingleValueCols(Client_StateMachineInput *input,
  * send all values except row status
  */
 static int
-Client_rowStatusStateMultipleValuesCols(Client_StateMachineInput *input,
+_Client_rowStatusStateMultipleValuesCols(Client_StateMachineInput *input,
                                        Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1473,12 +1473,12 @@ Client_rowStatusStateMultipleValuesCols(Client_StateMachineInput *input,
 
     ctx = (Client_RowcreateState *)input->input_context;
 
-    DEBUG_MSGT(("row_create:called", "called %s\n", step->name));
+    DEBUG_MSGT(("rowCreate:called", "called %s\n", step->name));
 
     vars = Client_cloneVarbind(ctx->vars);
     Assert_requirePtrLRV(vars, ErrorCode_GENERR);
 
-    row_status = Client_getVbNum2(vars, ctx->row_status_index);
+    row_status = _Client_getVbNum(vars, ctx->row_status_index);
     if (NULL == row_status) {
         Api_freeVarbind(vars);
         return ErrorCode_GENERR;
@@ -1519,7 +1519,7 @@ Client_rowStatusStateMultipleValuesCols(Client_StateMachineInput *input,
  * send a createAndWait request with no other values
  */
 static int
-Client_rowStatusStateSingleValueCreateAndWait(Client_StateMachineInput *input,
+_Client_rowStatusStateSingleValueCreateAndWait(Client_StateMachineInput *input,
                                              Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1532,9 +1532,9 @@ Client_rowStatusStateSingleValueCreateAndWait(Client_StateMachineInput *input,
 
     ctx = (Client_RowcreateState *)input->input_context;
 
-    DEBUG_MSGT(("row_create:called", "called %s\n", step->name));
+    DEBUG_MSGT(("rowCreate:called", "called %s\n", step->name));
 
-    rs_var = Client_getVbNum2(ctx->vars, ctx->row_status_index);
+    rs_var = _Client_getVbNum(ctx->vars, ctx->row_status_index);
     Assert_requirePtrLRV(rs_var, ErrorCode_GENERR);
 
     var = Api_varlistAddVariable(&var, rs_var->name, rs_var->nameLength,
@@ -1557,7 +1557,7 @@ Client_rowStatusStateSingleValueCreateAndWait(Client_StateMachineInput *input,
  * send a creatAndWait request with all values
  */
 static int
-Client_rowStatusStateAllValuesCreateAndWait(Client_StateMachineInput *input,
+_Client_rowStatusStateAllValuesCreateAndWait(Client_StateMachineInput *input,
                                            Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1570,7 +1570,7 @@ Client_rowStatusStateAllValuesCreateAndWait(Client_StateMachineInput *input,
 
     ctx = (Client_RowcreateState *)input->input_context;
 
-    DEBUG_MSGT(("row_create:called", "called %s\n", step->name));
+    DEBUG_MSGT(("rowCreate:called", "called %s\n", step->name));
 
     vars = Client_cloneVarbind(ctx->vars);
     Assert_requirePtrLRV(vars, ErrorCode_GENERR);
@@ -1578,7 +1578,7 @@ Client_rowStatusStateAllValuesCreateAndWait(Client_StateMachineInput *input,
     /*
      * make sure row stats is createAndWait
      */
-    rs_var = Client_getVbNum2(vars, ctx->row_status_index);
+    rs_var = _Client_getVbNum(vars, ctx->row_status_index);
     if (NULL == rs_var) {
         Api_freeVarbind(vars);
         return ErrorCode_GENERR;
@@ -1604,7 +1604,7 @@ Client_rowStatusStateAllValuesCreateAndWait(Client_StateMachineInput *input,
  * send createAndGo request with all values
  */
 static int
-Client_rowStatusStateAllValuesCreateAndGo(Client_StateMachineInput *input,
+_Client_rowStatusStateAllValuesCreateAndGo(Client_StateMachineInput *input,
                                          Client_StateMachineStep *step)
 {
     Client_RowcreateState       *ctx;
@@ -1617,7 +1617,7 @@ Client_rowStatusStateAllValuesCreateAndGo(Client_StateMachineInput *input,
 
     ctx = (Client_RowcreateState *)input->input_context;
 
-    DEBUG_MSGT(("row_create:called", "called %s\n", step->name));
+    DEBUG_MSGT(("rowCreate:called", "called %s\n", step->name));
 
     vars = Client_cloneVarbind(ctx->vars);
     Assert_requirePtrLRV(vars, ErrorCode_GENERR);
@@ -1625,7 +1625,7 @@ Client_rowStatusStateAllValuesCreateAndGo(Client_StateMachineInput *input,
     /*
      * make sure row stats is createAndGo
      */
-    rs_var = Client_getVbNum2(vars, ctx->row_status_index + 1);
+    rs_var = _Client_getVbNum(vars, ctx->row_status_index + 1);
     if (NULL == rs_var) {
         Api_freeVarbind(vars);
         return ErrorCode_GENERR;
@@ -1656,32 +1656,32 @@ Client_rowCreate(Types_Session *sess, Types_VariableList *vars,
                    int row_status_index)
 {
     Client_StateMachineStep rc_cleanup =
-        { "row_create_cleanup", 0, Client_rowStatusStateCleanup,
+        { "RowCreateCleanup", 0, _Client_rowStatusStateCleanup,
           0, NULL, NULL, 0, NULL };
     Client_StateMachineStep rc_activate =
-        { "row_create_activate", 0, Client_rowStatusStateActivate,
+        { "RowCreateActivate", 0, _Client_rowStatusStateActivate,
           0, NULL, NULL, 0, NULL };
     Client_StateMachineStep rc_sv_cols =
-        { "row_create_single_value_cols", 0,
-          Client_rowStatusStateSingleValueCols, 0, &rc_activate,NULL, 0, NULL };
+        { "RowCreateSingleValueCols", 0,
+          _Client_rowStatusStateSingleValueCols, 0, &rc_activate,NULL, 0, NULL };
     Client_StateMachineStep rc_mv_cols =
-        { "row_create_multiple_values_cols", 0,
-          Client_rowStatusStateMultipleValuesCols, 0, &rc_activate, &rc_sv_cols,
+        { "RowCreateMultipleValuesCols", 0,
+          _Client_rowStatusStateMultipleValuesCols, 0, &rc_activate, &rc_sv_cols,
           0, NULL };
     Client_StateMachineStep rc_sv_caw =
-        { "row_create_single_value_createAndWait", 0,
-          Client_rowStatusStateSingleValueCreateAndWait, 0, &rc_mv_cols, NULL,
+        { "RowCreateSingleValueCreateAndWait", 0,
+          _Client_rowStatusStateSingleValueCreateAndWait, 0, &rc_mv_cols, NULL,
           0, NULL };
     Client_StateMachineStep rc_av_caw =
-        { "row_create_all_values_createAndWait", 0,
-          Client_rowStatusStateAllValuesCreateAndWait, 0, &rc_activate,
+        { "RowCreateAllValuesCreateAndWait", 0,
+          _Client_rowStatusStateAllValuesCreateAndWait, 0, &rc_activate,
           &rc_sv_caw, 0, NULL };
     Client_StateMachineStep rc_av_cag =
-        { "row_create_all_values_createAndGo", 0,
-          Client_rowStatusStateAllValuesCreateAndGo, 0, NULL, &rc_av_caw, 0,
+        { "RowCreateAllValuesCreateAndGo", 0,
+          _Client_rowStatusStateAllValuesCreateAndGo, 0, NULL, &rc_av_caw, 0,
           NULL };
 
-    Client_StateMachineInput sm_input = { "row_create_machine", 0,
+    Client_StateMachineInput sm_input = { "RowCreateMachine", 0,
                                              &rc_av_cag, &rc_cleanup };
     Client_RowcreateState state;
 

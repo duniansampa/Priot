@@ -73,20 +73,20 @@ typedef struct LcdTime_Enginetime_s {
  * XXX  Requres the following declaration in modules calling ISENGINEKNOWN():
  *      static u_int    dummy_etime, dummy_eboot;
  */
-#define LCDTIME_ISENGINEKNOWN(e, e_l)                       \
-( (LcdTime_getEnginetime(e, e_l,                            \
+#define LCDTIME_ISENGINEKNOWN(e, e_l)                               \
+( (LcdTime_getEnginetime(e, e_l,                                    \
     &usm_dummyEboot, &usm_dummyEtime, TRUE) == ErrorCode_SUCCESS)	\
-    ? TRUE                                                  \
+    ? TRUE                                                          \
     : FALSE )
 
-#define LCDTIME_ENSURE_ENGINE_RECORD(e, e_l)				\
+#define LCDTIME_ENSURE_ENGINE_RECORD(e, e_l)                        \
 ( (LcdTime_setEnginetime(e, e_l, 0, 0, FALSE) == ErrorCode_SUCCESS)	\
-    ? ErrorCode_SUCCESS                                       \
+    ? ErrorCode_SUCCESS                                             \
     : ErrorCode_GENERR )
 
-#define LCDTIME_MAKENEW_ENGINE_RECORD(e, e_l)				\
-( (LCDTIME_ISENGINEKNOWN(e, e_l) == TRUE)                   \
-    ? ErrorCode_SUCCESS                                       \
+#define LCDTIME_MAKENEW_ENGINE_RECORD(e, e_l)                       \
+( (LCDTIME_ISENGINEKNOWN(e, e_l) == TRUE)                           \
+    ? ErrorCode_SUCCESS                                             \
     : (LCDTIME_ENSURE_ENGINE_RECORD(e, e_l), ErrorCode_GENERR) )
 
 

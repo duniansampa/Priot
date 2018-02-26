@@ -1,7 +1,7 @@
 #ifndef UDPBASEDOMAIN_H
 #define UDPBASEDOMAIN_H
 
-#include "../Transport.h"
+#include "Transport.h"
 
 
 void     UDPBaseDomain_sockOptSet(int fd, int local);

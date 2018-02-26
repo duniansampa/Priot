@@ -1,6 +1,5 @@
 #include "DefaultStore.h"
 #include <string.h>
-
 #include "String.h"
 #include "Util/Integer.h"
 #include "Debug.h"
@@ -10,17 +9,10 @@
 #include "Api.h"
 
 
-//Storage
-const struct DSStorage_s DSSTORAGE = {
-    .LIBRARY_ID     = 0,
-    .APPLICATION_ID = 1,
-    .TOKEN_ID       = 2
-};
-
 typedef struct DefaultStore_ReadConfig_s {
-    uchar           type;
-    char *         token;
-    char *         storename;
+    uchar        type;
+    char *       token;
+    char *       storename;
     int          storeid;
     int          which;
     struct DefaultStore_ReadConfig_s *next;
@@ -28,13 +20,13 @@ typedef struct DefaultStore_ReadConfig_s {
 
 
 
-static DefaultStore_ReadConfig * defaultStore_readConfig = NULL;
+static DefaultStore_ReadConfig * _defaultStore_configs = NULL;
 
-static const char *  defaultStore_stores [DEFAULTSTORE_MAX_IDS] = { "LIB", "APP", "TOK" };
-static int         defaultStore_integers[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS];
-static char          defaultStore_booleans[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS/8];
-static char  *       defaultStore_strings[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS];
-static void *       defaultStore_voids[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS];
+static const char *  _defaultStore_stores [DEFAULTSTORE_MAX_IDS] = { "LIB", "APP", "TOK" };
+static int           _defaultStore_integers[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS];
+static char          _defaultStore_booleans[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS/8];
+static char *        _defaultStore_strings[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS];
+static void *        _defaultStore_voids[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SUBIDS];
 
 
 
@@ -51,9 +43,9 @@ static void *       defaultStore_voids[DEFAULTSTORE_MAX_IDS][DEFAULTSTORE_MAX_SU
  * @return Returns SNMPPERR_GENERR if the storeid and which parameters do not
  * correspond to a valid slot, or  ErrorCode_SUCCESS otherwise.
  */
-static bool DefaultStore_isParamsOk(int storeid, int which){
-    if (storeid < 0 || storeid >= DEFAULTSTORE_MAX_IDS ||
-            which   < 0 || which   >= DEFAULTSTORE_MAX_SUBIDS) {
+static bool _DefaultStore_isParamsOk(int storeid, int which){
+    if ( storeid < 0 || storeid >= DEFAULTSTORE_MAX_IDS ||
+         which   < 0 || which   >= DEFAULTSTORE_MAX_SUBIDS) {
         return 0;
     }
     return 1;
@@ -61,17 +53,17 @@ static bool DefaultStore_isParamsOk(int storeid, int which){
 
 int DefaultStore_setBoolean(int storeid, int which, int value)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
     DEBUG_MSGTL(("DefaultStore_setBoolean", "Setting %s:%d = %d/%s\n",
-                defaultStore_stores[storeid], which, value, ((value) ? "True" : "False")));
+                _defaultStore_stores[storeid], which, value, ((value) ? "True" : "False")));
 
     if (value > 0) {
-        defaultStore_booleans[storeid][which/8] |= (1 << (which % 8));
+        _defaultStore_booleans[storeid][which/8] |= (1 << (which % 8));
     } else {
-        defaultStore_booleans[storeid][which/8] &= (0xff7f >> (7 - (which % 8)));
+        _defaultStore_booleans[storeid][which/8] &= (0xff7f >> (7 - (which % 8)));
     }
 
     return ErrorCode_SUCCESS;
@@ -79,78 +71,78 @@ int DefaultStore_setBoolean(int storeid, int which, int value)
 
 int DefaultStore_toggleBoolean(int storeid, int which)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
-    if ((defaultStore_booleans[storeid][which/8] & (1 << (which % 8))) == 0) {
-        defaultStore_booleans[storeid][which/8] |= (1 << (which % 8));
+    if ((_defaultStore_booleans[storeid][which/8] & (1 << (which % 8))) == 0) {
+        _defaultStore_booleans[storeid][which/8] |= (1 << (which % 8));
     } else {
-        defaultStore_booleans[storeid][which/8] &= (0xff7f >> (7 - (which % 8)));
+        _defaultStore_booleans[storeid][which/8] &= (0xff7f >> (7 - (which % 8)));
     }
 
     DEBUG_MSGTL(("DefaultStore_toggleBoolean", "Setting %s:%d = %d/%s\n",
-                defaultStore_stores[storeid], which, defaultStore_booleans[storeid][which/8],
-               ((defaultStore_booleans[storeid][which/8]) ? "True" : "False")));
+                _defaultStore_stores[storeid], which, _defaultStore_booleans[storeid][which/8],
+               ((_defaultStore_booleans[storeid][which/8]) ? "True" : "False")));
 
     return ErrorCode_SUCCESS;
 }
 
 int DefaultStore_getBoolean(int storeid, int which)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
-    return (defaultStore_booleans[storeid][which/8] & (1 << (which % 8))) ? 1:0;
+    return (_defaultStore_booleans[storeid][which/8] & (1 << (which % 8))) ? 1:0;
 }
 
 int DefaultStore_setInt(int storeid, int which, int value)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
     DEBUG_MSGTL(("DefaultStore_setInt", "Setting %s:%d = %d\n",
-                defaultStore_stores[storeid], which, value));
+                _defaultStore_stores[storeid], which, value));
 
-    defaultStore_integers[storeid][which] = value;
+    _defaultStore_integers[storeid][which] = value;
     return ErrorCode_SUCCESS;
 }
 
 int DefaultStore_getInt(int storeid, int which)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
-    return defaultStore_integers[storeid][which];
+    return _defaultStore_integers[storeid][which];
 }
 
 int DefaultStore_setString(int storeid, int which,  const char *value)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
     DEBUG_MSGTL(("DefaultStore_setString", "Setting %s:%d = \"%s\"\n",
-                defaultStore_stores[storeid], which, (value ? value : "(null)")));
+                _defaultStore_stores[storeid], which, (value ? value : "(null)")));
 
     /*
      * is some silly person is calling us with our own pointer?
      */
-    if (defaultStore_strings[storeid][which] == value)
+    if (_defaultStore_strings[storeid][which] == value)
         return ErrorCode_SUCCESS;
 
-    if (defaultStore_strings[storeid][which] != NULL) {
-        free(defaultStore_strings[storeid][which]);
-        defaultStore_strings[storeid][which] = NULL;
+    if (_defaultStore_strings[storeid][which] != NULL) {
+        free(_defaultStore_strings[storeid][which]);
+        _defaultStore_strings[storeid][which] = NULL;
     }
 
     if (value) {
-        defaultStore_strings[storeid][which] = strdup(value);
+        _defaultStore_strings[storeid][which] = strdup(value);
     } else {
-        defaultStore_strings[storeid][which] = NULL;
+        _defaultStore_strings[storeid][which] = NULL;
     }
 
     return ErrorCode_SUCCESS;
@@ -158,34 +150,34 @@ int DefaultStore_setString(int storeid, int which,  const char *value)
 
 char * DefaultStore_getString(int storeid, int which)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return NULL;
     }
 
-    return defaultStore_strings[storeid][which];
+    return _defaultStore_strings[storeid][which];
 }
 
 int DefaultStore_setVoid(int storeid, int which, void *value)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
     DEBUG_MSGTL(("DefaultStore_setVoid", "Setting %s:%d = %p\n",
-                defaultStore_stores[storeid], which, value));
+                _defaultStore_stores[storeid], which, value));
 
-    defaultStore_voids[storeid][which] = value;
+    _defaultStore_voids[storeid][which] = value;
 
     return ErrorCode_SUCCESS;
 }
 
 void * DefaultStore_getVoid(int storeid, int which)
 {
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return NULL;
     }
 
-    return defaultStore_voids[storeid][which];
+    return _defaultStore_voids[storeid][which];
 }
 
 
@@ -222,14 +214,14 @@ void DefaultStore_handleConfig(const char *token, char *line)
 
     DEBUG_MSGTL(("DefaultStore_handleConfig", "handling %s\n", token));
 
-    for (drsp = defaultStore_readConfig;
+    for (drsp = _defaultStore_configs;
          drsp != NULL && strcasecmp(token, drsp->token) != 0;
          drsp = drsp->next);
 
     if (drsp != NULL) {
         DEBUG_MSGTL(("DefaultStore_handleConfig",
                     "setting: token=%s, type=%d, id=%s, which=%d\n",
-                    drsp->token, drsp->type, defaultStore_stores[drsp->storeid],
+                    drsp->token, drsp->type, _defaultStore_stores[drsp->storeid],
                    drsp->which));
 
         switch (drsp->type) {
@@ -275,17 +267,17 @@ int    DefaultStore_registerConfig(uchar type, const char * storename,  const ch
 {
     DefaultStore_ReadConfig *drsp;
 
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
-    if (defaultStore_readConfig == NULL) {
-        defaultStore_readConfig = TOOLS_MALLOC_TYPEDEF(DefaultStore_ReadConfig);
-        if (defaultStore_readConfig == NULL)
+    if (_defaultStore_configs == NULL) {
+        _defaultStore_configs = TOOLS_MALLOC_TYPEDEF(DefaultStore_ReadConfig);
+        if (_defaultStore_configs == NULL)
             return ErrorCode_GENERR;
-        drsp = defaultStore_readConfig;
+        drsp = _defaultStore_configs;
     } else {
-        for (drsp = defaultStore_readConfig; drsp->next != NULL; drsp = drsp->next);
+        for (drsp = _defaultStore_configs; drsp->next != NULL; drsp = drsp->next);
         drsp->next = TOOLS_MALLOC_TYPEDEF(DefaultStore_ReadConfig);
         if (drsp->next == NULL)
             return ErrorCode_GENERR;
@@ -322,18 +314,18 @@ int        DefaultStore_registerPremib(uchar type, const char * storename,  cons
 {
     DefaultStore_ReadConfig *drsp;
 
-    if(!DefaultStore_isParamsOk(storeid, which)){
+    if(!_DefaultStore_isParamsOk(storeid, which)){
         return ErrorCode_GENERR;
     }
 
 
-    if (defaultStore_readConfig == NULL) {
-        defaultStore_readConfig = TOOLS_MALLOC_TYPEDEF(DefaultStore_ReadConfig);
-        if (defaultStore_readConfig == NULL)
+    if (_defaultStore_configs == NULL) {
+        _defaultStore_configs = TOOLS_MALLOC_TYPEDEF(DefaultStore_ReadConfig);
+        if (_defaultStore_configs == NULL)
             return ErrorCode_GENERR;
-        drsp = defaultStore_readConfig;
+        drsp = _defaultStore_configs;
     } else {
-        for (drsp = defaultStore_readConfig; drsp->next != NULL; drsp = drsp->next);
+        for (drsp = _defaultStore_configs; drsp->next != NULL; drsp = drsp->next);
         drsp->next = TOOLS_MALLOC_TYPEDEF(DefaultStore_ReadConfig);
         if (drsp->next == NULL)
             return ErrorCode_GENERR;
@@ -371,8 +363,8 @@ void DefaultStore_shutdown(void)
     DefaultStore_ReadConfig *drsp;
     int             i, j;
 
-    for (drsp = defaultStore_readConfig; drsp; drsp = defaultStore_readConfig) {
-        defaultStore_readConfig = drsp->next;
+    for (drsp = _defaultStore_configs; drsp; drsp = _defaultStore_configs) {
+        _defaultStore_configs = drsp->next;
 
         if (drsp->storename && drsp->token) {
             ReadConfig_unregisterConfigHandler(drsp->storename, drsp->token);
@@ -388,9 +380,9 @@ void DefaultStore_shutdown(void)
 
     for (i = 0; i < DEFAULTSTORE_MAX_IDS; i++) {
         for (j = 0; j < DEFAULTSTORE_MAX_SUBIDS; j++) {
-            if (defaultStore_strings[i][j] != NULL) {
-                free(defaultStore_strings[i][j]);
-                defaultStore_strings[i][j] = NULL;
+            if (_defaultStore_strings[i][j] != NULL) {
+                free(_defaultStore_strings[i][j]);
+                _defaultStore_strings[i][j] = NULL;
             }
         }
     }

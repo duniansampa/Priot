@@ -168,7 +168,7 @@ CacheHandler_create(int timeout, CacheLoadFT * load_hook,
     cache->enabled = 1;
 
     if(0 == cache->timeout)
-        cache->timeout = DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+        cache->timeout = DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                              DsAgentInterger_CACHE_TIMEOUT);
 
 
@@ -557,7 +557,7 @@ CacheHandler_helperHandler(MibHandler * handler,
     Assert_assert(handler->flags & MIB_HANDLER_AUTO_NEXT);
 
     cache = (Cache *) handler->myvoid;
-    if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                DsAgentBoolean_NO_CACHING) ||
         !cache || !cache->enabled || !cache->load_cache) {
         DEBUG_MSGT(("helper:cache_handler", " caching disabled or "

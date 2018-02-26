@@ -77,6 +77,6 @@ AliasDomain_ctor(void)
 
     Transport_tdomainRegister(&_aliasDomain_aliasDomain);
 
-    ReadConfig_registerConfigHandler("snmp", "alias", AliasDomain_parseAliasConfig,
+    ReadConfig_registerConfigHandler("priot", "alias", AliasDomain_parseAliasConfig,
                             AliasDomain_freeAliasConfig, "NAME TRANSPORT_DEFINITION");
 }

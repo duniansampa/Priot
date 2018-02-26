@@ -3,7 +3,7 @@
 #include  "IPv4BaseDomain.h"
 #include  "SocketBaseDomain.h"
 #include  "TCPBaseDomain.h"
-#include  "../Debug.h"
+#include  "Debug.h"
 #include  "Tools.h"
 #include  "Impl.h"
 /*

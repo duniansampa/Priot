@@ -26,7 +26,7 @@
 #include "Session.h"
 #include "Int64.h"
 #include "Callback.h"
-#include "../Modlib/Agentx/Protocol.h"
+#include "Agentx/Protocol.h"
 
 #include <sys/time.h>
 #include <arpa/inet.h>
@@ -39,35 +39,47 @@
 struct Api_InternalSession_s {
     Api_RequestList *requests;     /* Info about outstanding requests */
     Api_RequestList *requestsEnd;  /* ptr to end of list */
-    int             (*hook_pre) (Types_Session *, Transport_Transport *,
-                                 void *, int);
-    int             (*hook_parse) (Types_Session *, Types_Pdu *,
-                                   u_char *, size_t);
-    int             (*hook_post) (Types_Session *, Types_Pdu *, int);
-    int             (*hook_build) (Types_Session *, Types_Pdu *,
+    int             (*hook_pre) (Types_Session *,
+                                 Transport_Transport *,
+                                 void *,
+                                 int);
+
+    int             (*hook_parse) (Types_Session *,
+                                   Types_Pdu *,
+                                   u_char *,
+                                   size_t);
+
+    int             (*hook_post) (Types_Session *,
+                                  Types_Pdu *, int);
+
+    int             (*hook_build) (Types_Session *,
+                                   Types_Pdu *,
                                    u_char *, size_t *);
+
     int             (*hook_realloc_build) (Types_Session *,
                                            Types_Pdu *, u_char **,
                                            size_t *, size_t *);
+
     int             (*check_packet) (u_char *, size_t);
+
     Types_Pdu    *(*hook_create_pdu) (Transport_Transport *,
-                                        void *, size_t);
+                                      void *, size_t);
 
     u_char         *packet;
     size_t          packet_len, packet_size;
 };
 
 
-static void     Api_init2(void);
+static void     _Api_init(void);
 
-static int      api_priotStoreNeeded = 0;
+static int      _api_priotStoreNeeded = 0;
 
 /*
  * Globals.
  */
 #define MAX_PACKET_LENGTH	(0x7fffffff)
 
-static oid      api_defaultEnterprise[] = { 1, 3, 6, 1, 4, 1, 3, 1, 1 };
+static oid      _api_defaultEnterprise[] = { 1, 3, 6, 1, 4, 1, 3, 1, 1 };
 /*
  * enterprises.cmu.systems.cmuSNMP
  */
@@ -76,7 +88,7 @@ static oid      api_defaultEnterprise[] = { 1, 3, 6, 1, 4, 1, 3, 1, 1 };
 #define DEFAULT_RETRIES	    5
 #define DEFAULT_TIMEOUT	    ONE_SEC
 #define DEFAULT_REMPORT	    PRIOT_PORT
-#define DEFAULT_ENTERPRISE  api_defaultEnterprise
+#define DEFAULT_ENTERPRISE  _api_defaultEnterprise
 #define DEFAULT_TIME	    0
 
 /*
@@ -90,7 +102,7 @@ static oid      api_defaultEnterprise[] = { 1, 3, 6, 1, 4, 1, 3, 1, 1 };
  */
 
 //Size of api_errors is (-ErrorCode_MAX + 1)
-static const char *api_errors[] = {
+static const char *_api_errors[] = {
     "No error",                 /* ErrorCode_SUCCESS */
     "Generic error",            /* ErrorCode_GENERR */
     "Invalid local port",       /* ErrorCode_BAD_LOCPORT */
@@ -162,7 +174,7 @@ static const char *api_errors[] = {
     "Transport configuration failed", /* ErrorCode_TRANSPORT_CONFIG_ERROR */
 };
 
-static const char *api_secLevelName[] = {
+static const char *_api_secLevelName[] = {
     "BAD_SEC_LEVEL",
     "noAuthNoPriv",
     "authNoPriv",
@@ -183,10 +195,10 @@ static const char *api_secLevelName[] = {
  * use token in comments to individually protect these resources
  */
 struct Api_SessionList_s *api_sessions = NULL;   /* MTSUPPORT_LIB_SESSION */
-static long     api_reqid = 0;      /* MT_LIB_REQUESTID */
-static long     api_msgid = 0;      /* MT_LIB_MESSAGEID */
-static long     api_sessid = 0;     /* MT_LIB_SESSIONID */
-static long     api_transid = 0;    /* MT_LIB_TRANSID */
+static long     _api_reqid = 0;      /* MT_LIB_REQUESTID */
+static long     _api_msgid = 0;      /* MT_LIB_MESSAGEID */
+static long     _api_sessid = 0;     /* MT_LIB_SESSIONID */
+static long     _api_transid = 0;    /* MT_LIB_TRANSID */
 int             api_priotErrno = 0;
 /*
  * END MTCRITICAL_RESOURCE
@@ -195,8 +207,8 @@ int             api_priotErrno = 0;
 /*
  * global error detail storage
  */
-static char     api_detail[192];
-static int      api_detailF = 0;
+static char     _api_detail[192];
+static int      _api_detailF = 0;
 
 /*
  * Prototypes.
@@ -205,32 +217,25 @@ int             Api_build(u_char ** pkt, size_t * pkt_len,
                            size_t * offset, Types_Session * pss,
                            Types_Pdu *pdu);
 
-static int      Api_parse(void *, Types_Session *, Types_Pdu *,
+static int      _Api_parse(void *, Types_Session *, Types_Pdu *,
                            u_char *, size_t);
 
-static void     Api_v3CalcMsgFlags(int, int, u_char *);
+static void     _Api_v3CalcMsgFlags(int, int, u_char *);
 
-static int      Api_v3VerifyMsg(Api_RequestList *, Types_Pdu *);
+static int      _Api_v3VerifyMsg(Api_RequestList *, Types_Pdu *);
 
-static int      Api_v3Build(u_char ** pkt, size_t * pkt_len,
+static int      _Api_v3Build(u_char ** pkt, size_t * pkt_len,
                              size_t * offset, Types_Session * session,
                              Types_Pdu *pdu);
-static int      Api_parseVersion(u_char *, size_t);
+static int      _Api_parseVersion(u_char *, size_t);
 
-static int      Api_resendRequest(struct Api_SessionList_s *slp,
+static int      _Api_resendRequest(struct Api_SessionList_s *slp,
                                     Api_RequestList *rp,
                                     int incr_retries);
 
-static void     Api_registerDefaultHandlers(void);
+static void     _Api_registerDefaultHandlers(void);
 
-static struct Api_SessionList_s *Api_sessCopy2(Types_Session * pss);
-
-
-//int             snmp_get_errno(void);
-
-//void            snmp_synch_reset(Types_Session * notused);
-
-//void            snmp_synch_setup(Types_Session * notused);
+static struct Api_SessionList_s *_Api_sessCopy2(Types_Session * pss);
 
 
 const char *
@@ -268,17 +273,17 @@ Api_getNextReqid(void)
 {
     long            retVal;
     MtSupport_resLock(MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_REQUESTID);
-    retVal = 1 + api_reqid;         /*MTCRITICAL_RESOURCE */
+    retVal = 1 + _api_reqid;         /*MTCRITICAL_RESOURCE */
     if (!retVal)
         retVal = 2;
-    api_reqid = retVal;
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LIB_16BIT_IDS))
+    _api_reqid = retVal;
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS))
         retVal &= 0x7fff;	/* mask to 15 bits */
     else
         retVal &= 0x7fffffff;	/* mask to 31 bits */
 
     if (!retVal) {
-        api_reqid = retVal = 2;
+        _api_reqid = retVal = 2;
     }
     MtSupport_resUnlock(MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_REQUESTID);
     return retVal;
@@ -289,17 +294,17 @@ Api_getNextMsgid(void)
 {
     long            retVal;
     MtSupport_resLock(MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_MESSAGEID);
-    retVal = 1 + api_msgid;         /*MTCRITICAL_RESOURCE */
+    retVal = 1 + _api_msgid;         /*MTCRITICAL_RESOURCE */
     if (!retVal)
         retVal = 2;
-    api_msgid = retVal;
-    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LIB_16BIT_IDS))
+    _api_msgid = retVal;
+    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS))
         retVal &= 0x7fff;	/* mask to 15 bits */
     else
         retVal &= 0x7fffffff;	/* mask to 31 bits */
 
     if (!retVal) {
-        api_msgid = retVal = 2;
+        _api_msgid = retVal = 2;
     }
     MtSupport_resUnlock(MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_MESSAGEID);
     return retVal;
@@ -310,17 +315,17 @@ Api_getNextSessid(void)
 {
     long            retVal;
     MtSupport_resLock(MTSUPPORT_LIBRARY_ID, MT_LIB_SESSIONID);
-    retVal = 1 + api_sessid;        /*MTCRITICAL_RESOURCE */
+    retVal = 1 + _api_sessid;        /*MTCRITICAL_RESOURCE */
     if (!retVal)
         retVal = 2;
-    api_sessid = retVal;
-    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LIB_16BIT_IDS))
+    _api_sessid = retVal;
+    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS))
         retVal &= 0x7fff;	/* mask to 15 bits */
     else
         retVal &= 0x7fffffff;	/* mask to 31 bits */
 
     if (!retVal) {
-        api_sessid = retVal = 2;
+        _api_sessid = retVal = 2;
     }
     MtSupport_resUnlock(MTSUPPORT_LIBRARY_ID, MT_LIB_SESSIONID);
     return retVal;
@@ -331,17 +336,17 @@ Api_getNextTransid(void)
 {
     long            retVal;
     MtSupport_resLock(MTSUPPORT_LIBRARY_ID, MT_LIB_TRANSID);
-    retVal = 1 + api_transid;       /*MTCRITICAL_RESOURCE */
+    retVal = 1 + _api_transid;       /*MTCRITICAL_RESOURCE */
     if (!retVal)
         retVal = 2;
-    api_transid = retVal;
-    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LIB_16BIT_IDS))
+    _api_transid = retVal;
+    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS))
         retVal &= 0x7fff;	/* mask to 15 bits */
     else
         retVal &= 0x7fffffff;	/* mask to 31 bits */
 
     if (!retVal) {
-        api_transid = retVal = 2;
+        _api_transid = retVal = 2;
     }
     MtSupport_resUnlock(MTSUPPORT_LIBRARY_ID, MT_LIB_TRANSID);
     return retVal;
@@ -361,8 +366,8 @@ void
 Api_setDetail(const char *detail_string)
 {
     if (detail_string != NULL) {
-        Strlcpy_strlcpy((char *) api_detail, detail_string, sizeof(api_detail));
-        api_detailF = 1;
+        Strlcpy_strlcpy((char *) _api_detail, detail_string, sizeof(_api_detail));
+        _api_detailF = 1;
     }
 }
 
@@ -379,17 +384,17 @@ Api_errstring(int snmp_errnumber)
     static char     msg_buf[IMPL_SPRINT_MAX_LEN];
 
     if (snmp_errnumber >= ErrorCode_MAX && snmp_errnumber <= ErrorCode_GENERR) {
-        msg = api_errors[-snmp_errnumber];
+        msg = _api_errors[-snmp_errnumber];
     } else if (snmp_errnumber != ErrorCode_SUCCESS) {
         msg = NULL;
     }
     if (!msg) {
     snprintf(msg_buf, sizeof(msg_buf), "Unknown error: %d", snmp_errnumber);
         msg_buf[sizeof(msg_buf)-1] = '\0';
-    } else if (api_detailF) {
-        snprintf(msg_buf, sizeof(msg_buf), "%s (%s)", msg, api_detail);
+    } else if (_api_detailF) {
+        snprintf(msg_buf, sizeof(msg_buf), "%s (%s)", msg, _api_detail);
         msg_buf[sizeof(msg_buf)-1] = '\0';
-        api_detailF = 0;
+        _api_detailF = 0;
     } else {
         Strlcpy_strlcpy(msg_buf, msg, sizeof(msg_buf));
     }
@@ -419,14 +424,14 @@ Api_error(Types_Session * psess,
     strcpy(buf, "");
     snmp_errnumber = psess->s_snmp_errno;
     if (snmp_errnumber >= ErrorCode_MAX && snmp_errnumber <= ErrorCode_GENERR) {
-    if (api_detailF) {
-            snprintf(buf, sizeof(buf), "%s (%s)", api_errors[-snmp_errnumber],
-            api_detail);
+    if (_api_detailF) {
+            snprintf(buf, sizeof(buf), "%s (%s)", _api_errors[-snmp_errnumber],
+            _api_detail);
             buf[sizeof(buf)-1] = '\0';
-        api_detailF = 0;
+        _api_detailF = 0;
     }
     else
-        Strlcpy_strlcpy(buf, api_errors[-snmp_errnumber], sizeof(buf));
+        Strlcpy_strlcpy(buf, _api_errors[-snmp_errnumber], sizeof(buf));
     } else {
         if (snmp_errnumber) {
             snprintf(buf, sizeof(buf), "Unknown Error %d", snmp_errnumber);
@@ -494,19 +499,19 @@ Api_sessPerror(const char *prog_string, Types_Session * ss)
  *
  * Warning: no debug messages here.
  */
-static char api_initPriotInitDone2 = 0;
+static char _api_initPriotInitDone2 = 0;
 
 static void
-Api_init2(void)
+_Api_init(void)
 {
 
     struct timeval  tv;
     long            tmpReqid, tmpMsgid;
 
-    if (api_initPriotInitDone2)
+    if (_api_initPriotInitDone2)
         return;
-    api_initPriotInitDone2 = 1;
-    api_reqid = 1;
+    _api_initPriotInitDone2 = 1;
+    _api_reqid = 1;
 
     MtSupport_resInit();            /* initialize the mt locking structures */
     Parse_initMibInternals();
@@ -532,35 +537,35 @@ Api_init2(void)
         tmpReqid = 1;
     if (tmpMsgid == 0)
         tmpMsgid = 1;
-    api_reqid = tmpReqid;
-    api_msgid = tmpMsgid;
+    _api_reqid = tmpReqid;
+    _api_msgid = tmpMsgid;
 
-    Service_registerDefaultDomain("snmp", "udp udp6");
-    Service_registerDefaultDomain("snmptrap", "udp udp6");
+    Service_registerDefaultDomain("priot", "udp udp6");
+    Service_registerDefaultDomain("priottrap", "udp udp6");
 
-    Service_registerDefaultTarget("snmp", "udp", ":161");
-    Service_registerDefaultTarget("snmp", "tcp", ":161");
-    Service_registerDefaultTarget("snmp", "udp6", ":161");
-    Service_registerDefaultTarget("snmp", "tcp6", ":161");
-    Service_registerDefaultTarget("snmp", "dtlsudp", ":10161");
-    Service_registerDefaultTarget("snmp", "tlstcp", ":10161");
-    Service_registerDefaultTarget("snmp", "ipx", "/36879");
+    Service_registerDefaultTarget("priot", "udp", ":161");
+    Service_registerDefaultTarget("priot", "tcp", ":161");
+    Service_registerDefaultTarget("priot", "udp6", ":161");
+    Service_registerDefaultTarget("priot", "tcp6", ":161");
+    Service_registerDefaultTarget("priot", "dtlsudp", ":10161");
+    Service_registerDefaultTarget("priot", "tlstcp", ":10161");
+    Service_registerDefaultTarget("priot", "ipx", "/36879");
 
-    Service_registerDefaultTarget("snmptrap", "udp", ":162");
-    Service_registerDefaultTarget("snmptrap", "tcp", ":162");
-    Service_registerDefaultTarget("snmptrap", "udp6", ":162");
-    Service_registerDefaultTarget("snmptrap", "tcp6", ":162");
-    Service_registerDefaultTarget("snmptrap", "dtlsudp", ":10162");
-    Service_registerDefaultTarget("snmptrap", "tlstcp", ":10162");
-    Service_registerDefaultTarget("snmptrap", "ipx", "/36880");
+    Service_registerDefaultTarget("priottrap", "udp", ":162");
+    Service_registerDefaultTarget("priottrap", "tcp", ":162");
+    Service_registerDefaultTarget("priottrap", "udp6", ":162");
+    Service_registerDefaultTarget("priottrap", "tcp6", ":162");
+    Service_registerDefaultTarget("priottrap", "dtlsudp", ":10162");
+    Service_registerDefaultTarget("priottrap", "tlstcp", ":10162");
+    Service_registerDefaultTarget("priottrap", "ipx", "/36880");
 
-    DefaultStore_setInt(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_INTEGER.HEX_OUTPUT_LENGTH, 16);
-    DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.RETRIES,
+    DefaultStore_setInt(DsStorage_LIBRARY_ID,
+                       DsInt_HEX_OUTPUT_LENGTH, 16);
+    DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_RETRIES,
                        DEFAULT_RETRIES);
 
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.REVERSE_ENCODE,
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_REVERSE_ENCODE,
                DEFAULT_ASNENCODING_DIRECTION);
 }
 
@@ -572,7 +577,7 @@ Api_init2(void)
 void
 Api_sessInit(Types_Session * session)
 {
-    Api_init2();
+    _Api_init();
 
     /*
      * initialize session to default values
@@ -590,54 +595,54 @@ Api_sessInit(Types_Session * session)
 
 
 static void
-Api_registerDefaultHandlers(void)
+_Api_registerDefaultHandlers(void)
 {
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "dumpPacket",
-              DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DUMP_PACKET);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "reverseEncodeBER",
-              DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.REVERSE_ENCODE);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "defaultPort",
-              DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.DEFAULT_PORT);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "dumpPacket",
+              DsStorage_LIBRARY_ID, DsBool_DUMP_PACKET);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "reverseEncodeBER",
+              DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "defaultPort",
+              DsStorage_LIBRARY_ID, DsInt_DEFAULT_PORT);
 
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "noTokenWarnings",
-                      DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NO_TOKEN_WARNINGS);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "noRangeCheck",
-              DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_CHECK_RANGE);
-    DefaultStore_registerPremib(ASN01_OCTET_STR, "snmp", "persistentDir",
-                  DSSTORAGE.LIBRARY_ID, DSLIB_STRING.PERSISTENT_DIR);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "tempFilePattern",
-                  DSSTORAGE.LIBRARY_ID, DSLIB_STRING.TEMP_FILE_PATTERN);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "noDisplayHint",
-                  DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NO_DISPLAY_HINT);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "16bitIDs",
-                  DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LIB_16BIT_IDS);
-    DefaultStore_registerPremib(ASN01_OCTET_STR, "snmp", "clientaddr",
-                      DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CLIENT_ADDR);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "serverSendBuf",
-              DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SERVERSENDBUF);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "serverRecvBuf",
-              DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SERVERRECVBUF);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "clientSendBuf",
-              DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.CLIENTSENDBUF);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "clientRecvBuf",
-              DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.CLIENTRECVBUF);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "noPersistentLoad",
-              DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DISABLE_PERSISTENT_LOAD);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp", "noPersistentSave",
-              DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DISABLE_PERSISTENT_SAVE);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, "snmp",
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "noTokenWarnings",
+                      DsStorage_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "noRangeCheck",
+              DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE);
+    DefaultStore_registerPremib(ASN01_OCTET_STR, "priot", "persistentDir",
+                  DsStorage_LIBRARY_ID, DsStr_PERSISTENT_DIR);
+    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "tempFilePattern",
+                  DsStorage_LIBRARY_ID, DsStr_TEMP_FILE_PATTERN);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "noDisplayHint",
+                  DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "16bitIDs",
+                  DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS);
+    DefaultStore_registerPremib(ASN01_OCTET_STR, "priot", "clientaddr",
+                      DsStorage_LIBRARY_ID, DsStr_CLIENT_ADDR);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "serverSendBuf",
+              DsStorage_LIBRARY_ID, DsInt_SERVERSENDBUF);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "serverRecvBuf",
+              DsStorage_LIBRARY_ID, DsInt_SERVERRECVBUF);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "clientSendBuf",
+              DsStorage_LIBRARY_ID, DsInt_CLIENTSENDBUF);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "clientRecvBuf",
+              DsStorage_LIBRARY_ID, DsInt_CLIENTRECVBUF);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "noPersistentLoad",
+              DsStorage_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_LOAD);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot", "noPersistentSave",
+              DsStorage_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_SAVE);
+    DefaultStore_registerConfig(ASN01_BOOLEAN, "priot",
                                "noContextEngineIDDiscovery",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.NO_DISCOVERY);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "timeout",
-                       DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.TIMEOUT);
-    DefaultStore_registerConfig(ASN01_INTEGER, "snmp", "retries",
-                       DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.RETRIES);
+                               DsStorage_LIBRARY_ID,
+                               DsBool_NO_DISCOVERY);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "timeout",
+                       DsStorage_LIBRARY_ID, DsInt_TIMEOUT);
+    DefaultStore_registerConfig(ASN01_INTEGER, "priot", "retries",
+                       DsStorage_LIBRARY_ID, DsInt_RETRIES);
 
     Service_registerServiceHandlers();
 }
 
-static int api_initPriotInitDone = 0; /* To prevent double init's. */
+static int _api_initPriotInitDone = 0; /* To prevent double init's. */
 /**
  * Calls the functions to do config file loading and  mib module parsing
  * in the correct order.
@@ -651,22 +656,22 @@ static int api_initPriotInitDone = 0; /* To prevent double init's. */
 void
 Api_init(const char *type)
 {
-    if (api_initPriotInitDone) {
+    if (_api_initPriotInitDone) {
         return;
     }
 
-    api_initPriotInitDone = 1;
+    _api_initPriotInitDone = 1;
 
     /*
      * make the type available everywhere else
      */
-    if (type && !DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_STRING.APPTYPE)) {
-        DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_STRING.APPTYPE, type);
+    if (type && !DefaultStore_getString(DsStorage_LIBRARY_ID,
+                       DsStr_APPTYPE)) {
+        DefaultStore_setString(DsStorage_LIBRARY_ID,
+                  DsStr_APPTYPE, type);
     }
 
-    Api_init2();
+    _Api_init();
 
     /*
      * set our current locale properly to initialize isprint() type functions
@@ -679,7 +684,7 @@ Api_init(const char *type)
     Logger_initLogger();
     Api_initStatistics();
     Mib_registerMibHandlers();
-    Api_registerDefaultHandlers();
+    _Api_registerDefaultHandlers();
     Transport_initTransport();
     V3_initV3(type);
     Alarm_initAlarm();
@@ -700,26 +705,26 @@ Api_init(const char *type)
 void
 Api_storeNeeded(const char *type)
 {
-    DEBUG_MSGTL(("snmp_store", "setting needed flag...\n"));
-    api_priotStoreNeeded = 1;
+    DEBUG_MSGTL(("priotStore", "setting needed flag...\n"));
+    _api_priotStoreNeeded = 1;
 }
 
 void
 Api_storeIfNeeded(void)
 {
-    if (0 == api_priotStoreNeeded)
+    if (0 == _api_priotStoreNeeded)
         return;
 
-    DEBUG_MSGTL(("snmp_store", "store needed...\n"));
-    Api_store(DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                     DSLIB_STRING.APPTYPE));
-    api_priotStoreNeeded = 0;
+    DEBUG_MSGTL(("priotStore", "store needed...\n"));
+    Api_store(DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                     DsStr_APPTYPE));
+    _api_priotStoreNeeded = 0;
 }
 
 void
 Api_store(const char *type)
 {
-    DEBUG_MSGTL(("Api_store", "storing stuff...\n"));
+    DEBUG_MSGTL(("priotStore", "storing stuff...\n"));
     ReadConfig_savePersistent(type);
     Callback_callCallbacks(CALLBACK_LIBRARY, CALLBACK_STORE_DATA, NULL);
     ReadConfig_cleanPersistent(type);
@@ -755,8 +760,8 @@ Api_shutdown(const char *type)
     Service_clearDefaultDomain();
     Secmod_shutdown();
 
-    api_initPriotInitDone  = 0;
-    api_initPriotInitDone2 = 0;
+    _api_initPriotInitDone  = 0;
+    _api_initPriotInitDone2 = 0;
 }
 
 
@@ -819,7 +824,7 @@ Api_openEx(Types_Session *session,
 }
 
 static struct Api_SessionList_s *
-Api_sessCopy2(Types_Session * in_session)
+_Api_sessCopy2(Types_Session * in_session)
 {
     struct Api_SessionList_s *slp;
     struct Api_InternalSession_s *isp;
@@ -892,7 +897,7 @@ Api_sessCopy2(Types_Session * in_session)
 
     if (session->securityLevel <= 0) {
         session->securityLevel =
-            DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SECLEVEL);
+            DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_SECLEVEL);
     }
 
     if (in_session->securityEngineIDLen > 0) {
@@ -942,8 +947,8 @@ Api_sessCopy2(Types_Session * in_session)
         }
         session->contextNameLen = in_session->contextNameLen;
     } else {
-        if ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                        DSLIB_STRING.CONTEXT)) != NULL)
+        if ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                        DsStr_CONTEXT)) != NULL)
             cp = strdup(cp);
         else
             cp = strdup(API_DEFAULT_CONTEXT);
@@ -961,8 +966,8 @@ Api_sessCopy2(Types_Session * in_session)
             Api_sessClose(slp);
             return (NULL);
         }
-    } else if ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_STRING.SECNAME)) != NULL) {
+    } else if ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                       DsStr_SECNAME)) != NULL) {
         cp = strdup(cp);
         if (cp == NULL) {
             Api_sessClose(slp);
@@ -973,16 +978,16 @@ Api_sessCopy2(Types_Session * in_session)
     }
 
     if (session->retries == API_DEFAULT_RETRIES) {
-        int retry = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                                       DSLIB_INTEGER.RETRIES);
+        int retry = DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                                       DsInt_RETRIES);
         if (retry < 0)
             session->retries = DEFAULT_RETRIES;
         else
             session->retries = retry;
     }
     if (session->timeout == API_DEFAULT_TIMEOUT) {
-        int timeout = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                                         DSLIB_INTEGER.TIMEOUT);
+        int timeout = DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                                         DsInt_TIMEOUT);
         if (timeout <= 0)
             session->timeout = DEFAULT_TIMEOUT;
         else
@@ -1026,10 +1031,10 @@ Api_sessCopy2(Types_Session * in_session)
 }
 
 static struct Api_SessionList_s *
-Api_sessCopy(Types_Session * pss)
+_Api_sessCopy(Types_Session * pss)
 {
     struct Api_SessionList_s *psl;
-    psl = Api_sessCopy2(pss);
+    psl = _Api_sessCopy2(pss);
     if (!psl) {
         if (!pss->s_snmp_errno) {
             pss->s_snmp_errno = ErrorCode_GENERR;
@@ -1079,7 +1084,7 @@ Api_v3ProbeContextEngineIDRfc5343(void *slp, Types_Session *session) {
 
     Client_addNullVar(pdu, snmpEngineIDoid, snmpEngineIDoid_len);
 
-    DEBUG_MSGTL(("snmp_api", "probing for engineID using rfc5343 methods...\n"));
+    DEBUG_MSGTL(("priotApi", "probing for engineID using rfc5343 methods...\n"));
     session->flags |= API_FLAGS_DONT_PROBE; /* prevent recursion */
     status = Client_sessSynchResponse(slp, pdu, &response);
 
@@ -1120,12 +1125,12 @@ Api_v3ProbeContextEngineIDRfc5343(void *slp, Types_Session *session) {
 
         if (Debug_getDoDebugging()) {
             size_t i;
-            DEBUG_MSGTL(("snmp_sess_open",
+            DEBUG_MSGTL(("priotSessOpen",
                         "  probe found engineID:  "));
             for (i = 0; i < session->securityEngineIDLen; i++)
-                DEBUG_MSG(("snmp_sess_open", "%02x",
+                DEBUG_MSG(("priotSessOpen", "%02x",
                           session->securityEngineID[i]));
-            DEBUG_MSG(("snmp_sess_open", "\n"));
+            DEBUG_MSG(("priotSessOpen", "\n"));
         }
     }
     return ErrorCode_SUCCESS;
@@ -1172,7 +1177,7 @@ Api_v3EngineIDProbe(struct Api_SessionList_s *slp,
     if (session->version == PRIOT_VERSION_3 &&
         (0 == (session->flags & API_FLAGS_DONT_PROBE))) {
         if (NULL != sptr && NULL != sptr->probe_engineid) {
-            DEBUG_MSGTL(("snmp_api", "probing for engineID using security model callback...\n"));
+            DEBUG_MSGTL(("priotApi", "probing for engineID using security model callback...\n"));
             /* security model specific mechanism of determining engineID */
             status = (*sptr->probe_engineid) (slp, in_session);
             if (status != ErrorCode_SUCCESS)
@@ -1216,7 +1221,7 @@ Api_sessConfigTransport(Container_Container *transport_configuration,
     /* Optional supplimental transport configuration information and
        final call to actually open the transport */
     if (transport_configuration) {
-        DEBUG_MSGTL(("snmp_sess", "configuring transport\n"));
+        DEBUG_MSGTL(("priotSess", "configuring transport\n"));
         if (transport->f_config) {
             Container_Iterator *iter;
             Transport_Config *config_data;
@@ -1275,7 +1280,7 @@ Api_sessConfigAndOpenTransport(Types_Session *in_session,
 {
     int rc;
 
-    DEBUG_MSGTL(("snmp_sess", "opening transport: %x\n", transport->flags & TRANSPORT_FLAG_OPENED));
+    DEBUG_MSGTL(("priotSess", "opening transport: %x\n", transport->flags & TRANSPORT_FLAG_OPENED));
 
     /* don't double open */
     if (transport->flags & TRANSPORT_FLAG_OPENED)
@@ -1292,7 +1297,7 @@ Api_sessConfigAndOpenTransport(Types_Session *in_session,
         transport = transport->f_open(transport);
 
     if (transport == NULL) {
-        DEBUG_MSGTL(("snmp_sess", "couldn't interpret peername\n"));
+        DEBUG_MSGTL(("priotSess", "couldn't interpret peername\n"));
         in_session->s_snmp_errno = ErrorCode_BAD_ADDRESS;
         in_session->s_errno = errno;
         Api_setDetail(in_session->peername);
@@ -1300,7 +1305,7 @@ Api_sessConfigAndOpenTransport(Types_Session *in_session,
     }
 
     transport->flags |= TRANSPORT_FLAG_OPENED;
-    DEBUG_MSGTL(("snmp_sess", "done opening transport: %x\n", transport->flags & TRANSPORT_FLAG_OPENED));
+    DEBUG_MSGTL(("priotSess", "done opening transport: %x\n", transport->flags & TRANSPORT_FLAG_OPENED));
     return ErrorCode_SUCCESS;
 }
 
@@ -1317,7 +1322,7 @@ Api_sessConfigAndOpenTransport(Types_Session *in_session,
  * The "spin-free" version of Api_open.
  */
 static void    *
-Api_sessOpen2(Types_Session * in_session)
+_Api_sessOpen(Types_Session * in_session)
 {
     Transport_Transport *transport = NULL;
     int rc;
@@ -1325,39 +1330,39 @@ Api_sessOpen2(Types_Session * in_session)
     in_session->s_snmp_errno = 0;
     in_session->s_errno = 0;
 
-    Api_init2();
+    _Api_init();
 
     {
         char *clientaddr_save = NULL;
 
         if (NULL != in_session->localname) {
             clientaddr_save =
-                DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                      DSLIB_STRING.CLIENT_ADDR);
-            DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-                                  DSLIB_STRING.CLIENT_ADDR,
+                DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                      DsStr_CLIENT_ADDR);
+            DefaultStore_setString(DsStorage_LIBRARY_ID,
+                                  DsStr_CLIENT_ADDR,
                                   in_session->localname);
         }
 
         if (in_session->flags & API_FLAGS_STREAM_SOCKET) {
             transport =
-                Transport_tdomainTransportFull("snmp", in_session->peername,
+                Transport_tdomainTransportFull("priot", in_session->peername,
                                                in_session->local_port, "tcp,tcp6",
                                                NULL);
         } else {
             transport =
-                Transport_tdomainTransportFull("snmp", in_session->peername,
+                Transport_tdomainTransportFull("priot", in_session->peername,
                                                in_session->local_port, "udp,udp6",
                                                NULL);
         }
 
         if (NULL != clientaddr_save)
-            DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-                                  DSLIB_STRING.CLIENT_ADDR, clientaddr_save);
+            DefaultStore_setString(DsStorage_LIBRARY_ID,
+                                  DsStr_CLIENT_ADDR, clientaddr_save);
     }
 
     if (transport == NULL) {
-        DEBUG_MSGTL(("Api_sessOpen2", "couldn't interpret peername\n"));
+        DEBUG_MSGTL(("_ApiSessOpen", "couldn't interpret peername\n"));
         in_session->s_snmp_errno = ErrorCode_BAD_ADDRESS;
         in_session->s_errno = errno;
         Api_setDetail(in_session->peername);
@@ -1383,7 +1388,7 @@ Api_sessOpen2(Types_Session * in_session)
             in_session->s_snmp_errno = ErrorCode_BAD_ADDRESS; /* good as any? */
             in_session->s_errno = errno;
 
-            DEBUG_MSGTL(("Api_sessOpen2", "couldn't enable UDP_BROADCAST\n"));
+            DEBUG_MSGTL(("_ApiSessOpen", "couldn't enable UDP_BROADCAST\n"));
             return NULL;
         }
     }
@@ -1486,7 +1491,7 @@ Api_sessAddEx(Types_Session * in_session,
     struct Api_SessionList_s *slp;
     int rc;
 
-    Api_init2();
+    _Api_init();
 
     if (transport == NULL)
         return NULL;
@@ -1512,10 +1517,10 @@ Api_sessAddEx(Types_Session * in_session,
     }
 
 
-    DEBUG_MSGTL(("snmp_sess_add", "fd %d\n", transport->sock));
+    DEBUG_MSGTL(("priotSessAdd", "fd %d\n", transport->sock));
 
 
-    if ((slp = Api_sessCopy(in_session)) == NULL) {
+    if ((slp = _Api_sessCopy(in_session)) == NULL) {
         transport->f_close(transport);
         Transport_free(transport);
         return (NULL);
@@ -1533,10 +1538,10 @@ Api_sessAddEx(Types_Session * in_session,
     slp->session->rcvMsgMaxSize = transport->msgMaxSize;
 
     if (slp->session->version == PRIOT_VERSION_3) {
-        DEBUG_MSGTL(("snmp_sess_add",
+        DEBUG_MSGTL(("priotSessAdd",
                     "adding v3 session -- maybe engineID probe now\n"));
         if (!Api_v3EngineIDProbe(slp, slp->session)) {
-            DEBUG_MSGTL(("snmp_sess_add", "engine ID probe failed\n"));
+            DEBUG_MSGTL(("priotSessAdd", "engine ID probe failed\n"));
             Api_sessClose(slp);
             return NULL;
         }
@@ -1566,7 +1571,7 @@ void           *
 Api_sessOpen(Types_Session * pss)
 {
     void           *pvoid;
-    pvoid = Api_sessOpen2(pss);
+    pvoid = _Api_sessOpen(pss);
     if (!pvoid) {
         API_SET_PRIOT_ERROR(pss->s_snmp_errno);
     }
@@ -1588,7 +1593,7 @@ Api_createUserFromSession(Types_Session * session) {
  */
 
 static void
-Api_freeSession(Types_Session * s)
+_Api_freeSession(Types_Session * s)
 {
     if (s) {
         TOOLS_FREE(s->localname);
@@ -1682,16 +1687,16 @@ int Api_sessClose(void *sessp)
         Types_Session *subsession = sesp->subsession, *tmpsub;
 
         while (subsession != NULL) {
-            DEBUG_MSGTL(("snmp_sess_close",
+            DEBUG_MSGTL(("priotSessClose",
                         "closing session %p, subsession %p\n", sesp,
                         subsession));
             tmpsub = subsession->next;
-            Api_freeSession(subsession);
+            _Api_freeSession(subsession);
             subsession = tmpsub;
         }
     }
 
-    Api_freeSession(sesp);
+    _Api_freeSession(sesp);
     free((char *) slp);
     return 1;
 }
@@ -1739,7 +1744,7 @@ int Api_closeSessions(void)
 }
 
 static void
-Api_v3CalcMsgFlags(int sec_level, int msg_command, u_char * flags)
+_Api_v3CalcMsgFlags(int sec_level, int msg_command, u_char * flags)
 {
     *flags = 0;
     if (sec_level == PRIOT_SEC_LEVEL_AUTHNOPRIV)
@@ -1754,7 +1759,7 @@ Api_v3CalcMsgFlags(int sec_level, int msg_command, u_char * flags)
 }
 
 static int
-Api_v3VerifyMsg(Api_RequestList *rp, Types_Pdu *pdu)
+_Api_v3VerifyMsg(Api_RequestList *rp, Types_Pdu *pdu)
 {
     Types_Pdu    *rpdu;
 
@@ -1808,7 +1813,7 @@ Api_v3VerifyMsg(Api_RequestList *rp, Types_Pdu *pdu)
  * * occur, -1 is returned.  If all goes well, 0 is returned.
  */
 static int
-Api_v3Build(u_char ** pkt, size_t * pkt_len, size_t * offset,
+_Api_v3Build(u_char ** pkt, size_t * pkt_len, size_t * offset,
              Types_Session * session, Types_Pdu *pdu)
 {
     int             ret;
@@ -1897,7 +1902,7 @@ Api_v3Build(u_char ** pkt, size_t * pkt_len, size_t * offset,
     if (pdu->securityModel == API_DEFAULT_SECMODEL) {
         pdu->securityModel = session->securityModel;
         if (pdu->securityModel == API_DEFAULT_SECMODEL) {
-            pdu->securityModel = Enum_seFindValueInSlist("snmp_secmods", DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.SECMODEL));
+            pdu->securityModel = Enum_seFindValueInSlist("priotSecmods", DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_SECMODEL));
 
             if (pdu->securityModel <= 0) {
                 pdu->securityModel = PRIOT_SEC_MODEL_USM;
@@ -1929,14 +1934,14 @@ Api_v3Build(u_char ** pkt, size_t * pkt_len, size_t * offset,
         }
         pdu->securityLevel = session->securityLevel;
     }
-    DEBUG_MSGTL(("Api_build",
-                "Building SNMPv3 message (secName:\"%s\", secLevel:%s)...\n",
+    DEBUG_MSGTL(("priotBuild",
+                "Building PRIOTv3 message (secName:\"%s\", secLevel:%s)...\n",
                 ((session->securityName) ? (char *) session->securityName :
                  ((pdu->securityName) ? (char *) pdu->securityName :
-                  "ERROR: undefined")), api_secLevelName[pdu->securityLevel]));
+                  "ERROR: undefined")), _api_secLevelName[pdu->securityLevel]));
 
-    DEBUG_DUMPSECTION("send", "SNMPv3 Message");
-    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.REVERSE_ENCODE)) {
+    DEBUG_DUMPSECTION("send", "PRIOTv3 Message");
+    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE)) {
         ret = Api_v3PacketReallocRbuild(pkt, pkt_len, offset,
                                            session, pdu, NULL, 0);
     } else {
@@ -1955,7 +1960,7 @@ Api_v3Build(u_char ** pkt, size_t * pkt_len, size_t * offset,
 
 
 static u_char  *
-Api_v3HeaderBuild(Types_Session * session, Types_Pdu *pdu,
+_Api_v3HeaderBuild(Types_Session * session, Types_Pdu *pdu,
                     u_char * packet, size_t * out_length,
                     size_t length, u_char ** msg_hdr_e)
 {
@@ -1983,7 +1988,7 @@ Api_v3HeaderBuild(Types_Session * session, Types_Pdu *pdu,
     /*
      * store the version field - msgVersion
      */
-    DEBUG_DUMPHEADER("send", "SNMP Version Number");
+    DEBUG_DUMPHEADER("send", "PRIOT Version Number");
     cp = Asn01_buildInt(cp, out_length,
                        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
                                  ASN01_INTEGER), (long *) &pdu->version,
@@ -2032,7 +2037,7 @@ Api_v3HeaderBuild(Types_Session * session, Types_Pdu *pdu,
     /*
      * msgFlags
      */
-    Api_v3CalcMsgFlags(pdu->securityLevel, pdu->command, &msg_flags);
+    _Api_v3CalcMsgFlags(pdu->securityLevel, pdu->command, &msg_flags);
     DEBUG_DUMPHEADER("send", "msgFlags");
     cp = Asn01_buildString(cp, out_length,
                           (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
@@ -2107,7 +2112,7 @@ Api_v3HeaderReallocRbuild(u_char ** pkt, size_t * pkt_len,
     /*
      * msgFlags.
      */
-    Api_v3CalcMsgFlags(pdu->securityLevel, pdu->command, &msg_flags);
+    _Api_v3CalcMsgFlags(pdu->securityLevel, pdu->command, &msg_flags);
     DEBUG_DUMPHEADER("send", "msgFlags");
     rc = Asn01_reallocRbuildString(pkt, pkt_len, offset, 1,
                                    (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE
@@ -2159,7 +2164,7 @@ Api_v3HeaderReallocRbuild(u_char ** pkt, size_t * pkt_len,
     /*
      * Store the version field - msgVersion.
      */
-    DEBUG_DUMPHEADER("send", "SNMP Version Number");
+    DEBUG_DUMPHEADER("send", "PRIOT Version Number");
     rc = Asn01_reallocRbuildInt(pkt, pkt_len, offset, 1,
                                 (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
                                           ASN01_INTEGER),
@@ -2170,7 +2175,7 @@ Api_v3HeaderReallocRbuild(u_char ** pkt, size_t * pkt_len,
 }                               /* end Api_v3HeaderReallocRbuild() */
 
 static u_char  *
-Api_v3ScopedPDUHeaderBuild(Types_Pdu *pdu,
+_Api_v3ScopedPDUHeaderBuild(Types_Pdu *pdu,
                               u_char * packet, size_t * out_length,
                               u_char ** spdu_e)
 {
@@ -2378,7 +2383,7 @@ Api_v3PacketBuild(Types_Session * session, Types_Pdu *pdu,
     /*
      * build the headers for the packet, returned addr = start of secParams
      */
-    sec_params = Api_v3HeaderBuild(session, pdu, global_data,
+    sec_params = _Api_v3HeaderBuild(session, pdu, global_data,
                                      out_length, 0, NULL);
     if (sec_params == NULL)
         return -1;
@@ -2391,7 +2396,7 @@ Api_v3PacketBuild(Types_Session * session, Types_Pdu *pdu,
      */
     spdu_buf_len = API_MAX_MSG_SIZE;
     DEBUG_DUMPSECTION("send", "ScopedPdu");
-    cp = Api_v3ScopedPDUHeaderBuild(pdu, spdu_buf, &spdu_buf_len,
+    cp = _Api_v3ScopedPDUHeaderBuild(pdu, spdu_buf, &spdu_buf_len,
                                        &spdu_hdr_e);
     if (cp == NULL)
         return -1;
@@ -2477,7 +2482,7 @@ Api_v3PacketBuild(Types_Session * session, Types_Pdu *pdu,
  */
 
 static int
-Api_build2(u_char ** pkt, size_t * pkt_len, size_t * offset,
+_Api_build(u_char ** pkt, size_t * pkt_len, size_t * offset,
             Types_Session * session, Types_Pdu *pdu)
 {
 
@@ -2488,7 +2493,7 @@ Api_build2(u_char ** pkt, size_t * pkt_len, size_t * offset,
     session->s_errno = 0;
 
     if (pdu->version == PRIOT_VERSION_3) {
-        return Api_v3Build(pkt, pkt_len, offset, session, pdu);
+        return _Api_v3Build(pkt, pkt_len, offset, session, pdu);
     }
 
     switch (pdu->command) {
@@ -2581,10 +2586,6 @@ Api_build2(u_char ** pkt, size_t * pkt_len, size_t * offset,
      * (note that actual length of message will be inserted later)
      */
     switch (pdu->version) {
-//    case PRIOT_VERSION_2p:
-//    case PRIOT_VERSION_sec:
-//    case PRIOT_VERSION_2u:
-//    case PRIOT_VERSION_2star:
     default:
         session->s_snmp_errno = ErrorCode_BAD_VERSION;
         return -1;
@@ -2600,13 +2601,9 @@ Api_build2(u_char ** pkt, size_t * pkt_len, size_t * offset,
      * insert the actual length of the message sequence
      */
     switch (pdu->version) {
-//    case PRIOT_VERSION_2p:
-//    case PRIOT_VERSION_sec:
-//    case PRIOT_VERSION_2u:
-//    case PRIOT_VERSION_2star:
-    default:
-        session->s_snmp_errno = ErrorCode_BAD_VERSION;
-        return -1;
+        default:
+            session->s_snmp_errno = ErrorCode_BAD_VERSION;
+            return -1;
     }
     *pkt_len = cp - *pkt;
     return 0;
@@ -2617,10 +2614,10 @@ Api_build(u_char ** pkt, size_t * pkt_len, size_t * offset,
            Types_Session * pss, Types_Pdu *pdu)
 {
     int             rc;
-    rc = Api_build2(pkt, pkt_len, offset, pss, pdu);
+    rc = _Api_build(pkt, pkt_len, offset, pss, pdu);
     if (rc) {
         if (!pss->s_snmp_errno) {
-            Logger_log(LOGGER_PRIORITY_ERR, "snmp_build: unknown failure\n");
+            Logger_log(LOGGER_PRIORITY_ERR, "Api_build: unknown failure\n");
             pss->s_snmp_errno = ErrorCode_BAD_ASN1_BUILD;
         }
         API_SET_PRIOT_ERROR(pss->s_snmp_errno);
@@ -2816,13 +2813,13 @@ Api_pduReallocRbuild(u_char ** pkt, size_t * pkt_len, size_t * offset,
     size_t          start_offset = *offset;
     int             i, wrapped = 0, notdone, final, rc = 0;
 
-    DEBUG_MSGTL(("Api_pduReallocRbuild", "starting\n"));
+    DEBUG_MSGTL(("priotPduReallocRbuild", "starting\n"));
     for (vp = pdu->variables, i = VPCACHE_SIZE - 1; vp;
          vp = vp->nextVariable, i--) {
         if (i < 0) {
             wrapped = notdone = 1;
             i = VPCACHE_SIZE - 1;
-            DEBUG_MSGTL(("Api_pduReallocRbuild", "wrapped\n"));
+            DEBUG_MSGTL(("priotPduReallocRbuild", "wrapped\n"));
         }
         vpcache[i] = vp;
     }
@@ -2872,7 +2869,7 @@ Api_pduReallocRbuild(u_char ** pkt, size_t * pkt_len, size_t * offset,
                 if (i < 0) {
                     wrapped = 1;
                     i = VPCACHE_SIZE - 1;
-                    DEBUG_MSGTL(("Api_pduReallocRbuild", "wrapped\n"));
+                    DEBUG_MSGTL(("priotPduReallocRbuild", "wrapped\n"));
                 }
                 vpcache[i] = vp;
             }
@@ -3024,7 +3021,7 @@ Api_pduReallocRbuild(u_char ** pkt, size_t * pkt_len, size_t * offset,
  * from packets version field or inferred from ASN.1 construct.
  */
 static int
-Api_parseVersion(u_char * data, size_t length)
+_Api_parseVersion(u_char * data, size_t length)
 {
     u_char          type;
     long            version = ErrorCode_BAD_VERSION;
@@ -3032,7 +3029,7 @@ Api_parseVersion(u_char * data, size_t length)
     data = Asn01_parseSequence(data, &length, &type,
                               (ASN01_SEQUENCE | ASN01_CONSTRUCTOR), "version");
     if (data) {
-        DEBUG_DUMPHEADER("recv", "SNMP Version");
+        DEBUG_DUMPHEADER("recv", "PRIOT Version");
         data =
             Asn01_parseInt(data, &length, &type, &version, sizeof(version));
         DEBUG_INDENTLESS();
@@ -3073,7 +3070,7 @@ Api_v3Parse(Types_Pdu *pdu,
     /*
      * message is an ASN.1 SEQUENCE
      */
-    DEBUG_DUMPSECTION("recv", "SNMPv3 Message");
+    DEBUG_DUMPSECTION("recv", "PRIOTv3 Message");
     data = Asn01_parseSequence(data, length, &type,
                               (ASN01_SEQUENCE | ASN01_CONSTRUCTOR), "message");
     if (data == NULL) {
@@ -3088,7 +3085,7 @@ Api_v3Parse(Types_Pdu *pdu,
     /*
      * parse msgVersion
      */
-    DEBUG_DUMPHEADER("recv", "SNMP Version Number");
+    DEBUG_DUMPHEADER("recv", "PRIOT Version Number");
     data = Asn01_parseInt(data, length, &type, &ver, sizeof(ver));
     DEBUG_INDENTLESS();
     if (data == NULL) {
@@ -3190,7 +3187,7 @@ Api_v3Parse(Types_Pdu *pdu,
         DEBUG_INDENTADD(-4);
         return ErrorCode_ASN_PARSE_ERR;
     } else {
-        DEBUG_MSGTL(("Api_v3Parse", "msgMaxSize %lu received\n",
+        DEBUG_MSGTL(("priotV3Parse", "msgMaxSize %lu received\n",
                     msg_max_size));
         sess->sndMsgMaxSize = msg_max_size;
     }
@@ -3404,31 +3401,38 @@ Api_v3MakeReport(Types_Pdu *pdu, int error)
     int             stat_ind;
     struct Secmod_Def_s *sptr;
 
-    if( error == ErrorCode_USM_UNKNOWNENGINEID ){
+    switch (error) {
+    case ErrorCode_USM_UNKNOWNENGINEID:
         stat_ind = API_STAT_USMSTATSUNKNOWNENGINEIDS;
         err_var = unknownEngineID;
         err_var_len = ERROR_STAT_LENGTH;
-    }else if( error == ErrorCode_USM_UNKNOWNSECURITYNAME ){
+        break;
+    case ErrorCode_USM_UNKNOWNSECURITYNAME:
         stat_ind = API_STAT_USMSTATSUNKNOWNUSERNAMES;
         err_var = unknownUserName;
         err_var_len = ERROR_STAT_LENGTH;
-    }else if( error == ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL ){
+        break;
+    case ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL:
         stat_ind = API_STAT_USMSTATSUNSUPPORTEDSECLEVELS;
         err_var = unknownSecurityLevel;
         err_var_len = ERROR_STAT_LENGTH;
-    }else if( error == ErrorCode_USM_AUTHENTICATIONFAILURE ){
+        break;
+    case ErrorCode_USM_AUTHENTICATIONFAILURE:
         stat_ind = API_STAT_USMSTATSWRONGDIGESTS;
         err_var = wrongDigest;
         err_var_len = ERROR_STAT_LENGTH;
-    }else if( error == ErrorCode_USM_NOTINTIMEWINDOW ){
+        break;
+    case ErrorCode_USM_NOTINTIMEWINDOW:
         stat_ind = API_STAT_USMSTATSNOTINTIMEWINDOWS;
         err_var = notInTimeWindow;
         err_var_len = ERROR_STAT_LENGTH;
-    }else if( error == ErrorCode_USM_DECRYPTIONERROR ){
+        break;
+    case ErrorCode_USM_DECRYPTIONERROR:
         stat_ind = API_STAT_USMSTATSDECRYPTIONERRORS;
         err_var = decryptionError;
         err_var_len = ERROR_STAT_LENGTH;
-    }else{
+        break;
+    default:
         return ErrorCode_GENERR;
     }
 
@@ -3574,7 +3578,7 @@ Api_v3GetReportType(Types_Pdu *pdu)
  * Otherwise, a 0 is returned.
  */
 static int
-Api_parse2(void *sessp,
+_Api_parse2(void *sessp,
             Types_Session * session,
             Types_Pdu *pdu, u_char * data, size_t length)
 {
@@ -3601,7 +3605,7 @@ Api_parse2(void *sessp,
     if (session->version != API_DEFAULT_VERSION) {
         pdu->version = session->version;
     } else {
-        pdu->version = Api_parseVersion(data, length);
+        pdu->version = _Api_parseVersion(data, length);
     }
 
 
@@ -3609,9 +3613,9 @@ Api_parse2(void *sessp,
     case PRIOT_VERSION_3:
 
         result = Api_v3Parse(pdu, data, &length, NULL, session);
-        DEBUG_MSGTL(("Api_parse",
-                    "Parsed SNMPv3 message (secName:%s, secLevel:%s): %s\n",
-                    pdu->securityName, api_secLevelName[pdu->securityLevel],
+        DEBUG_MSGTL(("priotParse",
+                    "Parsed PRIOTv3 message (secName:%s, secLevel:%s): %s\n",
+                    pdu->securityName, _api_secLevelName[pdu->securityLevel],
                     Api_errstring(result)));
 
         if (result) {
@@ -3668,8 +3672,8 @@ Api_parse2(void *sessp,
         */
 
         /* special RFC5343 engineID discovery engineID check */
-        if (!DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID,
-                                    DSLIB_BOOLEAN.NO_DISCOVERY) &&
+        if (!DefaultStore_getBoolean (DsStorage_LIBRARY_ID,
+                                    DsBool_NO_DISCOVERY) &&
             PRIOT_MSG_RESPONSE       != pdu->command &&
             NULL                    != pdu->contextEngineID &&
             pdu->contextEngineIDLen == 5 &&
@@ -3683,7 +3687,7 @@ Api_parse2(void *sessp,
                and gets dropped by future parts of the stack */
             result = ErrorCode_JUST_A_CONTEXT_PROBE;
 
-            DEBUG_MSGTL(("snmpv3_contextid", "starting context ID discovery\n"));
+            DEBUG_MSGTL(("priotv3Contextid", "starting context ID discovery\n"));
             /* ensure exactly one variable */
             if (NULL != pdu->variables &&
                 NULL == pdu->variables->nextVariable &&
@@ -3703,7 +3707,7 @@ Api_parse2(void *sessp,
                                    pdu->variables->nameLength) > 0)
                     )) {
 
-                DEBUG_MSGTL(("snmpv3_contextid",
+                DEBUG_MSGTL(("priotv3Contextid",
                             "  One correct variable found\n"));
 
                 /* Note: we're explictly not handling a GETBULK.  Deal. */
@@ -3724,7 +3728,7 @@ Api_parse2(void *sessp,
                     V3_getEngineID((u_char*)ourEngineID, ourEngineID_len);
                 if (0 != ourEngineID_len) {
 
-                    DEBUG_MSGTL(("snmpv3_contextid",
+                    DEBUG_MSGTL(("priotv3Contextid",
                                 "  responding with our engineID\n"));
 
                     Api_pduAddVariable(pdu2,
@@ -3735,7 +3739,7 @@ Api_parse2(void *sessp,
                     /* send the response */
                     if (0 == Api_sessSend(sessp, pdu2)) {
 
-                        DEBUG_MSGTL(("snmpv3_contextid",
+                        DEBUG_MSGTL(("priotv3Contextid",
                                     "  sent it off!\n"));
 
                         Api_freePdu(pdu2);
@@ -3752,14 +3756,10 @@ Api_parse2(void *sessp,
         }
         break;
     case ErrorCode_BAD_VERSION :
-        IMPL_ERROR_MSG("error parsing snmp message version");
+        IMPL_ERROR_MSG("error parsing priot message version");
         Api_incrementStatistic(API_STAT_SNMPINASNPARSEERRS);
         session->s_snmp_errno = ErrorCode_BAD_VERSION;
         break;
-//    case PRIOT_VERSION_sec:
-//    case PRIOT_VERSION_2u:
-//    case PRIOT_VERSION_2star:
-//    case PRIOT_VERSION_2p:
     default:
         IMPL_ERROR_MSG("unsupported snmp message version");
         Api_incrementStatistic(API_STAT_SNMPINBADVERSIONS);
@@ -3778,13 +3778,13 @@ Api_parse2(void *sessp,
 }
 
 static int
-Api_parse(void *sessp,
+_Api_parse(void *sessp,
            Types_Session * pss,
            Types_Pdu *pdu, u_char * data, size_t length)
 {
     int             rc;
 
-    rc = Api_parse2(sessp, pss, pdu, data, length);
+    rc = _Api_parse2(sessp, pss, pdu, data, length);
     if (rc) {
         if (!pss->s_snmp_errno) {
             pss->s_snmp_errno = ErrorCode_BAD_PARSE;
@@ -3814,7 +3814,7 @@ Api_pduParse(Types_Pdu *pdu, u_char * data, size_t * length)
     data = Asn01_parseHeader(data, length, &msg_type);
     if (data == NULL)
         return -1;
-    DEBUG_MSGTL(("dumpv_recv","    Command %s\n", Api_pduType(msg_type)));
+    DEBUG_MSGTL(("dumpvRecv","    Command %s\n", Api_pduType(msg_type)));
     pdu->command = msg_type;
     pdu->flags &= (~PRIOT_UCD_MSG_FLAG_RESPONSE_PDU);
 
@@ -4207,7 +4207,7 @@ int Api_asyncSend(Types_Session * session,
 }
 
 static int
-Api_sessAsyncSend2(void *sessp,
+_Api_sessAsyncSend(void *sessp,
                  Types_Pdu *pdu, Types_CallbackFT callback, void *cb_data)
 {
     struct Api_SessionList_s *slp = (struct Api_SessionList_s *) sessp;
@@ -4226,7 +4226,7 @@ Api_sessAsyncSend2(void *sessp,
         isp = slp->internal;
         transport = slp->transport;
         if (!session || !isp || !transport) {
-            DEBUG_MSGTL(("sess_async_send", "send fail: closing...\n"));
+            DEBUG_MSGTL(("sessAsyncSend", "send fail: closing...\n"));
             return 0;
         }
     }
@@ -4287,14 +4287,14 @@ Api_sessAsyncSend2(void *sessp,
         (session->securityEngineIDLen == 0) &&
         (0 == (session->flags & API_FLAGS_DONT_PROBE))) {
         int rc;
-        DEBUG_MSGTL(("Api_v3Build", "delayed probe for engineID\n"));
+        DEBUG_MSGTL(("priotV3Build", "delayed probe for engineID\n"));
         rc = Api_v3EngineIDProbe(slp, session);
         if (rc == 0)
             return 0; /* s_snmp_errno already set */
     }
 
     if ((pktbuf = (u_char *)malloc(2048)) == NULL) {
-        DEBUG_MSGTL(("sess_async_send",
+        DEBUG_MSGTL(("sessAsyncSend",
                     "couldn't malloc initial packet buffer\n"));
         session->s_snmp_errno = ErrorCode_MALLOC;
         return 0;
@@ -4317,7 +4317,7 @@ Api_sessAsyncSend2(void *sessp,
         length = pktbuf_len;
         result = isp->hook_build(session, pdu, pktbuf, &length);
     } else {
-        if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.REVERSE_ENCODE)) {
+        if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE)) {
             result =
                 Api_build(&pktbuf, &pktbuf_len, &offset, session, pdu);
             packet = pktbuf + pktbuf_len - offset;
@@ -4330,7 +4330,7 @@ Api_sessAsyncSend2(void *sessp,
     }
 
     if (result < 0) {
-        DEBUG_MSGTL(("sess_async_send", "encoding failure\n"));
+        DEBUG_MSGTL(("sessAsyncSend", "encoding failure\n"));
         TOOLS_FREE(pktbuf);
         return 0;
     }
@@ -4341,7 +4341,7 @@ Api_sessAsyncSend2(void *sessp,
      */
 
     if (pdu->version == PRIOT_VERSION_3 && session->sndMsgMaxSize != 0 && length > session->sndMsgMaxSize) {
-        DEBUG_MSGTL(("sess_async_send",
+        DEBUG_MSGTL(("sessAsyncSend",
                     "length of packet (%lu) exceeds session maximum (%lu)\n",
                     (unsigned long)length, (unsigned long)session->sndMsgMaxSize));
         session->s_snmp_errno = ErrorCode_TOO_LONG;
@@ -4355,7 +4355,7 @@ Api_sessAsyncSend2(void *sessp,
      */
 
     if (transport->msgMaxSize != 0 && length > transport->msgMaxSize) {
-        DEBUG_MSGTL(("sess_async_send",
+        DEBUG_MSGTL(("sessAsyncSend",
                     "length of packet (%lu) exceeds transport maximum (%lu)\n",
                     (unsigned long)length, (unsigned long)transport->msgMaxSize));
         session->s_snmp_errno = ErrorCode_TOO_LONG;
@@ -4367,7 +4367,7 @@ Api_sessAsyncSend2(void *sessp,
      * Send the message.
      */
 
-    DEBUG_MSGTL(("sess_process_packet", "sending message id#%ld reqid#%ld len %"
+    DEBUG_MSGTL(("sessProcessPacket", "sending message id#%ld reqid#%ld len %"
                 "l" "u\n", pdu->msgid, pdu->reqid, length));
     result = Transport_send(transport, packet, length,
                                     &(pdu->transportData),
@@ -4458,7 +4458,7 @@ Api_sessAsyncSend(void *sessp,
     /*
      * send pdu
      */
-    rc = Api_sessAsyncSend2(sessp, pdu, callback, cb_data);
+    rc = _Api_sessAsyncSend(sessp, pdu, callback, cb_data);
     if (rc == 0) {
         struct Api_SessionList_s *psl;
         Types_Session *pss;
@@ -4564,7 +4564,7 @@ Api_createSessPdu(Transport_Transport *transport, void *opaque,
 {
     Types_Pdu *pdu = (Types_Pdu *)calloc(1, sizeof(Types_Pdu));
     if (pdu == NULL) {
-        DEBUG_MSGTL(("sess_process_packet", "can't malloc space for PDU\n"));
+        DEBUG_MSGTL(("sessProcessPacket", "can't malloc space for PDU\n"));
         return NULL;
     }
 
@@ -4589,7 +4589,7 @@ Api_createSessPdu(Transport_Transport *transport, void *opaque,
  */
 
 static int
-Api_sessProcessPacket(void *sessp, Types_Session * sp,
+_Api_sessProcessPacket(void *sessp, Types_Session * sp,
                      struct Api_InternalSession_s *isp,
                      Transport_Transport *transport,
                      void *opaque, int olength,
@@ -4601,11 +4601,11 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
   struct Secmod_Def_s *sptr;
   int             ret = 0, handled = 0;
 
-  DEBUG_MSGTL(("sess_process_packet",
+  DEBUG_MSGTL(("sessProcessPacket",
           "session %p fd %d pkt %p length %d\n", sessp,
           transport->sock, packetptr, length));
 
-  if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID,DSLIB_BOOLEAN.DUMP_PACKET)) {
+  if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID,DsBool_DUMP_PACKET)) {
       char *addrtxt = Transport_peerString(transport, opaque, olength);
       Logger_log(LOGGER_PRIORITY_DEBUG, "\nReceived %d byte packet from %s\n",
                length, addrtxt);
@@ -4619,7 +4619,7 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
 
   if (isp->hook_pre) {
     if (isp->hook_pre(sp, transport, opaque, olength) == 0) {
-      DEBUG_MSGTL(("sess_process_packet", "pre-parse fail\n"));
+      DEBUG_MSGTL(("sessProcessPacket", "pre-parse fail\n"));
       TOOLS_FREE(opaque);
       return -1;
     }
@@ -4646,19 +4646,19 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
   if (isp->hook_parse) {
     ret = isp->hook_parse(sp, pdu, packetptr, length);
   } else {
-    ret = Api_parse(sessp, sp, pdu, packetptr, length);
+    ret = _Api_parse(sessp, sp, pdu, packetptr, length);
   }
 
-  DEBUG_MSGTL(("sess_process_packet", "received message id#%ld reqid#%ld len "
+  DEBUG_MSGTL(("sessProcessPacket", "received message id#%ld reqid#%ld len "
               "%u\n", pdu->msgid, pdu->reqid, length));
 
   if (ret != PRIOT_ERR_NOERROR) {
-    DEBUG_MSGTL(("sess_process_packet", "parse fail\n"));
+    DEBUG_MSGTL(("sessProcessPacket", "parse fail\n"));
   }
 
   if (isp->hook_post) {
     if (isp->hook_post(sp, pdu, ret) == 0) {
-      DEBUG_MSGTL(("sess_process_packet", "post-parse fail\n"));
+      DEBUG_MSGTL(("sessProcessPacket", "post-parse fail\n"));
       ret = ErrorCode_ASN_PARSE_ERR;
     }
   }
@@ -4719,7 +4719,7 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
      * msgId must match for v3 messages.
      */
     if (rp->message_id != pdu->msgid) {
-            DEBUG_MSGTL(("sess_process_packet", "unmatched msg id: %ld != %ld\n",
+            DEBUG_MSGTL(("sessProcessPacket", "unmatched msg id: %ld != %ld\n",
                         rp->message_id, pdu->msgid));
         continue;
     }
@@ -4728,7 +4728,7 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
      * Check that message fields match original, if not, no further
      * processing.
      */
-    if (!Api_v3VerifyMsg(rp, pdu)) {
+    if (!_Api_v3VerifyMsg(rp, pdu)) {
       break;
     }
       } else {
@@ -4764,7 +4764,7 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
          * * inifinite resend
          */
         if (rp->retries <= sp->retries) {
-          Api_resendRequest(slp, rp, TRUE);
+          _Api_resendRequest(slp, rp, TRUE);
           break;
         } else {
           /* We're done with retries, so no longer waiting for a response */
@@ -4874,7 +4874,7 @@ Api_sessProcessPacket(void *sessp, Types_Session * sp,
 
   if (!handled) {
     Api_incrementStatistic(API_STAT_SNMPUNKNOWNPDUHANDLERS);
-    DEBUG_MSGTL(("sess_process_packet", "unhandled PDU\n"));
+    DEBUG_MSGTL(("sessProcessPacket", "unhandled PDU\n"));
   }
 
   Api_freePdu(pdu);
@@ -4929,7 +4929,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
     void           *opaque = NULL;
 
     if (!sp || !isp || !transport) {
-        DEBUG_MSGTL(("sess_read", "read fail: closing...\n"));
+        DEBUG_MSGTL(("sessRead", "read fail: closing...\n"));
         return 0;
     }
 
@@ -4940,7 +4940,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
     }
 
     if (!fdset || !(LARGEFDSET_FD_ISSET(transport->sock, fdset))) {
-        DEBUG_MSGTL(("sess_read", "not reading %d (fdset %p set %d)\n",
+        DEBUG_MSGTL(("sessRead", "not reading %d (fdset %p set %d)\n",
                     transport->sock, fdset,
                     fdset ? LARGEFDSET_FD_ISSET(transport->sock, fdset)
             : -9));
@@ -4999,7 +4999,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
                     /*
                      * Tell the new session about its existance if possible.
                      */
-                    DEBUG_MSGTL(("sess_read",
+                    DEBUG_MSGTL(("sessRead",
                                 "perform callback with op=CONNECT\n"));
                     (void)nslp->session->callback(API_CALLBACK_OP_CONNECT,
                                                   nslp->session, 0, NULL,
@@ -5030,7 +5030,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
              * We have no saved packet.  Allocate one.
              */
             if ((isp->packet = (u_char *) malloc(rxbuf_len)) == NULL) {
-                DEBUG_MSGTL(("sess_read", "can't malloc %" "l"
+                DEBUG_MSGTL(("sessRead", "can't malloc %" "l"
                             "u bytes for rxbuf\n", rxbuf_len));
                 return 0;
             } else {
@@ -5050,7 +5050,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
                     (u_char *) realloc(isp->packet,
                                        isp->packet_len + rxbuf_len);
                 if (newbuf == NULL) {
-                    DEBUG_MSGTL(("sess_read",
+                    DEBUG_MSGTL(("sessRead",
                                 "can't malloc %" "l"
                                 "u more for rxbuf (%" "l" "u tot)\n",
                                 rxbuf_len, isp->packet_len + rxbuf_len));
@@ -5067,7 +5067,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
         }
     } else {
         if ((rxbuf = (u_char *) malloc(rxbuf_len)) == NULL) {
-            DEBUG_MSGTL(("sess_read", "can't malloc %" "l"
+            DEBUG_MSGTL(("sessRead", "can't malloc %" "l"
                         "u bytes for rxbuf\n", rxbuf_len));
             return 0;
         }
@@ -5105,14 +5105,14 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
          * Alert the application if possible.
          */
         if (sp->callback != NULL) {
-            DEBUG_MSGTL(("sess_read", "perform callback with op=DISCONNECT\n"));
+            DEBUG_MSGTL(("sessRead", "perform callback with op=DISCONNECT\n"));
             (void) sp->callback(API_CALLBACK_OP_DISCONNECT, sp, 0,
                                 NULL, sp->callback_magic);
         }
         /*
          * Close socket and mark session for deletion.
          */
-        DEBUG_MSGTL(("sess_read", "fd %d closed\n", transport->sock));
+        DEBUG_MSGTL(("sessRead", "fd %d closed\n", transport->sock));
         transport->f_close(transport);
         TOOLS_FREE(isp->packet);
         TOOLS_FREE(opaque);
@@ -5137,7 +5137,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
                 pdulen = Asn01_checkPacket(pptr, isp->packet_len);
             }
 
-            DEBUG_MSGTL(("sess_read",
+            DEBUG_MSGTL(("sessRead",
                         "  loop packet_len %" "l" "u, PDU length %"
                         "l" "u\n", isp->packet_len, pdulen));
 
@@ -5148,12 +5148,12 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
                 Logger_log(LOGGER_PRIORITY_ERR,
              "Received broken packet. Closing session.\n");
         if (sp->callback != NULL) {
-          DEBUG_MSGTL(("sess_read",
+          DEBUG_MSGTL(("sessRead",
                   "perform callback with op=DISCONNECT\n"));
           (void)sp->callback(API_CALLBACK_OP_DISCONNECT,
                      sp, 0, NULL, sp->callback_magic);
         }
-        DEBUG_MSGTL(("sess_read", "fd %d closed\n", transport->sock));
+        DEBUG_MSGTL(("sessRead", "fd %d closed\n", transport->sock));
                 transport->f_close(transport);
                 TOOLS_FREE(opaque);
                 /** XXX-rks: why no TOOLS_FREE(isp->packet); ?? */
@@ -5167,7 +5167,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
                  * to the start of the buffer. If we're already at the
                  * start, simply return and wait for more data to arrive.
                  */
-                DEBUG_MSGTL(("sess_read",
+                DEBUG_MSGTL(("sessRead",
                             "pkt not complete (need %" "l" "u got %"
                             "l" "u so far)\n", pdulen,
                             isp->packet_len));
@@ -5197,7 +5197,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
         opaque = NULL;
         }
 
-            if ((rc = Api_sessProcessPacket(sessp, sp, isp, transport,
+            if ((rc = _Api_sessProcessPacket(sessp, sp, isp, transport,
                                            ocopy, ocopy?olength:0, pptr,
                                            pdulen))) {
                 /*
@@ -5258,7 +5258,7 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
          */
 
         memmove(isp->packet, pptr, isp->packet_len);
-        DEBUG_MSGTL(("sess_read",
+        DEBUG_MSGTL(("sessRead",
                     "end: memmove(%p, %p, %" "l" "u); realloc(%p, %"
                     "l" "u)\n",
                     isp->packet, pptr, isp->packet_len,
@@ -5268,16 +5268,16 @@ Api_sessRead3(void *sessp, Types_LargeFdSet * fdset)
             /*
              * I don't see why this should ever fail, but it's not a big deal.
              */
-            DEBUG_MSGTL(("sess_read", "realloc() failed\n"));
+            DEBUG_MSGTL(("sessRead", "realloc() failed\n"));
         } else {
-            DEBUG_MSGTL(("sess_read", "realloc() okay, old buffer %p, new %p\n",
+            DEBUG_MSGTL(("sessRead", "realloc() okay, old buffer %p, new %p\n",
                         isp->packet, rxbuf));
             isp->packet = rxbuf;
             isp->packet_size = isp->packet_len;
         }
         return rc;
     } else {
-        rc = Api_sessProcessPacket(sessp, sp, isp, transport, opaque,
+        rc = _Api_sessProcessPacket(sessp, sp, isp, transport, opaque,
                                   olength, rxbuf, length);
         TOOLS_FREE(rxbuf);
         return rc;
@@ -5451,7 +5451,7 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
      * If a single session is specified, do just for that session.
      */
 
-    DEBUG_MSGTL(("sess_select", "for %s session%s: ",
+    DEBUG_MSGTL(("sessSelect", "for %s session%s: ",
                 sessp ? "single" : "all", sessp ? "" : "s"));
 
     for (slp = (sessp ? (struct Api_SessionList_s *)sessp : api_sessions); slp; slp = next) {
@@ -5461,7 +5461,7 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
             /*
              * Close in progress -- skip this one.
              */
-            DEBUG_MSG(("sess_select", "skip "));
+            DEBUG_MSG(("sessSelect", "skip "));
             continue;
         }
 
@@ -5469,18 +5469,18 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
             /*
              * This session was marked for deletion.
              */
-            DEBUG_MSG(("sess_select", "delete\n"));
+            DEBUG_MSG(("sessSelect", "delete\n"));
             if (sessp == NULL) {
                 Api_close(slp->session);
             } else {
                 Api_sessClose(slp);
             }
-            DEBUG_MSGTL(("sess_select", "for %s session%s: ",
+            DEBUG_MSGTL(("sessSelect", "for %s session%s: ",
                         sessp ? "single" : "all", sessp ? "" : "s"));
             continue;
         }
 
-        DEBUG_MSG(("sess_select", "%d ", slp->transport->sock));
+        DEBUG_MSG(("sessSelect", "%d ", slp->transport->sock));
         if ((slp->transport->sock + 1) > *numfds) {
             *numfds = (slp->transport->sock + 1);
         }
@@ -5496,7 +5496,7 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
                     || (timerisset(&rp->expireM)
                         && timercmp(&rp->expireM, &earliest, <))) {
                     earliest = rp->expireM;
-                    DEBUG_MSG(("verbose:sess_select","(to in %d.%06d sec) ",
+                    DEBUG_MSG(("verbose:sessSelect","(to in %d.%06d sec) ",
                                (int)earliest.tv_sec, (int)earliest.tv_usec));
                 }
             }
@@ -5510,23 +5510,23 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
             break;
         }
     }
-    DEBUG_MSG(("sess_select", "\n"));
+    DEBUG_MSG(("sessSelect", "\n"));
 
     Tools_getMonotonicClock(&now);
 
-    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.ALARM_DONT_USE_SIG) &&
+    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID,
+                               DsBool_ALARM_DONT_USE_SIG) &&
         !(flags & SESSION_SELECT_NOALARMS)) {
         next_alarm = Alarm_getNextAlarmTime(&alarm_tm, &now);
         if (next_alarm)
-            DEBUG_MSGT(("sess_select","next alarm at %ld.%06ld sec\n",
+            DEBUG_MSGT(("sessSelect","next alarm at %ld.%06ld sec\n",
                        (long)alarm_tm.tv_sec, (long)alarm_tm.tv_usec));
     }
     if (next_alarm == 0 && requests == 0) {
         /*
          * If none are active, skip arithmetic.
          */
-        DEBUG_MSGT(("sess_select","blocking:no session requests or alarms.\n"));
+        DEBUG_MSGT(("sessSelect","blocking:no session requests or alarms.\n"));
         *block = 1; /* can block - timeout value is undefined if no requests */
         return active;
     }
@@ -5539,11 +5539,11 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
     if (earliest.tv_sec < 0) {
         time_t overdue_ms = -(earliest.tv_sec * 1000 + earliest.tv_usec / 1000);
         if (overdue_ms >= 10)
-            DEBUG_MSGT(("verbose:sess_select","timer overdue by %ld ms\n",
+            DEBUG_MSGT(("verbose:sessSelect","timer overdue by %ld ms\n",
                        (long) overdue_ms));
         timerclear(&earliest);
     } else {
-        DEBUG_MSGT(("verbose:sess_select","timer due in %d.%06d sec\n",
+        DEBUG_MSGT(("verbose:sessSelect","timer due in %d.%06d sec\n",
                    (int)earliest.tv_sec, (int)earliest.tv_usec));
     }
 
@@ -5551,7 +5551,7 @@ Api_sessSelectInfo2Flags(void *sessp, int *numfds,
      * if it was blocking before or our delta time is less, reset timeout
      */
     if ((*block || (timercmp(&earliest, timeout, <)))) {
-        DEBUG_MSGT(("verbose:sess_select",
+        DEBUG_MSGT(("verbose:sessSelect",
                    "setting timer to %d.%06d sec, clear block (was %d)\n",
                    (int)earliest.tv_sec, (int)earliest.tv_usec, *block));
         *timeout = earliest;
@@ -5581,7 +5581,7 @@ Api_timeout(void)
 }
 
 static int
-Api_resendRequest(struct Api_SessionList_s *slp, Api_RequestList *rp,
+_Api_resendRequest(struct Api_SessionList_s *slp, Api_RequestList *rp,
                     int incr_retries)
 {
     struct Api_InternalSession_s *isp;
@@ -5596,12 +5596,12 @@ Api_resendRequest(struct Api_SessionList_s *slp, Api_RequestList *rp,
     isp = slp->internal;
     transport = slp->transport;
     if (!sp || !isp || !transport) {
-        DEBUG_MSGTL(("sess_read", "resend fail: closing...\n"));
+        DEBUG_MSGTL(("sessRead", "resend fail: closing...\n"));
         return 0;
     }
 
     if ((pktbuf = (u_char *)malloc(2048)) == NULL) {
-        DEBUG_MSGTL(("sess_resend",
+        DEBUG_MSGTL(("sessResend",
                     "couldn't malloc initial packet buffer\n"));
         return 0;
     } else {
@@ -5628,7 +5628,7 @@ Api_resendRequest(struct Api_SessionList_s *slp, Api_RequestList *rp,
         length = pktbuf_len;
         result = isp->hook_build(sp, rp->pdu, pktbuf, &length);
     } else {
-        if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.REVERSE_ENCODE)) {
+        if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE)) {
             result =
                 Api_build(&pktbuf, &pktbuf_len, &offset, sp, rp->pdu);
             packet = pktbuf + pktbuf_len - offset;
@@ -5644,12 +5644,12 @@ Api_resendRequest(struct Api_SessionList_s *slp, Api_RequestList *rp,
         /*
          * This should never happen.
          */
-        DEBUG_MSGTL(("sess_resend", "encoding failure\n"));
+        DEBUG_MSGTL(("sessResend", "encoding failure\n"));
         TOOLS_FREE(pktbuf);
         return -1;
     }
 
-    DEBUG_MSGTL(("sess_process_packet", "resending message id#%ld reqid#%ld "
+    DEBUG_MSGTL(("sessProcessPacket", "resending message id#%ld reqid#%ld "
                 "rp_reqid#%ld rp_msgid#%ld len %" "l" "u\n",
                 rp->pdu->msgid, rp->pdu->reqid, rp->request_id, rp->message_id, length));
     result = Transport_send(transport, packet, length,
@@ -5700,7 +5700,7 @@ Api_sessTimeout(void *sessp)
     sp = slp->session;
     isp = slp->internal;
     if (!sp || !isp) {
-        DEBUG_MSGTL(("sess_read", "timeout fail: closing...\n"));
+        DEBUG_MSGTL(("sessRead", "timeout fail: closing...\n"));
         return;
     }
 
@@ -5756,7 +5756,7 @@ Api_sessTimeout(void *sessp)
                 freeme = rp;
                 continue;       /* don't update orp below */
             } else {
-                if (Api_resendRequest(slp, rp, TRUE)) {
+                if (_Api_resendRequest(slp, rp, TRUE)) {
                     break;
                 }
             }
@@ -6057,14 +6057,14 @@ Api_oidFindPrefix(const oid * in_name1, size_t len1,
                            Return its length. */
 }
 
-static int Api_checkRange(struct Parse_Tree_s *tp, long ltmp, int *resptr,
+static int _Api_checkRange(struct Parse_Tree_s *tp, long ltmp, int *resptr,
                     const char *errmsg)
 {
     char *cp   = NULL;
     char *temp = NULL;
     int   temp_len = 0;
-    int check = !DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID,
-                                    DSLIB_BOOLEAN.DONT_CHECK_RANGE);
+    int check = !DefaultStore_getBoolean (DsStorage_LIBRARY_ID,
+                                    DsBool_DONT_CHECK_RANGE);
 
     if (check && tp && tp->ranges) {
     struct Parse_RangeList_s *rp = tp->ranges;
@@ -6181,10 +6181,10 @@ Api_addVar(Types_Pdu *pdu,
     const char     *cp;
     char           *ecp, *vp;
     int             result = ErrorCode_SUCCESS;
-    int             check = !DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID,
-                         DSLIB_BOOLEAN.DONT_CHECK_RANGE);
-    int             do_hint = !DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID,
-                         DSLIB_BOOLEAN.NO_DISPLAY_HINT);
+    int             check = !DefaultStore_getBoolean (DsStorage_LIBRARY_ID,
+                         DsBool_DONT_CHECK_RANGE);
+    int             do_hint = !DefaultStore_getBoolean (DsStorage_LIBRARY_ID,
+                         DsBool_NO_DISPLAY_HINT);
     u_char         *hintptr;
     struct Parse_Tree_s    *tp;
     u_char         *buf = NULL;
@@ -6272,7 +6272,7 @@ Api_addVar(Types_Pdu *pdu,
             }
         }
 
-        if (!Api_checkRange(tp, ltmp, &result, value))
+        if (!_Api_checkRange(tp, ltmp, &result, value))
             break;
         Api_pduAddVariable(pdu, name, name_length, ASN01_INTEGER,
                               &ltmp, sizeof(ltmp));
@@ -6389,7 +6389,7 @@ Api_addVar(Types_Pdu *pdu,
             goto type_error;
         }
     if ('s' == type && do_hint && !Mib_parseOctetHint(tp->hint, value, &hintptr, &itmp)) {
-            if (Api_checkRange(tp, itmp, &result, "Value does not match DISPLAY-HINT")) {
+            if (_Api_checkRange(tp, itmp, &result, "Value does not match DISPLAY-HINT")) {
                 Api_pduAddVariable(pdu, name, name_length, ASN01_OCTET_STR,
                                       hintptr, itmp);
             }
@@ -6418,7 +6418,7 @@ Api_addVar(Types_Pdu *pdu,
             buf_ptr = (const u_char *)value;
             value_len = strlen(value);
         }
-        if (!Api_checkRange(tp, value_len, &result, "Bad string length"))
+        if (!_Api_checkRange(tp, value_len, &result, "Bad string length"))
             break;
         Api_pduAddVariable(pdu, name, name_length, ASN01_OCTET_STR,
                               buf_ptr, value_len);
@@ -6727,14 +6727,14 @@ Api_duplicateObjid(const oid * objToCopy, size_t objToCopyLen)
 /*
  * generic statistics counter functions
  */
-static u_int    api_statistics[API_STAT_MAX_STATS];
+static u_int    _api_statistics[API_STAT_MAX_STATS];
 
 u_int
 Api_incrementStatistic(int which)
 {
     if (which >= 0 && which < API_STAT_MAX_STATS) {
-        api_statistics[which]++;
-        return api_statistics[which];
+        _api_statistics[which]++;
+        return _api_statistics[which];
     }
     return 0;
 }
@@ -6743,8 +6743,8 @@ u_int
 Api_incrementStatisticBy(int which, int count)
 {
     if (which >= 0 && which < API_STAT_MAX_STATS) {
-        api_statistics[which] += count;
-        return api_statistics[which];
+        _api_statistics[which] += count;
+        return _api_statistics[which];
     }
     return 0;
 }
@@ -6753,13 +6753,13 @@ u_int
 Api_getStatistic(int which)
 {
     if (which >= 0 && which < API_STAT_MAX_STATS)
-        return api_statistics[which];
+        return _api_statistics[which];
     return 0;
 }
 
 void
 Api_initStatistics(void)
 {
-    memset(api_statistics, 0, sizeof(api_statistics));
+    memset(_api_statistics, 0, sizeof(_api_statistics));
 }
 

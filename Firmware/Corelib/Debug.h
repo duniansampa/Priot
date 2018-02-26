@@ -37,8 +37,6 @@ typedef struct Debug_tokenDescr_s {
 
 int         Debug_indentGet(void);
 
-//const char* Debug_indent(void);
-
 void        Debug_indentAdd(int amount);
 
 void        Debug_configRegisterTokens(const char *configtoken, char *tokens);
@@ -87,41 +85,41 @@ void        Debug_debugInit(void);
  *
  * They need to be called enclosing all the arguments in a single set of ()s.
  * Example:
- * DEBUGMSGTL(("token", "debugging of something %s related\n", "snmp"));
+ * DEBUG_MSGTL(("token", "debugging of something %s related\n", "snmp"));
  *
  * Usage:
  * All of the functions take a "token" argument that helps determine when
  * the output in question should be printed.  See the manual page
  * on the -D flag to turn on/off output for a given token on the command line.
  *
- * DEBUGMSG((token, format, ...)):      equivalent to printf(format, ...)
+ * DEBUG_MSG((token, format, ...)):      equivalent to printf(format, ...)
  * (if "token" debugging output
  * is requested by the user)
  *
- * DEBUGMSGT((token, format, ...)):     equivalent to DEBUGMSG, but prints
+ * DEBUG_MSGT((token, format, ...)):     equivalent to DEBUG_MSG, but prints
  * "token: " at the beginning of the
  * line for you.
  *
- * DEBUGTRACE                           Insert this token anywhere you want
+ * DEBUG_TRACE                           Insert this token anywhere you want
  * tracing output displayed when the
  * "trace" debugging token is selected.
  *
- * DEBUGMSGL((token, format, ...)):     equivalent to DEBUGMSG, but includes
- * DEBUGTRACE debugging line just before
+ * DEBUG_MSGL((token, format, ...)):     equivalent to DEBUG_MSG, but includes
+ * DEBUG_TRACE debugging line just before
  * yours.
  *
- * DEBUGMSGTL((token, format, ...)):    Same as DEBUGMSGL and DEBUGMSGT
+ * DEBUG_MSGTL((token, format, ...)):    Same as DEBUG_MSGL and DEBUG_MSGT
  * combined.
  *
  * Important:
- * It is considered best if you use DEBUGMSGTL() everywhere possible, as it
+ * It is considered best if you use DEBUG_MSGTL() everywhere possible, as it
  * gives the nicest format output and provides tracing support just before
  * every debugging statement output.
  *
  * To print multiple pieces to a single line in one call, use:
  *
- * DEBUGMSGTL(("token", "line part 1"));
- * DEBUGMSG  (("token", " and part 2\n"));
+ * DEBUG_MSGTL(("token", "line part 1"));
+ * DEBUG_MSG  (("token", " and part 2\n"));
  *
  * to get:
  *
@@ -216,7 +214,7 @@ void        Debug_debugInit(void);
 #define DEBUG_MSGTL(x)        do {if (_DBG_IF_) {__DBGMSGTL(x);} }while(0)
 #define DEBUG_MSGOID(x)       do {if (_DBG_IF_) {__DBGMSGOID(x);} }while(0)
 #define DEBUG_MSGSUBOID(x)    do {if (_DBG_IF_) {__DBGMSGSUBOID(x);} }while(0)
-#define DEBUG_MSGVAR(x)     do {if (_DBG_IF_) {__DBGMSGVAR(x);} }while(0)
+#define DEBUG_MSGVAR(x)       do {if (_DBG_IF_) {__DBGMSGVAR(x);} }while(0)
 #define DEBUG_MSGOIDRANGE(x)  do {if (_DBG_IF_) {__DBGMSGOIDRANGE(x);} }while(0)
 #define DEBUG_MSGHEX(x)       do {if (_DBG_IF_) {__DBGMSGHEX(x);} }while(0)
 #define DEBUG_MSGHEXTLI(x)    do {if (_DBG_IF_) {__DBGMSGHEXTLI(x);} }while(0)

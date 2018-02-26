@@ -59,7 +59,7 @@
  * Finally storing is done using read_config_store(type, buffer);
  * type is the application name this can be obtained from:
  *
- * DefaultStore_getString(DSSTORAGE.LIBRARY_ID, NETSNMP_DS_LIB_APPTYPE);
+ * DefaultStore_getString(DsStorage_LIBRARY_ID, NETSNMP_DS_LIB_APPTYPE);
  *
  * Now, reading back the data: This is done by registering a config handler
  * for your token using the ReadConfig_registerConfigHandler function. Your
@@ -90,8 +90,8 @@ ReadConfig_internalRegisterConfigHandler(const char *type_param,
     const char           *type = type_param;
 
     if (type == NULL || *type == '\0') {
-        type = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                    DSLIB_STRING.APPTYPE);
+        type = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                    DsStr_APPTYPE);
     }
 
     /*
@@ -274,8 +274,8 @@ ReadConfig_unregisterConfigHandler(const char *type_param, const char *token)
     const char           *type = type_param;
 
     if (type == NULL || *type == '\0') {
-        type = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                            DSLIB_STRING.APPTYPE);
+        type = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                            DsStr_APPTYPE);
     }
 
     /*
@@ -458,8 +458,8 @@ ReadConfig_runConfigHandler(struct ReadConfig_ConfigLine_s *lptr,
             DEBUG_MSGTL(("9:read_config:parser",
                         "%s handler not registered for this time\n", token));
     } else if (when != PREMIB_CONFIG &&
-           !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_BOOLEAN.NO_TOKEN_WARNINGS)) {
+           !DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                       DsBool_NO_TOKEN_WARNINGS)) {
     ReadConfig_warn("Unknown token: %s.", token);
         return ErrorCode_GENERR;
     }
@@ -517,8 +517,8 @@ int ReadConfig_configWhen(char *line, int when)
         for (; ctmp != NULL && lptr == NULL; ctmp = ctmp->next)
             lptr = ReadConfig_findHandler(ctmp->start, cptr);
     }
-    if (lptr == NULL && DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                      DSLIB_BOOLEAN.NO_TOKEN_WARNINGS)) {
+    if (lptr == NULL && DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                      DsBool_NO_TOKEN_WARNINGS)) {
     ReadConfig_warn("Unknown token: %s.", cptr);
         return ErrorCode_GENERR;
     }
@@ -538,8 +538,8 @@ int ReadConfig_config(char *line)
     ReadConfig_remember(line);      /* always remember it so it's read
                                          * processed after a ReadConfig_freeConfig()
                                          * call */
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_BOOLEAN.HAVE_READ_CONFIG)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                   DsBool_HAVE_READ_CONFIG)) {
         DEBUG_MSGTL(("snmp_config", "  ... processing it now\n"));
         ret = ReadConfig_configWhen(line, NORMAL_CONFIG);
     }
@@ -776,8 +776,8 @@ ReadConfig_readConfig(const char *filename,
             } else if ((token[0] == 'i') && (strncasecmp(token,"include", 7 )==0)) {
                 if ( strcasecmp( token, "include" )==0) {
                     if (when != PREMIB_CONFIG &&
-                    !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                DSLIB_BOOLEAN.NO_TOKEN_WARNINGS)) {
+                    !DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                DsBool_NO_TOKEN_WARNINGS)) {
                     ReadConfig_warn("Ambiguous token '%s' - use 'includeSearch' (or 'includeFile') instead.", token);
                     }
                     continue;
@@ -901,8 +901,8 @@ ReadConfig_optional(const char *optional_config, int when)
 {
     char *newp, *cp, *st = NULL;
     int              ret = ErrorCode_GENERR;
-    char *type = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_STRING.APPTYPE);
+    char *type = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                       DsStr_APPTYPE);
 
     if ((NULL == optional_config) || (NULL == type))
         return ret;
@@ -933,8 +933,8 @@ ReadConfig_optional(const char *optional_config, int when)
 void
 ReadConfig_readConfigs(void)
 {
-    char *optional_config = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                           DSLIB_STRING.OPTIONALCONFIG);
+    char *optional_config = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                           DsStr_OPTIONALCONFIG);
 
     Callback_callCallbacks(CALLBACK_LIBRARY,
                         CALLBACK_PRE_READ_CONFIG, NULL);
@@ -956,8 +956,8 @@ ReadConfig_readConfigs(void)
 
     ReadConfig_processMemoriesWhen(NORMAL_CONFIG, 1);
 
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.HAVE_READ_CONFIG, 1);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_HAVE_READ_CONFIG, 1);
 
     Callback_callCallbacks(CALLBACK_LIBRARY,
                            CALLBACK_POST_READ_CONFIG, NULL);
@@ -966,8 +966,8 @@ ReadConfig_readConfigs(void)
 void
 ReadConfig_readPremibConfigs(void)
 {
-    char *optional_config = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                           DSLIB_STRING.OPTIONALCONFIG);
+    char *optional_config = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                           DsStr_OPTIONALCONFIG);
 
     Callback_callCallbacks(CALLBACK_LIBRARY,
                            CALLBACK_PRE_PREMIB_READ_CONFIG, NULL);
@@ -986,8 +986,8 @@ ReadConfig_readPremibConfigs(void)
 
     ReadConfig_processMemoriesWhen(PREMIB_CONFIG, 0);
 
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.HAVE_READ_PREMIB_CONFIG, 1);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_HAVE_READ_PREMIB_CONFIG, 1);
 
     Callback_callCallbacks(CALLBACK_LIBRARY,
                            CALLBACK_POST_PREMIB_READ_CONFIG, NULL);
@@ -1004,8 +1004,8 @@ ReadConfig_readPremibConfigs(void)
 void
 ReadConfig_setConfigurationDirectory(const char *dir)
 {
-    DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-              DSLIB_STRING.CONFIGURATION_DIR, dir);
+    DefaultStore_setString(DsStorage_LIBRARY_ID,
+              DsStr_CONFIGURATION_DIR, dir);
 }
 
 /*******************************************************************-o-******
@@ -1026,8 +1026,8 @@ ReadConfig_getConfigurationDirectory(void)
     char            defaultPath[IMPL_SPRINT_MAX_LEN];
     char           *homepath;
 
-    if (NULL == DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                      DSLIB_STRING.CONFIGURATION_DIR)) {
+    if (NULL == DefaultStore_getString(DsStorage_LIBRARY_ID,
+                      DsStr_CONFIGURATION_DIR)) {
         homepath = Tools_getenv("HOME");
         snprintf(defaultPath, sizeof(defaultPath), "%s%c%s%c%s%s%s%s",
                 SNMPCONFPATH, ENV_SEPARATOR_CHAR,
@@ -1038,8 +1038,8 @@ ReadConfig_getConfigurationDirectory(void)
         defaultPath[ sizeof(defaultPath)-1 ] = 0;
         ReadConfig_setConfigurationDirectory(defaultPath);
     }
-    return (DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_STRING.CONFIGURATION_DIR));
+    return (DefaultStore_getString(DsStorage_LIBRARY_ID,
+                  DsStr_CONFIGURATION_DIR));
 }
 
 /*******************************************************************-o-******
@@ -1054,8 +1054,8 @@ ReadConfig_getConfigurationDirectory(void)
 void
 ReadConfig_setPersistentDirectory(const char *dir)
 {
-    DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-              DSLIB_STRING.PERSISTENT_DIR, dir);
+    DefaultStore_setString(DsStorage_LIBRARY_ID,
+              DsStr_PERSISTENT_DIR, dir);
 }
 
 /*******************************************************************-o-******
@@ -1071,16 +1071,16 @@ ReadConfig_setPersistentDirectory(const char *dir)
 const char *
 ReadConfig_getPersistentDirectory(void)
 {
-    if (NULL == DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                      DSLIB_STRING.PERSISTENT_DIR)) {
+    if (NULL == DefaultStore_getString(DsStorage_LIBRARY_ID,
+                      DsStr_PERSISTENT_DIR)) {
 
         const char *persdir = Tools_getenv("SNMP_PERSISTENT_DIR");
         if (NULL == persdir)
             persdir = PERSISTENT_DIRECTORY;
         ReadConfig_setPersistentDirectory(persdir);
     }
-    return (DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_STRING.PERSISTENT_DIR));
+    return (DefaultStore_getString(DsStorage_LIBRARY_ID,
+                  DsStr_PERSISTENT_DIR));
 }
 
 /*******************************************************************-o-******
@@ -1095,8 +1095,8 @@ ReadConfig_getPersistentDirectory(void)
 void
 ReadConfig_setTempFilePattern(const char *pattern)
 {
-    DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-              DSLIB_STRING.TEMP_FILE_PATTERN, pattern);
+    DefaultStore_setString(DsStorage_LIBRARY_ID,
+              DsStr_TEMP_FILE_PATTERN, pattern);
 }
 
 /*******************************************************************-o-******
@@ -1112,12 +1112,12 @@ ReadConfig_setTempFilePattern(const char *pattern)
 const char     *
 ReadConfig_getTempFilePattern(void)
 {
-    if (NULL == DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                      DSLIB_STRING.TEMP_FILE_PATTERN)) {
+    if (NULL == DefaultStore_getString(DsStorage_LIBRARY_ID,
+                      DsStr_TEMP_FILE_PATTERN)) {
         ReadConfig_setTempFilePattern(NETSNMP_TEMP_FILE_PATTERN);
     }
-    return (DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                  DSLIB_STRING.TEMP_FILE_PATTERN));
+    return (DefaultStore_getString(DsStorage_LIBRARY_ID,
+                  DsStr_TEMP_FILE_PATTERN));
 }
 
 /**
@@ -1267,10 +1267,10 @@ int ReadConfig_filesOfType(int when, struct ReadConfig_ConfigFiles_s *ctmp)
     char           *perspath;
     int             ret = ErrorCode_GENERR;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DONT_PERSIST_STATE)
-        || DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                  DSLIB_BOOLEAN.DONT_READ_CONFIGS)
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DONT_PERSIST_STATE)
+        || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                  DsBool_DONT_READ_CONFIGS)
         || (NULL == ctmp)) return ret;
 
     /*
@@ -1395,10 +1395,10 @@ ReadConfig_store(const char *type, const char *line)
     FILE           *fout;
     mode_t          oldmask;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DONT_PERSIST_STATE)
-     || DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DISABLE_PERSISTENT_LOAD)) return;
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DONT_PERSIST_STATE)
+     || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DISABLE_PERSISTENT_LOAD)) return;
 
     /*
      * store configuration directives in the following order of preference:
@@ -1434,8 +1434,8 @@ ReadConfig_store(const char *type, const char *line)
 void
 ReadConfig_readAppConfigStore(const char *line)
 {
-    ReadConfig_store(DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                        DSLIB_STRING.APPTYPE), line);
+    ReadConfig_store(DefaultStore_getString(DsStorage_LIBRARY_ID,
+                        DsStr_APPTYPE), line);
 }
 
 
@@ -1467,10 +1467,10 @@ ReadConfig_savePersistent(const char *type)
     struct stat     statbuf;
     int             j;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DONT_PERSIST_STATE)
-     || DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DISABLE_PERSISTENT_SAVE)) return;
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DONT_PERSIST_STATE)
+     || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DISABLE_PERSISTENT_SAVE)) return;
 
     DEBUG_MSGTL(("snmp_save_persistent", "saving %s files...\n", type));
     snprintf(file, sizeof(file),
@@ -1534,10 +1534,10 @@ ReadConfig_cleanPersistent(const char *type)
     struct stat     statbuf;
     int             j;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DONT_PERSIST_STATE)
-     || DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DISABLE_PERSISTENT_SAVE)) return;
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DONT_PERSIST_STATE)
+     || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_DISABLE_PERSISTENT_SAVE)) return;
 
     DEBUG_MSGTL(("snmp_clean_persistent", "cleaning %s files...\n", type));
     snprintf(file, sizeof(file),

@@ -146,8 +146,8 @@ Vars_initAgent(const char *app)
     /*
      * we handle alarm signals ourselves in the select loop
      */
-    DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-               DSLIB_BOOLEAN.ALARM_DONT_USE_SIG, 1);
+    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+               DsBool_ALARM_DONT_USE_SIG, 1);
 
     AgentRegistry_setupTree();
 
@@ -164,7 +164,7 @@ Vars_initAgent(const char *app)
      * initialize agentx configs
      */
     AgentxConfig_init();
-    if(DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    if(DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                               DsAgentBoolean_ROLE) == SUB_AGENT)
         Subagent_init();
 
@@ -178,7 +178,7 @@ Vars_initAgent(const char *app)
     /*
      * don't init agent modules for a sub-agent
      */
-    if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                    DsAgentBoolean_ROLE) == SUB_AGENT)
         return r;
 

@@ -981,9 +981,9 @@ int
 VacmConf_warnIfNotConfigured(int majorID, int minorID, void *serverarg,
                             void *clientarg)
 {
-    const char * name = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                               DSLIB_STRING.APPTYPE);
-    const int agent_mode =  DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    const char * name = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                               DsStr_APPTYPE);
+    const int agent_mode =  DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                                    DsAgentBoolean_ROLE);
     if (NULL==name)
         name = "snmpd";
@@ -1019,7 +1019,7 @@ VacmConf_warnIfNotConfigured(int majorID, int minorID, void *serverarg,
          */
 
         if (!strcmp(name, "snmptrapd") &&
-            !DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+            !DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                      DsAgentBoolean_APP_NO_AUTHORIZATION)) {
             Logger_log(LOGGER_PRIORITY_WARNING,
                  "Warning: no access control information configured.\n"

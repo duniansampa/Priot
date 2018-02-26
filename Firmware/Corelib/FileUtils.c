@@ -4,7 +4,6 @@
 #include "Debug.h"
 #include "DataList.h"
 #include "Assert.h"
-
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -45,7 +44,7 @@ FileUtils_File * FileUtils_create(void)
     if (NULL != filei)
         filei->fd = -1;
     else {
-        Logger_log(LOGGER_PRIORITY_WARNING,"failed to malloc netsnmp_file structure\n");
+        Logger_log(LOGGER_PRIORITY_WARNING,"failed to malloc FileUtils_File structure\n");
     }
 
     return filei;
@@ -160,7 +159,7 @@ int FileUtils_open(FileUtils_File * filei)
         filei->fd = open(filei->name, filei->fsFlags, filei->mode);
 
     if (filei->fd < 0) {
-        DEBUG_MSGTL(("netsnmp_file", "error opening %s (%d)\n", filei->name, errno));
+        DEBUG_MSGTL(("FileUtils_File", "error opening %s (%d)\n", filei->name, errno));
     }
 
     /*
@@ -198,7 +197,7 @@ int FileUtils_close(FileUtils_File * filei)
      */
     rc = close(filei->fd);
     if (rc < 0) {
-        DEBUG_MSGTL(("netsnmp_file", "error closing %s (%d)\n", filei->name, errno));
+        DEBUG_MSGTL(("FileUtils_File", "error closing %s (%d)\n", filei->name, errno));
     }
     else
         filei->fd = -1;

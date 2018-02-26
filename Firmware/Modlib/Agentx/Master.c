@@ -19,12 +19,12 @@ Master_realInitMaster(void)
     char *agentx_sockets;
     char *cp1;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID, DsAgentBoolean_ROLE) != MASTER_AGENT)
+    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE) != MASTER_AGENT)
         return;
 
-    if (DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getString(DsStorage_APPLICATION_ID,
                                DsAgentString_X_SOCKET)) {
-       agentx_sockets = strdup(DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+       agentx_sockets = strdup(DefaultStore_getString(DsStorage_APPLICATION_ID,
                                                       DsAgentString_X_SOCKET));
     } else {
         agentx_sockets = strdup("");
@@ -36,14 +36,14 @@ DEBUG_MSGTL(("agentx/master", "initializing...\n"));
     Api_sessInit(&sess);
     sess.version = AGENTX_VERSION_1;
     sess.flags |= API_FLAGS_STREAM_SOCKET;
-    sess.timeout = DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+    sess.timeout = DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                        DsAgentInterger_AGENTX_TIMEOUT);
-    sess.retries = DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+    sess.retries = DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                       DsAgentInterger_AGENTX_RETRIES);
 
     {
     int agentx_dir_perm =
-        DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_getInt(DsStorage_APPLICATION_ID,
                       DsAgentInterger_X_DIR_PERM);
     if (agentx_dir_perm == 0)
         agentx_dir_perm = AGENT_DIRECTORY_MODE;
@@ -78,7 +78,7 @@ DEBUG_MSGTL(("agentx/master", "initializing...\n"));
              * pointer.
              */
             char buf[1024];
-            if (!DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+            if (!DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                         DsAgentBoolean_NO_ROOT_ACCESS)) {
                 snprintf(buf, sizeof(buf),
                          "Error: Couldn't open a master agentx socket to "
@@ -98,13 +98,13 @@ DEBUG_MSGTL(("agentx/master", "initializing...\n"));
                  * AgentX socket
                  */
                 int agentx_sock_perm =
-                    DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+                    DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                        DsAgentInterger_X_SOCK_PERM);
                 int agentx_sock_user =
-                    DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+                    DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                        DsAgentInterger_X_SOCK_USER);
                 int agentx_sock_group =
-                    DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+                    DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                        DsAgentInterger_X_SOCK_GROUP);
 
                 char name[sizeof(struct sockaddr_un) + 1];
@@ -326,7 +326,7 @@ DEBUG_MSGTL(("agentx/master",
 DEBUG_MSGOID(("agentx/master", var->name, var->nameLength));
 
 DEBUG_MSG(("agentx/master", "\n"));
-            if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID, DsAgentBoolean_VERBOSE)) {
+            if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_VERBOSE)) {
 
 DEBUG_MSGTL(("agentx/master", "    >> "));
 

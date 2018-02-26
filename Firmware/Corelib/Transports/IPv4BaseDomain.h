@@ -1,7 +1,7 @@
 #ifndef IPV4BASEDOMAIN_H
 #define IPV4BASEDOMAIN_H
 
-#include "../Transport.h"
+#include "Transport.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>

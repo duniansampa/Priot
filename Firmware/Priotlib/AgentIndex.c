@@ -143,7 +143,7 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
     DEBUG_MSGVAR(("AgentIndex_registerIndex", varbind));
     DEBUG_MSG(("AgentIndex_registerIndex", "for session %8p\n", ss));
 
-    if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                    DsAgentBoolean_ROLE) == SUB_AGENT) {
         return (XClient_registerIndex(ss, varbind, flags));
     }
@@ -470,7 +470,7 @@ AgentIndex_unregisterIndex( Types_VariableList* varbind,
     struct Index_s *prev_oid_ptr, *prev_idx_ptr;
     int             res, res2, i;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                    DsAgentBoolean_ROLE) == SUB_AGENT) {
         return (XClient_unregisterIndex(ss, varbind));
     }

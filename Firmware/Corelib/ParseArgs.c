@@ -230,8 +230,8 @@ int  ParseArgs_parseArgs(int argc,
             break;
 
         case 'd':
-            DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_BOOLEAN.DUMP_PACKET, 1);
+            DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
+                   DsBool_DUMP_PACKET, 1);
             break;
 
         case 'v':
@@ -553,8 +553,8 @@ int  ParseArgs_parseArgs(int argc,
         /*
          * run time default version
          */
-        session->version = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                          DSLIB_INTEGER.SNMPVERSION);
+        session->version = DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                          DsInt_SNMPVERSION);
 
         /*
          * compile time default version

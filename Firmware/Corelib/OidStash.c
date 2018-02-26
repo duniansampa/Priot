@@ -341,8 +341,8 @@ OidStash_store(OidStash_Node *root,
     char buf[TOOLS_MAXBUF];
     OidStash_Node *tmpp;
     char *cp;
-    char *appname = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                          DSLIB_STRING.APPTYPE);
+    char *appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                          DsStr_APPTYPE);
     int i;
 
     if (!tokenname || !root || !curoid || !dumpfn)

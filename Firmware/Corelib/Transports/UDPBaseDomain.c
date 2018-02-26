@@ -1,10 +1,10 @@
 #include "UDPBaseDomain.h"
 
 #include "UDPDomain.h"
-#include "../System.h"
+#include "System.h"
 #include "SocketBaseDomain.h"
 #include <arpa/inet.h>
-#include "../Debug.h"
+#include "Debug.h"
 #include "Assert.h"
 #include "System.h"
 

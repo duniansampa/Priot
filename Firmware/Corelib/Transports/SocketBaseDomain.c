@@ -1,7 +1,7 @@
 #include "SocketBaseDomain.h"
 
 #include "DefaultStore.h"
-#include "../Debug.h"
+#include "Debug.h"
 #include "Api.h"
 
 
@@ -126,16 +126,16 @@ static int _SocketBaseDomain_bufferSizeGet(int optname, int local, const char **
 
     if (optname == SO_SNDBUF) {
         if (local) {
-            size = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SERVERSENDBUF);
+            size = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_SERVERSENDBUF);
 
         } else {
-            size = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.CLIENTSENDBUF);
+            size = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_CLIENTSENDBUF);
         }
     } else if (optname == SO_RCVBUF) {
         if (local) {
-            size = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SERVERRECVBUF);
+            size = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_SERVERRECVBUF);
         } else {
-            size = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.CLIENTRECVBUF);
+            size = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_CLIENTRECVBUF);
         }
     } else {
         size = 0;

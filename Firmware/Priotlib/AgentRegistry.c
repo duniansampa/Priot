@@ -1182,7 +1182,7 @@ AgentRegistry_registerMib2(const char *moduleName,
     /*
      * mark the MIB as detached, if there's no master agent present as of now
      */
-    if (DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                     DsAgentBoolean_ROLE) != MASTER_AGENT) {
         extern struct Types_Session_s *agent_mainSession;
         if (agent_mainSession == NULL) {
@@ -2086,10 +2086,10 @@ AgentRegistry_setupTree(void)
     oid iso[1]             = { 1 };
     oid joint_ccitt_iso[1] = { 2 };
 
-    int role = DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    int role = DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                        DsAgentBoolean_ROLE);
 
-    DefaultStore_setBoolean(DSSTORAGE.APPLICATION_ID, DsAgentBoolean_ROLE,
+    DefaultStore_setBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE,
                MASTER_AGENT);
 
     /*
@@ -2100,7 +2100,7 @@ AgentRegistry_setupTree(void)
     Null_registerNull(Api_duplicateObjid(iso, 1), 1);
     Null_registerNull(Api_duplicateObjid(joint_ccitt_iso, 1), 1);
 
-    DefaultStore_setBoolean(DSSTORAGE.APPLICATION_ID, DsAgentBoolean_ROLE,
+    DefaultStore_setBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE,
                role);
 }
 

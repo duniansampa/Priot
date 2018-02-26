@@ -49,8 +49,8 @@ void Transport_initTransport(void)
 {
     DefaultStore_registerConfig(ASN01_BOOLEAN,
                                "snmp", "dontLoadHostConfig",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.DONT_LOAD_HOST_FILES);
+                               DsStorage_LIBRARY_ID,
+                               DsBool_DONT_LOAD_HOST_FILES);
 }
 
 /*
@@ -199,8 +199,8 @@ Transport_send(Transport_Transport *t, void *packet, int length,
         return ErrorCode_GENERR;
     }
 
-    dumpPacket = DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                        DSLIB_BOOLEAN.DUMP_PACKET);
+    dumpPacket = DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                        DsBool_DUMP_PACKET);
     debugLength = (ErrorCode_SUCCESS ==
                    Debug_isTokenRegistered("transport:send"));
 
@@ -435,8 +435,8 @@ Transport_tdomainTransportFull(const char *application,
                 default_target ? default_target : "[NIL]"));
 
     /* see if we can load a host-name specific set of conf files */
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                DSLIB_BOOLEAN.DONT_LOAD_HOST_FILES) &&
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                DsBool_DONT_LOAD_HOST_FILES) &&
         Transport_isFqdn(str)) {
         static int have_added_handler = 0;
         char *newhost;
@@ -449,16 +449,16 @@ Transport_tdomainTransportFull(const char *application,
             have_added_handler = 1;
             DefaultStore_registerConfig(ASN01_OCTET_STR,
                                        "snmp", "transport",
-                                       DSSTORAGE.LIBRARY_ID,
-                                       DSLIB_STRING.HOSTNAME);
+                                       DsStorage_LIBRARY_ID,
+                                       DsStr_HOSTNAME);
         }
 
         /* we save on specific setting that we don't allow to change
            from one transport creation to the next; ie, we don't want
            the "transport" specifier to be a default.  It should be a
            single invocation use only */
-        prev_hostname = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                              DSLIB_STRING.HOSTNAME);
+        prev_hostname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                              DsStr_HOSTNAME);
         if (prev_hostname)
             prev_hostname = strdup(prev_hostname);
 
@@ -473,14 +473,14 @@ Transport_tdomainTransportFull(const char *application,
         ReadConfig_filesOfType(EITHER_CONFIG, &file_names);
 
         if (NULL !=
-            (newhost = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                             DSLIB_STRING.HOSTNAME))) {
+            (newhost = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                             DsStr_HOSTNAME))) {
             Strlcpy_strlcpy(buf, newhost, sizeof(buf));
             str = buf;
         }
 
-        DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-                              DSLIB_STRING.HOSTNAME,
+        DefaultStore_setString(DsStorage_LIBRARY_ID,
+                              DsStr_HOSTNAME,
                               prev_hostname);
         TOOLS_FREE(prev_hostname);
     }

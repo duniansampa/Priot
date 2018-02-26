@@ -17,7 +17,7 @@ Iquery_parseIquerySecLevel(const char *token, char *line)
     int secLevel;
 
     if ((secLevel = V3_parseSecLevelConf( token, line )) >= 0 ) {
-        DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_setInt(DsStorage_APPLICATION_ID,
                            DsAgentInterger_INTERNAL_SECLEVEL, secLevel);
     } else {
     ReadConfig_error("Unknown security level: %s", line);
@@ -29,7 +29,7 @@ Iquery_parseIqueryVersion(const char *token, char *line)
 {
 
     if (!strcmp( line, "3" ))
-        DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_setInt(DsStorage_APPLICATION_ID,
                            DsAgentInterger_INTERNAL_VERSION, PRIOT_VERSION_3);
     else {
         ReadConfig_error("Unknown version: %s", line);
@@ -45,7 +45,7 @@ static int
 _Iquery_initDefaultIquerySession( int majorID, int minorID,
                               void *serverargs, void *clientarg)
 {
-    char *secName = DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+    char *secName = DefaultStore_getString(DsStorage_APPLICATION_ID,
                                           DsAgentString_INTERNAL_SECNAME);
     if (secName)
         Client_querySetDefaultSession(
@@ -78,13 +78,13 @@ _Iquery_tweakDefaultIquerySession( int majorID, int minorID,
 }
 
 void Iquery_initIquery(void){
-    char *type = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                       DSLIB_STRING.APPTYPE);
+    char *type = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                       DsStr_APPTYPE);
     DefaultStore_registerPremib(ASN01_OCTET_STR, type, "agentSecName",
-                               DSSTORAGE.APPLICATION_ID,
+                               DsStorage_APPLICATION_ID,
                                DsAgentString_INTERNAL_SECNAME);
     DefaultStore_registerPremib(ASN01_OCTET_STR, type, "iquerySecName",
-                               DSSTORAGE.APPLICATION_ID,
+                               DsStorage_APPLICATION_ID,
                                DsAgentString_INTERNAL_SECNAME);
 
     AgentReadConfig_priotdRegisterConfigHandler("iqueryVersion",
@@ -97,9 +97,9 @@ void Iquery_initIquery(void){
     /*
      * Set defaults
      */
-    DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+    DefaultStore_setInt(DsStorage_APPLICATION_ID,
                         DsAgentInterger_INTERNAL_VERSION, PRIOT_VERSION_3);
-    DefaultStore_setInt(DSSTORAGE.APPLICATION_ID,
+    DefaultStore_setInt(DsStorage_APPLICATION_ID,
                        DsAgentInterger_INTERNAL_SECLEVEL,  PRIOT_SEC_LEVEL_AUTHNOPRIV);
 
     Callback_registerCallback(CALLBACK_LIBRARY,

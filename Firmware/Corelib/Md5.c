@@ -87,7 +87,7 @@
 #define MD5_UNS(num) num##U
 
 void Md5_reverse(unsigned int *);
-static void     Md5_block(Md5_MdPTR, const unsigned int *);
+static void     _Md5_block(Md5_MdPTR, const unsigned int *);
 
 
 /*
@@ -144,7 +144,7 @@ void Md5_reverse(unsigned int *X)
  * ** Does not update MDp->count.
  * ** This routine is not user-callable.
  */
-static void Md5_block(Md5_MdPTR MDp, const unsigned int *X)
+static void _Md5_block(Md5_MdPTR MDp, const unsigned int *X)
 {
     register unsigned int tmp, A, B, C, D;      /* hpux sysv sun */
     A = MDp->buffer[0];
@@ -277,7 +277,7 @@ int Md5_update(Md5_MdPTR MDp, const unsigned char *X, unsigned int count)
      * Process data
      */
     if (count == 512) {         /* Full block of data to handle */
-        Md5_block(MDp, (const unsigned int *) X);
+        _Md5_block(MDp, (const unsigned int *) X);
     } else if (count > 512)     /* Check for count too large */
         return -2;
     /*
@@ -312,14 +312,14 @@ int Md5_update(Md5_MdPTR MDp, const unsigned char *X, unsigned int count)
         if (byte <= 55) {
             for (i = 0; i < 8; i++)
                 XX[56 + i] = MDp->count[i];
-            Md5_block(MDp, (unsigned int *) XX);
+            _Md5_block(MDp, (unsigned int *) XX);
         } else {                /* need to do two blocks to finish up */
-            Md5_block(MDp, (unsigned int *) XX);
+            _Md5_block(MDp, (unsigned int *) XX);
             for (i = 0; i < 56; i++)
                 XX[i] = 0;
             for (i = 0; i < 8; i++)
                 XX[56 + i] = MDp->count[i];
-            Md5_block(MDp, (unsigned int *) XX);
+            _Md5_block(MDp, (unsigned int *) XX);
         }
         /*
          * Set flag saying we're done with MD computation

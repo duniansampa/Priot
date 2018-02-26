@@ -149,23 +149,23 @@
 //            break;
 
 //        case 'A':
-//            DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.APPEND_LOGFILES, 1);
+//            DefaultStore_setBoolean(DsStorage_LIBRARY_ID, DsBool_APPEND_LOGFILES, 1);
 //            break;
 
 //        case 'c':
 //            if (optarg != NULL) {
-//                DefaultStore_setString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.OPTIONALCONFIG, optarg );
+//                DefaultStore_setString(DsStorage_LIBRARY_ID, DsStr_OPTIONALCONFIG, optarg );
 //            } else {
 //                this->usage(argv[0]);
 //            }
 //            break;
 
 //        case 'C':
-//            DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_READ_CONFIGS, 1);
+//            DefaultStore_setBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_READ_CONFIGS, 1);
 //            break;
 
 //        case 'd':
-//            DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DUMP_PACKET, ++snmp_dump_packet);
+//            DefaultStore_setBoolean(DsStorage_LIBRARY_ID, DsBool_DUMP_PACKET, ++snmp_dump_packet);
 //            break;
 
 //        case 'D':
@@ -242,7 +242,7 @@
 //        case 'n':
 //            if (optarg != NULL) {
 //                m_appName = optarg;
-//                DefaultStore_setString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.APPTYPE, (char*)m_appName.c_str());
+//                DefaultStore_setString(DsStorage_LIBRARY_ID, DsStr_APPTYPE, (char*)m_appName.c_str());
 //            } else {
 //                this->usage(argv[0]);
 //            }
@@ -256,7 +256,7 @@
 //            break;
 
 //        case 'q':
-//            DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT, 1);
+//            DefaultStore_setBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT, 1);
 //            break;
 
 //        case 'r':

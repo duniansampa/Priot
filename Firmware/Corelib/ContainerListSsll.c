@@ -23,14 +23,14 @@ typedef struct ContainerListSsll_SlContainer_s {
 typedef struct ContainerListSsll_SsllIterator_s {
     Container_Iterator base;
 
-    ContainerListSsll_SlNode         *pos;
-    ContainerListSsll_SlNode         *last;
+    ContainerListSsll_SlNode *pos;
+    ContainerListSsll_SlNode *last;
 } ContainerListSsll_SsllIterator;
 
-static Container_Iterator * ContainerListSsll_iteratorGet(Container_Container *c);
+static Container_Iterator * _ContainerListSsll_iteratorGet(Container_Container *c);
 
 
-static void * ContainerListSsll_get2(Container_Container *c, const void *key, int exact)
+static void * _ContainerListSsll_get(Container_Container *c, const void *key, int exact)
 {
     ContainerListSsll_SlContainer *sl = (ContainerListSsll_SlContainer*)c;
     ContainerListSsll_SlNode  *curr = sl->head;
@@ -69,7 +69,7 @@ static void * ContainerListSsll_get2(Container_Container *c, const void *key, in
  *
  *
  **********************************************************************/
-static int ContainerListSsll_free(Container_Container *c)
+static int _ContainerListSsll_free(Container_Container *c)
 {
     if(c) {
         free(c);
@@ -77,23 +77,23 @@ static int ContainerListSsll_free(Container_Container *c)
     return 0;
 }
 
-static void * ContainerListSsll_find(Container_Container *c, const void *data)
+static void * _ContainerListSsll_find(Container_Container *c, const void *data)
 {
     if((NULL == c) || (NULL == data))
         return NULL;
 
-    return ContainerListSsll_get2(c, data, 1);
+    return _ContainerListSsll_get(c, data, 1);
 }
 
-static void * ContainerListSsll_findNext(Container_Container *c, const void *data)
+static void * _ContainerListSsll_findNext(Container_Container *c, const void *data)
 {
     if(NULL == c)
         return NULL;
 
-    return ContainerListSsll_get2(c, data, 0);
+    return _ContainerListSsll_get(c, data, 0);
 }
 
-static int ContainerListSsll_insert(Container_Container *c, const void *data)
+static int _ContainerListSsll_insert(Container_Container *c, const void *data)
 {
     ContainerListSsll_SlContainer *sl = (ContainerListSsll_SlContainer*)c;
     ContainerListSsll_SlNode  *newNode, *curr = sl->head;
@@ -161,7 +161,7 @@ static int ContainerListSsll_insert(Container_Container *c, const void *data)
     return 0;
 }
 
-static int ContainerListSsll_remove(Container_Container *c, const void *data)
+static int _ContainerListSsll_remove(Container_Container *c, const void *data)
 {
     ContainerListSsll_SlContainer *sl = (ContainerListSsll_SlContainer*)c;
     ContainerListSsll_SlNode  *curr = sl->head;
@@ -209,7 +209,7 @@ static int ContainerListSsll_remove(Container_Container *c, const void *data)
     return 0;
 }
 
-static size_t ContainerListSsll_size(Container_Container *c)
+static size_t _ContainerListSsll_size(Container_Container *c)
 {
     ContainerListSsll_SlContainer *sl = (ContainerListSsll_SlContainer*)c;
 
@@ -219,7 +219,7 @@ static size_t ContainerListSsll_size(Container_Container *c)
     return sl->count;
 }
 
-static void ContainerListSsll_forEach(Container_Container *c, Container_FuncObjFunc *f, void *context)
+static void _ContainerListSsll_forEach(Container_Container *c, Container_FuncObjFunc *f, void *context)
 {
     ContainerListSsll_SlContainer *sl = (ContainerListSsll_SlContainer*)c;
     ContainerListSsll_SlNode  *curr;
@@ -231,7 +231,7 @@ static void ContainerListSsll_forEach(Container_Container *c, Container_FuncObjF
         (*f) ((void *)curr->data, context);
 }
 
-static void ContainerListSsll_clear(Container_Container *c, Container_FuncObjFunc *f, void *context)
+static void _ContainerListSsll_clear(Container_Container *c, Container_FuncObjFunc *f, void *context)
 {
     ContainerListSsll_SlContainer *sl = (ContainerListSsll_SlContainer*)c;
     ContainerListSsll_SlNode  *curr, *next;
@@ -274,15 +274,15 @@ Container_Container * ContainerListSsll_getSsll(void)
         return NULL;
     }
 
-    Container_init((Container_Container *)sl, NULL, ContainerListSsll_free,
-                    ContainerListSsll_size, NULL, ContainerListSsll_insert,
-                    ContainerListSsll_remove, ContainerListSsll_find);
+    Container_init((Container_Container *)sl, NULL, _ContainerListSsll_free,
+                    _ContainerListSsll_size, NULL, _ContainerListSsll_insert,
+                    _ContainerListSsll_remove, _ContainerListSsll_find);
 
-    sl->c.findNext = ContainerListSsll_findNext;
+    sl->c.findNext = _ContainerListSsll_findNext;
     sl->c.getSubset = NULL;
-    sl->c.getIterator = ContainerListSsll_iteratorGet;
-    sl->c.forEach = ContainerListSsll_forEach;
-    sl->c.clear = ContainerListSsll_clear;
+    sl->c.getIterator = _ContainerListSsll_iteratorGet;
+    sl->c.forEach = _ContainerListSsll_forEach;
+    sl->c.clear = _ContainerListSsll_clear;
 
 
     return (Container_Container*)sl;
@@ -364,7 +364,7 @@ void ContainerListSsll_init(void)
  * iterator
  *
  */
-static inline ContainerListSsll_SlContainer * ContainerListSsll_it2cont(ContainerListSsll_SsllIterator *it)
+static inline ContainerListSsll_SlContainer * _ContainerListSsll_it2cont(ContainerListSsll_SsllIterator *it)
 {
     if(NULL == it) {
         Assert_assert(NULL != it);
@@ -384,27 +384,27 @@ static inline ContainerListSsll_SlContainer * ContainerListSsll_it2cont(Containe
     return (ContainerListSsll_SlContainer *)it->base.container;
 }
 
-static void * ContainerListSsll_iteratorCurr(ContainerListSsll_SsllIterator *it)
+static void * _ContainerListSsll_iteratorCurr(ContainerListSsll_SsllIterator *it)
 {
-    ContainerListSsll_SlContainer *t = ContainerListSsll_it2cont(it);
+    ContainerListSsll_SlContainer *t = _ContainerListSsll_it2cont(it);
     if ((NULL == t) || (NULL == it->pos))
         return NULL;
 
     return it->pos->data;
 }
 
-static void * ContainerListSsll_iteratorFirst(ContainerListSsll_SsllIterator *it)
+static void * _ContainerListSsll_iteratorFirst(ContainerListSsll_SsllIterator *it)
 {
-    ContainerListSsll_SlContainer *t = ContainerListSsll_it2cont(it);
+    ContainerListSsll_SlContainer *t = _ContainerListSsll_it2cont(it);
     if ((NULL == t) || (NULL == t->head))
         return NULL;
 
     return t->head->data;
 }
 
-static void * ContainerListSsll_iteratorNext(ContainerListSsll_SsllIterator *it)
+static void * _ContainerListSsll_iteratorNext(ContainerListSsll_SsllIterator *it)
 {
-    ContainerListSsll_SlContainer *t = ContainerListSsll_it2cont(it);
+    ContainerListSsll_SlContainer *t = _ContainerListSsll_it2cont(it);
     if ((NULL == t) || (NULL == it->pos))
         return NULL;
 
@@ -415,10 +415,10 @@ static void * ContainerListSsll_iteratorNext(ContainerListSsll_SsllIterator *it)
     return it->pos->data;
 }
 
-static void * ContainerListSsll_iteratorLast(ContainerListSsll_SsllIterator *it)
+static void * _ContainerListSsll_iteratorLast(ContainerListSsll_SsllIterator *it)
 {
     ContainerListSsll_SlNode      *n;
-    ContainerListSsll_SlContainer *t = ContainerListSsll_it2cont(it);
+    ContainerListSsll_SlContainer *t = _ContainerListSsll_it2cont(it);
     if(NULL == t)
         return NULL;
 
@@ -440,7 +440,7 @@ static void * ContainerListSsll_iteratorLast(ContainerListSsll_SsllIterator *it)
     return it->last->data;
 }
 
-static int ContainerListSsll_iteratorReset(ContainerListSsll_SsllIterator *it)
+static int _ContainerListSsll_iteratorReset(ContainerListSsll_SsllIterator *it)
 {
     ContainerListSsll_SlContainer *t;
 
@@ -470,14 +470,14 @@ static int ContainerListSsll_iteratorReset(ContainerListSsll_SsllIterator *it)
     return 0;
 }
 
-static int ContainerListSsll_iteratorRelease(Container_Iterator *it)
+static int _ContainerListSsll_iteratorRelease(Container_Iterator *it)
 {
     free(it);
 
     return 0;
 }
 
-static Container_Iterator * ContainerListSsll_iteratorGet(Container_Container *c)
+static Container_Iterator * _ContainerListSsll_iteratorGet(Container_Container *c)
 {
     ContainerListSsll_SsllIterator* it;
 
@@ -490,14 +490,14 @@ static Container_Iterator * ContainerListSsll_iteratorGet(Container_Container *c
 
     it->base.container = c;
 
-    it->base.first = (Container_FuncIteratorRtn*) ContainerListSsll_iteratorFirst;
-    it->base.next = (Container_FuncIteratorRtn*) ContainerListSsll_iteratorNext;
-    it->base.curr = (Container_FuncIteratorRtn*) ContainerListSsll_iteratorCurr;
-    it->base.last = (Container_FuncIteratorRtn*) ContainerListSsll_iteratorLast;
-    it->base.reset = (Container_FuncIteratorRc*) ContainerListSsll_iteratorReset;
-    it->base.release = (Container_FuncIteratorRc*) ContainerListSsll_iteratorRelease;
+    it->base.first = (Container_FuncIteratorRtn*) _ContainerListSsll_iteratorFirst;
+    it->base.next = (Container_FuncIteratorRtn*) _ContainerListSsll_iteratorNext;
+    it->base.curr = (Container_FuncIteratorRtn*) _ContainerListSsll_iteratorCurr;
+    it->base.last = (Container_FuncIteratorRtn*) _ContainerListSsll_iteratorLast;
+    it->base.reset = (Container_FuncIteratorRc*) _ContainerListSsll_iteratorReset;
+    it->base.release = (Container_FuncIteratorRc*) _ContainerListSsll_iteratorRelease;
 
-    (void) ContainerListSsll_iteratorReset(it);
+    (void) _ContainerListSsll_iteratorReset(it);
 
     return (Container_Iterator *)it;
 }

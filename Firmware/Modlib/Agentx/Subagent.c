@@ -72,7 +72,7 @@ Subagent_startup(int majorID, int minorID,
      * to try to connect to master or setup a ping alarm if it couldn't
      * succeed. if no ping interval was set up, just try to connect once.
      */
-    if (DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+    if (DefaultStore_getInt(DsStorage_APPLICATION_ID,
                             DsAgentInterger_AGENTX_PING_INTERVAL) > 0)
         _Subagent_reopenSession(0, NULL);
     else {
@@ -109,7 +109,7 @@ Subagent_init(void)
     if (++_subagent_initInit != 1)
         return 0;
 
-    Assert_assert(DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+    Assert_assert(DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                           DsAgentBoolean_ROLE) == SUB_AGENT);
 
 
@@ -131,7 +131,7 @@ Subagent_init(void)
 
 void
 Subagent_enableSubagent(void) {
-    DefaultStore_setBoolean(DSSTORAGE.APPLICATION_ID, DsAgentBoolean_ROLE,
+    DefaultStore_setBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE,
                            SUB_AGENT);
 }
 
@@ -236,7 +236,7 @@ Subagent_handleAgentxPacket(int operation, Types_Session * session, int reqid,
     if (operation == API_CALLBACK_OP_DISCONNECT) {
         struct Client_SynchState_s *state = (struct Client_SynchState_s *) magic;
         int             period =
-            DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+            DefaultStore_getInt(DsStorage_APPLICATION_ID,
                                 DsAgentInterger_AGENTX_PING_INTERVAL);
         DEBUG_MSGTL(("agentx/subagent",
                     "transport disconnect indication\n"));
@@ -796,7 +796,7 @@ Subagent_openMasterSession(void)
     sess.callback = Subagent_handleAgentxPacket;
     sess.authenticator = NULL;
 
-    agentx_socket = DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+    agentx_socket = DefaultStore_getString(DsStorage_APPLICATION_ID,
                                           DsAgentString_X_SOCKET);
     t = Transport_openClient("agentx", agentx_socket);
     if (t == NULL) {
@@ -804,13 +804,13 @@ Subagent_openMasterSession(void)
          * Diagnose snmp_open errors with the input
          * Types_Session pointer.
          */
-        if (!DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+        if (!DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                      DsAgentBoolean_NO_CONNECTION_WARNINGS)) {
             char buf[1024];
             snprintf(buf, sizeof(buf), "Warning: "
                      "Failed to connect to the agentx master agent (%s)",
                      agentx_socket ? agentx_socket : "[NIL]");
-            if (!DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+            if (!DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                           DsAgentBoolean_NO_ROOT_ACCESS)) {
                 Api_sessLogError(LOGGER_PRIORITY_WARNING, buf, &sess);
             } else {
@@ -825,7 +825,7 @@ Subagent_openMasterSession(void)
                       Protocol_reallocBuild, Protocol_checkPacket, NULL);
 
     if (agent_mainSession == NULL) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.APPLICATION_ID,
+        if (!DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                                     DsAgentBoolean_NO_CONNECTION_WARNINGS)) {
             char buf[1024];
             snprintf(buf, sizeof(buf), "Error: "
@@ -948,7 +948,7 @@ _Subagent_registerPingAlarm(int majorID, int minorID,
 
     Types_Session *ss = (Types_Session *) clientarg;
     int             ping_interval =
-        DefaultStore_getInt(DSSTORAGE.APPLICATION_ID,
+        DefaultStore_getInt(DsStorage_APPLICATION_ID,
                            DsAgentInterger_AGENTX_PING_INTERVAL);
 
     if (!ping_interval)         /* don't do anything if not setup properly */

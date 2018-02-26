@@ -640,7 +640,7 @@ Trap_sendTraps(int trap, int specific,
      * Ensure that the v1 trap PDU includes the local IP address
      */
        pdu_in_addr_t = (in_addr_t *) template_v1pdu->agentAddr;
-       v1trapaddress = DefaultStore_getString(DSSTORAGE.APPLICATION_ID,
+       v1trapaddress = DefaultStore_getString(DsStorage_APPLICATION_ID,
                                              DsAgentString_TRAP_ADDR);
        if (v1trapaddress != NULL) {
            /* "v1trapaddress" was specified in config, try to resolve it */

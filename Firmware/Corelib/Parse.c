@@ -521,14 +521,14 @@ static u_int    Parse_computeMatch(const char *search_base, const char *key);
 void Parse_mibToggleOptionsUsage(const char *lead, FILE * outf)
 {
     fprintf(outf, "%su:  %sallow the use of underlines in MIB symbols\n",
-            lead, ((DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_PARSE_LABEL)) ?
+            lead, ((DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_MIB_PARSE_LABEL)) ?
            "dis" : ""));
     fprintf(outf, "%sc:  %sallow the use of \"--\" to terminate comments\n",
-            lead, ((DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_COMMENT_TERM)) ?
+            lead, ((DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM)) ?
            "" : "dis"));
 
     fprintf(outf, "%sd:  %ssave the DESCRIPTIONs of the MIB objects\n",
-            lead, ((DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) ?
+            lead, ((DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_SAVE_MIB_DESCRS)) ?
            "do not " : ""));
 
     fprintf(outf, "%se:  disable errors when MIB symbols conflict\n", lead);
@@ -547,33 +547,33 @@ char * Parse_mibToggleOptions(char *options)
         while (*options) {
             switch (*options) {
             case 'u':
-                DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_PARSE_LABEL,
-                               !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                               DSLIB_BOOLEAN.MIB_PARSE_LABEL));
+                DefaultStore_setBoolean(DsStorage_LIBRARY_ID, DsBool_MIB_PARSE_LABEL,
+                               !DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                               DsBool_MIB_PARSE_LABEL));
                 break;
 
             case 'c':
-                DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_COMMENT_TERM);
+                DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM);
                 break;
 
             case 'e':
-                DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_ERRORS);
+                DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_MIB_ERRORS);
                 break;
 
             case 'w':
-                DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.MIB_WARNINGS, 1);
+                DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_MIB_WARNINGS, 1);
                 break;
 
             case 'W':
-                DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.MIB_WARNINGS, 2);
+                DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_MIB_WARNINGS, 2);
                 break;
 
             case 'd':
-                DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.SAVE_MIB_DESCRS);
+                DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_SAVE_MIB_DESCRS);
                 break;
 
             case 'R':
-                DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_REPLACE);
+                DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_MIB_REPLACE);
                 break;
 
             default:
@@ -1221,8 +1221,8 @@ static void Parse_mergeAnonChildren(struct Parse_Tree_s *tp1, struct Parse_Tree_
                         previous->parent = tp2;
                     goto next;
                 } else if (!PARSE_LABEL_COMPARE(child1->label, child2->label)) {
-                    if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                           DSLIB_INTEGER.MIB_WARNINGS)) {
+                    if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                           DsInt_MIB_WARNINGS)) {
                         Logger_log(LOGGER_PRIORITY_WARNING,
                                  "Warning: %s.%ld is both %s and %s (%s)\n",
                                  tp2->label, child1->subid, child1->label,
@@ -1355,8 +1355,8 @@ static void Parse_doSubtree(struct Parse_Tree_s *root, struct Parse_Node_s **nod
                 ++tp->number_modules;
                 tp->module_list = int_p;
 
-                if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_BOOLEAN.MIB_REPLACE)) {
+                if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                       DsBool_MIB_REPLACE)) {
                     /*
                      * Replace from node
                      */
@@ -1371,8 +1371,8 @@ static void Parse_doSubtree(struct Parse_Tree_s *root, struct Parse_Node_s **nod
             if (!strncmp(np->label, PARSE_ANON, PARSE_ANON_LEN) ||
                 !strncmp(tp->label, PARSE_ANON, PARSE_ANON_LEN)) {
                 anon_tp = tp;   /* Need to merge these two trees later */
-            } else if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                      DSLIB_INTEGER.MIB_WARNINGS)) {
+            } else if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                      DsInt_MIB_WARNINGS)) {
                 Logger_log(LOGGER_PRIORITY_WARNING,
                          "Warning: %s.%ld is both %s and %s (%s)\n",
                          root->label, np->subid, tp->label, np->label,
@@ -1478,8 +1478,8 @@ static void Parse_doSubtree(struct Parse_Tree_s *root, struct Parse_Node_s **nod
                 /*
                  * Uh?  One of these two should have been anonymous!
                  */
-                if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_INTEGER.MIB_WARNINGS)) {
+                if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                       DsInt_MIB_WARNINGS)) {
                     Logger_log(LOGGER_PRIORITY_WARNING,
                              "Warning: expected anonymous node (either %s or %s) in %s\n",
                              tp->label, anon_tp->label, parse_file);
@@ -2020,8 +2020,8 @@ Parse_parseRanges(FILE * fp, struct Parse_RangeList_s **retp)
             errno = 0;
             high = strtoul(nexttoken, NULL, 10);
             if ( errno == PARSE_RANGE ) {
-                if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                                       DSLIB_INTEGER.MIB_WARNINGS))
+                if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                                       DsInt_MIB_WARNINGS))
                     Logger_log(LOGGER_PRIORITY_WARNING,
                              "Warning: Upper bound not handled correctly (%s != %d): At line %d in %s\n",
                                  nexttoken, high, parse_mibLine, parse_file);
@@ -2157,8 +2157,8 @@ Parse_parseAsntype(FILE * fp, char *name, int *ntype, char *ntoken)
                     else
                         hint = strdup(token);
                 } else if (type == PARSE_DESCRIPTION &&
-                           DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                                  DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+                           DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                                  DsBool_SAVE_MIB_DESCRS)) {
                     type = Parse_getToken(fp, quoted_string_buffer, PARSE_MAXQUOTESTR);
                     if (type != PARSE_QUOTESTRING)
                         Parse_printError("DESCRIPTION must be string", token,
@@ -2270,8 +2270,8 @@ Parse_parseObjecttype(FILE * fp, char *name)
         tctype = Parse_getTc(token, parse_currentModule, &tmp_index,
                         &np->enums, &np->ranges, &np->hint);
         if (tctype == PARSE_LABEL &&
-            DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_INTEGER.MIB_WARNINGS) > 1) {
+            DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                   DsInt_MIB_WARNINGS) > 1) {
             Parse_printError("Warning: No known translation for type", token,
                         type);
         }
@@ -2397,8 +2397,8 @@ Parse_parseObjecttype(FILE * fp, char *name)
                 Parse_freeNode(np);
                 return NULL;
             }
-            if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                       DsBool_SAVE_MIB_DESCRS)) {
                 np->description = strdup(quoted_string_buffer);
             }
             break;
@@ -2579,8 +2579,8 @@ static struct Parse_Node_s * Parse_parseObjectgroup(FILE * fp, char *name, int w
         Parse_freeNode(np);
         return NULL;
     }
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                   DsBool_SAVE_MIB_DESCRS)) {
         np->description = strdup(quoted_string_buffer);
     }
     type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
@@ -2628,8 +2628,8 @@ Parse_parseNotificationDefinition(FILE * fp, char *name)
                 Parse_freeNode(np);
                 return NULL;
             }
-            if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                       DsBool_SAVE_MIB_DESCRS)) {
                 np->description = strdup(quoted_string_buffer);
             }
             break;
@@ -2686,8 +2686,8 @@ Parse_parseTrapDefinition(FILE * fp, char *name)
                 Parse_freeNode(np);
                 return NULL;
             }
-            if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                       DsBool_SAVE_MIB_DESCRS)) {
                 np->description = strdup(quoted_string_buffer);
             }
             break;
@@ -2903,8 +2903,8 @@ Parse_parseCompliance(FILE * fp, char *name)
         Parse_printError("Bad DESCRIPTION", quoted_string_buffer, type);
         goto skip;
     }
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_BOOLEAN.SAVE_MIB_DESCRS))
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                   DsBool_SAVE_MIB_DESCRS))
         np->description = strdup(quoted_string_buffer);
     type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
     if (type == PARSE_REFERENCE) {
@@ -3056,8 +3056,8 @@ Parse_parseCapabilities(FILE * fp, char *name)
         Parse_printError("Bad DESCRIPTION", quoted_string_buffer, type);
         goto skip;
     }
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                   DsBool_SAVE_MIB_DESCRS)) {
         np->description = strdup(quoted_string_buffer);
     }
     type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
@@ -3295,8 +3295,8 @@ Parse_parseModuleIdentity(FILE * fp, char *name)
         Parse_printError("Bad DESCRIPTION", quoted_string_buffer, type);
         goto skip;
     }
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_BOOLEAN.SAVE_MIB_DESCRS)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                   DsBool_SAVE_MIB_DESCRS)) {
         np->description = strdup(quoted_string_buffer);
     }
     type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
@@ -3371,8 +3371,8 @@ Parse_parseMacro(FILE * fp, char *name)
         return NULL;
     }
 
-    if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-               DSLIB_INTEGER.MIB_WARNINGS)) {
+    if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+               DsInt_MIB_WARNINGS)) {
         Logger_log(LOGGER_PRIORITY_WARNING,
                  "%s MACRO (lines %d..%d parsed and ignored).\n", name,
                  iLine, parse_mibLine);
@@ -3570,8 +3570,8 @@ Parse_readModuleReplacements(const char *name)
 
     for (mcp = parse_moduleMapHead; mcp; mcp = mcp->next) {
         if (!PARSE_LABEL_COMPARE(mcp->old_module, name)) {
-            if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_INTEGER.MIB_WARNINGS)) {
+            if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                   DsInt_MIB_WARNINGS)) {
                 Logger_log(LOGGER_PRIORITY_WARNING,
                          "Loading replacement module %s for %s (%s)\n",
                          mcp->new_module, name, parse_file);
@@ -3606,8 +3606,8 @@ Parse_readImportReplacements(const char *old_module_name,
                     !strncmp(mcp->tag, identifier->label, mcp->tag_len))
                 ) {
 
-                if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_INTEGER.MIB_WARNINGS)) {
+                if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                       DsInt_MIB_WARNINGS)) {
                     Logger_log(LOGGER_PRIORITY_WARNING,
                              "Importing %s from replacement module %s instead of %s (%s)\n",
                              identifier->label, mcp->new_module,
@@ -3970,8 +3970,8 @@ Parse_newModule(const char *name, const char *file)
             if (PARSE_LABEL_COMPARE(mp->file, file)) {
                 DEBUG_MSGTL(("parse-mibs", "    %s is now in %s\n",
                             name, file));
-                if (DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_INTEGER.MIB_WARNINGS)) {
+                if (DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                       DsInt_MIB_WARNINGS)) {
                     Logger_log(LOGGER_PRIORITY_WARNING,
                              "Warning: Module %s was in %s now is %s\n",
                              name, mp->file, file);
@@ -4333,8 +4333,8 @@ Parse_isLabelchar(int ich)
 {
     if ((isalnum(ich)) || (ich == '-'))
         return 1;
-    if (ich == '_' && DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                         DSLIB_BOOLEAN.MIB_PARSE_LABEL)) {
+    if (ich == '_' && DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                         DsBool_MIB_PARSE_LABEL)) {
         return 1;
     }
 
@@ -4483,8 +4483,8 @@ Parse_getToken(FILE * fp, char *token, int maxtlen)
     case '-':
         ch_next = Parse_getc(fp);
         if (ch_next == '-') {
-            if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_BOOLEAN.MIB_COMMENT_TERM)) {
+            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                       DsBool_MIB_COMMENT_TERM)) {
                 /*
                  * Treat the rest of this line as a comment.
                  */
@@ -4775,8 +4775,8 @@ static int Parse_parseQuoteString(FILE * fp, char *token, int maxtlen)
             parse_mibLine++;
         } else if (ch == '"') {
             *token = '\0';
-            if (too_long && DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                       DSLIB_INTEGER.MIB_WARNINGS) > 1) {
+            if (too_long && DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                       DsInt_MIB_WARNINGS) > 1) {
                 /*
                  * show short form for brevity sake
                  */

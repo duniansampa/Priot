@@ -5,7 +5,7 @@
 #include "SocketBaseDomain.h"
 #include "DefaultStore.h"
 #include "IPv4BaseDomain.h"
-#include "../Debug.h"
+#include "Debug.h"
 #include "Tools.h"
 #include "Assert.h"
 #include "Assert.h"
@@ -53,7 +53,7 @@ Transport_Transport * UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int 
     }
 
     t->sock = socket(PF_INET, SOCK_DGRAM, 0);
-    DEBUG_MSGTL(("UDPBase", "openned socket %d as local=%d\n", t->sock, local));
+    DEBUG_MSGTL(("uDPBase", "openned socket %d as local=%d\n", t->sock, local));
     if (t->sock < 0) {
         Transport_free(t);
         return NULL;
@@ -104,7 +104,7 @@ Transport_Transport * UDPIPv4BaseDomain_transport(struct sockaddr_in *addr, int 
          * client address to send from, then bind to that.
          * Otherwise the send will use "something sensible".
          */
-        client_socket = (char *) DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CLIENT_ADDR);
+        client_socket = (char *) DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_CLIENT_ADDR);
 
         if (client_socket) {
             struct sockaddr_in client_addr;

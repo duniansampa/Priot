@@ -132,19 +132,19 @@
 
 #include <netinet/in.h>
 
-#define CHECK_OVERFLOW_S(x,y) do {                                      \
-        if (x > INT32_MAX) {                                            \
+#define CHECK_OVERFLOW_S(x,y) do {                                                          \
+        if (x > INT32_MAX) {                                                                \
             DEBUG_MSG(("asn","truncating signed value %ld to 32 bits (%d)\n",(long)(x),y)); \
-            x &= 0xffffffff;                                            \
-        } else if (x < INT32_MIN) {                                     \
+            x &= 0xffffffff;                                                                \
+        } else if (x < INT32_MIN) {                                                         \
             DEBUG_MSG(("asn","truncating signed value %ld to 32 bits (%d)\n",(long)(x),y)); \
-            x = 0 - (x & 0xffffffff);                                   \
-        }                                                               \
+            x = 0 - (x & 0xffffffff);                                                       \
+        }                                                                                   \
     } while(0)
 
-#define CHECK_OVERFLOW_U(x,y) do {                                      \
-        if (x > UINT32_MAX) {                                           \
-            x &= 0xffffffff;                                            \
+#define CHECK_OVERFLOW_U(x,y) do {                                              \
+        if (x > UINT32_MAX) {                                                   \
+            x &= 0xffffffff;                                                    \
             DEBUG_MSG(("asn","truncating unsigned value to 32 bits (%d)\n",y)); \
         }                                                                       \
     } while(0)
@@ -158,7 +158,7 @@
  * @param wrongsize  wrong size
  * @param rightsize  expected size
  */
-static void Asn01_sizeErr(const char *str, size_t wrongsize, size_t rightsize)
+static void _Asn01_sizeErr(const char *str, size_t wrongsize, size_t rightsize)
 {
     char            ebuf[128];
 
@@ -176,7 +176,7 @@ static void Asn01_sizeErr(const char *str, size_t wrongsize, size_t rightsize)
  * @param str        error string
  * @param wrongtype  wrong type
  */
-static void Asn01_typeErr(const char *str, int wrongtype)
+static void _Asn01_typeErr(const char *str, int wrongtype)
 {
     char            ebuf[128];
 
@@ -193,7 +193,7 @@ static void Asn01_typeErr(const char *str, int wrongtype)
  * @param wrongsize  wrong  length
  * @param rightsize  expected length
  */
-static void Asn01_lengthErr(const char *str, size_t wrongsize, size_t rightsize)
+static void _Asn01_lengthErr(const char *str, size_t wrongsize, size_t rightsize)
 {
     char            ebuf[128];
 
@@ -216,7 +216,7 @@ static void Asn01_lengthErr(const char *str, size_t wrongsize, size_t rightsize)
  *
  * @return 1 on error 0 on success
  */
-static int Asn01_parseLengthCheck(const char *str,
+static int _Asn01_parseLengthCheck(const char *str,
                         const u_char * bufp, const u_char * data,
                         u_long plen, size_t dlen)
 {
@@ -254,7 +254,7 @@ static int Asn01_parseLengthCheck(const char *str,
  *
  * @return 0 on success, 1 on error
  */
-static int Asn01_buildHeaderCheck(const char *str, const u_char * data,
+static int _Asn01_buildHeaderCheck(const char *str, const u_char * data,
                         size_t datalen, size_t typedlen)
 {
     char            ebuf[128];
@@ -287,7 +287,7 @@ static int Asn01_buildHeaderCheck(const char *str, const u_char * data,
  *
  * @return 0 on success 1 on error
  */
-static int Asn01_reallocBuildHeaderCheck(const char *str,
+static int _Asn01_reallocBuildHeaderCheck(const char *str,
                                 u_char ** pkt,
                                 const size_t * pkt_len, size_t typedlen)
 {
@@ -346,7 +346,7 @@ int Asn01_checkPacket(u_char * pkt, size_t len)
     }
 }
 
-static int Asn01_bitstringCheck(const char *str, size_t asn_length, u_char datum)
+static int _Asn01_bitstringCheck(const char *str, size_t asn_length, u_char datum)
 {
     char            ebuf[128];
 
@@ -401,22 +401,22 @@ u_char * Asn01_parseInt(u_char * data,
     register long   value = 0;
 
     if (intsize != sizeof(long)) {
-        Asn01_sizeErr(errpre, intsize, sizeof(long));
+        _Asn01_sizeErr(errpre, intsize, sizeof(long));
         return NULL;
     }
     *type = *bufp++;
     if (*type != ASN01_INTEGER) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
 
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck
+    if (_Asn01_parseLengthCheck
         (errpre, bufp, data, asn_length, *datalength))
         return NULL;
 
     if ((size_t) asn_length > intsize || (int) asn_length == 0) {
-        Asn01_lengthErr(errpre, (size_t) asn_length, intsize);
+        _Asn01_lengthErr(errpre, (size_t) asn_length, intsize);
         return NULL;
     }
 
@@ -431,7 +431,7 @@ u_char * Asn01_parseInt(u_char * data,
 
     CHECK_OVERFLOW_S(value,1);
 
-    DEBUG_MSG(("dumpv_recv", "  Integer:\t%ld (0x%.2lX)\n", value, value));
+    DEBUG_MSG(("dumpvRecv", "  Integer:\t%ld (0x%.2lX)\n", value, value));
 
     *intp = value;
     return bufp;
@@ -472,23 +472,23 @@ u_char * Asn01_parseUnsignedInt(u_char * data,
     register u_long value = 0;
 
     if (intsize != sizeof(long)) {
-        Asn01_sizeErr(errpre, intsize, sizeof(long));
+        _Asn01_sizeErr(errpre, intsize, sizeof(long));
         return NULL;
     }
     *type = *bufp++;
     if (*type != ASN01_COUNTER && *type != ASN01_GAUGE && *type != ASN01_TIMETICKS
             && *type != ASN01_UINTEGER) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck
+    if (_Asn01_parseLengthCheck
         (errpre, bufp, data, asn_length, *datalength))
         return NULL;
 
     if ((asn_length > (intsize + 1)) || ((int) asn_length == 0) ||
         ((asn_length == intsize + 1) && *bufp != 0x00)) {
-        Asn01_lengthErr(errpre, (size_t) asn_length, intsize);
+        _Asn01_lengthErr(errpre, (size_t) asn_length, intsize);
         return NULL;
     }
     *datalength -= (int) asn_length + (bufp - data);
@@ -502,7 +502,7 @@ u_char * Asn01_parseUnsignedInt(u_char * data,
 
     CHECK_OVERFLOW_U(value,2);
 
-    DEBUG_MSG(("dumpv_recv", "  UInteger:\t%ld (0x%.2lX)\n", value, value));
+    DEBUG_MSG(("dumpvRecv", "  UInteger:\t%ld (0x%.2lX)\n", value, value));
 
     *intp = value;
     return bufp;
@@ -544,7 +544,7 @@ u_char * Asn01_buildInt(u_char * data,
     u_char         *initdatap = data;
 
     if (intsize != sizeof(long)) {
-        Asn01_sizeErr(errpre, intsize, sizeof(long));
+        _Asn01_sizeErr(errpre, intsize, sizeof(long));
         return NULL;
     }
     integer = *intp;
@@ -565,7 +565,7 @@ u_char * Asn01_buildInt(u_char * data,
         integer <<= 8;
     }
     data = Asn01_buildHeader(data, datalength, type, intsize);
-    if (Asn01_buildHeaderCheck(errpre, data, *datalength, intsize))
+    if (_Asn01_buildHeaderCheck(errpre, data, *datalength, intsize))
         return NULL;
 
     *datalength -= intsize;
@@ -578,7 +578,7 @@ u_char * Asn01_buildInt(u_char * data,
         integer <<= 8;
     }
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_MSG(("dumpv_send", "  Integer:\t%ld (0x%.2lX)\n", *intp, *intp));
+    DEBUG_MSG(("dumpvSend", "  Integer:\t%ld (0x%.2lX)\n", *intp, *intp));
     return data;
 }
 
@@ -621,7 +621,7 @@ u_char * Asn01_buildUnsignedInt(u_char * data,
     u_char *initdatap = data;
 
     if (intsize != sizeof(long)) {
-        Asn01_sizeErr(errpre, intsize, sizeof(long));
+        _Asn01_sizeErr(errpre, intsize, sizeof(long));
         return NULL;
     }
     integer = *intp;
@@ -654,7 +654,7 @@ u_char * Asn01_buildUnsignedInt(u_char * data,
         }
     }
     data = Asn01_buildHeader(data, datalength, type, intsize);
-    if (Asn01_buildHeaderCheck(errpre, data, *datalength, intsize))
+    if (_Asn01_buildHeaderCheck(errpre, data, *datalength, intsize))
         return NULL;
 
     *datalength -= intsize;
@@ -671,7 +671,7 @@ u_char * Asn01_buildUnsignedInt(u_char * data,
         integer <<= 8;
     }
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_MSG(("dumpv_send", "  UInteger:\t%ld (0x%.2lX)\n", *intp, *intp));
+    DEBUG_MSG(("dumpvSend", "  UInteger:\t%ld (0x%.2lX)\n", *intp, *intp));
     return data;
 }
 
@@ -715,18 +715,18 @@ u_char * Asn01_parseString(u_char * data,
     *type = *bufp++;
     if (*type != ASN01_OCTET_STR && *type != ASN01_IPADDRESS && *type != ASN01_OPAQUE
             && *type != ASN01_NSAP) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
 
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck
+    if (_Asn01_parseLengthCheck
         (errpre, bufp, data, asn_length, *datalength)) {
         return NULL;
     }
 
     if (asn_length > *strlength) {
-        Asn01_lengthErr(errpre, (size_t) asn_length, *strlength);
+        _Asn01_lengthErr(errpre, (size_t) asn_length, *strlength);
         return NULL;
     }
 
@@ -738,18 +738,18 @@ u_char * Asn01_parseString(u_char * data,
     *strlength = asn_length;
     *datalength -= asn_length + (bufp - data);
 
-    DEBUG_IF("dumpv_recv") {
+    DEBUG_IF("dumpvRecv") {
         u_char         *buf = (u_char *) malloc(1 + asn_length);
         size_t          l = (buf != NULL) ? (1 + asn_length) : 0, ol = 0;
 
         if (Mib_sprintReallocAsciiString
             (&buf, &l, &ol, 1, str, asn_length)) {
-            DEBUG_MSG(("dumpv_recv", "  String:\t%s\n", buf));
+            DEBUG_MSG(("dumpvRecv", "  String:\t%s\n", buf));
         } else {
             if (buf == NULL) {
-                DEBUG_MSG(("dumpv_recv", "  String:\t[TRUNCATED]\n"));
+                DEBUG_MSG(("dumpvRecv", "  String:\t[TRUNCATED]\n"));
             } else {
-                DEBUG_MSG(("dumpv_recv", "  String:\t%s [TRUNCATED]\n",
+                DEBUG_MSG(("dumpvRecv", "  String:\t%s [TRUNCATED]\n",
                           buf));
             }
         }
@@ -796,7 +796,7 @@ u_char * Asn01_buildString(u_char * data,
      */
     u_char         *initdatap = data;
     data = Asn01_buildHeader(data, datalength, type, strlength);
-    if (Asn01_buildHeaderCheck
+    if (_Asn01_buildHeaderCheck
         ("build string", data, *datalength, strlength))
         return NULL;
 
@@ -809,18 +809,18 @@ u_char * Asn01_buildString(u_char * data,
     }
     *datalength -= strlength;
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap + strlength);
-    DEBUG_IF("dumpv_send") {
+    DEBUG_IF("dumpvSend") {
         u_char         *buf = (u_char *) malloc(1 + strlength);
         size_t          l = (buf != NULL) ? (1 + strlength) : 0, ol = 0;
 
         if (Mib_sprintReallocAsciiString
             (&buf, &l, &ol, 1, str, strlength)) {
-            DEBUG_MSG(("dumpv_send", "  String:\t%s\n", buf));
+            DEBUG_MSG(("dumpvSend", "  String:\t%s\n", buf));
         } else {
             if (buf == NULL) {
-                DEBUG_MSG(("dumpv_send", "  String:\t[TRUNCATED]\n"));
+                DEBUG_MSG(("dumpvSend", "  String:\t[TRUNCATED]\n"));
             } else {
-                DEBUG_MSG(("dumpv_send", "  String:\t%s [TRUNCATED]\n",
+                DEBUG_MSG(("dumpvSend", "  String:\t%s [TRUNCATED]\n",
                           buf));
             }
         }
@@ -835,7 +835,7 @@ u_char * Asn01_buildString(u_char * data,
 
 /**
  * @internal
- * asn_parse_header - interprets the ID and length of the current object.
+ * Asn01_parseHeader - interprets the ID and length of the current object.
  *
  *  On entry, datalength is input as the number of valid bytes following
  *   "data".  On exit, it is returned as the number of valid bytes
@@ -872,7 +872,7 @@ u_char * Asn01_parseHeader(u_char * data, size_t * datalength, u_char * type)
     *type = *bufp;
     bufp = Asn01_parseLength(bufp + 1, &asn_length);
 
-    if (Asn01_parseLengthCheck
+    if (_Asn01_parseLengthCheck
         ("parse header", bufp, data, asn_length, *datalength))
         return NULL;
 
@@ -901,7 +901,7 @@ u_char * Asn01_parseHeader(u_char * data, size_t * datalength, u_char * type)
          * value is encoded as special format
          */
         bufp = Asn01_parseLength(bufp + 2, &asn_length);
-        if (Asn01_parseLengthCheck("parse opaque header", bufp, data,
+        if (_Asn01_parseLengthCheck("parse opaque header", bufp, data,
                                     asn_length, *datalength))
             return NULL;
     }
@@ -913,9 +913,9 @@ u_char * Asn01_parseHeader(u_char * data, size_t * datalength, u_char * type)
 
 /**
  * @internal
- * same as asn_parse_header with test for expected type
+ * same as Asn01_parseHeader with test for expected type
  *
- * @see asn_parse_header
+ * @see Asn01_parseHeader
  *
  * @param data          IN - pointer to start of object
  * @param datalength    IN/OUT - number of valid bytes left in buffer
@@ -1097,7 +1097,7 @@ u_char * Asn01_parseLength(u_char * data, u_long * length)
 
 /**
  * @internal
- * asn_build_length - builds an ASN header for a length with
+ * Asn01_buildLength - builds an ASN header for a length with
  * length specified.
  *
  *  On entry, datalength is input as the number of valid bytes following
@@ -1209,11 +1209,11 @@ u_char * Asn01_parseObjid(u_char * data,
 
     *type = *bufp++;
     if (*type != ASN01_OBJECT_ID) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck("parse objid", bufp, data,
+    if (_Asn01_parseLengthCheck("parse objid", bufp, data,
                                 asn_length, *datalength))
         return NULL;
 
@@ -1284,9 +1284,9 @@ u_char * Asn01_parseObjid(u_char * data,
 
     *objidlength = (int) (oidp - objid);
 
-    DEBUG_MSG(("dumpv_recv", "  ObjID: "));
-    DEBUG_MSGOID(("dumpv_recv", objid, *objidlength));
-    DEBUG_MSG(("dumpv_recv", "\n"));
+    DEBUG_MSG(("dumpvRecv", "  ObjID: "));
+    DEBUG_MSGOID(("dumpvRecv", objid, *objidlength));
+    DEBUG_MSG(("dumpvRecv", "\n"));
     return bufp;
 }
 
@@ -1402,7 +1402,7 @@ u_char * Asn01_buildObjid(u_char * data,
      * store the ASN.1 tag and length
      */
     data = Asn01_buildHeader(data, datalength, type, asnlength);
-    if (Asn01_buildHeaderCheck
+    if (_Asn01_buildHeaderCheck
         ("build objid", data, *datalength, asnlength))
         return NULL;
 
@@ -1451,9 +1451,9 @@ u_char * Asn01_buildObjid(u_char * data,
      */
     *datalength -= asnlength;
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_MSG(("dumpv_send", "  ObjID: "));
-    DEBUG_MSGOID(("dumpv_send", objid, objidlength));
-    DEBUG_MSG(("dumpv_send", "\n"));
+    DEBUG_MSG(("dumpvSend", "  ObjID: "));
+    DEBUG_MSGOID(("dumpvSend", objid, objidlength));
+    DEBUG_MSG(("dumpvSend", "\n"));
     return data;
 }
 
@@ -1498,7 +1498,7 @@ u_char * Asn01_parseNull(u_char * data, size_t * datalength, u_char * type)
     *datalength -= (bufp - data);
 
     DEBUG_DUMPSETUP("recv", data, bufp - data);
-    DEBUG_MSG(("dumpv_recv", "  NULL\n"));
+    DEBUG_MSG(("dumpvRecv", "  NULL\n"));
 
     return bufp + asn_length;
 }
@@ -1532,7 +1532,7 @@ u_char * Asn01_buildNull(u_char * data, size_t * datalength, u_char type)
     u_char         *initdatap = data;
     data = Asn01_buildHeader(data, datalength, type, 0);
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_MSG(("dumpv_send", "  NULL\n"));
+    DEBUG_MSG(("dumpvSend", "  NULL\n"));
     return data;
 }
 
@@ -1572,25 +1572,25 @@ u_char * Asn01_parseBitstring(u_char * data,
 
     *type = *bufp++;
     if (*type != ASN01_BIT_STR) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck(errpre, bufp, data,
+    if (_Asn01_parseLengthCheck(errpre, bufp, data,
                                 asn_length, *datalength))
         return NULL;
 
     if ((size_t) asn_length > *strlength) {
-        Asn01_lengthErr(errpre, (size_t) asn_length, *strlength);
+        _Asn01_lengthErr(errpre, (size_t) asn_length, *strlength);
         return NULL;
     }
-    if (Asn01_bitstringCheck(errpre, asn_length, *bufp))
+    if (_Asn01_bitstringCheck(errpre, asn_length, *bufp))
         return NULL;
 
     DEBUG_DUMPSETUP("recv", data, bufp - data);
-    DEBUG_MSG(("dumpv_recv", "  Bitstring: "));
-    DEBUG_MSGHEX(("dumpv_recv", data, asn_length));
-    DEBUG_MSG(("dumpv_recv", "\n"));
+    DEBUG_MSG(("dumpvRecv", "  Bitstring: "));
+    DEBUG_MSGHEX(("dumpvRecv", data, asn_length));
+    DEBUG_MSG(("dumpvRecv", "\n"));
 
     memmove(str, bufp, asn_length);
     *strlength = (int) asn_length;
@@ -1629,26 +1629,26 @@ u_char  * Asn01_buildBitstring(u_char * data,
      * ASN.1 bit string ::= 0x03 asnlength unused {byte}*
      */
     static const char *errpre = "build bitstring";
-    if (Asn01_bitstringCheck
+    if (_Asn01_bitstringCheck
         (errpre, strlength, (u_char)((str) ? *str :  0)))
         return NULL;
 
     data = Asn01_buildHeader(data, datalength, type, strlength);
-    if (Asn01_buildHeaderCheck(errpre, data, *datalength, strlength))
+    if (_Asn01_buildHeaderCheck(errpre, data, *datalength, strlength))
         return NULL;
 
     if (strlength > 0 && str)
         memmove(data, str, strlength);
     else if (strlength > 0 && !str) {
-        IMPL_ERROR_MSG("no string passed into asn_build_bitstring\n");
+        IMPL_ERROR_MSG("no string passed into Asn01_buildBitstring\n");
         return NULL;
     }
 
     *datalength -= strlength;
     DEBUG_DUMPSETUP("send", data, strlength);
-    DEBUG_MSG(("dumpv_send", "  Bitstring: "));
-    DEBUG_MSGHEX(("dumpv_send", data, strlength));
-    DEBUG_MSG(("dumpv_send", "\n"));
+    DEBUG_MSG(("dumpvSend", "  Bitstring: "));
+    DEBUG_MSGHEX(("dumpvSend", data, strlength));
+    DEBUG_MSG(("dumpvSend", "\n"));
     return data + strlength;
 }
 
@@ -1689,18 +1689,18 @@ u_char * Asn01_parseUnsignedInt64(u_char * data,
     register u_long low = 0, high = 0;
 
     if (countersize != sizeof(struct Asn01_Counter64_s)) {
-        Asn01_sizeErr(errpre, countersize, sizeof(struct Asn01_Counter64_s));
+        _Asn01_sizeErr(errpre, countersize, sizeof(struct Asn01_Counter64_s));
         return NULL;
     }
     *type = *bufp++;
     if (*type != ASN01_COUNTER64
             && *type != ASN01_OPAQUE
             ) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck
+    if (_Asn01_parseLengthCheck
         (errpre, bufp, data, asn_length, *datalength))
         return NULL;
 
@@ -1721,14 +1721,14 @@ u_char * Asn01_parseUnsignedInt64(u_char * data,
          * value is encoded as special format
          */
         bufp = Asn01_parseLength(bufp + 2, &asn_length);
-        if (Asn01_parseLengthCheck("parse opaque uint64", bufp, data,
+        if (_Asn01_parseLengthCheck("parse opaque uint64", bufp, data,
                                     asn_length, *datalength))
             return NULL;
     }
                           /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
     if (((int) asn_length > uint64sizelimit) ||
         (((int) asn_length == uint64sizelimit) && *bufp != 0x00)) {
-        Asn01_lengthErr(errpre, (size_t) asn_length, uint64sizelimit);
+        _Asn01_lengthErr(errpre, (size_t) asn_length, uint64sizelimit);
         return NULL;
     }
     *datalength -= (int) asn_length + (bufp - data);
@@ -1743,10 +1743,10 @@ u_char * Asn01_parseUnsignedInt64(u_char * data,
     cp->low = low;
     cp->high = high;
 
-    DEBUG_IF("dumpv_recv") {
+    DEBUG_IF("dumpvRecv") {
         char            i64buf[INT64_I64CHARSZ + 1];
         Int64_printU64(i64buf, cp);
-        DEBUG_MSG(("dumpv_recv", "Counter64: %s\n", i64buf));
+        DEBUG_MSG(("dumpvRecv", "Counter64: %s\n", i64buf));
     }
 
     return bufp;
@@ -1790,7 +1790,7 @@ u_char * Asn01_buildUnsignedInt64(u_char * data,
     u_char  *initdatap = data;
 
     if (countersize != sizeof(struct Asn01_Counter64_s)) {
-        Asn01_sizeErr("build uint64", countersize,
+        _Asn01_sizeErr("build uint64", countersize,
                       sizeof(struct Asn01_Counter64_s));
         return NULL;
     }
@@ -1834,7 +1834,7 @@ u_char * Asn01_buildUnsignedInt64(u_char * data,
          * put the tag and length for the Opaque wrapper
          */
         data = Asn01_buildHeader(data, datalength, ASN01_OPAQUE, intsize + 3);
-        if (Asn01_buildHeaderCheck
+        if (_Asn01_buildHeaderCheck
             ("build counter u64", data, *datalength, intsize + 3))
             return NULL;
 
@@ -1857,7 +1857,7 @@ u_char * Asn01_buildUnsignedInt64(u_char * data,
          * put the tag and length for the Opaque wrapper
          */
         data = Asn01_buildHeader(data, datalength, ASN01_OPAQUE, intsize + 3);
-        if (Asn01_buildHeaderCheck
+        if (_Asn01_buildHeaderCheck
             ("build opaque u64", data, *datalength, intsize + 3))
             return NULL;
 
@@ -1870,7 +1870,7 @@ u_char * Asn01_buildUnsignedInt64(u_char * data,
         *datalength = *datalength - 3;
     } else {
         data = Asn01_buildHeader(data, datalength, type, intsize);
-        if (Asn01_buildHeaderCheck
+        if (_Asn01_buildHeaderCheck
             ("build uint64", data, *datalength, intsize))
             return NULL;
     }
@@ -1886,10 +1886,10 @@ u_char * Asn01_buildUnsignedInt64(u_char * data,
 
     }
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_IF("dumpv_send") {
+    DEBUG_IF("dumpvSend") {
         char            i64buf[INT64_I64CHARSZ + 1];
         Int64_printU64(i64buf, cp);
-        DEBUG_MSG(("dumpv_send", "%s", i64buf));
+        DEBUG_MSG(("dumpvSend", "%s", i64buf));
     }
     return data;
 }
@@ -1932,12 +1932,12 @@ u_char * Asn01_parseSignedInt64(u_char * data,
     register u_int  low = 0, high = 0;
 
     if (countersize != sizeof(struct Asn01_Counter64_s)) {
-        Asn01_sizeErr(errpre, countersize, sizeof(struct Asn01_Counter64_s));
+        _Asn01_sizeErr(errpre, countersize, sizeof(struct Asn01_Counter64_s));
         return NULL;
     }
     *type = *bufp++;
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck
+    if (_Asn01_parseLengthCheck
         (errpre, bufp, data, asn_length, *datalength))
         return NULL;
 
@@ -1953,7 +1953,7 @@ u_char * Asn01_parseSignedInt64(u_char * data,
          * value is encoded as special format
          */
         bufp = Asn01_parseLength(bufp + 2, &asn_length);
-        if (Asn01_parseLengthCheck("parse opaque int64", bufp, data,
+        if (_Asn01_parseLengthCheck("parse opaque int64", bufp, data,
                                     asn_length, *datalength))
             return NULL;
     }
@@ -1970,7 +1970,7 @@ u_char * Asn01_parseSignedInt64(u_char * data,
     }
     if (((int) asn_length > int64sizelimit) ||
         (((int) asn_length == int64sizelimit) && *bufp != 0x00)) {
-        Asn01_lengthErr(errpre, (size_t) asn_length, int64sizelimit);
+        _Asn01_lengthErr(errpre, (size_t) asn_length, int64sizelimit);
         return NULL;
     }
     *datalength -= (int) asn_length + (bufp - data);
@@ -1990,10 +1990,10 @@ u_char * Asn01_parseSignedInt64(u_char * data,
     cp->low = low;
     cp->high = high;
 
-    DEBUG_IF("dumpv_recv") {
+    DEBUG_IF("dumpvRecv") {
         char            i64buf[INT64_I64CHARSZ + 1];
         Int64_printI64(i64buf, cp);
-        DEBUG_MSG(("dumpv_recv", "Integer64: %s\n", i64buf));
+        DEBUG_MSG(("dumpvRecv", "Integer64: %s\n", i64buf));
     }
 
     return bufp;
@@ -2038,7 +2038,7 @@ u_char  * Asn01_buildSignedInt64(u_char * data,
     u_char         *initdatap = data;
 
     if (countersize != sizeof(struct Asn01_Counter64_s)) {
-        Asn01_sizeErr("build int64", countersize,
+        _Asn01_sizeErr("build int64", countersize,
                       sizeof(struct Asn01_Counter64_s));
         return NULL;
     }
@@ -2070,7 +2070,7 @@ u_char  * Asn01_buildSignedInt64(u_char * data,
      * int64 in the opaque string.
      */
     data = Asn01_buildHeader(data, datalength, ASN01_OPAQUE, intsize + 3);
-    if (Asn01_buildHeaderCheck
+    if (_Asn01_buildHeaderCheck
         ("build int64", data, *datalength, intsize + 3))
         return NULL;
 
@@ -2085,10 +2085,10 @@ u_char  * Asn01_buildSignedInt64(u_char * data,
         low = (low & 0x00ffffff) << 8;
     }
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_IF("dumpv_send") {
+    DEBUG_IF("dumpvSend") {
         char            i64buf[INT64_I64CHARSZ + 1];
         Int64_printU64(i64buf, cp);
-        DEBUG_MSG(("dumpv_send", "%s\n", i64buf));
+        DEBUG_MSG(("dumpvSend", "%s\n", i64buf));
     }
     return data;
 }
@@ -2129,12 +2129,12 @@ u_char * Asn01_parseFloat(u_char * data,
     } fu;
 
     if (floatsize != sizeof(float)) {
-        Asn01_sizeErr("parse float", floatsize, sizeof(float));
+        _Asn01_sizeErr("parse float", floatsize, sizeof(float));
         return NULL;
     }
     *type = *bufp++;
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck("parse float", bufp, data,
+    if (_Asn01_parseLengthCheck("parse float", bufp, data,
                                 asn_length, *datalength))
         return NULL;
 
@@ -2150,7 +2150,7 @@ u_char * Asn01_parseFloat(u_char * data,
          * value is encoded as special format
          */
         bufp = Asn01_parseLength(bufp + 2, &asn_length);
-        if (Asn01_parseLengthCheck("parse opaque float", bufp, data,
+        if (_Asn01_parseLengthCheck("parse opaque float", bufp, data,
                                     asn_length, *datalength))
             return NULL;
 
@@ -2161,12 +2161,12 @@ u_char * Asn01_parseFloat(u_char * data,
     }
 
     if (*type != ASN01_OPAQUE_FLOAT) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
 
     if (asn_length != sizeof(float)) {
-        Asn01_sizeErr("parse seq float", asn_length, sizeof(float));
+        _Asn01_sizeErr("parse seq float", asn_length, sizeof(float));
         return NULL;
     }
 
@@ -2180,7 +2180,7 @@ u_char * Asn01_parseFloat(u_char * data,
 
     *floatp = fu.floatVal;
 
-    DEBUG_MSG(("dumpv_recv", "Opaque float: %f\n", *floatp));
+    DEBUG_MSG(("dumpvRecv", "Opaque float: %f\n", *floatp));
     return bufp;
 }
 
@@ -2219,7 +2219,7 @@ u_char  * Asn01_buildFloat(u_char * data,
     u_char         *initdatap = data;
 
     if (floatsize != sizeof(float)) {
-        Asn01_sizeErr("build float", floatsize, sizeof(float));
+        _Asn01_sizeErr("build float", floatsize, sizeof(float));
         return NULL;
     }
     /*
@@ -2233,7 +2233,7 @@ u_char  * Asn01_buildFloat(u_char * data,
      * put the tag and length for the Opaque wrapper
      */
     data = Asn01_buildHeader(data, datalength, ASN01_OPAQUE, floatsize + 3);
-    if (Asn01_buildHeaderCheck
+    if (_Asn01_buildHeaderCheck
         ("build float", data, *datalength, (floatsize + 3)))
         return NULL;
 
@@ -2255,7 +2255,7 @@ u_char  * Asn01_buildFloat(u_char * data,
     memcpy(data, &fu.c[0], floatsize);
 
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_MSG(("dumpv_send", "Opaque float: %f\n", *floatp));
+    DEBUG_MSG(("dumpvSend", "Opaque float: %f\n", *floatp));
     data += floatsize;
     return data;
 }
@@ -2298,12 +2298,12 @@ u_char * Asn01_parseDouble(u_char * data,
 
 
     if (doublesize != sizeof(double)) {
-        Asn01_sizeErr("parse double", doublesize, sizeof(double));
+        _Asn01_sizeErr("parse double", doublesize, sizeof(double));
         return NULL;
     }
     *type = *bufp++;
     bufp = Asn01_parseLength(bufp, &asn_length);
-    if (Asn01_parseLengthCheck("parse double", bufp, data,
+    if (_Asn01_parseLengthCheck("parse double", bufp, data,
                                 asn_length, *datalength))
         return NULL;
 
@@ -2319,7 +2319,7 @@ u_char * Asn01_parseDouble(u_char * data,
          * value is encoded as special format
          */
         bufp = Asn01_parseLength(bufp + 2, &asn_length);
-        if (Asn01_parseLengthCheck("parse opaque double", bufp, data,
+        if (_Asn01_parseLengthCheck("parse opaque double", bufp, data,
                                     asn_length, *datalength))
             return NULL;
 
@@ -2330,12 +2330,12 @@ u_char * Asn01_parseDouble(u_char * data,
     }
 
     if (*type != ASN01_OPAQUE_DOUBLE) {
-        Asn01_typeErr(errpre, *type);
+        _Asn01_typeErr(errpre, *type);
         return NULL;
     }
 
     if (asn_length != sizeof(double)) {
-        Asn01_sizeErr("parse seq double", asn_length, sizeof(double));
+        _Asn01_sizeErr("parse seq double", asn_length, sizeof(double));
         return NULL;
     }
     *datalength -= (int) asn_length + (bufp - data);
@@ -2350,7 +2350,7 @@ u_char * Asn01_parseDouble(u_char * data,
     fu.intVal[1] = tmp;
 
     *doublep = fu.doubleVal;
-    DEBUG_MSG(("dumpv_recv", "  Opaque Double:\t%f\n", *doublep));
+    DEBUG_MSG(("dumpvRecv", "  Opaque Double:\t%f\n", *doublep));
 
     return bufp;
 }
@@ -2391,7 +2391,7 @@ u_char * Asn01_buildDouble(u_char * data,
     u_char         *initdatap = data;
 
     if (doublesize != sizeof(double)) {
-        Asn01_sizeErr("build double", doublesize, sizeof(double));
+        _Asn01_sizeErr("build double", doublesize, sizeof(double));
         return NULL;
     }
 
@@ -2406,7 +2406,7 @@ u_char * Asn01_buildDouble(u_char * data,
      * put the tag and length for the Opaque wrapper
      */
     data = Asn01_buildHeader(data, datalength, ASN01_OPAQUE, doublesize + 3);
-    if (Asn01_buildHeaderCheck
+    if (_Asn01_buildHeaderCheck
         ("build double", data, *datalength, doublesize + 3))
         return NULL;
 
@@ -2430,7 +2430,7 @@ u_char * Asn01_buildDouble(u_char * data,
 
     data += doublesize;
     DEBUG_DUMPSETUP("send", initdatap, data - initdatap);
-    DEBUG_MSG(("dumpv_send", "  Opaque double: %f\n", *doublep));
+    DEBUG_MSG(("dumpvSend", "  Opaque double: %f\n", *doublep));
     return data;
 }
 
@@ -2454,13 +2454,13 @@ int Asn01_realloc(u_char ** pkt, size_t * pkt_len)
     if (pkt != NULL && pkt_len != NULL) {
         size_t          old_pkt_len = *pkt_len;
 
-        DEBUG_MSGTL(("asn_realloc", " old_pkt %8p, old_pkt_len %lu\n",
+        DEBUG_MSGTL(("Asn01_realloc", " old_pkt %8p, old_pkt_len %lu\n",
                     *pkt, (unsigned long)old_pkt_len));
 
         if (Tools_realloc2(pkt, pkt_len)) {
-            DEBUG_MSGTL(("asn_realloc", " new_pkt %8p, new_pkt_len %lu\n",
+            DEBUG_MSGTL(("Asn01_realloc", " new_pkt %8p, new_pkt_len %lu\n",
                         *pkt, (unsigned long)*pkt_len));
-            DEBUG_MSGTL(("asn_realloc",
+            DEBUG_MSGTL(("Asn01_realloc",
                         " memmove(%8p + %08x, %8p, %08x)\n",
             *pkt, (unsigned)(*pkt_len - old_pkt_len),
             *pkt, (unsigned)old_pkt_len));
@@ -2468,7 +2468,7 @@ int Asn01_realloc(u_char ** pkt, size_t * pkt_len)
             memset(*pkt, (int) ' ', *pkt_len - old_pkt_len);
             return 1;
         } else {
-            DEBUG_MSG(("asn_realloc", " CANNOT REALLOC()\n"));
+            DEBUG_MSG(("Asn01_realloc", " CANNOT REALLOC()\n"));
         }
     }
     return 0;
@@ -2608,7 +2608,7 @@ int Asn01_reallocRbuildInt(u_char ** pkt, size_t * pkt_len,
     size_t          start_offset = *offset;
 
     if (intsize != sizeof(long)) {
-        Asn01_sizeErr(errpre, intsize, sizeof(long));
+        _Asn01_sizeErr(errpre, intsize, sizeof(long));
         return 0;
     }
 
@@ -2644,13 +2644,13 @@ int Asn01_reallocRbuildInt(u_char ** pkt, size_t * pkt_len,
 
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r, type,
                                   (*offset - start_offset))) {
-        if (Asn01_reallocBuildHeaderCheck(errpre, pkt, pkt_len,
+        if (_Asn01_reallocBuildHeaderCheck(errpre, pkt, pkt_len,
                                             (*offset - start_offset))) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            (*offset - start_offset));
-            DEBUG_MSG(("dumpv_send", "  Integer:\t%ld (0x%.2lX)\n", *intp,
+            DEBUG_MSG(("dumpvSend", "  Integer:\t%ld (0x%.2lX)\n", *intp,
                       *intp));
             return 1;
         }
@@ -2696,15 +2696,15 @@ int Asn01_reallocRbuildString(u_char ** pkt, size_t * pkt_len,
 
     if (Asn01_reallocRbuildHeader
         (pkt, pkt_len, offset, r, type, strlength)) {
-        if (Asn01_reallocBuildHeaderCheck
+        if (_Asn01_reallocBuildHeaderCheck
             (errpre, pkt, pkt_len, strlength)) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            *offset - start_offset);
-            DEBUG_IF("dumpv_send") {
+            DEBUG_IF("dumpvSend") {
                 if (strlength == 0) {
-                    DEBUG_MSG(("dumpv_send", "  String: [NULL]\n"));
+                    DEBUG_MSG(("dumpvSend", "  String: [NULL]\n"));
                 } else {
                     u_char         *buf = (u_char *) malloc(2 * strlength);
                     size_t          l =
@@ -2712,13 +2712,13 @@ int Asn01_reallocRbuildString(u_char ** pkt, size_t * pkt_len,
 
                     if (Mib_sprintReallocAsciiString
                         (&buf, &l, &ol, 1, str, strlength)) {
-                        DEBUG_MSG(("dumpv_send", "  String:\t%s\n", buf));
+                        DEBUG_MSG(("dumpvSend", "  String:\t%s\n", buf));
                     } else {
                         if (buf == NULL) {
-                            DEBUG_MSG(("dumpv_send",
+                            DEBUG_MSG(("dumpvSend",
                                       "  String:\t[TRUNCATED]\n"));
                         } else {
-                            DEBUG_MSG(("dumpv_send",
+                            DEBUG_MSG(("dumpvSend",
                                       "  String:\t%s [TRUNCATED]\n", buf));
                         }
                     }
@@ -2760,7 +2760,7 @@ int Asn01_reallocRbuildUnsignedInt(u_char ** pkt, size_t * pkt_len,
     size_t          start_offset = *offset;
 
     if (intsize != sizeof(unsigned long)) {
-        Asn01_sizeErr(errpre, intsize, sizeof(unsigned long));
+        _Asn01_sizeErr(errpre, intsize, sizeof(unsigned long));
         return 0;
     }
 
@@ -2795,13 +2795,13 @@ int Asn01_reallocRbuildUnsignedInt(u_char ** pkt, size_t * pkt_len,
 
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r, type,
                                   (*offset - start_offset))) {
-        if (Asn01_reallocBuildHeaderCheck(errpre, pkt, pkt_len,
+        if (_Asn01_reallocBuildHeaderCheck(errpre, pkt, pkt_len,
                                             (*offset - start_offset))) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            (*offset - start_offset));
-            DEBUG_MSG(("dumpv_send", "  UInteger:\t%lu (0x%.2lX)\n", *intp,
+            DEBUG_MSG(("dumpvSend", "  UInteger:\t%lu (0x%.2lX)\n", *intp,
                       *intp));
             return 1;
         }
@@ -2949,15 +2949,15 @@ int Asn01_reallocRbuildObjid(u_char ** pkt, size_t * pkt_len,
     tmpint = *offset - start_offset;
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r, type,
                                   (*offset - start_offset))) {
-        if (Asn01_reallocBuildHeaderCheck(errpre, pkt, pkt_len,
+        if (_Asn01_reallocBuildHeaderCheck(errpre, pkt, pkt_len,
                                             (*offset - start_offset))) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            (*offset - start_offset));
-            DEBUG_MSG(("dumpv_send", "  ObjID: "));
-            DEBUG_MSGOID(("dumpv_send", objid, objidlength));
-            DEBUG_MSG(("dumpv_send", "\n"));
+            DEBUG_MSG(("dumpvSend", "  ObjID: "));
+            DEBUG_MSGOID(("dumpvSend", objid, objidlength));
+            DEBUG_MSG(("dumpvSend", "\n"));
             return 1;
         }
     }
@@ -2992,7 +2992,7 @@ int Asn01_reallocRbuildNull(u_char ** pkt, size_t * pkt_len,
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r, type, 0)) {
         DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                        (*offset - start_offset));
-        DEBUG_MSG(("dumpv_send", "  NULL\n"));
+        DEBUG_MSG(("dumpvSend", "  NULL\n"));
         return 1;
     } else {
         return 0;
@@ -3039,15 +3039,15 @@ int Asn01_reallocRbuildBitstring(u_char ** pkt, size_t * pkt_len,
 
     if (Asn01_reallocRbuildHeader
         (pkt, pkt_len, offset, r, type, strlength)) {
-        if (Asn01_reallocBuildHeaderCheck
+        if (_Asn01_reallocBuildHeaderCheck
             (errpre, pkt, pkt_len, strlength)) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            *offset - start_offset);
-            DEBUG_IF("dumpv_send") {
+            DEBUG_IF("dumpvSend") {
                 if (strlength == 0) {
-                    DEBUG_MSG(("dumpv_send", "  Bitstring: [NULL]\n"));
+                    DEBUG_MSG(("dumpvSend", "  Bitstring: [NULL]\n"));
                 } else {
                     u_char         *buf = (u_char *) malloc(2 * strlength);
                     size_t          l =
@@ -3055,14 +3055,14 @@ int Asn01_reallocRbuildBitstring(u_char ** pkt, size_t * pkt_len,
 
                     if (Mib_sprintReallocAsciiString
                         (&buf, &l, &ol, 1, str, strlength)) {
-                        DEBUG_MSG(("dumpv_send", "  Bitstring:\t%s\n",
+                        DEBUG_MSG(("dumpvSend", "  Bitstring:\t%s\n",
                                   buf));
                     } else {
                         if (buf == NULL) {
-                            DEBUG_MSG(("dumpv_send",
+                            DEBUG_MSG(("dumpvSend",
                                       "  Bitstring:\t[TRUNCATED]\n"));
                         } else {
-                            DEBUG_MSG(("dumpv_send",
+                            DEBUG_MSG(("dumpvSend",
                                       "  Bitstring:\t%s [TRUNCATED]\n",
                                       buf));
                         }
@@ -3109,7 +3109,7 @@ int Asn01_reallocRbuildUnsignedInt64(u_char ** pkt, size_t * pkt_len,
     int             count;
 
     if (countersize != sizeof(struct Asn01_Counter64_s)) {
-        Asn01_sizeErr("build uint64", countersize,
+        _Asn01_sizeErr("build uint64", countersize,
                       sizeof(struct Asn01_Counter64_s));
         return 0;
     }
@@ -3205,7 +3205,7 @@ int Asn01_reallocRbuildUnsignedInt64(u_char ** pkt, size_t * pkt_len,
          */
         if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r,
                                       ASN01_OPAQUE, intsize + 3)) {
-            if (Asn01_reallocBuildHeaderCheck
+            if (_Asn01_reallocBuildHeaderCheck
                 ("build counter u64", pkt, pkt_len, intsize + 3)) {
                 return 0;
             }
@@ -3231,7 +3231,7 @@ int Asn01_reallocRbuildUnsignedInt64(u_char ** pkt, size_t * pkt_len,
          */
         if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r,
                                       ASN01_OPAQUE, intsize + 3)) {
-            if (Asn01_reallocBuildHeaderCheck
+            if (_Asn01_reallocBuildHeaderCheck
                 ("build counter u64", pkt, pkt_len, intsize + 3)) {
                 return 0;
             }
@@ -3242,7 +3242,7 @@ int Asn01_reallocRbuildUnsignedInt64(u_char ** pkt, size_t * pkt_len,
 
         if (Asn01_reallocRbuildHeader
             (pkt, pkt_len, offset, r, type, intsize)) {
-            if (Asn01_reallocBuildHeaderCheck
+            if (_Asn01_reallocBuildHeaderCheck
                 ("build uint64", pkt, pkt_len, intsize)) {
                 return 0;
             }
@@ -3252,7 +3252,7 @@ int Asn01_reallocRbuildUnsignedInt64(u_char ** pkt, size_t * pkt_len,
     }
 
     DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset), intsize);
-    DEBUG_MSG(("dumpv_send", "  U64:\t%lu %lu\n", cp->high, cp->low));
+    DEBUG_MSG(("dumpvSend", "  U64:\t%lu %lu\n", cp->high, cp->low));
     return 1;
 }
 
@@ -3287,7 +3287,7 @@ int Asn01_reallocRbuildSignedInt64(u_char ** pkt, size_t * pkt_len,
     int32_t          testvalue = (high & 0x80000000) ? -1 : 0;
 
     if (countersize != sizeof(struct Asn01_Counter64_s)) {
-        Asn01_sizeErr("build uint64", countersize,
+        _Asn01_sizeErr("build uint64", countersize,
                       sizeof(struct Asn01_Counter64_s));
         return 0;
     }
@@ -3379,7 +3379,7 @@ int Asn01_reallocRbuildSignedInt64(u_char ** pkt, size_t * pkt_len,
      */
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r,
                                   ASN01_OPAQUE, intsize + 3)) {
-        if (Asn01_reallocBuildHeaderCheck
+        if (_Asn01_reallocBuildHeaderCheck
             ("build counter u64", pkt, pkt_len, intsize + 3)) {
             return 0;
         }
@@ -3388,7 +3388,7 @@ int Asn01_reallocRbuildSignedInt64(u_char ** pkt, size_t * pkt_len,
     }
 
     DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset), intsize);
-    DEBUG_MSG(("dumpv_send", "  UInt64:\t%lu %lu\n", cp->high, cp->low));
+    DEBUG_MSG(("dumpvSend", "  UInt64:\t%lu %lu\n", cp->high, cp->low));
     return 1;
 }
 
@@ -3454,13 +3454,13 @@ int Asn01_reallocRbuildFloat(u_char ** pkt, size_t * pkt_len,
      */
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r,
                                   ASN01_OPAQUE, floatsize + 3)) {
-        if (Asn01_reallocBuildHeaderCheck("build float", pkt, pkt_len,
+        if (_Asn01_reallocBuildHeaderCheck("build float", pkt, pkt_len,
                                             floatsize + 3)) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            *offset - start_offset);
-            DEBUG_MSG(("dumpv_send", "Opaque Float:\t%f\n", *floatp));
+            DEBUG_MSG(("dumpvSend", "Opaque Float:\t%f\n", *floatp));
             return 1;
         }
     }
@@ -3533,13 +3533,13 @@ int Asn01_reallocRbuildDouble(u_char ** pkt, size_t * pkt_len,
      */
     if (Asn01_reallocRbuildHeader(pkt, pkt_len, offset, r,
                                   ASN01_OPAQUE, doublesize + 3)) {
-        if (Asn01_reallocBuildHeaderCheck("build float", pkt, pkt_len,
+        if (_Asn01_reallocBuildHeaderCheck("build float", pkt, pkt_len,
                                             doublesize + 3)) {
             return 0;
         } else {
             DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset),
                            *offset - start_offset);
-            DEBUG_MSG(("dumpv_send", "  Opaque Double:\t%f\n", *doublep));
+            DEBUG_MSG(("dumpvSend", "  Opaque Double:\t%f\n", *doublep));
             return 1;
         }
     }

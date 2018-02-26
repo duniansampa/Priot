@@ -74,18 +74,18 @@ int LargeFdSet_resize(Types_LargeFdSet * fdset, int setsize)
     int             fd_set_bytes;
 
     if (fdset->lfs_setsize == setsize)
-        goto success;
+        goto goto_success;
 
     if (setsize > FD_SETSIZE) {
         fd_set_bytes = NETSNMP_FD_SET_BYTES(setsize);
         if (fdset->lfs_setsize > FD_SETSIZE) {
             fdset->lfs_setptr = (fd_set *)realloc(fdset->lfs_setptr, fd_set_bytes);
             if (!fdset->lfs_setptr)
-                goto out_of_mem;
+                goto goto_outOfMem;
         } else {
             fdset->lfs_setptr = (fd_set *)malloc(fd_set_bytes);
             if (!fdset->lfs_setptr)
-                goto out_of_mem;
+                goto goto_outOfMem;
             *fdset->lfs_setptr = fdset->lfs_set;
         }
     } else {
@@ -110,10 +110,10 @@ int LargeFdSet_resize(Types_LargeFdSet * fdset, int setsize)
             LARGEFDSET_LFD_CLR(i, fdset->lfs_setptr);
     }
     fdset->lfs_setsize = setsize;
-success:
+goto_success:
     return 1;
 
-out_of_mem:
+goto_outOfMem:
     fdset->lfs_setsize = 0;
 
     return 0;

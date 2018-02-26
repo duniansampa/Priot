@@ -121,7 +121,7 @@ static char * Mib_uptimeString2(u_long timeticks, char *buf, size_t buflen)
 {
     int centisecs, seconds, minutes, hours, days;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NUMERIC_TIMETICKS)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS)) {
         snprintf(buf, buflen, "%lu", timeticks);
         return buf;
     }
@@ -138,7 +138,7 @@ static char * Mib_uptimeString2(u_long timeticks, char *buf, size_t buflen)
     minutes = timeticks / 60;
     seconds = timeticks % 60;
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT))
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT))
         snprintf(buf, buflen, "%d:%d:%02d:%02d.%02d", days, hours, minutes, seconds, centisecs);
     else {
         if (days == 0) {
@@ -227,7 +227,7 @@ int Mib_sprintHexStringLine(u_char ** buf, size_t * buf_len, size_t * out_len,
     /*
      * .... plus (optionally) do the same for the ASCII equivalent.
      */
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_HEX_TEXT)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT)) {
         while ((*out_len + line_len+5) >= *buf_len) {
             if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
                 return 0;
@@ -249,8 +249,8 @@ int Mib_sprintHexStringLine(u_char ** buf, size_t * buf_len, size_t * out_len,
 int Mib_sprintReallocHexString(u_char ** buf, size_t * buf_len, size_t * out_len,
                              int allow_realloc, const u_char * cp, size_t len)
 {
-    int line_len = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                                       DSLIB_INTEGER.HEX_OUTPUT_LENGTH);
+    int line_len = DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                                       DsInt_HEX_OUTPUT_LENGTH);
     if (!line_len)
         line_len=len;
 
@@ -359,7 +359,7 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
     int             output_format, cnt;
 
     if (var->type != ASN01_OCTET_STR) {
-        if (!DefaultStore_getBoolean( DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             const char      str[] = "Wrong Type (should be OCTET STRING): ";
             if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -378,7 +378,7 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
         char            hex2digit = HEX2DIGIT_NEED_INIT;
         u_char         *ecp;
 
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
             if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "STRING: ")) {
                 return 0;
             }
@@ -423,8 +423,8 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
                 switch (code) {
                 case 'x':
                     if (HEX2DIGIT_NEED_INIT == hex2digit)
-                        hex2digit = DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                                           DSLIB_BOOLEAN.LIB_2DIGIT_HEX_OUTPUT);
+                        hex2digit = DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                                           DsBool_LIB_2DIGIT_HEX_OUTPUT);
                     /*
                      * if value is < 16, it will be a single hex digit. If the
                      * width is 1 (we are outputting a byte at a time), pat it
@@ -526,7 +526,7 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
         return 1;
     }
 
-    output_format = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.STRING_OUTPUT_FORMAT);
+    output_format = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT);
     if (0 == output_format) {
         output_format = MIB_STRING_OUTPUT_GUESS;
     }
@@ -554,7 +554,7 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
     }
 
     if (hex) {
-        if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+        if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
             if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"")) {
                 return 0;
             }
@@ -570,13 +570,13 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
             return 0;
         }
 
-        if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+        if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
             if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"")) {
                 return 0;
             }
         }
     } else {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
             if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
                              "STRING: ")) {
                 return 0;
@@ -633,7 +633,7 @@ int Mib_sprintReallocFloat(u_char ** buf, size_t * buf_len,
                      const char *hint, const char *units)
 {
     if (var->type != ASN01_OPAQUE_FLOAT) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Float): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -641,7 +641,7 @@ int Mib_sprintReallocFloat(u_char ** buf, size_t * buf_len,
         return Mib_sprintReallocByType(buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         if (!Tools_cstrcat
             (buf, buf_len, out_len, allow_realloc, "Opaque: Float: ")) {
             return 0;
@@ -699,7 +699,7 @@ int Mib_sprintReallocDouble(u_char ** buf, size_t * buf_len,
                       const char *hint, const char *units)
 {
     if (var->type != ASN01_OPAQUE_DOUBLE) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Double): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -709,7 +709,7 @@ int Mib_sprintReallocDouble(u_char ** buf, size_t * buf_len,
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         if (!Tools_cstrcat
             (buf, buf_len, out_len, allow_realloc, "Opaque: Float: ")) {
             return 0;
@@ -771,7 +771,7 @@ int Mib_sprintReallocCounter64(u_char ** buf, size_t * buf_len, size_t * out_len
         && var->type != ASN01_OPAQUE_COUNTER64
         && var->type != ASN01_OPAQUE_I64 && var->type != ASN01_OPAQUE_U64
         ) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Counter64): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -781,7 +781,7 @@ int Mib_sprintReallocCounter64(u_char ** buf, size_t * buf_len, size_t * out_len
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         if (var->type != ASN01_COUNTER64) {
             if (!Tools_cstrcat
                 (buf, buf_len, out_len, allow_realloc, "Opaque: ")) {
@@ -860,7 +860,7 @@ int Mib_sprintReallocOpaque(u_char ** buf, size_t * buf_len,
         && var->type != ASN01_OPAQUE_I64
         && var->type != ASN01_OPAQUE_FLOAT && var->type != ASN01_OPAQUE_DOUBLE
         ) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Opaque): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -885,7 +885,7 @@ int Mib_sprintReallocOpaque(u_char ** buf, size_t * buf_len,
         break;
 
     case ASN01_OPAQUE:
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
             u_char          str[] = "OPAQUE: ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
                 return 0;
@@ -936,7 +936,7 @@ int Mib_sprintReallocObjectIdentifier(u_char ** buf, size_t * buf_len,
     int buf_overflow = 0;
 
     if (var->type != ASN01_OBJECT_ID) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be OBJECT IDENTIFIER): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -946,7 +946,7 @@ int Mib_sprintReallocObjectIdentifier(u_char ** buf, size_t * buf_len,
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "OID: ";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1002,7 +1002,7 @@ int Mib_sprintReallocTimeTicks(u_char ** buf, size_t * buf_len, size_t * out_len
     char timebuf[40];
 
     if (var->type != ASN01_TIMETICKS) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Timeticks): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1012,7 +1012,7 @@ int Mib_sprintReallocTimeTicks(u_char ** buf, size_t * buf_len, size_t * out_len
                                           NULL);
     }
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NUMERIC_TIMETICKS)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS)) {
         char            str[32];
         sprintf(str, "%lu", *(u_long *) var->val.integer);
         if (!Tools_strcat
@@ -1021,7 +1021,7 @@ int Mib_sprintReallocTimeTicks(u_char ** buf, size_t * buf_len, size_t * out_len
         }
         return 1;
     }
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         char            str[32];
         sprintf(str, "Timeticks: (%lu) ", *(u_long *) var->val.integer);
         if (!Tools_strcat
@@ -1166,7 +1166,7 @@ int Mib_sprintReallocInteger(u_char ** buf, size_t * buf_len, size_t * out_len,
     char           *enum_string = NULL;
 
     if (var->type != ASN01_INTEGER) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be INTEGER): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1183,14 +1183,14 @@ int Mib_sprintReallocInteger(u_char ** buf, size_t * buf_len, size_t * out_len,
         }
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc,
                          (const u_char *) "INTEGER: ")) {
             return 0;
         }
     }
 
-    if (enum_string == NULL || DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_NUMERIC_ENUM)) {
+    if (enum_string == NULL || DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM)) {
         if (hint) {
             if (!(Mib_sprintReallocHintedInteger(buf, buf_len, out_len,
                                                 allow_realloc,
@@ -1207,7 +1207,7 @@ int Mib_sprintReallocInteger(u_char ** buf, size_t * buf_len, size_t * out_len,
                 return 0;
             }
         }
-    } else if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    } else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         if (!Tools_strcat
             (buf, buf_len, out_len, allow_realloc,
              (const u_char *) enum_string)) {
@@ -1267,7 +1267,7 @@ int Mib_sprintReallocUinteger(u_char ** buf, size_t * buf_len, size_t * out_len,
     char           *enum_string = NULL;
 
     if (var->type != ASN01_UINTEGER) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be UInteger32): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1285,7 +1285,7 @@ int Mib_sprintReallocUinteger(u_char ** buf, size_t * buf_len, size_t * out_len,
     }
 
     if (enum_string == NULL ||
-        DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_NUMERIC_ENUM)) {
+        DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM)) {
         if (hint) {
             if (!(Mib_sprintReallocHintedInteger(buf, buf_len, out_len,
                                                 allow_realloc,
@@ -1302,7 +1302,7 @@ int Mib_sprintReallocUinteger(u_char ** buf, size_t * buf_len, size_t * out_len,
                 return 0;
             }
         }
-    } else if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    } else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         if (!Tools_strcat
             (buf, buf_len, out_len, allow_realloc,
              (const u_char *) enum_string)) {
@@ -1362,7 +1362,7 @@ int Mib_sprintReallocGauge(u_char ** buf, size_t * buf_len, size_t * out_len,
     char            tmp[32];
 
     if (var->type != ASN01_GAUGE) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Gauge32 or Unsigned32): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1372,7 +1372,7 @@ int Mib_sprintReallocGauge(u_char ** buf, size_t * buf_len, size_t * out_len,
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "Gauge32: ";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1432,7 +1432,7 @@ int Mib_sprintReallocCounter(u_char ** buf, size_t * buf_len, size_t * out_len,
     char            tmp[32];
 
     if (var->type != ASN01_COUNTER) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be Counter32): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1442,7 +1442,7 @@ int Mib_sprintReallocCounter(u_char ** buf, size_t * buf_len, size_t * out_len,
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "Counter32: ";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1493,7 +1493,7 @@ int Mib_sprintReallocNetworkAddress(u_char ** buf, size_t * buf_len,
     size_t          i;
 
     if (var->type != ASN01_IPADDRESS) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be NetworkAddress): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1503,7 +1503,7 @@ int Mib_sprintReallocNetworkAddress(u_char ** buf, size_t * buf_len,
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "Network Address: ";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1557,7 +1557,7 @@ int Mib_sprintReallocIpAddress(u_char ** buf, size_t * buf_len, size_t * out_len
     u_char         *ip = var->val.string;
 
     if (var->type != ASN01_IPADDRESS) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be IpAddress): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1567,7 +1567,7 @@ int Mib_sprintReallocIpAddress(u_char ** buf, size_t * buf_len, size_t * out_len
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "IpAddress: ";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1615,7 +1615,7 @@ int Mib_sprintReallocNull(u_char ** buf, size_t * buf_len, size_t * out_len,
     u_char          str[] = "NULL";
 
     if (var->type != ASN01_NULL) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be NULL): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1660,7 +1660,7 @@ int Mib_sprintReallocBitString(u_char ** buf, size_t * buf_len, size_t * out_len
     char           *enum_string;
 
     if (var->type != ASN01_BIT_STR && var->type != ASN01_OCTET_STR) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be BITS): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1670,7 +1670,7 @@ int Mib_sprintReallocBitString(u_char ** buf, size_t * buf_len, size_t * out_len
                                           NULL);
     }
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "\"";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1686,7 +1686,7 @@ int Mib_sprintReallocBitString(u_char ** buf, size_t * buf_len, size_t * out_len
         return 0;
     }
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "\"";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1704,7 +1704,7 @@ int Mib_sprintReallocBitString(u_char ** buf, size_t * buf_len, size_t * out_len
                         }
                     }
                     if (enum_string == NULL ||
-                        DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_NUMERIC_ENUM)) {
+                        DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM)) {
                         char            str[32];
                         sprintf(str, "%d ", (len * 8) + bit);
                         if (!Tools_strcat
@@ -1741,7 +1741,7 @@ int Mib_sprintReallocNsapAddress(u_char ** buf, size_t * buf_len,
                            const char *units)
 {
     if (var->type != ASN01_NSAP) {
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             u_char          str[] = "Wrong Type (should be NsapAddress): ";
             if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
                 return 0;
@@ -1751,7 +1751,7 @@ int Mib_sprintReallocNsapAddress(u_char ** buf, size_t * buf_len,
                                           NULL);
     }
 
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
         u_char          str[] = "NsapAddress: ";
         if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
             return 0;
@@ -1986,7 +1986,7 @@ static void Mib_handlePrintNumeric(const char *token, char *line)
         (strcasecmp(value, "true") == 0) ||
         (*value == '1') )) {
 
-        DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT, MIB_OID_OUTPUT_NUMERIC);
+        DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT, MIB_OID_OUTPUT_NUMERIC);
     }
 }
 
@@ -1995,66 +1995,66 @@ char * Mib_outToggleOptions(char *options)
     while (*options) {
         switch (*options++) {
         case '0':
-           DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LIB_2DIGIT_HEX_OUTPUT);
+           DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_LIB_2DIGIT_HEX_OUTPUT);
             break;
         case 'a':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.STRING_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT,
                                                       MIB_STRING_OUTPUT_ASCII);
             break;
         case 'b':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_BREAKDOWN_OIDS);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS);
             break;
         case 'e':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_NUMERIC_ENUM);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM);
             break;
         case 'E':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.ESCAPE_QUOTES);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES);
             break;
         case 'f':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
                                                       MIB_OID_OUTPUT_FULL);
             break;
         case 'n':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
                                                       MIB_OID_OUTPUT_NUMERIC);
             break;
         case 'q':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT);
             break;
         case 'Q':
-            DefaultStore_setBoolean(DSSTORAGE.LIBRARY_ID,  DSLIB_BOOLEAN.QUICKE_PRINT, 1);
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT);
+            DefaultStore_setBoolean(DsStorage_LIBRARY_ID,  DsBool_QUICKE_PRINT, 1);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT);
             break;
         case 's':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
                                                       MIB_OID_OUTPUT_SUFFIX);
             break;
         case 'S':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
                                                       MIB_OID_OUTPUT_MODULE);
             break;
         case 't':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NUMERIC_TIMETICKS);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS);
             break;
         case 'T':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_HEX_TEXT);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT);
             break;
         case 'u':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
                                                       MIB_OID_OUTPUT_UCD);
             break;
         case 'U':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_PRINT_UNITS);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS);
             break;
         case 'v':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_BARE_VALUE);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE);
             break;
         case 'x':
-            DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.STRING_OUTPUT_FORMAT,
+            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT,
                                                       MIB_STRING_OUTPUT_HEX);
             break;
         case 'X':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.EXTENDED_INDEX);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX);
             break;
         default:
             return options - 1;
@@ -2096,34 +2096,34 @@ char * Mib_inOptions(char *optarg, int argc, char *const *argv)
     for (cp = optarg; *cp; cp++) {
         switch (*cp) {
         case 'b':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.REGEX_ACCESS);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_REGEX_ACCESS);
             break;
         case 'R':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.RANDOM_ACCESS);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_RANDOM_ACCESS);
             break;
         case 'r':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_CHECK_RANGE);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE);
             break;
         case 'h':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NO_DISPLAY_HINT);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT);
             break;
         case 'u':
-            DefaultStore_toggleBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.READ_UCD_STYLE_OID);
+            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_READ_UCD_STYLE_OID);
             break;
         case 's':
             /* What if argc/argv are null ? */
             if (!*(++cp))
                 cp = argv[optind++];
-            DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-                                  DSLIB_STRING.OIDSUFFIX, cp);
+            DefaultStore_setString(DsStorage_LIBRARY_ID,
+                                  DsStr_OIDSUFFIX, cp);
             return NULL;
 
         case 'S':
             /* What if argc/argv are null ? */
             if (!*(++cp))
                 cp = argv[optind++];
-            DefaultStore_setString(DSSTORAGE.LIBRARY_ID,
-                                  DSLIB_STRING.OIDPREFIX, cp);
+            DefaultStore_setString(DsStorage_LIBRARY_ID,
+                                  DsStr_OIDPREFIX, cp);
             return NULL;
 
         default:
@@ -2179,26 +2179,26 @@ void Mib_registerMibHandlers(void)
      * parsing behaviour
      */
 
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "showMibErrors", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_ERRORS);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "commentToEOL",  DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_COMMENT_TERM);  /* Describes actual behaviour */
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "strictCommentTerm", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_COMMENT_TERM); /* Backward compatibility */
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "mibAllowUnderline", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_PARSE_LABEL);
-    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "mibWarningLevel", DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.MIB_WARNINGS);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "mibReplaceWithLatest", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.MIB_REPLACE);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "showMibErrors", DsStorage_LIBRARY_ID, DsBool_MIB_ERRORS);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "commentToEOL",  DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM);  /* Describes actual behaviour */
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "strictCommentTerm", DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM); /* Backward compatibility */
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "mibAllowUnderline", DsStorage_LIBRARY_ID, DsBool_MIB_PARSE_LABEL);
+    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "mibWarningLevel", DsStorage_LIBRARY_ID, DsInt_MIB_WARNINGS);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "mibReplaceWithLatest", DsStorage_LIBRARY_ID, DsBool_MIB_REPLACE);
 
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "printNumericEnums", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_NUMERIC_ENUM);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "printNumericEnums", DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM);
     ReadConfig_registerPrenetMibHandler("snmp", "printNumericOids", Mib_handlePrintNumeric, NULL, "(1|yes|true|0|no|false)");
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "escapeQuotes", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.ESCAPE_QUOTES);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "dontBreakdownOids", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_BREAKDOWN_OIDS);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "quickPrinting", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "numericTimeticks", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NUMERIC_TIMETICKS);
-    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "oidOutputFormat", DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT);
-    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "suffixPrinting", DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "extendedIndex", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.EXTENDED_INDEX);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "printHexText", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_HEX_TEXT);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "printValueOnly", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_BARE_VALUE);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "dontPrintUnits", DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_PRINT_UNITS);
-    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "hexOutputLength", DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.HEX_OUTPUT_LENGTH);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "escapeQuotes", DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "dontBreakdownOids", DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "quickPrinting", DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "numericTimeticks", DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS);
+    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "oidOutputFormat", DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
+    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "suffixPrinting", DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "extendedIndex", DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "printHexText", DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "printValueOnly", DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE);
+    DefaultStore_registerPremib(ASN01_BOOLEAN, "snmp", "dontPrintUnits", DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS);
+    DefaultStore_registerPremib(ASN01_INTEGER, "snmp", "hexOutputLength", DsStorage_LIBRARY_ID, DsInt_HEX_OUTPUT_LENGTH);
 }
 
 /*
@@ -2221,7 +2221,7 @@ void Mib_setMibDirectory(const char *dir)
         return;
     }
 
-    olddir = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.MIBDIRS);
+    olddir = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS);
     if (olddir) {
         if ((*dir == '+') || (*dir == '-')) {
             /** New dir starts with '+', thus we add it. */
@@ -2242,7 +2242,7 @@ void Mib_setMibDirectory(const char *dir)
         /** If dir starts with '+' skip '+' it. */
         newdir = ((*dir == '+') ? ++dir : dir);
     }
-    DefaultStore_setString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.MIBDIRS, newdir);
+    DefaultStore_setString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS, newdir);
 
     /** set_string calls strdup, so if we allocated memory, free it */
     if (tmpdir == newdir) {
@@ -2268,7 +2268,7 @@ char * Mib_getMibDirectory(void)
     char *dir;
 
     DEBUG_TRACE;
-    dir = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.MIBDIRS);
+    dir = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS);
     if (dir == NULL) {
         DEBUG_MSGTL(("get_mib_directory", "no mib directories set\n"));
 
@@ -2298,7 +2298,7 @@ char * Mib_getMibDirectory(void)
             DEBUG_MSGTL(("get_mib_directory", "mib directories set by environment\n"));
             Mib_setMibDirectory(dir);
         }
-        dir = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.MIBDIRS);
+        dir = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS);
     }
     DEBUG_MSGTL(("get_mib_directory", "mib directories set '%s'\n", dir));
     return(dir);
@@ -2794,7 +2794,7 @@ int Mib_readObjid(const char *input, oid * output, size_t * out_len)
         return Mib_getNode(input, output, out_len);
     if (*input == '.')
         input++;
-    else if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.READ_UCD_STYLE_OID)) {
+    else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_READ_UCD_STYLE_OID)) {
         /*
          * get past leading '.', append '.' to Prefix.
          */
@@ -2866,7 +2866,7 @@ void Mib_sprintReallocObjid(u_char ** buf, size_t * buf_len,
         return;
     }
 
-    output_format = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT);
+    output_format = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
     if (0 == output_format) {
         output_format = MIB_OID_OUTPUT_NUMERIC;
     }
@@ -2926,7 +2926,7 @@ struct Parse_Tree_s    * Mib_sprintReallocObjidTree(u_char ** buf, size_t * buf_
         return subtree;
     }
 
-    output_format = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT);
+    output_format = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
     if (0 == output_format) {
         output_format = MIB_OID_OUTPUT_MODULE;
     }
@@ -3098,15 +3098,15 @@ int Mib_sprintReallocVariable(u_char ** buf, size_t * buf_len,
     if (buf_overflow) {
         return 0;
     }
-    if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.PRINT_BARE_VALUE)) {
-        if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICKE_PRINT)) {
+    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE)) {
+        if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
             if (!Tools_strcat
                 (buf, buf_len, out_len, allow_realloc,
                  (const u_char *) " = ")) {
                 return 0;
             }
         } else {
-            if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.QUICK_PRINT)) {
+            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
                 if (!Tools_strcat
                     (buf, buf_len, out_len, allow_realloc,
                      (const u_char *) " ")) {
@@ -3139,11 +3139,11 @@ int Mib_sprintReallocVariable(u_char ** buf, size_t * buf_len,
     } else if (subtree) {
         const char *units = NULL;
         const char *hint = NULL;
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_PRINT_UNITS)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS)) {
             units = subtree->units;
         }
 
-        if (!DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NO_DISPLAY_HINT)) {
+        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT)) {
             hint = subtree->hint;
         }
 
@@ -3246,7 +3246,7 @@ int Mib_sprintReallocValue(u_char ** buf, size_t * buf_len,
         const char *units = NULL;
         struct Parse_Tree_s *subtree = parse_treeHead;
     subtree = Mib_getTree(objid, objidlen, subtree);
-        if (subtree && !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_PRINT_UNITS)) {
+        if (subtree && !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS)) {
             units = subtree->units;
         }
         if (subtree) {
@@ -3801,7 +3801,7 @@ int Mib_dumpReallocOidToString(const oid * objid, size_t objidlen,
             }
 
             if (alen == 0) {
-                if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.ESCAPE_QUOTES)) {
+                if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
                     while ((*out_len + 2) >= *buf_len) {
                         if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
                             return 0;
@@ -3830,7 +3830,7 @@ int Mib_dumpReallocOidToString(const oid * objid, size_t objidlen,
         }
 
         if (alen) {
-            if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.ESCAPE_QUOTES)) {
+            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
                 while ((*out_len + 2) >= *buf_len) {
                     if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
                         return 0;
@@ -3889,9 +3889,9 @@ static struct Parse_Tree_s * Mib_getReallocSymbol(const oid * objid, size_t obji
 {
     struct Parse_Tree_s    *return_tree = NULL;
     int             extended_index =
-        DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.EXTENDED_INDEX);
+        DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX);
     int             output_format =
-        DefaultStore_getInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.OID_OUTPUT_FORMAT);
+        DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
     char            intbuf[64];
 
     if (!objid || !buf) {
@@ -3964,7 +3964,7 @@ static struct Parse_Tree_s * Mib_getReallocSymbol(const oid * objid, size_t obji
 
     while (in_dices && (objidlen > 0) &&
            (MIB_OID_OUTPUT_NUMERIC != output_format) &&
-           !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_BREAKDOWN_OIDS)) {
+           !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS)) {
         size_t          numids;
         struct Parse_Tree_s    *tp;
 
@@ -4060,7 +4060,7 @@ static struct Parse_Tree_s * Mib_getReallocSymbol(const oid * objid, size_t obji
                 if (numids > objidlen)
                     goto goto_finishIt;
                 if (numids == 1) {
-                    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.ESCAPE_QUOTES)) {
+                    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
                         if (!*buf_overflow
                             && !Tools_strcat(buf, buf_len, out_len,
                                             allow_realloc,
@@ -4074,7 +4074,7 @@ static struct Parse_Tree_s * Mib_getReallocSymbol(const oid * objid, size_t obji
                                         (const u_char *) "\"")) {
                         *buf_overflow = 1;
                     }
-                    if (DefaultStore_getBoolean (DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.ESCAPE_QUOTES)) {
+                    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
                         if (!*buf_overflow
                             && !Tools_strcat(buf, buf_len, out_len,
                                             allow_realloc,
@@ -4968,8 +4968,8 @@ static int Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
     char           *fcp, *ecp, *cp2 = NULL;
     char            doingquote;
     int             len = -1, pos = -1;
-    int             check = !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.DONT_CHECK_RANGE);
-    int             do_hint = !DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.NO_DISPLAY_HINT);
+    int             check = !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE);
+    int             do_hint = !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT);
 
     while (cp && tp && tp->child_list) {
         fcp = cp;
@@ -5660,8 +5660,8 @@ oid * Mib_parseOid(const char *argv, oid * root, size_t * rootlen)
     static char    *tmpbuf;
     const char     *suffix, *prefix;
 
-    suffix = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.OIDSUFFIX);
-    prefix = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.OIDPREFIX);
+    suffix = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_OIDSUFFIX);
+    prefix = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_OIDPREFIX);
 
     if ((suffix && suffix[0]) || (prefix && prefix[0])) {
         if (!suffix)
@@ -5679,12 +5679,12 @@ oid * Mib_parseOid(const char *argv, oid * root, size_t * rootlen)
         DEBUG_MSGTL(("snmp_parse_oid","Parsing: %s\n",argv));
     }
 
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.RANDOM_ACCESS)
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_RANDOM_ACCESS)
         || strchr(argv, ':')) {
         if (Mib_getNode(argv, root, rootlen)) {
             return root;
         }
-    } else if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.REGEX_ACCESS)) {
+    } else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_REGEX_ACCESS)) {
     Mib_clearTreeFlags(parse_treeHead);
         if (Mib_getWildNode(argv, root, rootlen)) {
             return root;

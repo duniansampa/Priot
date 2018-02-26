@@ -1046,8 +1046,8 @@ int Vacm_storeVacm(int majorID, int minorID, void *serverarg, void *clientarg)
      */
     char           *appname = (char *) clientarg;
     if (appname == NULL) {
-        appname = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                    DSLIB_STRING.APPTYPE);
+        appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                    DsStr_APPTYPE);
     }
 
     /*

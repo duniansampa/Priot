@@ -59,7 +59,7 @@ typedef struct ContainerIterator_IteratorInfo_s {
  * iterator
  *
  **********************************************************************/
-static void * ContainerIterator_iteratorGet(ContainerIterator_IteratorInfo *ii, const void *key)
+static void * _ContainerIterator_iteratorGet(ContainerIterator_IteratorInfo *ii, const void *key)
 {
     int cmp, rc = PRIOT_ERR_NOERROR;
     Types_RefVoid best = { NULL };
@@ -113,7 +113,7 @@ static void * ContainerIterator_iteratorGet(ContainerIterator_IteratorInfo *ii, 
  *   the get_data and get_pos functions must be implemented to
  *   return unique memory that will be saved for later comparisons.
  */
-static void * ContainerIterator_iteratorGetNext(ContainerIterator_IteratorInfo *ii, const void *key)
+static void * _ContainerIterator_iteratorGetNext(ContainerIterator_IteratorInfo *ii, const void *key)
 {
     int cmp, rc = PRIOT_ERR_NOERROR;
     Types_RefVoid bestVal = { NULL };
@@ -121,7 +121,7 @@ static void * ContainerIterator_iteratorGetNext(ContainerIterator_IteratorInfo *
     Types_RefVoid tmp = { NULL };
     Types_RefVoid loopCtx = { NULL };
 
-    DEBUG_MSGT(("containerIterator",">%s\n", "_iterator_get_next"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "_ContainerIterator_iteratorGetNext"));
 
     /*
      * initialize loop context
@@ -175,7 +175,7 @@ static void * ContainerIterator_iteratorGetNext(ContainerIterator_IteratorInfo *
                  */
                 if(bestVal.val == tmp.val) {
                     Logger_log(LOGGER_PRIORITY_ERR,"illegal reuse of data context in "
-                             "container_iterator\n");
+                             "containerIterator\n");
                     rc = PRIOT_ERR_GENERR;
                     break;
                 }
@@ -190,7 +190,7 @@ static void * ContainerIterator_iteratorGetNext(ContainerIterator_IteratorInfo *
                  */
                 if((NULL == key) || (NULL == bestVal.val) ||
                    ((cmp=ii->c.compare(tmp.val, bestVal.val)) < 0) ) {
-                    DEBUG_MSGT(("container_iterator:results"," best match\n"));
+                    DEBUG_MSGT(("containerIterator:results"," best match\n"));
                     bestVal.val = tmp.val;
                     if(ii->getData)
                         ii->savePos(ii->userCtx, &loopCtx, &bestCtx, 1);
@@ -264,9 +264,9 @@ static void * ContainerIterator_iteratorGetNext(ContainerIterator_IteratorInfo *
  * container
  *
  **********************************************************************/
-static void ContainerIterator_iteratorFree(ContainerIterator_IteratorInfo *ii)
+static void _ContainerIterator_iteratorFree(ContainerIterator_IteratorInfo *ii)
 {
-    DEBUG_MSGT(("ContainerIterator",">%s\n", "ContainerIterator_iteratorFree"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "ContainerIterator_iteratorFree"));
 
     if(NULL == ii)
         return;
@@ -277,29 +277,29 @@ static void ContainerIterator_iteratorFree(ContainerIterator_IteratorInfo *ii)
     free(ii);
 }
 
-static void * ContainerIterator_iteratorFind(ContainerIterator_IteratorInfo *ii, const void *data)
+static void * _ContainerIterator_iteratorFind(ContainerIterator_IteratorInfo *ii, const void *data)
 {
-    DEBUG_MSGT(("container_iterator",">%s\n", "_iterator_find"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "_ContainerIterator_iteratorFind"));
 
     if((NULL == ii) || (NULL == data))
         return NULL;
 
-    return ContainerIterator_iteratorGet(ii, data);
+    return _ContainerIterator_iteratorGet(ii, data);
 }
 
-static void * ContainerIterator_iteratorFindNext(ContainerIterator_IteratorInfo *ii, const void *data)
+static void * _ContainerIterator_iteratorFindNext(ContainerIterator_IteratorInfo *ii, const void *data)
 {
-    DEBUG_MSGT(("container_iterator",">%s\n", "_iterator_find_next"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "_ContainerIterator_iteratorFindNext"));
 
     if(NULL == ii)
         return NULL;
 
-    return ContainerIterator_iteratorGetNext(ii, data);
+    return _ContainerIterator_iteratorGetNext(ii, data);
 }
 
-static int ContainerIterator_iteratorInsert(ContainerIterator_IteratorInfo *ii, const void *data)
+static int _ContainerIterator_iteratorInsert(ContainerIterator_IteratorInfo *ii, const void *data)
 {
-    DEBUG_MSGT(("ContainerIterator",">%s\n", "ContainerIterator_iteratorInsert"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "ContainerIterator_iteratorInsert"));
 
     if(NULL == ii)
         return -1;
@@ -310,9 +310,9 @@ static int ContainerIterator_iteratorInsert(ContainerIterator_IteratorInfo *ii, 
     return ii->insertData(ii->userCtx, data);
 }
 
-static int ContainerIterator_iteratorRemove(ContainerIterator_IteratorInfo *ii, const void *data)
+static int _ContainerIterator_iteratorRemove(ContainerIterator_IteratorInfo *ii, const void *data)
 {
-    DEBUG_MSGT(("ContainerIterator",">%s\n", "ContainerIterator_iteratorRemove"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "ContainerIterator_iteratorRemove"));
 
     if(NULL == ii)
         return -1;
@@ -323,9 +323,9 @@ static int ContainerIterator_iteratorRemove(ContainerIterator_IteratorInfo *ii, 
     return ii->removeData(ii->userCtx, data);
 }
 
-static int ContainerIterator_iteratorRelease(ContainerIterator_IteratorInfo *ii, const void *data)
+static int _ContainerIterator_iteratorRelease(ContainerIterator_IteratorInfo *ii, const void *data)
 {
-    DEBUG_MSGT(("ContainerIterator",">%s\n", "ContainerIterator_iteratorRelease"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "ContainerIterator_iteratorRelease"));
 
     if(NULL == ii)
         return -1;
@@ -336,13 +336,13 @@ static int ContainerIterator_iteratorRelease(ContainerIterator_IteratorInfo *ii,
     return ii->releaseData(ii->userCtx, data);
 }
 
-static size_t ContainerIterator_iteratorSize(ContainerIterator_IteratorInfo *ii)
+static size_t _ContainerIterator_iteratorSize(ContainerIterator_IteratorInfo *ii)
 {
     size_t count = 0;
     Types_RefVoid loopCtx = { NULL };
     Types_RefVoid tmp = { NULL };
 
-    DEBUG_MSGT(("container_iterator",">%s\n", "_iterator_size"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "_iterator_size"));
 
     if(NULL == ii)
         return -1;
@@ -367,12 +367,12 @@ static size_t ContainerIterator_iteratorSize(ContainerIterator_IteratorInfo *ii)
     return count;
 }
 
-static void ContainerIterator_iteratorForEach(ContainerIterator_IteratorInfo *ii, Container_FuncObjFunc *f, void *ctx)
+static void _ContainerIterator_iteratorForEach(ContainerIterator_IteratorInfo *ii, Container_FuncObjFunc *f, void *ctx)
 {
     Types_RefVoid loopCtx = { NULL };
     Types_RefVoid tmp = { NULL };
 
-    DEBUG_MSGT(("ContainerIterator",">%s\n", "ContainerIterator_iteratorForEach"));
+    DEBUG_MSGT(("containerIterator",">%s\n", "ContainerIterator_iteratorForEach"));
 
     if(NULL == ii)
         return;
@@ -389,7 +389,7 @@ static void ContainerIterator_iteratorForEach(ContainerIterator_IteratorInfo *ii
         ii->cleanupLoopCtx(ii->userCtx, &loopCtx);
 }
 
-static void ContainerIterator_iteratorClear(Container_Container *container, Container_FuncObjFunc *f,
+static void _ContainerIterator_iteratorClear(Container_Container *container, Container_FuncObjFunc *f,
                  void *context)
 {
     Logger_log(LOGGER_PRIORITY_WARNING,"clear is meaningless for iterator container.\n");
@@ -431,19 +431,19 @@ Container_Container * ContainerIterator_get(void *iteratorUserCtx,
     /*
      * init container structure with iterator functions
      */
-    ii->c.cfree = (Container_FuncRc*)ContainerIterator_iteratorFree;
-    ii->c.compare = compare;
-    ii->c.getSize = (Container_FuncSize*) ContainerIterator_iteratorSize;
-    ii->c.init = NULL;
-    ii->c.insert = (Container_FuncOp*) ContainerIterator_iteratorInsert;
-    ii->c.remove = (Container_FuncOp*) ContainerIterator_iteratorRemove;
-    ii->c.release = (Container_FuncOp*) ContainerIterator_iteratorRelease;
-    ii->c.find = (Container_FuncRtn*) ContainerIterator_iteratorFind;
-    ii->c.findNext = (Container_FuncRtn*) ContainerIterator_iteratorFindNext;
-    ii->c.getSubset = NULL;
+    ii->c.cfree    = (Container_FuncRc*)_ContainerIterator_iteratorFree;
+    ii->c.compare  = compare;
+    ii->c.getSize  = (Container_FuncSize*) _ContainerIterator_iteratorSize;
+    ii->c.init     = NULL;
+    ii->c.insert   = (Container_FuncOp*) _ContainerIterator_iteratorInsert;
+    ii->c.remove   = (Container_FuncOp*) _ContainerIterator_iteratorRemove;
+    ii->c.release  = (Container_FuncOp*) _ContainerIterator_iteratorRelease;
+    ii->c.find     = (Container_FuncRtn*) _ContainerIterator_iteratorFind;
+    ii->c.findNext = (Container_FuncRtn*) _ContainerIterator_iteratorFindNext;
+    ii->c.getSubset   = NULL;
     ii->c.getIterator = NULL;
-    ii->c.forEach = (Container_FuncFunc*) ContainerIterator_iteratorForEach;
-    ii->c.clear = ContainerIterator_iteratorClear;
+    ii->c.forEach = (Container_FuncFunc*) _ContainerIterator_iteratorForEach;
+    ii->c.clear   = _ContainerIterator_iteratorClear;
 
     /*
      * init iterator structure with user functions

@@ -209,7 +209,7 @@ int DataList_removeNode(DataList_DataList **realhead, const char *name)
 }
 
 /** used to store registered save/parse handlers (specifically, parsing info) */
-static DataList_DataList * dataList_saveHead;
+static DataList_DataList * _dataList_saveHead;
 
 /** registers to store a data_list set of data at persistent storage time
  *
@@ -243,7 +243,7 @@ void DataList_registerSave(DataList_DataList **dataList,
     info->token = token;
     info->type = type;
     if (!info->type) {
-        info->type = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.APPTYPE);
+        info->type = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_APPTYPE);
     }
 
     /* function which will save the data */
@@ -256,7 +256,7 @@ void DataList_registerSave(DataList_DataList **dataList,
     info->readPtr = readPtr;
     if (readPtr) {
         /** @todo netsnmp_register_save_list should handle the same token name being saved from different types? */
-        DataList_add(&dataList_saveHead, DataList_create(token, info, NULL));
+        DataList_add(&_dataList_saveHead, DataList_create(token, info, NULL));
 
         ReadConfig_registerConfigHandler(type, token, DataList_readDataCallback,
                                 NULL /* XXX */, NULL);
@@ -328,7 +328,7 @@ void DataList_readDataCallback(const char *token, char *line) {
     void *data = NULL;
 
     /* find the stashed information about what we're parsing */
-    info = (DataList_SaveInfo *) DataList_get(dataList_saveHead, token);
+    info = (DataList_SaveInfo *) DataList_get(_dataList_saveHead, token);
     if (!info) {
         Logger_log(LOGGER_PRIORITY_WARNING, "DataList_readDataCallback called without previously registered subparser");
         return;

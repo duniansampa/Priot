@@ -1,7 +1,7 @@
 #ifndef TCPDOMAIN_H
 #define TCPDOMAIN_H
 
-#include "../Transport.h"
+#include "Transport.h"
 
 /*
  * The SNMP over TCP over IPv4 transport domain is identified by

@@ -228,7 +228,7 @@ int Int64_c64CheckFor32bitWrap(Int64_U64 *oldVal, Int64_U64 *newVal, int adjust)
     if( (NULL == oldVal) || (NULL == newVal) )
         return -1;
 
-    DEBUG_MSGTL(("9:c64:check_wrap", "check wrap 0x%0lx.0x%0lx 0x%0lx.0x%0lx\n",
+    DEBUG_MSGTL(("9:c64:checkWrap", "check wrap 0x%0lx.0x%0lx 0x%0lx.0x%0lx\n",
                 oldVal->high, oldVal->low, newVal->high, newVal->low));
 
     /*
@@ -236,7 +236,7 @@ int Int64_c64CheckFor32bitWrap(Int64_U64 *oldVal, Int64_U64 *newVal, int adjust)
      */
     if ((newVal->low >= oldVal->low) &&
         (newVal->high == oldVal->high)) {
-        DEBUG_MSGTL(("9:c64:check_wrap", "no wrap\n"));
+        DEBUG_MSGTL(("9:c64:checkWrap", "no wrap\n"));
         return 0;
     }
 
@@ -244,13 +244,13 @@ int Int64_c64CheckFor32bitWrap(Int64_U64 *oldVal, Int64_U64 *newVal, int adjust)
      * low wrapped. did high change?
      */
     if (newVal->high == oldVal->high) {
-        DEBUG_MSGTL(("c64:check_wrap", "32 bit wrap\n"));
+        DEBUG_MSGTL(("c64:checkWrap", "32 bit wrap\n"));
         if (adjust)
             newVal->high = (uint32_t)(newVal->high + 1);
         return 32;
     }
     else if (newVal->high == (uint32_t)(oldVal->high + 1)) {
-        DEBUG_MSGTL(("c64:check_wrap", "64 bit wrap\n"));
+        DEBUG_MSGTL(("c64:checkWrap", "64 bit wrap\n"));
         return 64;
     }
 

@@ -86,7 +86,7 @@ XClient_openSession(Types_Session * ss)
     pdu = Client_pduCreate(AGENTX_MSG_OPEN);
     if (pdu == NULL)
         return 0;
-    timeout = DefaultStore_getInt( DSSTORAGE.APPLICATION_ID,
+    timeout = DefaultStore_getInt( DsStorage_APPLICATION_ID,
                                    DsAgentInterger_AGENTX_TIMEOUT);
     if (timeout < 0)
         pdu->time = 0;

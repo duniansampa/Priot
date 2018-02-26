@@ -20,10 +20,10 @@
 Logger_LogHandler * logger_logHandlerHead = NULL;
 Logger_LogHandler * logger_logHandlerPriorities[LOGGER_PRIORITY_DEBUG + 1 ];
 
-static int  logger_logHandlerEnabled = 0;
+static int  _logger_logHandlerEnabled = 0;
 
 
-static char logger_syslogname[64] = LOGGER_DEFAULT_LOG_ID;
+static char _logger_syslogname[64] = LOGGER_DEFAULT_LOG_ID;
 
 
 void Logger_disableThisLoghandler(Logger_LogHandler *logh)
@@ -31,8 +31,8 @@ void Logger_disableThisLoghandler(Logger_LogHandler *logh)
     if (!logh || (0 == logh->enabled))
         return;
     logh->enabled = 0;
-    --logger_logHandlerEnabled;
-    Assert_assert(logger_logHandlerEnabled >= 0);
+    --_logger_logHandlerEnabled;
+    Assert_assert(_logger_logHandlerEnabled >= 0);
 }
 
 void Logger_enableThisLoghandler(Logger_LogHandler *logh)
@@ -40,7 +40,7 @@ void Logger_enableThisLoghandler(Logger_LogHandler *logh)
     if (!logh || (0 != logh->enabled))
         return;
     logh->enabled = 1;
-    ++logger_logHandlerEnabled;
+    ++_logger_logHandlerEnabled;
 }
 
 
@@ -56,7 +56,7 @@ void Logger_initLogger(void)
 {
 
     DefaultStore_registerPremib(DATATYPE_BOOLEAN, "priot", "logTimestamp",
-                                DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LOG_TIMESTAMP);
+                                DsStorage_LIBRARY_ID, DsBool_LOG_TIMESTAMP);
 
     ReadConfig_registerPrenetMibHandler("priot", "logOption",
                                     Logger_parseConfigLogOption, NULL, "string");
@@ -296,8 +296,8 @@ int Logger_logOptions(char *optarg, int argc, char *const *argv)
             logh->pri_max = pri_max;
             logh->token   = strdup(optarg);
             Logger_enableFilelog(logh,
-                                   DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                                                          DSLIB_BOOLEAN.APPEND_LOGFILES));
+                                   DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                                                          DsBool_APPEND_LOGFILES));
         }
         break;
         /*
@@ -343,9 +343,9 @@ int Logger_logOptions(char *optarg, int argc, char *const *argv)
         /* Fallthrough */
     case 'n':
         /*
-                 * disable all logs to clean them up (close files, etc),
-                 * remove all log handlers, then register a null handler.
-                 */
+         * disable all logs to clean them up (close files, etc),
+         * remove all log handlers, then register a null handler.
+         */
         Logger_disableLog();
         while(NULL != logger_logHandlerHead)
             Logger_removeLoghandler( logger_logHandlerHead );
@@ -365,9 +365,9 @@ int Logger_logOptions(char *optarg, int argc, char *const *argv)
 char * Logger_logSyslogname(const char *pstr)
 {
   if (pstr)
-    Strlcpy_strlcpy (logger_syslogname, pstr, sizeof(logger_syslogname));
+    Strlcpy_strlcpy (_logger_syslogname, pstr, sizeof(_logger_syslogname));
 
-  return logger_syslogname;
+  return _logger_syslogname;
 }
 
 void Logger_logOptionsUsage(const char *lead, FILE * outf)
@@ -394,10 +394,10 @@ void Logger_logOptionsUsage(const char *lead, FILE * outf)
  */
 int Logger_isDoLogging(void)
 {
-    return (logger_logHandlerEnabled > 0);
+    return (_logger_logHandlerEnabled > 0);
 }
 
-static char * Logger_sprintfStamp(time_t * now, char *sbuf)
+static char * _Logger_sprintfStamp(time_t * now, char *sbuf)
 {
     time_t          Now;
     struct tm      *tm;
@@ -511,8 +511,6 @@ void Logger_disableLog(void)
     }
 }
 
-
-
 /*
  * close and reopen all file based logs, to allow logfile
  * rotation.
@@ -593,9 +591,9 @@ void Logger_enableFilelog(Logger_LogHandler *logh, int dont_zero_log)
     if (!logh->magic) {
         logfile = fopen(logh->token, dont_zero_log ? "a" : "w");
         if (!logfile) {
-        Logger_logPerror(logh->token);
+            Logger_logPerror(logh->token);
             return;
-    }
+        }
         logh->magic = (void*)logfile;
         Logger_setLineBuffering(logfile);
     }
@@ -670,8 +668,6 @@ void Logger_enableCalllog(void)	/* XXX - or take a callback routine ??? */
     }
 }
 
-
-
 Logger_LogHandler * Logger_findLoghandler( const char *token )
 {
     Logger_LogHandler *logh;
@@ -733,7 +729,6 @@ int Logger_addLoghandler( Logger_LogHandler *logh )
 
     return 1;
 }
-
 
 Logger_LogHandler * Logger_registerLoghandler( int type, int priority )
 {
@@ -821,16 +816,15 @@ int Logger_removeLoghandler( Logger_LogHandler *logh )
     return 1;
 }
 
-
 int Logger_logHandlerStdouterr( Logger_LogHandler * logh, int pri, const char *str)
 {
     static int      newline = 1;	 /* MTCRITICAL_RESOURCE */
     const char     *newline_ptr;
     char            sbuf[40];
 
-    if ( DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID,
-                               DSLIB_BOOLEAN.LOG_TIMESTAMP) && newline) {
-        Logger_sprintfStamp(NULL, sbuf);
+    if ( DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+                               DsBool_LOG_TIMESTAMP) && newline) {
+        _Logger_sprintfStamp(NULL, sbuf);
     } else {
         strcpy(sbuf, "");
     }
@@ -864,7 +858,7 @@ int Logger_logHandlerSyslog(Logger_LogHandler * logh, int pri, const char *str)
         const char *ident    = logh->token;
         int   facility = (int)(intptr_t)logh->magic;
         if (!ident)
-            ident = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.APPTYPE);
+            ident = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_APPTYPE);
 
         openlog(ident, LOG_CONS | LOG_PID, facility);
         logh->imagic = 1;
@@ -882,8 +876,8 @@ int Logger_logHandlerFile(Logger_LogHandler * logh, int pri, const char *str)
      * We use imagic to save information about whether the next output
      * will start a new line, and thus might need a timestamp
      */
-    if (DefaultStore_getBoolean(DSSTORAGE.LIBRARY_ID, DSLIB_BOOLEAN.LOG_TIMESTAMP) && logh->imagic) {
-        Logger_sprintfStamp(NULL, sbuf);
+    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_LOG_TIMESTAMP) && logh->imagic) {
+        _Logger_sprintfStamp(NULL, sbuf);
     } else {
         strcpy(sbuf, "");
     }
@@ -949,7 +943,7 @@ void Logger_logString(int priority, const char *str)
      * We've got to be able to log messages *somewhere*!
      * If you don't want stderr logging, then enable something else.
      */
-    if (0 == logger_logHandlerEnabled) {
+    if (0 == _logger_logHandlerEnabled) {
         if (!stderr_enabled) {
             ++stderr_enabled;
             Logger_setLineBuffering(stderr);
@@ -1024,13 +1018,11 @@ int Logger_vlog(int priority, const char *format, va_list ap)
     va_end(ap);
 
     if (length == 0) {
-
         return (0);             /* Empty string */
     }
 
     if (length == -1) {
         Logger_logString(LOGGER_PRIORITY_ERR, "Could not format log-string\n");
-
         return (-1);
     }
 

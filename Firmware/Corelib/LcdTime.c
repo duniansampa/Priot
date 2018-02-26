@@ -1,5 +1,4 @@
 #include "LcdTime.h"
-
 #include "Tools.h"
 #include "Debug.h"
 #include "Scapi.h"
@@ -11,7 +10,7 @@
  *
  * New records are prepended to the appropriate list at the hash index.
  */
-static LcdTime_EnginetimePTR lcdTime_etimelist[ LCDTIME_ETIMELIST_SIZE ];
+static LcdTime_EnginetimePTR _lcdTime_etimelist[ LCDTIME_ETIMELIST_SIZE ];
 
 /*******************************************************************-o-******
  * LcdTime_getEnginetime
@@ -54,7 +53,7 @@ int LcdTime_getEnginetime(const u_char * engineID,
      * Sanity check.
      */
     if (!engine_time || !engineboot) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetime);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeQuit);
     }
 
 
@@ -65,11 +64,11 @@ int LcdTime_getEnginetime(const u_char * engineID,
     *engine_time = *engineboot = 0;
 
     if (!engineID || (engineID_len <= 0)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetime);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeQuit);
     }
 
     if (!(e = LcdTime_searchEnginetimeList(engineID, engineID_len))) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetime);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeQuit);
     }
 
     if (!authenticated || e->authenticatedFlag) {
@@ -99,7 +98,7 @@ int LcdTime_getEnginetime(const u_char * engineID,
     DEBUG_MSG(("LcdTime_getEnginetime", ": boots=%d, time=%d\n", *engineboot,
               *engine_time));
 
-goto_getEnginetime:
+goto_getEnginetimeQuit:
     return rval;
 
 }
@@ -145,7 +144,7 @@ int LcdTime_getEnginetimeEx(u_char * engineID,
      * Sanity check.
      */
     if (!engine_time || !engineboot || !last_engine_time) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeEx);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeExQuit);
     }
 
 
@@ -156,11 +155,11 @@ int LcdTime_getEnginetimeEx(u_char * engineID,
     *last_engine_time = *engine_time = *engineboot = 0;
 
     if (!engineID || (engineID_len <= 0)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeEx);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeExQuit);
     }
 
     if (!(e = LcdTime_searchEnginetimeList(engineID, engineID_len))) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeEx);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_getEnginetimeExQuit);
     }
 
     if (!authenticated || e->authenticatedFlag) {
@@ -191,7 +190,7 @@ int LcdTime_getEnginetimeEx(u_char * engineID,
     DEBUG_MSG(("LcdTime_getEnginetimeEx", ": boots=%d, time=%d\n",
               *engineboot, *engine_time));
 
-goto_getEnginetimeEx:
+goto_getEnginetimeExQuit:
     return rval;
 
 }                               /* end get_enginetime_ex() */
@@ -206,13 +205,13 @@ void LcdTime_freeEnginetime(unsigned char *engineID, size_t engineID_len)
     if (rval < 0)
     return;
 
-    e = lcdTime_etimelist[rval];
+    e = _lcdTime_etimelist[rval];
 
     while (e != NULL) {
-        lcdTime_etimelist[rval] = e->next;
+        _lcdTime_etimelist[rval] = e->next;
         TOOLS_FREE(e->engineID);
         TOOLS_FREE(e);
-        e = lcdTime_etimelist[rval];
+        e = _lcdTime_etimelist[rval];
     }
 
 }
@@ -240,7 +239,7 @@ void LcdTime_freeEtimelist(void)
 
      for( ; index < LCDTIME_ETIMELIST_SIZE; ++index)
      {
-           e = lcdTime_etimelist[index];
+           e = _lcdTime_etimelist[index];
 
            while(e != NULL)
            {
@@ -250,7 +249,7 @@ void LcdTime_freeEtimelist(void)
                  e = nextE;
            }
 
-           lcdTime_etimelist[index] = NULL;
+           _lcdTime_etimelist[index] = NULL;
      }
      return;
 }
@@ -302,13 +301,13 @@ int LcdTime_setEnginetime(const u_char * engineID,
      */
     if (!(e = LcdTime_searchEnginetimeList(engineID, engineID_len))) {
         if ((iindex = LcdTime_hashEngineID(engineID, engineID_len)) < 0) {
-           TOOLS_QUITFUN(ErrorCode_GENERR, goto_setEnginetime);
+           TOOLS_QUITFUN(ErrorCode_GENERR, goto_setEnginetimeQuit);
         }
 
         e = (LcdTime_EnginetimePTR) calloc(1, sizeof(*e));
 
-        e->next = lcdTime_etimelist[iindex];
-        lcdTime_etimelist[iindex] = e;
+        e->next = _lcdTime_etimelist[iindex];
+        _lcdTime_etimelist[iindex] = e;
 
         e->engineID = (u_char *) calloc(1, engineID_len);
         memcpy(e->engineID, engineID, engineID_len);
@@ -331,7 +330,7 @@ int LcdTime_setEnginetime(const u_char * engineID,
     DEBUG_MSG(("LcdTime_setEnginetime", ": boots=%d, time=%d\n", engineboot,
               engine_time));
 
-goto_setEnginetime:
+goto_setEnginetimeQuit:
     TOOLS_FREE(e);
 
     return rval;
@@ -378,7 +377,7 @@ LcdTime_EnginetimePTR LcdTime_searchEnginetimeList(const u_char * engineID, u_in
     if (rval < 0) {
         TOOLS_QUITFUN(ErrorCode_GENERR, goto_searchEnginetimeListQuit);
     }
-    e = lcdTime_etimelist[rval];
+    e = _lcdTime_etimelist[rval];
 
     for ( /*EMPTY*/; e; e = e->next) {
         if ((engineID_len == e->engineID_len)
@@ -425,7 +424,7 @@ int LcdTime_hashEngineID(const u_char * engineID, u_int engineID_len)
      * Sanity check.
      */
     if (!engineID || (engineID_len <= 0)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_hashEngineID);
+        TOOLS_QUITFUN(ErrorCode_GENERR, goto_hashEngineIDQuit);
     }
 
 
@@ -442,13 +441,13 @@ int LcdTime_hashEngineID(const u_char * engineID, u_int engineID_len)
                    engineID, engineID_len, buf, &buf_len);
     }
 
-    TOOLS_QUITFUN(rval, goto_hashEngineID);
+    TOOLS_QUITFUN(rval, goto_hashEngineIDQuit);
 
     for (bufp = buf; (bufp - buf) < (int) buf_len; bufp += 4) {
         additive += (u_int) * bufp;
     }
 
-goto_hashEngineID:
+goto_hashEngineIDQuit:
     TOOLS_FREE(context);
     memset(buf, 0, TOOLS_MAXBUF);
 

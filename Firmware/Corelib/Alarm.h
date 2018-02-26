@@ -13,7 +13,7 @@ typedef void  (Alarm_CallbackFT) (unsigned int clientreg,
 #define ALARM_SA_REPEAT 0x01          /* keep repeating every X seconds */
 #define ALARM_SA_FIRED 0x10          /* Being processed in run_alarms */
 
-struct Alarm_alarm_s {
+struct Alarm_s {
     /** Alarm interval. Zero if single-shot. */
     struct timeval  t;
     unsigned int    flags;
@@ -24,7 +24,7 @@ struct Alarm_alarm_s {
     struct timeval  t_nextM;
     void * clientarg;
     Alarm_CallbackFT *thecallback;
-    struct Alarm_alarm_s *next;
+    struct Alarm_s *next;
 };
 
 /*
@@ -56,9 +56,9 @@ int  Alarm_initAlarmPostConfig(int majorid, int minorid,
                                void *serverarg,
                                void *clientarg);
 
-void  Alarm_saUpdateEntry(struct Alarm_alarm_s *alrm);
+void  Alarm_saUpdateEntry(struct Alarm_s *alrm);
 
-struct Alarm_alarm_s * Alarm_saFindNext(void);
+struct Alarm_s * Alarm_saFindNext(void);
 
 void  Alarm_runAlarms(void);
 

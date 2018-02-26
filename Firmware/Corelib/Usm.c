@@ -2630,8 +2630,8 @@ Usm_sessionInit(Types_Session *in_session, Types_Session *session)
     }
 
     if ((in_session->securityAuthKeyLen <= 0) &&
-        ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                     DSLIB_STRING.AUTHMASTERKEY)))) {
+        ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                     DsStr_AUTHMASTERKEY)))) {
         size_t buflen = sizeof(session->securityAuthKey);
         u_char *tmpp = session->securityAuthKey;
         session->securityAuthKeyLen = 0;
@@ -2642,10 +2642,10 @@ Usm_sessionInit(Types_Session *in_session, Types_Session *session)
             return PRIOT_ERR_GENERR;
         }
     } else if ((in_session->securityAuthKeyLen <= 0) &&
-               ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                            DSLIB_STRING.AUTHPASSPHRASE)) ||
-                (cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                            DSLIB_STRING.PASSPHRASE)))) {
+               ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                            DsStr_AUTHPASSPHRASE)) ||
+                (cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                            DsStr_PASSPHRASE)))) {
         session->securityAuthKeyLen = USM_AUTH_KU_LEN;
         if (Keytools_generateKu(session->securityAuthProto,
                         session->securityAuthProtoLen,
@@ -2660,8 +2660,8 @@ Usm_sessionInit(Types_Session *in_session, Types_Session *session)
 
 
     if ((in_session->securityPrivKeyLen <= 0) &&
-        ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                     DSLIB_STRING.PRIVMASTERKEY)))) {
+        ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                     DsStr_PRIVMASTERKEY)))) {
         size_t buflen = sizeof(session->securityPrivKey);
         u_char *tmpp = session->securityPrivKey;
         session->securityPrivKeyLen = 0;
@@ -2672,10 +2672,10 @@ Usm_sessionInit(Types_Session *in_session, Types_Session *session)
             return PRIOT_ERR_GENERR;
         }
     } else if ((in_session->securityPrivKeyLen <= 0) &&
-               ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                            DSLIB_STRING.PRIVPASSPHRASE)) ||
-                (cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                            DSLIB_STRING.PASSPHRASE)))) {
+               ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                            DsStr_PRIVPASSPHRASE)) ||
+                (cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                            DsStr_PASSPHRASE)))) {
         session->securityPrivKeyLen = USM_PRIV_KU_LEN;
         if (Keytools_generateKu(session->securityAuthProto,
                         session->securityAuthProtoLen,
@@ -2834,8 +2834,8 @@ int Usm_createUserFromSession(Types_Session * session)
                 Usm_freeUser(user);
                 return ErrorCode_GENERR;
             }
-        } else if ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                               DSLIB_STRING.AUTHLOCALIZEDKEY))) {
+        } else if ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                               DsStr_AUTHLOCALIZEDKEY))) {
             size_t buflen = USM_AUTH_KU_LEN;
             TOOLS_FREE(user->authKey);
             user->authKey = (u_char *)malloc(buflen); /* max length needed */
@@ -2882,8 +2882,8 @@ int Usm_createUserFromSession(Types_Session * session)
                 Usm_freeUser(user);
                 return ErrorCode_GENERR;
             }
-        } else if ((cp = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                               DSLIB_STRING.PRIVLOCALIZEDKEY))) {
+        } else if ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                               DsStr_PRIVLOCALIZEDKEY))) {
             size_t buflen = USM_PRIV_KU_LEN;
             TOOLS_FREE(user->privKey);
             user->privKey = (u_char *)malloc(buflen); /* max length needed */
@@ -3088,7 +3088,7 @@ Usm_initUsm(void)
                            Usm_freeEnginetimeOnShutdown, NULL);
 
 
-    type = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.APPTYPE);
+    type = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_APPTYPE);
 
     ReadConfig_registerConfigHandler(type, "userSetAuthPass", Usm_setPassword,
                             NULL, NULL);
@@ -3779,8 +3779,8 @@ Usm_storeUsers(int majorID, int minorID, void *serverarg, void *clientarg)
      */
     char           *appname = (char *) clientarg;
     if (appname == NULL) {
-        appname = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                    DSLIB_STRING.APPTYPE);
+        appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                    DsStr_APPTYPE);
     }
 
     /*

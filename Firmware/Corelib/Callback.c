@@ -15,12 +15,12 @@
  * #define NETSNMP_PARANOID_LEVEL_HIGH 1
  */
 
-static int callback_needInit = 1;
-static struct Callback_GenCallback_s *callback_thecallbacks[CALLBACK_MAX_CALLBACK_IDS][CALLBACK_MAX_CALLBACK_SUBIDS];
+static int _callback_needInit = 1;
+static struct Callback_GenCallback_s *_callback_thecallbacks[CALLBACK_MAX_CALLBACK_IDS][CALLBACK_MAX_CALLBACK_SUBIDS];
 
 #define CALLBACK_NAME_LOGGING 1
-static const char *callback_types[CALLBACK_MAX_CALLBACK_IDS] = { "LIB", "APP" };
-static const char *callback_lib[CALLBACK_MAX_CALLBACK_SUBIDS] = {
+static const char *_callback_types[CALLBACK_MAX_CALLBACK_IDS] = { "LIB", "APP" };
+static const char *_callback_lib[CALLBACK_MAX_CALLBACK_SUBIDS] = {
     "POST_READ_CONFIG", /* 0 */
     "STORE_DATA", /* 1 */
     "SHUTDOWN", /* 2 */
@@ -50,20 +50,20 @@ static const char *callback_lib[CALLBACK_MAX_CALLBACK_SUBIDS] = {
  * subagents do this).
  */
 #define LOCK_PER_CALLBACK_SUBID 1
-static int callback_locks[CALLBACK_MAX_CALLBACK_IDS][CALLBACK_MAX_CALLBACK_SUBIDS];
-#define CALLBACK_LOCK(maj,min) ++callback_locks[maj][min]
-#define CALLBACK_UNLOCK(maj,min) --callback_locks[maj][min]
-#define CALLBACK_LOCK_COUNT(maj,min) callback_locks[maj][min]
+static int _callback_locks[CALLBACK_MAX_CALLBACK_IDS][CALLBACK_MAX_CALLBACK_SUBIDS];
+#define CALLBACK_LOCK(maj,min) ++_callback_locks[maj][min]
+#define CALLBACK_UNLOCK(maj,min) --_callback_locks[maj][min]
+#define CALLBACK_LOCK_COUNT(maj,min) _callback_locks[maj][min]
 
 
-int Callback_lock(int major, int minor, const char* warn, int do_assert)
+static int _Callback_lock(int major, int minor, const char* warn, int do_assert)
 {
     int lock_holded=0;
     struct timeval lock_time = { 0, 1000 };
 
     DEBUG_MSGTL(("9:callback:lock", "locked (%s,%s)\n",
-                callback_types[major], (CALLBACK_LIBRARY == major) ?
-                TOOLS_STRORNULL(callback_lib[minor]) : "null"));
+                _callback_types[major], (CALLBACK_LIBRARY == major) ?
+                TOOLS_STRORNULL(_callback_lib[minor]) : "null"));
 
     while (CALLBACK_LOCK_COUNT(major,minor) >= 1 && ++lock_holded < 100)
     select(0, NULL, NULL, NULL, &lock_time);
@@ -71,7 +71,7 @@ int Callback_lock(int major, int minor, const char* warn, int do_assert)
     if(lock_holded >= 100) {
         if (NULL != warn)
             Logger_log(LOGGER_PRIORITY_WARNING,
-                     "lock in _callback_lock sleeps more than 100 milliseconds in %s\n", warn);
+                     "lock in Callback_lock sleeps more than 100 milliseconds in %s\n", warn);
         if (do_assert)
             Assert_assert(lock_holded < 100);
 
@@ -83,14 +83,14 @@ int Callback_lock(int major, int minor, const char* warn, int do_assert)
 }
 
 void
-Callback_unlock(int major, int minor)
+static _Callback_unlock(int major, int minor)
 {
 
     CALLBACK_UNLOCK(major,minor);
 
     DEBUG_MSGTL(("9:callback:lock", "unlocked (%s,%s)\n",
-                callback_types[major], (CALLBACK_LIBRARY == major) ?
-                TOOLS_STRORNULL(callback_lib[minor]) : "null"));
+                _callback_types[major], (CALLBACK_LIBRARY == major) ?
+                TOOLS_STRORNULL(_callback_lib[minor]) : "null"));
 }
 
 
@@ -105,13 +105,13 @@ Callback_initCallbacks()
      * init_snmp() and then want the app to register a callback before
      * init_snmp() is called in the first place.  -- Wes
      */
-    if (0 == callback_needInit)
+    if (0 == _callback_needInit)
         return;
 
-    callback_needInit = 0;
+    _callback_needInit = 0;
 
-    memset(callback_thecallbacks, 0, sizeof(callback_thecallbacks));
-    memset(callback_locks, 0, sizeof(callback_locks));
+    memset(_callback_thecallbacks, 0, sizeof(_callback_thecallbacks));
+    memset(_callback_locks, 0, sizeof(_callback_locks));
 
 
     DEBUG_MSGTL(("callback", "initialized\n"));
@@ -180,19 +180,19 @@ Callback_registerCallback2(int major, int minor, Callback_CallbackFT * new_callb
                           void *arg, int priority)
 {
     struct Callback_GenCallback_s *newscp = NULL, *scp = NULL;
-    struct Callback_GenCallback_s **prevNext = &(callback_thecallbacks[major][minor]);
+    struct Callback_GenCallback_s **prevNext = &(_callback_thecallbacks[major][minor]);
 
     if (major >= CALLBACK_MAX_CALLBACK_IDS || minor >= CALLBACK_MAX_CALLBACK_SUBIDS) {
         return ErrorCode_GENERR;
     }
 
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
-    Callback_lock(major,minor, "netsnmp_register_callback", 1);
+    _Callback_lock(major,minor, "Callback_registerCallback2", 1);
 
     if ((newscp = TOOLS_MALLOC_STRUCT(Callback_GenCallback_s)) == NULL) {
-        Callback_unlock(major,minor);
+        _Callback_unlock(major,minor);
         return ErrorCode_GENERR;
     } else {
         newscp->priority = priority;
@@ -200,7 +200,7 @@ Callback_registerCallback2(int major, int minor, Callback_CallbackFT * new_callb
         newscp->sc_callback = new_callback;
         newscp->next = NULL;
 
-        for (scp = callback_thecallbacks[major][minor]; scp != NULL;
+        for (scp = _callback_thecallbacks[major][minor]; scp != NULL;
              scp = scp->next) {
             if (newscp->priority < scp->priority) {
                 newscp->next = scp;
@@ -213,7 +213,7 @@ Callback_registerCallback2(int major, int minor, Callback_CallbackFT * new_callb
 
         DEBUG_MSGTL(("callback", "registered (%d,%d) at %p with priority %d\n",
                     major, minor, newscp, priority));
-        Callback_unlock(major,minor);
+        _Callback_unlock(major,minor);
         return ErrorCode_SUCCESS;
     }
 }
@@ -245,10 +245,10 @@ Callback_callCallbacks(int major, int minor, void *caller_arg)
         return ErrorCode_GENERR;
     }
 
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
-    Callback_lock(major,minor,"snmp_call_callbacks", 1);
+    _Callback_lock(major,minor,"Callback_callCallbacks", 1);
 
 
     DEBUG_MSGTL(("callback", "START calling callbacks for maj=%d min=%d\n",
@@ -257,7 +257,7 @@ Callback_callCallbacks(int major, int minor, void *caller_arg)
     /*
      * for each registered callback of type major and minor
      */
-    for (scp = callback_thecallbacks[major][minor]; scp != NULL; scp = scp->next) {
+    for (scp = _callback_thecallbacks[major][minor]; scp != NULL; scp = scp->next) {
 
         /*
          * skip unregistered callbacks
@@ -280,7 +280,7 @@ Callback_callCallbacks(int major, int minor, void *caller_arg)
                 "END calling callbacks for maj=%d min=%d (%d called)\n",
                 major, minor, count));
 
-    Callback_unlock(major,minor);
+    _Callback_unlock(major,minor);
     return ErrorCode_SUCCESS;
 }
 
@@ -294,10 +294,10 @@ Callback_countCallbacks(int major, int minor)
         return ErrorCode_GENERR;
     }
 
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
-    for (scp = callback_thecallbacks[major][minor]; scp != NULL; scp = scp->next) {
+    for (scp = _callback_thecallbacks[major][minor]; scp != NULL; scp = scp->next) {
         count++;
     }
 
@@ -311,10 +311,10 @@ Callback_available(int major, int minor)
         return ErrorCode_GENERR;
     }
 
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
-    if (callback_thecallbacks[major][minor] != NULL) {
+    if (_callback_thecallbacks[major][minor] != NULL) {
         return ErrorCode_SUCCESS;
     }
 
@@ -351,17 +351,17 @@ int
 Callback_unregisterCallback(int major, int minor, Callback_CallbackFT * target,
                          void *arg, int matchargs)
 {
-    struct Callback_GenCallback_s *scp = callback_thecallbacks[major][minor];
-    struct Callback_GenCallback_s **prevNext = &(callback_thecallbacks[major][minor]);
+    struct Callback_GenCallback_s *scp = _callback_thecallbacks[major][minor];
+    struct Callback_GenCallback_s **prevNext = &(_callback_thecallbacks[major][minor]);
     int             count = 0;
 
     if (major >= CALLBACK_MAX_CALLBACK_IDS || minor >= CALLBACK_MAX_CALLBACK_SUBIDS)
         return ErrorCode_GENERR;
 
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
-    Callback_lock(major,minor,"snmp_unregister_callback", 1);
+    _Callback_lock(major,minor,"Callback_unregisterCallback", 1);
 
 
     while (scp != NULL) {
@@ -385,7 +385,7 @@ Callback_unregisterCallback(int major, int minor, Callback_CallbackFT * target,
         }
     }
 
-    Callback_unlock(major,minor);
+    _Callback_unlock(major,minor);
     return count;
 }
 
@@ -409,7 +409,7 @@ int Callback_clearClientArg(void *ptr, int i, int j)
      */
     for (; i < CALLBACK_MAX_CALLBACK_IDS; i++,j=0) {
         for (; j < CALLBACK_MAX_CALLBACK_SUBIDS; j++) {
-            scp = callback_thecallbacks[i][j];
+            scp = _callback_thecallbacks[i][j];
             while (scp != NULL) {
                 if ((NULL != scp->sc_callback) &&
                     (scp->sc_client_arg != NULL) &&
@@ -435,16 +435,16 @@ void Callback_clearCallback(void)
     unsigned int i = 0, j = 0;
     struct Callback_GenCallback_s *scp = NULL;
 
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
     DEBUG_MSGTL(("callback", "clear callback\n"));
     for (i = 0; i < CALLBACK_MAX_CALLBACK_IDS; i++) {
         for (j = 0; j < CALLBACK_MAX_CALLBACK_SUBIDS; j++) {
-            Callback_lock(i,j, "clear_callback", 1);
-            scp = callback_thecallbacks[i][j];
+            _Callback_lock(i,j, "clear_callback", 1);
+            scp = _callback_thecallbacks[i][j];
             while (scp != NULL) {
-                callback_thecallbacks[i][j] = scp->next;
+                _callback_thecallbacks[i][j] = scp->next;
                 /*
                  * if there is a client arg, check for duplicates
                  * and then free it.
@@ -465,9 +465,9 @@ void Callback_clearCallback(void)
                     free(tmp_arg);
                 }
                 TOOLS_FREE(scp);
-                scp = callback_thecallbacks[i][j];
+                scp = _callback_thecallbacks[i][j];
             }
-            Callback_unlock(i,j);
+            _Callback_unlock(i,j);
         }
     }
 }
@@ -475,8 +475,8 @@ void Callback_clearCallback(void)
 struct Callback_GenCallback_s *
 Callback_list(int major, int minor)
 {
-    if (callback_needInit)
+    if (_callback_needInit)
         Callback_initCallbacks();
 
-    return (callback_thecallbacks[major][minor]);
+    return (_callback_thecallbacks[major][minor]);
 }

@@ -2,9 +2,9 @@
 
 
 #include "DefaultStore.h"
-#include "../System.h"
-#include "../Debug.h"
-#include "../Priot.h"
+#include "System.h"
+#include "Debug.h"
+#include "Priot.h"
 
 
 
@@ -38,8 +38,8 @@ int IPv4BaseDomain_sockaddrIn2(struct sockaddr_in *addr,
     addr->sin_port = htons((u_short)PRIOT_PORT);
 
     {
-        int port = DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                                                      DSLIB_INTEGER.DEFAULT_PORT);
+        int port = DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                                                      DsInt_DEFAULT_PORT);
 
         if (port != 0) {
             addr->sin_port = htons((u_short)port);

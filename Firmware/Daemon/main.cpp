@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
 {
 
 
-//    DefaultStore_setString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CONTEXT, "ola mundo!");
+//    DefaultStore_setString(DsStorage_LIBRARY_ID, DsStr_CONTEXT, "ola mundo!");
 
-//    char * value = DefaultStore_getString(DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CONTEXT);
+//    char * value = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_CONTEXT);
 
 //    cout << "Value: " << value << endl;
     return 0;

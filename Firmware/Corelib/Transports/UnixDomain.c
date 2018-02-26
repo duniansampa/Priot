@@ -4,8 +4,8 @@
 #include "Vacm.h"
 #include <stddef.h>
 #include <sys/un.h>
-#include "../Debug.h"
-#include "../Logger.h"
+#include "Debug.h"
+#include "Logger.h"
 #include "Tools.h"
 #include "ReadConfig.h"
 #include "Strlcpy.h"

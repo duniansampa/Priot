@@ -59,13 +59,13 @@ void V3_secLevelConf(const char *word, char *cptr)
     int             secLevel;
 
     if ((secLevel = V3_parseSecLevelConf( word, cptr )) >= 0 ) {
-        DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SECLEVEL, secLevel);
+        DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_SECLEVEL, secLevel);
     } else {
     ReadConfig_error("Unknown security level: %s", cptr);
     }
     DEBUG_MSGTL(("snmpv3", "default secLevel set to: %s = %d\n", cptr,
-                DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_INTEGER.SECLEVEL)));
+                DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                   DsInt_SECLEVEL)));
 }
 
 
@@ -661,7 +661,7 @@ void V3_versionConf(const char *word, char *cptr)
     int valid = 0;
     if ((strcasecmp(cptr,  "3" ) == 0) ||
                (strcasecmp(cptr, "v3" ) == 0)) {
-        DefaultStore_setInt(DSSTORAGE.LIBRARY_ID, DSLIB_INTEGER.SNMPVERSION,
+        DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_SNMPVERSION,
                DEFAULTSTORE_PRIOT_VERSION_3);
         valid = 1;
     }
@@ -670,8 +670,8 @@ void V3_versionConf(const char *word, char *cptr)
         return;
     }
     DEBUG_MSGTL(("snmpv3", "set default version to %d\n",
-                DefaultStore_getInt(DSSTORAGE.LIBRARY_ID,
-                   DSLIB_INTEGER.SNMPVERSION)));
+                DefaultStore_getInt(DsStorage_LIBRARY_ID,
+                   DsInt_SNMPVERSION)));
 }
 
 /*
@@ -782,30 +782,30 @@ void V3_initV3(const char *type)
      * default store config entries
      */
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defSecurityName",
-                   DSSTORAGE.LIBRARY_ID, DSLIB_STRING.SECNAME);
+                   DsStorage_LIBRARY_ID, DsStr_SECNAME);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defContext",
-                   DSSTORAGE.LIBRARY_ID, DSLIB_STRING.CONTEXT);
+                   DsStorage_LIBRARY_ID, DsStr_CONTEXT);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defPassphrase",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.PASSPHRASE);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_PASSPHRASE);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defAuthPassphrase",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.AUTHPASSPHRASE);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_AUTHPASSPHRASE);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defPrivPassphrase",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.PRIVPASSPHRASE);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_PRIVPASSPHRASE);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defAuthMasterKey",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.AUTHMASTERKEY);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_AUTHMASTERKEY);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defPrivMasterKey",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.PRIVMASTERKEY);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_PRIVMASTERKEY);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defAuthLocalizedKey",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.AUTHLOCALIZEDKEY);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_AUTHLOCALIZEDKEY);
     DefaultStore_registerConfig(ASN01_OCTET_STR, "snmp", "defPrivLocalizedKey",
-                               DSSTORAGE.LIBRARY_ID,
-                               DSLIB_STRING.PRIVLOCALIZEDKEY);
+                               DsStorage_LIBRARY_ID,
+                               DsStr_PRIVLOCALIZEDKEY);
     ReadConfig_registerConfigHandler("snmp", "defVersion", V3_versionConf, NULL,
                             "1|2c|3");
 

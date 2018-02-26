@@ -23,14 +23,14 @@ typedef struct ContainerBinaryArray_Iterator_s {
     size_t           pos;
 } ContainerBinaryArray_Iterator;
 
-static Container_Iterator * ContainerBinaryArray_baIteratorGet(Container_Container *c);
+static Container_Iterator * _ContainerBinaryArray_baIteratorGet(Container_Container *c);
 
 /**********************************************************************
  *
  *
  *
  */
-static void ContainerBinaryArray_arrayQSort(void **data, int first, int last, Container_FuncCompare *f)
+static void _ContainerBinaryArray_arrayQSort(void **data, int first, int last, Container_FuncCompare *f)
 {
     int i, j;
     void *mid, *tmp;
@@ -60,13 +60,13 @@ static void ContainerBinaryArray_arrayQSort(void **data, int first, int last, Co
     } while(i <= j);
 
     if (j > first)
-        ContainerBinaryArray_arrayQSort(data, first, j, f);
+        _ContainerBinaryArray_arrayQSort(data, first, j, f);
 
     if (i < last)
-        ContainerBinaryArray_arrayQSort(data, i, last, f);
+        _ContainerBinaryArray_arrayQSort(data, i, last, f);
 }
 
-static int ContainerBinaryArray_sortArray(Container_Container *c)
+static int _ContainerBinaryArray_sortArray(Container_Container *c)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table*)c->containerData;
     Assert_assert(t!=NULL);
@@ -80,7 +80,7 @@ static int ContainerBinaryArray_sortArray(Container_Container *c)
          * Sort the table
          */
         if (t->count > 1)
-            ContainerBinaryArray_arrayQSort(t->data, 0, t->count - 1, c->compare);
+            _ContainerBinaryArray_arrayQSort(t->data, 0, t->count - 1, c->compare);
         t->dirty = 0;
 
         /*
@@ -92,7 +92,7 @@ static int ContainerBinaryArray_sortArray(Container_Container *c)
     return 1;
 }
 
-static int ContainerBinaryArray_linearSearch(const void *val, Container_Container *c)
+static int _ContainerBinaryArray_linearSearch(const void *val, Container_Container *c)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table*)c->containerData;
     size_t             pos = 0;
@@ -116,7 +116,7 @@ static int ContainerBinaryArray_linearSearch(const void *val, Container_Containe
     return pos;
 }
 
-static int ContainerBinaryArray_binarySearch(const void *val, Container_Container *c, int exact)
+static int _ContainerBinaryArray_binarySearch(const void *val, Container_Container *c, int exact)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table * )c->containerData;
     size_t             len = t->count;
@@ -133,11 +133,11 @@ static int ContainerBinaryArray_binarySearch(const void *val, Container_Containe
             Logger_log(LOGGER_PRIORITY_ERR, "non-exact search on unsorted container %s?!?\n", c->containerName);
             return -1;
         }
-        return ContainerBinaryArray_linearSearch(val, c);
+        return _ContainerBinaryArray_linearSearch(val, c);
     }
 
     if (t->dirty)
-        ContainerBinaryArray_sortArray(c);
+        _ContainerBinaryArray_sortArray(c);
 
     while (len > 0) {
         half = len >> 1;
@@ -179,7 +179,7 @@ static int ContainerBinaryArray_binarySearch(const void *val, Container_Containe
     return first;
 }
 
-static inline ContainerBinaryArray_Table * ContainerBinaryArray_initialize(void)
+static inline ContainerBinaryArray_Table * _ContainerBinaryArray_initialize(void)
 {
     ContainerBinaryArray_Table *t;
 
@@ -218,7 +218,7 @@ int ContainerBinaryArray_optionsSet(Container_Container *c, int set, u_int flags
     return flags;
 }
 
-static inline size_t ContainerBinaryArray_count(Container_Container *c)
+static inline size_t _ContainerBinaryArray_count(Container_Container *c)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table*)c->containerData;
     /*
@@ -227,7 +227,7 @@ static inline size_t ContainerBinaryArray_count(Container_Container *c)
     return t ? t->count : 0;
 }
 
-static inline void * ContainerBinaryArray_get2(Container_Container *c, const void *key, int exact)
+static inline void * _ContainerBinaryArray_get2(Container_Container *c, const void *key, int exact)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table*)c->containerData;
     int             index = 0;
@@ -242,13 +242,13 @@ static inline void * ContainerBinaryArray_get2(Container_Container *c, const voi
      * if the table is dirty, sort it.
      */
     if (t->dirty)
-        ContainerBinaryArray_sortArray(c);
+        _ContainerBinaryArray_sortArray(c);
 
     /*
      * if there is a key, search. Otherwise default is 0;
      */
     if (key) {
-        if ((index = ContainerBinaryArray_binarySearch(key, c, exact)) == -1)
+        if ((index = _ContainerBinaryArray_binarySearch(key, c, exact)) == -1)
             return NULL;
         if (!exact && c->flags & CONTAINER_KEY_ALLOW_DUPLICATES) {
             int result;
@@ -325,18 +325,18 @@ int ContainerBinaryArray_remove(Container_Container *c, const void *key, void **
      * if the table is dirty, sort it.
      */
     if (t->dirty)
-        ContainerBinaryArray_sortArray(c);
+        _ContainerBinaryArray_sortArray(c);
 
     /*
      * search
      */
-    if ((index = ContainerBinaryArray_binarySearch(key, c, 1)) == -1)
+    if ((index = _ContainerBinaryArray_binarySearch(key, c, 1)) == -1)
         return -1;
 
     return ContainerBinaryArray_removeAt(c, (size_t)index, save);
 }
 
-static inline void ContainerBinaryArray_forEach(Container_Container *c,
+static inline void _ContainerBinaryArray_forEach(Container_Container *c,
                                   Container_FuncObjFunc *fe,
                                   void *context, int sort)
 {
@@ -344,13 +344,13 @@ static inline void ContainerBinaryArray_forEach(Container_Container *c,
     size_t             i;
 
     if (sort && t->dirty)
-        ContainerBinaryArray_sortArray(c);
+        _ContainerBinaryArray_sortArray(c);
 
     for (i = 0; i < t->count; ++i)
         (*fe) (t->data[i], context);
 }
 
-static inline  void ContainerBinaryArray_clear(Container_Container *c,
+static inline  void _ContainerBinaryArray_clear(Container_Container *c,
                                 Container_FuncObjFunc *fe,
                                 void *context)
 {
@@ -368,7 +368,7 @@ static inline  void ContainerBinaryArray_clear(Container_Container *c,
     ++c->sync;
 }
 
-static inline int ContainerBinaryArray_insert(Container_Container *c, const void *entry)
+static inline int _ContainerBinaryArray_insert(Container_Container *c, const void *entry)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table * ) c->containerData;
     int             was_dirty = 0;
@@ -377,7 +377,7 @@ static inline int ContainerBinaryArray_insert(Container_Container *c, const void
      */
     if (! (c->flags & CONTAINER_KEY_ALLOW_DUPLICATES)) {
         was_dirty = t->dirty;
-        if (NULL != ContainerBinaryArray_get2(c, entry, 1)) {
+        if (NULL != _ContainerBinaryArray_get2(c, entry, 1)) {
             DEBUG_MSGTL(("container","not inserting duplicate key\n"));
             return -1;
         }
@@ -427,7 +427,7 @@ static inline int ContainerBinaryArray_insert(Container_Container *c, const void
  * Special case support for subsets
  *
  */
-static int ContainerBinaryArray_binarySearchForStart(Types_Index *val, Container_Container *c)
+static int _ContainerBinaryArray_binarySearchForStart(Types_Index *val, Container_Container *c)
 {
     ContainerBinaryArray_Table *t = (ContainerBinaryArray_Table*)c->containerData;
     size_t             len = t->count;
@@ -440,7 +440,7 @@ static int ContainerBinaryArray_binarySearchForStart(Types_Index *val, Container
         return -1;
 
     if (t->dirty)
-        ContainerBinaryArray_sortArray(c);
+        _ContainerBinaryArray_sortArray(c);
 
     while (len > 0) {
         half = len >> 1;
@@ -483,12 +483,12 @@ void  ** ContainerBinaryArray_getSubset(Container_Container *c, void *key, int *
      * if the table is dirty, sort it.
      */
     if (t->dirty)
-        ContainerBinaryArray_sortArray(c);
+        _ContainerBinaryArray_sortArray(c);
 
     /*
      * find matching items
      */
-    start = end = ContainerBinaryArray_binarySearchForStart((Types_Index *)key, c);
+    start = end = _ContainerBinaryArray_binarySearchForStart((Types_Index *)key, c);
     if (start == -1)
         return NULL;
 
@@ -511,51 +511,51 @@ void  ** ContainerBinaryArray_getSubset(Container_Container *c, void *key, int *
  * container
  *
  */
-static void * ContainerBinaryArray_baFind(Container_Container *container, const void *data)
+static void * _ContainerBinaryArray_baFind(Container_Container *container, const void *data)
 {
-    return ContainerBinaryArray_get2(container, data, 1);
+    return _ContainerBinaryArray_get2(container, data, 1);
 }
 
-static void * ContainerBinaryArray_baFindNext(Container_Container *container, const void *data)
+static void * _ContainerBinaryArray_baFindNext(Container_Container *container, const void *data)
 {
-    return ContainerBinaryArray_get2(container, data, 0);
+    return _ContainerBinaryArray_get2(container, data, 0);
 }
 
-static int ContainerBinaryArray_baInsert(Container_Container *container, const void *data)
+static int _ContainerBinaryArray_baInsert(Container_Container *container, const void *data)
 {
-    return ContainerBinaryArray_insert(container, data);
+    return _ContainerBinaryArray_insert(container, data);
 }
 
-static int ContainerBinaryArray_baRemove(Container_Container *container, const void *data)
+static int _ContainerBinaryArray_baRemove(Container_Container *container, const void *data)
 {
     return ContainerBinaryArray_remove(container,data, NULL);
 }
 
-static int ContainerBinaryArray_baFree(Container_Container *container)
+static int _ContainerBinaryArray_baFree(Container_Container *container)
 {
     ContainerBinaryArray_release(container);
 
     return 0;
 }
 
-static size_t ContainerBinaryArray_baSize(Container_Container *container)
+static size_t _ContainerBinaryArray_baSize(Container_Container *container)
 {
-    return ContainerBinaryArray_count(container);
+    return _ContainerBinaryArray_count(container);
 }
 
-static void ContainerBinaryArray_baForEach(Container_Container *container, Container_FuncObjFunc *f,
+static void _ContainerBinaryArray_baForEach(Container_Container *container, Container_FuncObjFunc *f,
              void *context)
 {
-    ContainerBinaryArray_forEach(container, f, context, 1);
+    _ContainerBinaryArray_forEach(container, f, context, 1);
 }
 
-static void ContainerBinaryArray_baClear(Container_Container *container, Container_FuncObjFunc *f,
+static void _ContainerBinaryArray_baClear(Container_Container *container, Container_FuncObjFunc *f,
              void *context)
 {
-    ContainerBinaryArray_clear(container, f, context);
+    _ContainerBinaryArray_clear(container, f, context);
 }
 
-static Types_VoidArray * ContainerBinaryArray_baGetSubset(Container_Container *container, void *data)
+static Types_VoidArray * _ContainerBinaryArray_baGetSubset(Container_Container *container, void *data)
 {
     Types_VoidArray * va;
     void ** rtn;
@@ -578,12 +578,12 @@ static Types_VoidArray * ContainerBinaryArray_baGetSubset(Container_Container *c
     return va;
 }
 
-static int ContainerBinaryArray_baOptions(Container_Container *c, int set, u_int flags)
+static int _ContainerBinaryArray_baOptions(Container_Container *c, int set, u_int flags)
 {
     return ContainerBinaryArray_optionsSet(c, set, flags);
 }
 
-static Container_Container * ContainerBinaryArray_baDuplicate(Container_Container *c, void *ctx, u_int flags)
+static Container_Container * _ContainerBinaryArray_baDuplicate(Container_Container *c, void *ctx, u_int flags)
 {
     Container_Container *dup;
     ContainerBinaryArray_Table *dupt, *t;
@@ -642,20 +642,20 @@ Container_Container * ContainerBinaryArray_getBinaryArray(void)
         return NULL;
     }
 
-    c->containerData = ContainerBinaryArray_initialize();
+    c->containerData = _ContainerBinaryArray_initialize();
 
     /*
      * NOTE: CHANGES HERE MUST BE DUPLICATED IN duplicate AS WELL!!
      */
-    Container_init(c, NULL, ContainerBinaryArray_baFree, ContainerBinaryArray_baSize, NULL, ContainerBinaryArray_baInsert, ContainerBinaryArray_baRemove, ContainerBinaryArray_baFind);
+    Container_init(c, NULL, _ContainerBinaryArray_baFree, _ContainerBinaryArray_baSize, NULL, _ContainerBinaryArray_baInsert, _ContainerBinaryArray_baRemove, _ContainerBinaryArray_baFind);
 
-    c->findNext = ContainerBinaryArray_baFindNext;
-    c->getSubset = ContainerBinaryArray_baGetSubset;
-    c->getIterator = ContainerBinaryArray_baIteratorGet;
-    c->forEach = ContainerBinaryArray_baForEach;
-    c->clear =ContainerBinaryArray_baClear;
-    c->options = ContainerBinaryArray_baOptions;
-    c->duplicate = ContainerBinaryArray_baDuplicate;
+    c->findNext = _ContainerBinaryArray_baFindNext;
+    c->getSubset = _ContainerBinaryArray_baGetSubset;
+    c->getIterator = _ContainerBinaryArray_baIteratorGet;
+    c->forEach = _ContainerBinaryArray_baForEach;
+    c->clear =_ContainerBinaryArray_baClear;
+    c->options = _ContainerBinaryArray_baOptions;
+    c->duplicate = _ContainerBinaryArray_baDuplicate;
 
     return c;
 }
@@ -678,7 +678,7 @@ void ContainerBinaryArray_init(void)
  * iterator
  *
  */
-static inline ContainerBinaryArray_Table * ContainerBinaryArray_baIt2cont(ContainerBinaryArray_Iterator *it)
+static inline ContainerBinaryArray_Table * _ContainerBinaryArray_baIt2cont(ContainerBinaryArray_Iterator *it)
 {
     if(NULL == it) {
         Assert_assert(NULL != it);
@@ -696,9 +696,9 @@ static inline ContainerBinaryArray_Table * ContainerBinaryArray_baIt2cont(Contai
     return (ContainerBinaryArray_Table*)(it->base.container->containerData);
 }
 
-static inline void * ContainerBinaryArray_baIteratorPosition(ContainerBinaryArray_Iterator *it, size_t pos)
+static inline void * _ContainerBinaryArray_baIteratorPosition(ContainerBinaryArray_Iterator *it, size_t pos)
 {
-    ContainerBinaryArray_Table *t = ContainerBinaryArray_baIt2cont(it);
+    ContainerBinaryArray_Table *t = _ContainerBinaryArray_baIt2cont(it);
     if (NULL == t)
         return t; /* msg already logged */
 
@@ -719,22 +719,22 @@ static inline void * ContainerBinaryArray_baIteratorPosition(ContainerBinaryArra
     return t->data[ pos ];
 }
 
-static void * ContainerBinaryArray_baIteratorCurr(ContainerBinaryArray_Iterator *it)
+static void * _ContainerBinaryArray_baIteratorCurr(ContainerBinaryArray_Iterator *it)
 {
     if(NULL == it) {
         Assert_assert(NULL != it);
         return NULL;
     }
 
-    return ContainerBinaryArray_baIteratorPosition(it, it->pos);
+    return _ContainerBinaryArray_baIteratorPosition(it, it->pos);
 }
 
-static void * ContainerBinaryArray_baIteratorFirst(ContainerBinaryArray_Iterator *it)
+static void * _ContainerBinaryArray_baIteratorFirst(ContainerBinaryArray_Iterator *it)
 {
-    return ContainerBinaryArray_baIteratorPosition(it, 0);
+    return _ContainerBinaryArray_baIteratorPosition(it, 0);
 }
 
-static void * ContainerBinaryArray_baIteratorNext(ContainerBinaryArray_Iterator *it)
+static void * _ContainerBinaryArray_baIteratorNext(ContainerBinaryArray_Iterator *it)
 {
     if(NULL == it) {
         Assert_assert(NULL != it);
@@ -743,23 +743,23 @@ static void * ContainerBinaryArray_baIteratorNext(ContainerBinaryArray_Iterator 
 
     ++it->pos;
 
-    return ContainerBinaryArray_baIteratorPosition(it, it->pos);
+    return _ContainerBinaryArray_baIteratorPosition(it, it->pos);
 }
 
-static void * ContainerBinaryArray_baIteratorLast(ContainerBinaryArray_Iterator *it)
+static void * _ContainerBinaryArray_baIteratorLast(ContainerBinaryArray_Iterator *it)
 {
-    ContainerBinaryArray_Table* t = ContainerBinaryArray_baIt2cont(it);
+    ContainerBinaryArray_Table* t = _ContainerBinaryArray_baIt2cont(it);
     if(NULL == t) {
         Assert_assert(NULL != t);
         return NULL;
     }
 
-    return ContainerBinaryArray_baIteratorPosition(it, t->count - 1 );
+    return _ContainerBinaryArray_baIteratorPosition(it, t->count - 1 );
 }
 
-static int ContainerBinaryArray_baIteratorRemove(ContainerBinaryArray_Iterator *it)
+static int _ContainerBinaryArray_baIteratorRemove(ContainerBinaryArray_Iterator *it)
 {
-    ContainerBinaryArray_Table* t = ContainerBinaryArray_baIt2cont(it);
+    ContainerBinaryArray_Table* t = _ContainerBinaryArray_baIt2cont(it);
     if(NULL == t) {
         Assert_assert(NULL != t);
         return -1;
@@ -775,16 +775,16 @@ static int ContainerBinaryArray_baIteratorRemove(ContainerBinaryArray_Iterator *
 
 }
 
-static int ContainerBinaryArray_baIteratorReset(ContainerBinaryArray_Iterator *it)
+static int _ContainerBinaryArray_baIteratorReset(ContainerBinaryArray_Iterator *it)
 {
-    ContainerBinaryArray_Table* t = ContainerBinaryArray_baIt2cont(it);
+    ContainerBinaryArray_Table* t = _ContainerBinaryArray_baIt2cont(it);
     if(NULL == t) {
         Assert_assert(NULL != t);
         return -1;
     }
 
     if (t->dirty)
-        ContainerBinaryArray_sortArray(it->base.container);
+        _ContainerBinaryArray_sortArray(it->base.container);
 
     /*
      * save sync count, to make sure container doesn't change while
@@ -797,14 +797,14 @@ static int ContainerBinaryArray_baIteratorReset(ContainerBinaryArray_Iterator *i
     return 0;
 }
 
-static int ContainerBinaryArray_baIteratorRelease(Container_Iterator *it)
+static int _ContainerBinaryArray_baIteratorRelease(Container_Iterator *it)
 {
     free(it);
 
     return 0;
 }
 
-static Container_Iterator * ContainerBinaryArray_baIteratorGet(Container_Container *c)
+static Container_Iterator * _ContainerBinaryArray_baIteratorGet(Container_Container *c)
 {
     ContainerBinaryArray_Iterator* it;
 
@@ -817,15 +817,15 @@ static Container_Iterator * ContainerBinaryArray_baIteratorGet(Container_Contain
 
     it->base.container = c;
 
-    it->base.first = (Container_FuncIteratorRtn*)   ContainerBinaryArray_baIteratorFirst;
-    it->base.next = (Container_FuncIteratorRtn*)    ContainerBinaryArray_baIteratorNext;
-    it->base.curr = (Container_FuncIteratorRtn*)    ContainerBinaryArray_baIteratorCurr;
-    it->base.last = (Container_FuncIteratorRtn*)    ContainerBinaryArray_baIteratorLast;
-    it->base.remove = (Container_FuncIteratorRc*)  ContainerBinaryArray_baIteratorRemove;
-    it->base.reset = (Container_FuncIteratorRc*)   ContainerBinaryArray_baIteratorReset;
-    it->base.release = (Container_FuncIteratorRc*) ContainerBinaryArray_baIteratorRelease;
+    it->base.first   = (Container_FuncIteratorRtn*)  _ContainerBinaryArray_baIteratorFirst;
+    it->base.next    = (Container_FuncIteratorRtn*)  _ContainerBinaryArray_baIteratorNext;
+    it->base.curr    = (Container_FuncIteratorRtn*)  _ContainerBinaryArray_baIteratorCurr;
+    it->base.last    = (Container_FuncIteratorRtn*)  _ContainerBinaryArray_baIteratorLast;
+    it->base.remove  = (Container_FuncIteratorRc*)   _ContainerBinaryArray_baIteratorRemove;
+    it->base.reset   = (Container_FuncIteratorRc*)   _ContainerBinaryArray_baIteratorReset;
+    it->base.release = (Container_FuncIteratorRc*)   _ContainerBinaryArray_baIteratorRelease;
 
-    (void) ContainerBinaryArray_baIteratorReset(it);
+    (void) _ContainerBinaryArray_baIteratorReset(it);
 
     return (Container_Iterator *)it;
 }

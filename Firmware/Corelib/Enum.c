@@ -14,33 +14,33 @@ struct Enum_EnumListStr_s {
     struct Enum_EnumListStr_s *next;
 };
 
-static struct Enum_EnumList_s ***emum_enumLists;
+static struct Enum_EnumList_s ***_enum_enumLists;
 
 unsigned int    emum_currentMajNum;
 unsigned int    emum_currentMinNum;
 
-static struct Enum_EnumListStr_s *emum_sliststorage;
+static struct Enum_EnumListStr_s *_enum_sliststorage;
 
-static void  Enum_freeEnumList(struct Enum_EnumList_s *list);
+static void  _Enum_freeEnumList(struct Enum_EnumList_s *list);
 
 int Enum_initEnum(const char *type)
 {
     int  i;
 
-    if (NULL != emum_enumLists)
+    if (NULL != _enum_enumLists)
         return ENUM_SE_OK;
 
-    emum_enumLists = (struct Enum_EnumList_s ***)
+    _enum_enumLists = (struct Enum_EnumList_s ***)
         calloc(1, sizeof(struct Enum_EnumList_s **) * ENUM_SE_MAX_IDS);
-    if (!emum_enumLists)
+    if (!_enum_enumLists)
         return ENUM_SE_NOMEM;
     emum_currentMajNum = ENUM_SE_MAX_IDS;
 
     for (i = 0; i < ENUM_SE_MAX_IDS; i++) {
-        if (!emum_enumLists[i])
-            emum_enumLists[i] = (struct Enum_EnumList_s **)
+        if (!_enum_enumLists[i])
+            _enum_enumLists[i] = (struct Enum_EnumList_s **)
                 calloc(1, sizeof(struct Enum_EnumList_s *) * ENUM_SE_MAX_SUBIDS);
-        if (!emum_enumLists[i])
+        if (!_enum_enumLists[i])
             return ENUM_SE_NOMEM;
     }
     emum_currentMinNum = ENUM_SE_MAX_SUBIDS;
@@ -60,12 +60,12 @@ int Enum_seStoreInList(struct Enum_EnumList_s *new_list,
          */
         return ENUM_SE_NOMEM;
     }
-    Assert_assert(NULL != emum_enumLists);
+    Assert_assert(NULL != _enum_enumLists);
 
-    if (emum_enumLists[major][minor] != NULL)
+    if (_enum_enumLists[major][minor] != NULL)
         ret = ENUM_SE_ALREADY_THERE;
 
-    emum_enumLists[major][minor] = new_list;
+    _enum_enumLists[major][minor] = new_list;
 
     return ret;
 }
@@ -172,9 +172,9 @@ struct Enum_EnumList_s * Enum_seFindList(unsigned int major, unsigned int minor)
 {
     if (major > emum_currentMajNum || minor > emum_currentMinNum)
         return NULL;
-    Assert_assert(NULL != emum_enumLists);
+    Assert_assert(NULL != _enum_enumLists);
 
-    return emum_enumLists[major][minor];
+    return _enum_enumLists[major][minor];
 }
 
 int Enum_seFindValueInList(struct Enum_EnumList_s *list, const char *label)
@@ -277,13 +277,13 @@ int Enum_seAddPair(unsigned int major, unsigned int minor, char *label, int valu
 /*
  * remember a list of enums based on a lookup name.
  */
-static struct Enum_EnumList_s ** Enum_seFindSlistPtr(const char *listname)
+static struct Enum_EnumList_s ** _Enum_seFindSlistPtr(const char *listname)
 {
     struct Enum_EnumListStr_s *sptr;
     if (!listname)
         return NULL;
 
-    for (sptr = emum_sliststorage; sptr != NULL; sptr = sptr->next)
+    for (sptr = _enum_sliststorage; sptr != NULL; sptr = sptr->next)
         if (sptr->name && strcmp(sptr->name, listname) == 0)
             return &sptr->list;
 
@@ -292,7 +292,7 @@ static struct Enum_EnumList_s ** Enum_seFindSlistPtr(const char *listname)
 
 struct Enum_EnumList_s * Enum_seFindSlist(const char *listname)
 {
-    struct Enum_EnumList_s **ptr = Enum_seFindSlistPtr(listname);
+    struct Enum_EnumList_s **ptr = _Enum_seFindSlistPtr(listname);
     return ptr ? *ptr : NULL;
 }
 
@@ -321,18 +321,18 @@ int Enum_seAddPairToSlist(const char *listname, char *label, int value)
         struct Enum_EnumListStr_s *sptr =
             TOOLS_MALLOC_STRUCT(Enum_EnumListStr_s);
         if (!sptr) {
-            Enum_freeEnumList(list);
+            _Enum_freeEnumList(list);
             return ENUM_SE_NOMEM;
         }
-        sptr->next = emum_sliststorage;
+        sptr->next = _enum_sliststorage;
         sptr->name = strdup(listname);
         sptr->list = list;
-        emum_sliststorage = sptr;
+        _enum_sliststorage = sptr;
     }
     return ret;
 }
 
-static void Enum_freeEnumList(struct Enum_EnumList_s *list)
+static void _Enum_freeEnumList(struct Enum_EnumList_s *list)
 {
     struct Enum_EnumList_s *next;
 
@@ -346,29 +346,29 @@ static void Enum_freeEnumList(struct Enum_EnumList_s *list)
 
 void Enum_clearEnum(void)
 {
-    struct Enum_EnumListStr_s *sptr = emum_sliststorage, *next = NULL;
+    struct Enum_EnumListStr_s *sptr = _enum_sliststorage, *next = NULL;
     int i, j;
 
     while (sptr != NULL) {
     next = sptr->next;
-    Enum_freeEnumList(sptr->list);
+    _Enum_freeEnumList(sptr->list);
     TOOLS_FREE(sptr->name);
     TOOLS_FREE(sptr);
     sptr = next;
     }
-    emum_sliststorage = NULL;
+    _enum_sliststorage = NULL;
 
-    if (emum_enumLists) {
+    if (_enum_enumLists) {
         for (i = 0; i < ENUM_SE_MAX_IDS; i++) {
-            if (emum_enumLists[i]) {
+            if (_enum_enumLists[i]) {
                 for (j = 0; j < ENUM_SE_MAX_SUBIDS; j++) {
-                    if (emum_enumLists[i][j])
-                        Enum_freeEnumList(emum_enumLists[i][j]);
+                    if (_enum_enumLists[i][j])
+                        _Enum_freeEnumList(_enum_enumLists[i][j]);
                 }
-                TOOLS_FREE(emum_enumLists[i]);
+                TOOLS_FREE(_enum_enumLists[i]);
             }
         }
-        TOOLS_FREE(emum_enumLists);
+        TOOLS_FREE(_enum_enumLists);
     }
 }
 
@@ -399,21 +399,21 @@ void Enum_seStoreSlist(const char *listname, const char *type)
 int Enum_seStoreSlistCallback(int majorID, int minorID,
                         void *serverargs, void *clientargs)
 {
-    char *appname = DefaultStore_getString(DSSTORAGE.LIBRARY_ID,
-                                          DSLIB_STRING.APPTYPE);
+    char *appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+                                          DsStr_APPTYPE);
     Enum_seStoreSlist((char *)clientargs, appname);
     return ErrorCode_SUCCESS;
 }
 
 void Enum_seClearSlist(const char *listname)
 {
-    Enum_seClearList(Enum_seFindSlistPtr(listname));
+    Enum_seClearList(_Enum_seFindSlistPtr(listname));
 }
 
 void Enum_seClearAlllists(void)
 {
     struct Enum_EnumListStr_s *sptr = NULL;
 
-    for (sptr = emum_sliststorage; sptr != NULL; sptr = sptr->next)
+    for (sptr = _enum_sliststorage; sptr != NULL; sptr = sptr->next)
         Enum_seClearList(&(sptr->list));
 }
