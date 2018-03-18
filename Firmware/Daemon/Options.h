@@ -1,7 +1,6 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include "Corelib.h"
 
 #include <string>
 

@@ -7,18 +7,18 @@ CONFIG += ordered
 #message("message: $$CONFIG")
 unix {
 
-    SUBDIRS += corelib_proj \
-               modlib_proj \
-               priotlib_proj \
+    SUBDIRS += core_proj \
+               plugin_proj \
+               priot_proj \
                daemon_proj
 
-    corelib_proj.subdir  = Corelib
-    modlib_proj.subdir   = Modlib
-    priotlib_proj.subdir = Priotlib
-    daemon_proj.subdir   = Daemon
+    core_proj.subdir   = Core
+    plugin_proj.subdir = Plugin
+    priot_proj.subdir  = Priot
+    daemon_proj.subdir = Daemon
 
 
-    daemon_proj.depends = baselib_proj
+    daemon_proj.depends = core_proj plugin_proj priot_proj
 
 }else:win32{
     message("Buildings for Windows")
@@ -26,6 +26,4 @@ unix {
    message ("Unknown configuration")
 }
 
-SUBDIRS += \
-    PL
 

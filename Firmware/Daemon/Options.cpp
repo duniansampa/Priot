@@ -1,5 +1,5 @@
 #include "Options.h"
-#include "../Corelib/DefaultStore.h"
+#include "../Core/DefaultStore.h"
 
 
 //int snmp_dump_packet;
@@ -7,7 +7,7 @@
 //Options.Options()
 //{
 
-//    m_appName   = "snmpd";
+//    m_appName   = "priotd";
 //    m_dontFork  = false;
 //    m_doHelp    = false;
 //    m_logSet    = false;

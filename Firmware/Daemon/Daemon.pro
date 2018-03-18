@@ -20,7 +20,7 @@ HEADERS += \
 
 
 
-unix:!macx: LIBS += -L$$OUT_PWD/../Corelib/ -lcore
+unix:!macx: LIBS += -L$$OUT_PWD/../Core/ -lcore
 
-INCLUDEPATH += $$PWD/../Corelib
-DEPENDPATH += $$PWD/../Corelib
+INCLUDEPATH += $$PWD/../Core
+DEPENDPATH += $$PWD/../Core
