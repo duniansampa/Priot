@@ -5941,7 +5941,7 @@ const char * Mib_parseOctetHint(const char *hint, const char *value, unsigned ch
 }
 
 
-u_char Mib_mibToAsnType(int mib_type)
+u_char Mib_toAsnType(int mib_type)
 {
     switch (mib_type) {
     case PARSE_TYPE_OBJID:

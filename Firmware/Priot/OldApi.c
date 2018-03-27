@@ -14,8 +14,8 @@
  * don't use these!
  */
 
-void
-OldApi_setCurrentAgentSession(AgentSession *asp);
+static void
+_OldApi_setCurrentAgentSession(AgentSession *asp);
 
 AgentSession*
 OldApi_getCurrentAgentSession(void);
@@ -252,7 +252,7 @@ OldApi_registerMibTableRow(const char *moduleName,
 
 /** implements the old_api handler */
 int
-OldApi_oldApiHelper(MibHandler *handler,
+OldApi_helper(MibHandler *handler,
                        HandlerRegistration *reginfo,
                        AgentRequestInfo *reqinfo,
                        RequestInfo *requests)
@@ -386,7 +386,7 @@ OldApi_oldApiHelper(MibHandler *handler,
             }
 
             oldasp = OldApi_getCurrentAgentSession();
-            OldApi_setCurrentAgentSession(reqinfo->asp);
+            _OldApi_setCurrentAgentSession(reqinfo->asp);
             status =
                 (*(cacheptr->write_method)) (reqinfo->mode,
                                              requests->requestvb->val.
@@ -397,7 +397,7 @@ OldApi_oldApiHelper(MibHandler *handler,
                                              requests->requestvb->name,
                                              requests->requestvb->
                                              nameLength);
-            OldApi_setCurrentAgentSession(oldasp);
+            _OldApi_setCurrentAgentSession(oldasp);
 
             if (status != PRIOT_ERR_NOERROR) {
                 Agent_setRequestError(reqinfo, requests, status);
@@ -430,8 +430,8 @@ OldApi_getCurrentAgentSession(void)
 /*
  * don't use this!
  */
-void
-OldApi_setCurrentAgentSession(AgentSession *asp)
+static void
+_OldApi_setCurrentAgentSession(AgentSession *asp)
 {
     _oldApi_currentAgentSession = asp;
 }

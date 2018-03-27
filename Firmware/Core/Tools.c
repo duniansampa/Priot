@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/time.h>
-#include "Settings.h"
+#include "Config.h"
 #include "Debug.h"
 #include "Logger.h"
 #include "Scapi.h"

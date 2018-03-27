@@ -1,8 +1,10 @@
 QT      -= core gui
 CONFIG  -= qt shared
 CONFIG  += shared
-TARGET   = mod
+TARGET   = puglin
 TEMPLATE = lib
+
+QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
 HEADERS +=
 

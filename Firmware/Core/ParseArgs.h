@@ -83,4 +83,6 @@ void ParseArgs_descriptions(FILE *);
 
 void ParseArgs_usage(FILE *);
 
+void  ParseArgs_handleLongOpt(const char *myoptarg);
+
 #endif // PARSEARGS_H

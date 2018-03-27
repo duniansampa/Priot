@@ -113,13 +113,13 @@
 #define MAX_PERSISTENT_BACKUPS 10
 
 /* pattern for temporary file names */
-#define NETSNMP_TEMP_FILE_PATTERN "/tmp/snmpdXXXXXX"
+#define NETSNMP_TEMP_FILE_PATTERN "/tmp/priotdXXXXXX"
 
 /* net-snmp's major path names */
-#define SNMPLIBPATH "/usr/local/lib/snmp"
-#define SNMPSHAREPATH "/usr/local/share/snmp"
-#define SNMPCONFPATH "/usr/local/etc/snmp"
-#define SNMPDLMODPATH "/usr/local/lib/snmp/dlmod"
+#define SNMPLIBPATH "/usr/local/lib/priot"
+#define SNMPSHAREPATH "/usr/local/share/priot"
+#define SNMPCONFPATH "/usr/local/etc/priot"
+#define SNMPDLMODPATH "/usr/local/lib/priot/dlmod"
 
 /* LOGFILE:  If defined it closes stdout/err/in and opens this in
    out/err's place.  (stdin is closed so that sh scripts won't wait for it) */
@@ -145,12 +145,6 @@
 #define FALSE	0
 #define TRUE	1
 #define ONE_SEC         1000000L
-//============= these defines will be changed ==========//
-
-#define DSAGENT_INTERNAL_SECNAME  3    /* used by disman/mteTriggerTable. */
-
-
-//==============================================================
 
 /* Environment separator character surrounded by double quotes. */
 #define ENV_SEPARATOR ":"
@@ -200,8 +194,6 @@
 /* Size prefix to use to printf a size_t or ssize_t */
 #define NETSNMP_PRIz "l"
 
-/* Pattern of temporary files */
-#define NETSNMP_TEMP_FILE_PATTERN "/tmp/snmpdXXXXXX"
 
 /* Define this if you have lm_sensors v3 or later */
 #define NETSNMP_USE_SENSORS_V3 1
@@ -305,12 +297,6 @@
 
 /* define the machine (cpu) type include file here */
 #define NETSNMP_MACHINE_INCLUDE_FILE "siglog/machine/generic.h"
-
-/* net-snmp's major path names */
-#define SNMPLIBPATH "/usr/local/lib/snmp"
-#define SNMPSHAREPATH "/usr/local/share/snmp"
-#define SNMPCONFPATH "/usr/local/etc/snmp"
-#define SNMPDLMODPATH "/usr/local/lib/snmp/dlmod"
 
 /* Mib-2 tree Info */
 /* These are the system information variables. */
@@ -463,5 +449,12 @@
 
 #define DONT_USE_NLIST 1  //NETSNMP_DONT_USE_NLIST
 
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+
+
+#define config_UNUSED(x) (void)(x)
 
 #endif // PRIO_CONFIG_H

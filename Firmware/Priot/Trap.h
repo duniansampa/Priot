@@ -3,6 +3,14 @@
 
 #include "Types.h"
 
+extern const oid       trap_sysuptimeOid[];
+extern const size_t    trap_sysuptimeOidLen;
+extern const oid       trap_priotTrapOid[];
+extern const size_t    trap_priotTrapOidLen;
+
+
+
+
 struct AgentAddTrapArgs_s {
     Types_Session *ss;
     int             confirm;

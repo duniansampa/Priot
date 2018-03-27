@@ -24,6 +24,7 @@ int	Integer_parseInt3(const  char * s,  char * sub, int base){
 
 //Returns a string representation of the integer argument as an unsigned integer in base 2.
 char * Integer_toBinaryString(int i){
+    config_UNUSED(i);
 //	unsigned int numBit  = sizeof(int) * 8;
 //	string ret;
 //	for(unsigned j = 0; j< numBit ; j++){

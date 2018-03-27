@@ -84,6 +84,7 @@ AgentRegistry_setupTree( void );
 void
 AgentRegistry_shutdownTree( void );
 
+void AgentRegistry_dumpRegistry(void);
 
 Subtree *
 AgentRegistry_subtreeFind( const oid *, size_t,

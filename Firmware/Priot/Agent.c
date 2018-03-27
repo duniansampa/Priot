@@ -3466,7 +3466,7 @@ Agent_setAgentUptime(u_long hsec)
 * @return error_value
 */
 int
-v(AgentRequestInfo *reqinfo,
+Agent_setRequestError(AgentRequestInfo *reqinfo,
                          RequestInfo *request, int error_value)
 {
    if (!request || !reqinfo)

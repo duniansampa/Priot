@@ -1,9 +1,8 @@
 #include "LargeFdSet.h"
 #include "Assert.h"
 
-#include <stdio.h>
 #include <string.h> /* memset(), which is invoked by FD_ZERO() */
-#include <stdlib.h>
+
 
 /*
  * Recent versions of glibc trigger abort() if FD_SET(), FD_CLR() or
@@ -149,7 +148,6 @@ int LargeFdSet_copyLargeFdSetToFdSet(fd_set * dst, const Types_LargeFdSet * src)
     /* Unix: clear any file descriptors defined in *dst but not in *src. */
     for (i = src->lfs_setsize; i < FD_SETSIZE; ++i)
         FD_CLR(i, dst);
-
 
     return 0;
 }

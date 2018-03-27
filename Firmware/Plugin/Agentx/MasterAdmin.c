@@ -374,8 +374,6 @@ MasterAdmin_agentxNotify(Types_Session * session, Types_Pdu *pdu)
 {
     Types_Session       *sp;
     Types_VariableList *var;
-    extern const oid       sysuptime_oid[], snmptrap_oid[];
-    extern const size_t    sysuptime_oid_len, snmptrap_oid_len;
 
     sp = MasterAdmin_findAgentxSession(session, pdu->sessid);
     if (sp == NULL)
@@ -386,12 +384,12 @@ MasterAdmin_agentxNotify(Types_Session * session, Types_Pdu *pdu)
         return AGENTX_ERR_PROCESSING_ERROR;
 
     if (Api_oidCompare(var->name, var->nameLength,
-                         sysuptime_oid, sysuptime_oid_len) == 0) {
+                         trap_sysuptimeOid, trap_sysuptimeOidLen) == 0) {
         var = var->nextVariable;
     }
 
     if (!var || Api_oidCompare(var->name, var->nameLength,
-                                 snmptrap_oid, snmptrap_oid_len) != 0)
+                                 trap_priotTrapOid, trap_priotTrapOidLen) != 0)
         return AGENTX_ERR_PROCESSING_ERROR;
 
     /*

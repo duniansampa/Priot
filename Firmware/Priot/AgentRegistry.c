@@ -1357,7 +1357,7 @@ AgentRegistry_registerMibContext(const char *moduleName,
                      Types_Session * ss,
                      const char *context, int timeout, int flags)
 {
-    return OldApi_registerOlAapi(moduleName, var, varsize, numvars,
+    return OldApi_registerOldApi(moduleName, var, varsize, numvars,
                                     mibloc, mibloclen, priority,
                                     range_subid, range_ubound, ss, context,
                                     timeout, flags);

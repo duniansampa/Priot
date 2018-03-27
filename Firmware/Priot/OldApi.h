@@ -25,7 +25,7 @@ typedef struct OldOpiCache {
 } OldApiCache;
 
 int
-OldApi_registerOlAapi( const char*              moduleName,
+OldApi_registerOldApi( const char*              moduleName,
                        const struct Variable_s* var,
                        size_t                   varsize,
                        size_t                   numvars,

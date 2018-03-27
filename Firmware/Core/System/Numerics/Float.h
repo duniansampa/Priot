@@ -14,7 +14,7 @@
  */
 
 
-#include "../../Settings.h"
+#include "../../Config.h"
 #include "../../Generals.h"
 #include "../String.h"
 

@@ -213,7 +213,7 @@ static mode_t _unixDomain_createMode;
 /** If trying to create unix sockets in nonexisting directories then
  *  try to create the directory with mask mode.
  */
- void UnixDomain_unixCreatePathWithMode(int mode)
+ void UnixDomain_createPathWithMode(int mode)
 {
     _unixDomain_createPath = 1;
     _unixDomain_createMode = mode;

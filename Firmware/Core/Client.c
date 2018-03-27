@@ -10,6 +10,7 @@
 #include "Tools.h"
 #include "Debug.h"
 #include "Tc.h"
+#include "../Priot/DsAgent.h"
 
 #include <sys/time.h>
 
@@ -1081,7 +1082,7 @@ Client_queryGetDefaultSession( void ) {
 
     if (! _client_defQuerySession && ! warning_logged) {
         if (! DefaultStore_getString(DsStorage_APPLICATION_ID,
-                                    DSAGENT_INTERNAL_SECNAME)) {
+                                    DsAgentString_INTERNAL_SECNAME)) {
             Logger_log(LOGGER_PRIORITY_WARNING,
                      "iquerySecName has not been configured - internal queries will fail\n");
         } else {

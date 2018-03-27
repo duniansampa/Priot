@@ -6,7 +6,7 @@ TEMPLATE = lib
 LIBS    += -lcrypto
 
 VERSION  = 1.0.0    # major.minor.patch
-QMAKE_CFLAGS += -fno-strict-aliasing -g -O2 -Werror=implicit-function-declaration
+QMAKE_CFLAGS += -Werror=implicit-function-declaration
 DEFINES += PRIOT_CORELIB_LIBRARY
 INCLUDEPATH += "$$PWD"
 INCLUDEPATH +=  $$PWD/../Plugin/
@@ -151,8 +151,8 @@ HEADERS += \
     Assert.h \
     Session.h \
     Transports/AliasDomain.h \
-    Settings.h \
     ../Plugin/Agentx/Protocol.h \
     System/Numerics/Integer \
     Transports/CallbackDomain.h \
-    System/Convert.h
+    System/Convert.h \
+    Config.h

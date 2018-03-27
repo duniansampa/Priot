@@ -74,8 +74,6 @@ int
 XClient_openSession(Types_Session * ss)
 {
     Types_Pdu    *pdu, *response;
-    extern oid      version_sysoid[];
-    extern int      version_sysoid_len;
     u_long 	    timeout;
 
     DEBUG_MSGTL(("agentx/subagent", "opening session \n"));
@@ -94,7 +92,7 @@ XClient_openSession(Types_Session * ss)
         /* for master TIMEOUT is usec, but Agentx Open specifies sec */
         pdu->time = timeout/ONE_SEC;
 
-    Api_addVar(pdu, version_sysoid, version_sysoid_len,
+    Api_addVar(pdu, agent_versionSysoid, agent_versionSysoidLen,
                  's', "PRIOT AgentX sub-agent");
 
     if (XClient_synchResponse(ss, pdu, &response) != CLIENT_STAT_SUCCESS)

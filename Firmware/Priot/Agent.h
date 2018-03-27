@@ -13,6 +13,9 @@
 #define SNMP_MAX_PDU_SIZE 64000 /* local constraint on PDU size sent by agent
                                  * (see also SNMP_MAX_MSG_SIZE in snmp_api.h) */
 
+extern oid      agent_versionSysoid[];
+extern int      agent_versionSysoidLen;
+
 /*
  * If non-zero, causes the addresses of peers to be logged when receptions
  * occur.

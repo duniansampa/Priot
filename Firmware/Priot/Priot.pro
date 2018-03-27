@@ -4,13 +4,14 @@ CONFIG  += shared
 TARGET   = priot
 TEMPLATE = lib
 VERSION  = 1.0.0    # major.minor.patch
-QMAKE_CFLAGS += -fno-strict-aliasing -g -O2 -Werror=implicit-function-declaration
+QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
 DEFINES += PRIOT_PRIOTLIB_LIBRARY
 
 #DESTDIR = "/home/dsampa/Documents/workspace/pessoal/lib"
 
 INCLUDEPATH +=  $$PWD/../Plugin/
+DEPENDPATH  +=  $$PWD/../Plugin/
 
 unix:!macx: LIBS += -L$$OUT_PWD/../Core/ -lcore
 

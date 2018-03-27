@@ -71,6 +71,7 @@ void OidStash_store(OidStash_Node *root,
 void OidStash_free(OidStash_Node **root,
                             OidStash_FuncStashFreeNode *freefn);
 
+void OidStash_dump(OidStash_Node *root, char *prefix);
 
 /* a noop function that can be passed to OidStash_Node to
    NOT free the data */

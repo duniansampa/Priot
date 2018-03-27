@@ -153,7 +153,7 @@ OidStash_addData(OidStash_Node **root,
  * @param lookup_len the length of the lookup oid
  */
 OidStash_Node *
-OidStash_stashGetNode(OidStash_Node *root,
+OidStash_getNode(OidStash_Node *root,
                            const oid * lookup, size_t lookup_len)
 {
     OidStash_Node *curnode, *tmpp, *loopp;
@@ -190,7 +190,7 @@ OidStash_stashGetNode(OidStash_Node *root,
  * @param lookup_len the length of the lookup oid
  */
 OidStash_Node *
-OidStash_stashGetnextNode(OidStash_Node *root,
+OidStash_getnextNode(OidStash_Node *root,
                                oid * lookup, size_t lookup_len)
 {
     OidStash_Node *curnode, *tmpp, *loopp;
@@ -281,11 +281,11 @@ OidStash_stashGetnextNode(OidStash_Node *root,
  * @param lookup_len the length of the search oid.
  */
 void *
-OidStash_stashGetData(OidStash_Node *root,
+OidStash_getData(OidStash_Node *root,
                            const oid * lookup, size_t lookup_len)
 {
     OidStash_Node *ret;
-    ret = OidStash_stashGetNode(root, lookup, lookup_len);
+    ret = OidStash_getNode(root, lookup, lookup_len);
     if (ret)
         return ret->thedata;
     return NULL;
@@ -427,11 +427,4 @@ OidStash_free(OidStash_Node **root,
     free((*root)->children);
     free (*root);
     *root = NULL;
-}
-
-
-void
-OidStash_noFree(void *bogus)
-{
-    /* noop */
 }
