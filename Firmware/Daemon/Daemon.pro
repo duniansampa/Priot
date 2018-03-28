@@ -18,10 +18,6 @@ HEADERS += \
     ../Plugin/UtilFuncs/Restart.h \
     Daemon.h
 
-
-INCLUDEPATH += $$PWD/../Plugin
-DEPENDPATH += $$PWD/../Plugin
-
 unix:!macx: LIBS += -L$$OUT_PWD/../Core/ -lcore
 
 INCLUDEPATH += $$PWD/../Core
@@ -31,3 +27,9 @@ unix:!macx: LIBS += -L$$OUT_PWD/../Priot/ -lpriot
 
 INCLUDEPATH += $$PWD/../Priot
 DEPENDPATH += $$PWD/../Priot
+
+
+unix:!macx: LIBS += -L$$OUT_PWD/../Plugin/ -lpuglin
+
+INCLUDEPATH += $$PWD/../Plugin
+DEPENDPATH += $$PWD/../Plugin

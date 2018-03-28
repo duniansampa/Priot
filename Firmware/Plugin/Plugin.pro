@@ -6,8 +6,19 @@ TEMPLATE = lib
 
 QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
-HEADERS +=
+HEADERS += \
+    PluginModules.h \
+    ModuleIncludes.h \
+    ModuleConfig.h \
+    ModuleInits.h \
+    ModuleShutdown.h
+
+SOURCES += \
+    PluginModules.c
 
 SOURCES +=
 
-SOURCES +=
+unix:!macx: LIBS += -L$$OUT_PWD/../Core/ -lcore
+
+INCLUDEPATH += $$PWD/../Core
+DEPENDPATH += $$PWD/../Core

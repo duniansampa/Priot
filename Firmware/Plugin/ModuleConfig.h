@@ -1,0 +1,4 @@
+#ifndef MODULECONFIG_H
+#define MODULECONFIG_H
+
+#endif // MODULECONFIG_H

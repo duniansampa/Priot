@@ -1,7 +1,5 @@
 #include "Daemon.h"
-
 #include "Agent.h"
-
 #include "Trap.h"
 #include "Logger.h"
 #include "DsAgent.h"
@@ -14,7 +12,8 @@
 #include "Version.h"
 #include "ReadConfig.h"
 #include "AgentReadConfig.h"
-#include "LargeFdSet.h"
+#include "FdEventManager.h"
+#include "PluginModules.h"
 
 #include <sys/syslog.h>
 #include <grp.h>
@@ -22,11 +21,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-
-/** WILL BE REMOVED */
-#define FdEventManager_externalEventInfo2(...) while(false)
-#define FdEventManger_dispatchExternalEvents2(...) while(false)
-#define MibModules_initMibModules(...) while(false)
 
 #define TIMETICK         500000L
 
@@ -50,12 +44,10 @@ extern char    * restart_argvrestartname;
 /*
  * Prototypes.
  */
-int             Daemon_input(int, Types_Session *, int, Types_Pdu *, void *);
+static int      _Daemon_input(int, Types_Session *, int, Types_Pdu *, void *);
 static void     _Daemon_usage(char *);
-static void     SnmpTrapNodeDown(void);
-static int      receive(void);
-int             main(int, char **);
-
+static void     _Daemon_TrapNodeDown(void);
+static int      _Daemon_receive(void);
 
 static void _Daemon_usage(char *prog)
 {
@@ -119,32 +111,30 @@ static void _Daemon_version( )
     exit(0);
 }
 
-void Daemon_shutDown( int a )
+static void _Daemon_shutDown( int a )
 {
     config_UNUSED(a);
     agent_running = 0;
 }
 
 
-void Daemon_reconfig(int a)
+static void _Daemon_reconfig(int a)
 {
     config_UNUSED(a);
     _reconfig = 1;
-    signal(SIGHUP, Daemon_reconfig);
+    signal(SIGHUP, _Daemon_reconfig);
 }
 
 
-extern void     dump_registry(void);
-
-void Daemon_dump(int a)
+static void _Daemon_dump(int a)
 {
     config_UNUSED(a);
     AgentRegistry_dumpRegistry();
-    signal(SIGUSR1, Daemon_dump);
+    signal(SIGUSR1, _Daemon_dump);
 }
 
-void
-SnmpdCatchRandomSignal(int a)
+static void
+_Daemon_CatchRandomSignal(int a)
 {
     /* Disable all logs and log the error via syslog */
     Logger_disableLog();
@@ -155,7 +145,7 @@ SnmpdCatchRandomSignal(int a)
 }
 
 static void
-SnmpTrapNodeDown(void)
+_Daemon_TrapNodeDown(void)
 {
     Trap_sendEasyTrap(PRIOT_TRAP_ENTERPRISESPECIFIC, 2);
     /*
@@ -200,15 +190,15 @@ int main(int argc, char *argv[])
      * for signals during startup...
      */
     DEBUG_MSGTL(("signal", "registering SIGTERM signal handler\n"));
-    signal(SIGTERM, Daemon_shutDown);
+    signal(SIGTERM, _Daemon_shutDown);
     DEBUG_MSGTL(("signal", "registering SIGINT signal handler\n"));
-    signal(SIGINT, Daemon_shutDown);
+    signal(SIGINT, _Daemon_shutDown);
     signal(SIGHUP, SIG_IGN);   /* do not terminate on early SIGHUP */
     DEBUG_MSGTL(("signal", "registering SIGUSR1 signal handler\n"));
-    signal(SIGUSR1, Daemon_dump);
+    signal(SIGUSR1, _Daemon_dump);
     DEBUG_MSGTL(("signal", "registering SIGPIPE signal handler\n"));
     signal(SIGPIPE, SIG_IGN);   /* 'Inline' failure of wayward readers */
-    signal(SIGXFSZ, SnmpdCatchRandomSignal);
+    signal(SIGXFSZ, _Daemon_CatchRandomSignal);
 
     /*
      * Default to NOT running an AgentX master.
@@ -531,7 +521,7 @@ int main(int argc, char *argv[])
         DefaultStore_setBoolean(DsStorage_APPLICATION_ID,
                                DsAgentBoolean_NO_ROOT_ACCESS, 1);
         Vars_initAgent(_daemon_appName);        /* register our .conf handlers */
-        MibModules_initMibModules();
+        PluginModules_initModules();
         Api_init(_daemon_appName);
         fprintf(stderr, "Configuration directives understood:\n");
         ReadConfig_printUsage("  ");
@@ -616,7 +606,7 @@ int main(int argc, char *argv[])
         Logger_log(LOGGER_PRIORITY_ERR, "Agent initialization failed\n");
         exit(1);
     }
-    MibModules_initMibModules();
+    PluginModules_initModules();
 
     /*
      * start library
@@ -743,7 +733,7 @@ int main(int argc, char *argv[])
     Api_store(_daemon_appName);
 
     DEBUG_MSGTL(("signal", "registering SIGHUP signal handler\n"));
-    signal(SIGHUP, Daemon_reconfig);
+    signal(SIGHUP, _Daemon_reconfig);
 
     /*
      * Send coldstart trap if possible.
@@ -763,9 +753,9 @@ int main(int argc, char *argv[])
     DEBUG_MSGTL(("priotd/main", "We're up.  Starting to process data.\n"));
     if (!DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
                 DsAgentBoolean_QUIT_IMMEDIATELY))
-        receive();
+        _Daemon_receive();
     DEBUG_MSGTL(("priotd/main", "sending shutdown trap\n"));
-    SnmpTrapNodeDown();
+    _Daemon_TrapNodeDown();
     DEBUG_MSGTL(("priotd/main", "Bye...\n"));
     Api_shutdown(_daemon_appName);
     Agent_shutdownMasterAgent();
@@ -801,7 +791,7 @@ int main(int argc, char *argv[])
  * port basis.  Handle timeouts.
  */
 static int
-receive(void)
+_Daemon_receive(void)
 {
     int             numfds;
     Types_LargeFdSet readfds, writefds, exceptfds;
@@ -880,7 +870,7 @@ receive(void)
 
         if (count > 0) {
 
-            FdEventManger_dispatchExternalEvents2(&count, &readfds,
+            FdEventManager_dispatchExternalEvents2(&count, &readfds,
                                               &writefds, &exceptfds);
 
             /* If there are still events leftover, process them */
@@ -956,7 +946,7 @@ receive(void)
  * Not used by the agent to process other Response PDUs.
  */
 int
-Daemon_input( int op, Types_Session * session, int reqid, Types_Pdu *pdu, void *magic )
+_Daemon_input( int op, Types_Session * session, int reqid, Types_Pdu *pdu, void *magic )
 {
     config_UNUSED(session);
     config_UNUSED(reqid);

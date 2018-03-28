@@ -80,7 +80,8 @@ SOURCES += \
     Vacm.c \
     Version.c \
     Transports/CallbackDomain.c \
-    System/Convert.c
+    System/Convert.c \
+    FdEventManager.c
 
 HEADERS += \
     System/String.h \
@@ -155,4 +156,5 @@ HEADERS += \
     System/Numerics/Integer \
     Transports/CallbackDomain.h \
     System/Convert.h \
-    Config.h
+    Config.h \
+    FdEventManager.h

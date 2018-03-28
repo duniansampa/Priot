@@ -48,8 +48,6 @@ HEADERS += \
     ScalarGroup.h \
     Serialize.h \
     GetStatistic.h \
-    MibModules.h \
-    ModuleInits.h \
     StashCache.h \
     StashToNext.h \
     Table.h \
@@ -71,7 +69,8 @@ HEADERS += \
     ../Plugin/Agentx/AgentxConfig.h \
     ../Plugin/Agentx/XClient.h \
     ../Plugin/Agentx/Master.h \
-    ../Plugin/Agentx/MasterAdmin.h
+    ../Plugin/Agentx/MasterAdmin.h \
+    AgentModuleInits.h
 
 
 SOURCES += \
@@ -99,7 +98,6 @@ SOURCES += \
     ScalarGroup.c \
     GetStatistic.c \
     Vars.c \
-    MibModules.c \
     Serialize.c \
     StashCache.c \
     StashToNext.c \

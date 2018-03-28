@@ -1,6 +1,6 @@
 #include "Vars.h"
 #include "PriotSettings.h"
-#include "MibModules.h"
+#include "../Plugin/PluginModules.h"
 #include "VarStruct.h"
 #include "Logger.h"
 #include "AgentRegistry.h"
@@ -182,7 +182,7 @@ Vars_initAgent(const char *app)
                    DsAgentBoolean_ROLE) == SUB_AGENT)
         return r;
 
-#include "ModuleInits.h"
+#include "AgentModuleInits.h"
 
     return r;
 }                               /* end Vars_initAgent() */
