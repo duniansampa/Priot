@@ -35,6 +35,8 @@ char * Long_toString1(long i){
 
 //Returns a string representation of the first argument in the 'base' specified by the second argument.
 char *	Long_toString2(unsigned long i, int base){
+    config_UNUSED(i);
+    config_UNUSED(base);
 //	long q;
 //	long r;
 //	string buffer;

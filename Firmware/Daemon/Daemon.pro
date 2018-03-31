@@ -2,11 +2,12 @@ TEMPLATE = app
 CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
+TARGET = daemon
 
 QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
+#DESTDIR = $$PWD/../../bin/exe
 
-TARGET = daemon
 
 SOURCES += \
     ../Plugin/UtilFuncs/Restart.c \

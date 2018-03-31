@@ -8,7 +8,7 @@ QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
 DEFINES += PRIOT_PRIOTLIB_LIBRARY
 
-#DESTDIR = "/home/dsampa/Documents/workspace/pessoal/lib"
+#DESTDIR = $$PWD/../../bin/lib
 
 INCLUDEPATH +=  $$PWD/../Plugin/
 DEPENDPATH  +=  $$PWD/../Plugin/

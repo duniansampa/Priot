@@ -6,6 +6,8 @@ TEMPLATE = lib
 
 QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
+#DESTDIR = $$PWD/../../bin/lib
+
 HEADERS += \
     PluginModules.h \
     ModuleIncludes.h \

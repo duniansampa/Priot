@@ -118,7 +118,7 @@ int Tools_strcat(u_char ** buf, size_t * buf_len, size_t * out_len,
     }
 
     while ((*out_len + strlen((const char *) s) + 1) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc(buf, buf_len))) {
+        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
             return 0;
         }
     }
@@ -256,7 +256,7 @@ u_int Tools_binaryToHex2(u_char ** dest, size_t *dest_len, int allow_realloc,
         if (!allow_realloc)
             return 0;
         *dest_len = olen;
-        if (Tools_realloc(dest, dest_len))
+        if (Tools_realloc2(dest, dest_len))
             return 0;
     }
 
@@ -376,7 +376,7 @@ int Tools_decimalToBinary(u_char ** buf, size_t * buf_len, size_t * out_len,
             return 0;
         }
         if ((*out_len >= *buf_len) &&
-            !(allow_realloc && Tools_realloc(buf, buf_len))) {
+            !(allow_realloc && Tools_realloc2(buf, buf_len))) {
             return 0;
         }
         *(*buf + *out_len) = (u_char) subid;
@@ -447,7 +447,7 @@ int Tools_hexToBinary(u_char ** buf, size_t * buf_len, size_t * offset,
          * (snmp_realloc will adjust buf_len to new size)
          */
         if ((*offset >= *buf_len) &&
-            !(allow_realloc && Tools_realloc(buf, buf_len))) {
+            !(allow_realloc && Tools_realloc2(buf, buf_len))) {
             return 0;
         }
         *(*buf + *offset) = (u_char) subid;

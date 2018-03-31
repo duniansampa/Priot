@@ -50,7 +50,8 @@ char *	Integer_toString1(int i){
 
 // Returns a string representation of the first argument in the base specified by the second argument.
 char *	Integer_toString2(unsigned int i, int base){
-
+    config_UNUSED(i);
+    config_UNUSED(base);
 //	int q;
 //	int r;
 //	string s;

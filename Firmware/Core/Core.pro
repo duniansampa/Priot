@@ -10,10 +10,8 @@ QMAKE_CFLAGS += -Werror=implicit-function-declaration
 DEFINES += PRIOT_CORELIB_LIBRARY
 INCLUDEPATH += "$$PWD"
 INCLUDEPATH +=  $$PWD/../Plugin/
-#DESTDIR = "/home/dsampa/Documents/workspace/pessoal/lib"
-#LIBS +=  -L$$DESTDIR
 
-message("message: $$LIBS")
+#DESTDIR = $$PWD/../../bin/lib
 
 SOURCES += \
     DefaultStore.c \

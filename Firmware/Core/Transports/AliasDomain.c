@@ -14,6 +14,7 @@ static struct DataList_DataList_s *_aliasDomain_aliasMemory = NULL;
 
 /* An alias parser */
 void AliasDomain_parseAliasConfig(const char *token, char *line) {
+
     char aliasname[IMPL_SPRINT_MAX_LEN];
     char transportdef[IMPL_SPRINT_MAX_LEN];
     /* copy the first word (the alias) out and then assume the rest is

@@ -44,7 +44,7 @@
 
 /* default location to look for mibs to load using the above tokens and/or
    those in the MIBS envrionment variable */
-#define DEFAULT_MIBDIRS "$HOME/.priot/mibs:/usr/local/share/priot/mibs"
+#define DEFAULT_MIBDIRS  "/priot/mibs" /** "$HOME/.priot/mibs:/usr/local/share/priot/mibs" */
 
 
 /* umask permissions to set up persistent files with */
@@ -52,27 +52,19 @@
 
 
 /* Define to the full name of this package. */
-#ifndef PACKAGE_NAME
 #define PACKAGE_NAME "PRIOT"
-#endif
 
 /* Define to the full name and version of this package. */
-#ifndef PACKAGE_STRING
 #define PACKAGE_STRING "PRIOT 5.7.3"
-#endif
 
 /* Define to the one symbol short name of this package. */
-#ifndef PACKAGE_TARNAME
 #define PACKAGE_TARNAME "priot"
-#endif
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "5.7.3"
-#endif
 
 
 /* The size of `int', as computed by sizeof. */
@@ -98,7 +90,7 @@
 /* PERSISTENT_DIRECTORY: If defined, the library is capabile of saving
    persisant information to this directory in the form of configuration
    lines: PERSISTENT_DIRECTORY/NAME.persistent.conf */
-#define PERSISTENT_DIRECTORY "/var/priot"
+#define PERSISTENT_DIRECTORY "/priot/var/priot" /** "/var/priot" */
 
 /* AGENT_DIRECTORY_MODE: the mode the agents should use to create
    directories with. Since the data stored here is probably sensitive, it
@@ -113,17 +105,17 @@
 #define MAX_PERSISTENT_BACKUPS 10
 
 /* pattern for temporary file names */
-#define NETSNMP_TEMP_FILE_PATTERN "/tmp/priotdXXXXXX"
+#define NETSNMP_TEMP_FILE_PATTERN "/priot/tmp/priotdXXXXXX"
 
 /* net-snmp's major path names */
-#define SNMPLIBPATH "/usr/local/lib/priot"
-#define SNMPSHAREPATH "/usr/local/share/priot"
-#define SNMPCONFPATH "/usr/local/etc/priot"
-#define SNMPDLMODPATH "/usr/local/lib/priot/dlmod"
+#define SNMPLIBPATH "/priot/lib/priot"
+#define SNMPSHAREPATH "/priot/share/priot"
+#define SNMPCONFPATH "/priot/etc/priot"
+#define SNMPDLMODPATH "/priot/lib/priot/dlmod"
 
 /* LOGFILE:  If defined it closes stdout/err/in and opens this in
    out/err's place.  (stdin is closed so that sh scripts won't wait for it) */
-#define LOGFILE "/var/log/priotd.log"
+#define LOGFILE "/priot/var/log/priotd.log"
 
 /* default system contact */
 #define SYS_CONTACT "duniansampa@outlook.com"
@@ -146,11 +138,6 @@
 #define TRUE	1
 #define ONE_SEC         1000000L
 
-/* Environment separator character surrounded by double quotes. */
-#define ENV_SEPARATOR ":"
-
-/* Environment separator character surrounded by single quotes. */
-#define ENV_SEPARATOR_CHAR ':'
 
 /* location of mount table list */
 #define ETC_MNTTAB "/etc/mtab"
@@ -166,7 +153,7 @@
 #define LT_OBJDIR ".libs/"
 
 /* Unix domain socket for AgentX master-subagent communication */
-#define NETSNMP_AGENTX_SOCKET "/var/agentx/master"
+#define NETSNMP_AGENTX_SOCKET "/priot/var/agentx/master"
 
 /* "Define if crytography support is possible" */
 #define NETSNMP_CAN_DO_CRYPTO 1
@@ -180,16 +167,9 @@
    support. */
 #define NETSNMP_ENABLE_SCAPI_AUTHPRIV 1
 
-/* Should evaluate to the name of the current function if defined */
-#define NETSNMP_FUNCTION __func__
-
 /* If you don't want the agent to report on variables it doesn't have data for
    */
 #define NETSNMP_NO_DUMMY_VALUES 1
-
-
-/* Size prefix to use to printf a uint32_t */
-#define NETSNMP_PRI32 ""
 
 /* Size prefix to use to printf a size_t or ssize_t */
 #define NETSNMP_PRIz "l"
@@ -206,36 +186,10 @@
 #define PACKAGE_BUGREPORT "net-snmp-coders@lists.sourceforge.net"
 
 
-/* Define to the home page for this package. */
-#define PACKAGE_URL ""
-
-/* Define to the version of this package. */
-#define PACKAGE_VERSION "5.7.3"
-
 /* Command to generate ps output, the final column must be the process name
    withOUT arguments */
 #define PSCMD "/usr/bin/ps -e"
 
-/* Define as the return type of signal handlers (`int' or `void'). */
-#define RETSIGTYPE void
-
-/* define rtentry to ortentry on SYSV machines (alphas) */
-#define RTENTRY struct rtentry
-
-/* The size of `int', as computed by sizeof. */
-#define SIZEOF_INT 4
-
-/* The size of `intmax_t', as computed by sizeof. */
-#define SIZEOF_INTMAX_T 8
-
-/* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 8
-
-/* The size of `long long', as computed by sizeof. */
-#define SIZEOF_LONG_LONG 8
-
-/* The size of `short', as computed by sizeof. */
-#define SIZEOF_SHORT 2
 
 /* The size of `sockaddr_un.sun_path', as computed by sizeof. */
 #define SIZEOF_SOCKADDR_UN_SUN_PATH 108
@@ -278,10 +232,6 @@
 /* Default (SNMP) version number for the tools to use */
 #define NETSNMP_DEFAULT_SNMP_VERSION 3
 
-/* don't change these values! */
-#define NETSNMP_SNMPV1      0xAAAA       /* readable by anyone */
-#define NETSNMP_SNMPV2ANY   0xA000       /* V2 Any type (includes NoAuth) */
-#define NETSNMP_SNMPV2AUTH  0x8000       /* V2 Authenticated requests only */
 
 /* default list of mibs to load */
 #define NETSNMP_DEFAULT_MIBS ":SNMPv2-MIB:IF-MIB:IP-MIB:TCP-MIB:UDP-MIB:HOST-RESOURCES-MIB:NOTIFICATION-LOG-MIB:DISMAN-EVENT-MIB:DISMAN-SCHEDULE-MIB:UCD-SNMP-MIB:UCD-DEMO-MIB:SNMP-TARGET-MIB:NET-SNMP-AGENT-MIB:HOST-RESOURCES-TYPES:SNMP-MPD-MIB:SNMP-USER-BASED-SM-MIB:SNMP-FRAMEWORK-MIB:SNMP-VIEW-BASED-ACM-MIB:SNMP-COMMUNITY-MIB:IP-FORWARD-MIB:NET-SNMP-PASS-MIB:NET-SNMP-EXTEND-MIB:UCD-DLMOD-MIB:SNMP-NOTIFICATION-MIB:SNMPv2-TM:NET-SNMP-VACM-MIB"
@@ -292,11 +242,6 @@
 /* ignore the -D flag and always print debugging information */
 #define NETSNMP_ALWAYS_DEBUG 0
 
-/* define the system type include file here */
-#define NETSNMP_SYSTEM_INCLUDE_FILE "siglog/system/linux.h"
-
-/* define the machine (cpu) type include file here */
-#define NETSNMP_MACHINE_INCLUDE_FILE "siglog/machine/generic.h"
 
 /* Mib-2 tree Info */
 /* These are the system information variables. */
@@ -448,11 +393,6 @@
 
 
 #define DONT_USE_NLIST 1  //NETSNMP_DONT_USE_NLIST
-
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
-#endif
 
 
 #define config_UNUSED(x) (void)(x)
