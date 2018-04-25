@@ -9,7 +9,7 @@
 /**
  * The table helper is designed to simplify the task of writing a
  * table handler for the net-snmp agent.  You should create a normal
- * handler and register it using the netsnmp_register_table() function
+ * handler and register it using the Table_registerTable() function
  * instead of the netsnmp_register_handler() function.
  */
 
@@ -17,7 +17,7 @@
  * Notes:
  *
  *   1) illegal indexes automatically get handled for get/set cases.
- *      Simply check to make sure the value is type ASN_NULL before
+ *      Simply check to make sure the value is type ASN01_NULL before
  *      you answer a request.
  */
 

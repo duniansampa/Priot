@@ -1,10 +1,10 @@
 #include "OidStash.h"
-#include "Tools.h"
 #include "Debug.h"
 #include "DefaultStore.h"
-#include "ReadConfig.h"
-#include "Types.h"
 #include "Priot.h"
+#include "ReadConfig.h"
+#include "Tools.h"
+#include "Types.h"
 
 /** @defgroup oid_stash Store and retrieve data referenced by an OID.
     This is essentially a way of storing data associated with a given
@@ -29,7 +29,6 @@
  *
  */
 
-
 /***************************************************************************
  *
  *
@@ -43,16 +42,16 @@
  * @return NULL on error, otherwise the newly allocated node
  */
 
-OidStash_Node *
-OidStash_createSizedNode(size_t mysize)
+OidStash_Node*
+OidStash_createSizedNode( size_t mysize )
 {
-    OidStash_Node *ret;
-    ret = TOOLS_MALLOC_TYPEDEF(OidStash_Node);
-    if (!ret)
+    OidStash_Node* ret;
+    ret = TOOLS_MALLOC_TYPEDEF( OidStash_Node );
+    if ( !ret )
         return NULL;
-    ret->children = (OidStash_Node**) calloc(mysize, sizeof(OidStash_Node *));
-    if (!ret->children) {
-        free(ret);
+    ret->children = ( OidStash_Node** )calloc( mysize, sizeof( OidStash_Node* ) );
+    if ( !ret->children ) {
+        free( ret );
         return NULL;
     }
     ret->childrenSize = mysize;
@@ -63,12 +62,11 @@ OidStash_createSizedNode(size_t mysize)
  * Assumes you want the default OID_STASH_CHILDREN_SIZE hash size for the node.
  * @return NULL on error, otherwise the newly allocated node
  */
- OidStash_Node *
-OidStash_createNode(void)
+OidStash_Node*
+OidStash_createNode( void )
 {
-    return OidStash_createSizedNode(OIDSTASH_CHILDREN_SIZE);
+    return OidStash_createSizedNode( OIDSTASH_CHILDREN_SIZE );
 }
-
 
 /** adds data to the stash at a given oid.
 
@@ -78,56 +76,53 @@ OidStash_createNode(void)
  * @param mydata the data to store
 
  * @return ErrorCode_SUCCESS on success, ErrorCode_GENERR if data is
-   already there, SNMPERR_MALLOC on malloc failures or if arguments
+   already there, ErrorCode_MALLOC on malloc failures or if arguments
    passed in with NULL values.
  */
-int
-OidStash_addData(OidStash_Node **root,
-                           const oid * lookup, size_t lookup_len, void *mydata)
+int OidStash_addData( OidStash_Node** root,
+    const oid* lookup, size_t lookup_len, void* mydata )
 {
     OidStash_Node *curnode, *tmpp, *loopp;
-    unsigned int    i;
+    unsigned int i;
 
-    if (!root || !lookup || lookup_len == 0)
+    if ( !root || !lookup || lookup_len == 0 )
         return ErrorCode_GENERR;
 
-    if (!*root) {
+    if ( !*root ) {
         *root = OidStash_createNode();
-        if (!*root)
+        if ( !*root )
             return ErrorCode_MALLOC;
     }
-    DEBUG_MSGTL(( "oidStash", "stashAddData "));
-    DEBUG_MSGOID(("oidStash", lookup, lookup_len));
-    DEBUG_MSG((   "oidStash", "\n"));
+    DEBUG_MSGTL( ( "oidStash", "stashAddData " ) );
+    DEBUG_MSGOID( ( "oidStash", lookup, lookup_len ) );
+    DEBUG_MSG( ( "oidStash", "\n" ) );
     tmpp = NULL;
-    for (curnode = *root, i = 0; i < lookup_len; i++) {
-        tmpp = curnode->children[lookup[i] % curnode->childrenSize];
-        if (!tmpp) {
+    for ( curnode = *root, i = 0; i < lookup_len; i++ ) {
+        tmpp = curnode->children[ lookup[ i ] % curnode->childrenSize ];
+        if ( !tmpp ) {
             /*
              * no child in array at all
              */
-            tmpp = curnode->children[lookup[i] % curnode->childrenSize] =
-                OidStash_createNode();
-            tmpp->value = lookup[i];
+            tmpp = curnode->children[ lookup[ i ] % curnode->childrenSize ] = OidStash_createNode();
+            tmpp->value = lookup[ i ];
             tmpp->parent = curnode;
         } else {
-            for (loopp = tmpp; loopp; loopp = loopp->nextSibling) {
-                if (loopp->value == lookup[i])
+            for ( loopp = tmpp; loopp; loopp = loopp->nextSibling ) {
+                if ( loopp->value == lookup[ i ] )
                     break;
             }
-            if (loopp) {
+            if ( loopp ) {
                 tmpp = loopp;
             } else {
                 /*
                  * none exists.  Create it
                  */
                 loopp = OidStash_createNode();
-                loopp->value = lookup[i];
+                loopp->value = lookup[ i ];
                 loopp->nextSibling = tmpp;
                 loopp->parent = curnode;
                 tmpp->prevSibling = loopp;
-                curnode->children[lookup[i] % curnode->childrenSize] =
-                    loopp;
+                curnode->children[ lookup[ i ] % curnode->childrenSize ] = loopp;
                 tmpp = loopp;
             }
             /*
@@ -139,9 +134,9 @@ OidStash_addData(OidStash_Node **root,
     /*
      * tmpp now points to the exact match
      */
-    if (curnode->thedata)
+    if ( curnode->thedata )
         return ErrorCode_GENERR;
-    if (NULL == tmpp)
+    if ( NULL == tmpp )
         return ErrorCode_GENERR;
     tmpp->thedata = mydata;
     return ErrorCode_SUCCESS;
@@ -152,26 +147,26 @@ OidStash_addData(OidStash_Node **root,
  * @param lookup the oid to look up a node for.
  * @param lookup_len the length of the lookup oid
  */
-OidStash_Node *
-OidStash_getNode(OidStash_Node *root,
-                           const oid * lookup, size_t lookup_len)
+OidStash_Node*
+OidStash_getNode( OidStash_Node* root,
+    const oid* lookup, size_t lookup_len )
 {
     OidStash_Node *curnode, *tmpp, *loopp;
-    unsigned int    i;
+    unsigned int i;
 
-    if (!root)
+    if ( !root )
         return NULL;
     tmpp = NULL;
-    for (curnode = root, i = 0; i < lookup_len; i++) {
-        tmpp = curnode->children[lookup[i] % curnode->childrenSize];
-        if (!tmpp) {
+    for ( curnode = root, i = 0; i < lookup_len; i++ ) {
+        tmpp = curnode->children[ lookup[ i ] % curnode->childrenSize ];
+        if ( !tmpp ) {
             return NULL;
         } else {
-            for (loopp = tmpp; loopp; loopp = loopp->nextSibling) {
-                if (loopp->value == lookup[i])
+            for ( loopp = tmpp; loopp; loopp = loopp->nextSibling ) {
+                if ( loopp->value == lookup[ i ] )
                     break;
             }
-            if (loopp) {
+            if ( loopp ) {
                 tmpp = loopp;
             } else {
                 return NULL;
@@ -189,28 +184,28 @@ OidStash_getNode(OidStash_Node *root,
  * @param lookup the oid to look up a node for.
  * @param lookup_len the length of the lookup oid
  */
-OidStash_Node *
-OidStash_getnextNode(OidStash_Node *root,
-                               oid * lookup, size_t lookup_len)
+OidStash_Node*
+OidStash_getnextNode( OidStash_Node* root,
+    oid* lookup, size_t lookup_len )
 {
     OidStash_Node *curnode, *tmpp, *loopp;
-    unsigned int    i, j, bigger_than = 0, do_bigger = 0;
+    unsigned int i, j, bigger_than = 0, do_bigger = 0;
 
-    if (!root)
+    if ( !root )
         return NULL;
     tmpp = NULL;
 
     /* get closest matching node */
-    for (curnode = root, i = 0; i < lookup_len; i++) {
-        tmpp = curnode->children[lookup[i] % curnode->childrenSize];
-        if (!tmpp) {
+    for ( curnode = root, i = 0; i < lookup_len; i++ ) {
+        tmpp = curnode->children[ lookup[ i ] % curnode->childrenSize ];
+        if ( !tmpp ) {
             break;
         } else {
-            for (loopp = tmpp; loopp; loopp = loopp->nextSibling) {
-                if (loopp->value == lookup[i])
+            for ( loopp = tmpp; loopp; loopp = loopp->nextSibling ) {
+                if ( loopp->value == lookup[ i ] )
                     break;
             }
-            if (loopp) {
+            if ( loopp ) {
                 tmpp = loopp;
             } else {
                 break;
@@ -220,11 +215,11 @@ OidStash_getnextNode(OidStash_Node *root,
     }
 
     /* find the *next* node lexographically greater */
-    if (!curnode)
+    if ( !curnode )
         return NULL; /* ack! */
 
-    if (i+1 < lookup_len) {
-        bigger_than = lookup[i+1];
+    if ( i + 1 < lookup_len ) {
+        bigger_than = lookup[ i + 1 ];
         do_bigger = 1;
     }
 
@@ -233,14 +228,13 @@ OidStash_getnextNode(OidStash_Node *root,
         tmpp = NULL;
         /* next child must be (next) greater than our next search node */
         /* XXX: should start this loop at best_nums[i]%... and wrap */
-        for(j = 0; j < curnode->childrenSize; j++) {
-            for (loopp = curnode->children[j];
-                 loopp; loopp = loopp->nextSibling) {
-                if ((!do_bigger || loopp->value > bigger_than) &&
-                    (!tmpp || tmpp->value > loopp->value)) {
+        for ( j = 0; j < curnode->childrenSize; j++ ) {
+            for ( loopp = curnode->children[ j ];
+                  loopp; loopp = loopp->nextSibling ) {
+                if ( ( !do_bigger || loopp->value > bigger_than ) && ( !tmpp || tmpp->value > loopp->value ) ) {
                     tmpp = loopp;
                     /* XXX: can do better and include min_nums[i] */
-                    if (tmpp->value <= curnode->childrenSize-1) {
+                    if ( tmpp->value <= curnode->childrenSize - 1 ) {
                         /* best we can do. */
                         goto goto_doneThisLoop;
                     }
@@ -248,12 +242,12 @@ OidStash_getnextNode(OidStash_Node *root,
             }
         }
 
-      goto_doneThisLoop:
-        if (tmpp && tmpp->thedata)
+    goto_doneThisLoop:
+        if ( tmpp && tmpp->thedata )
             /* found a node with data.  Go with it. */
             return tmpp;
 
-        if (tmpp) {
+        if ( tmpp ) {
             /* found a child node without data, maybe find a grandchild? */
             do_bigger = 0;
             curnode = tmpp;
@@ -265,7 +259,7 @@ OidStash_getnextNode(OidStash_Node *root,
             bigger_than = curnode->value;
             curnode = curnode->parent;
         }
-    } while (curnode);
+    } while ( curnode );
 
     /* fell off the top */
     return NULL;
@@ -280,17 +274,15 @@ OidStash_getnextNode(OidStash_Node *root,
  * @param lookup the oid to search for
  * @param lookup_len the length of the search oid.
  */
-void *
-OidStash_getData(OidStash_Node *root,
-                           const oid * lookup, size_t lookup_len)
+void* OidStash_getData( OidStash_Node* root,
+    const oid* lookup, size_t lookup_len )
 {
-    OidStash_Node *ret;
-    ret = OidStash_getNode(root, lookup, lookup_len);
-    if (ret)
+    OidStash_Node* ret;
+    ret = OidStash_getNode( root, lookup, lookup_len );
+    if ( ret )
         return ret->thedata;
     return NULL;
 }
-
 
 /** a wrapper around netsnmp_oid_stash_store for use with a snmp_alarm.
  * when calling snmp_alarm, you can list this as a callback.  The
@@ -303,18 +295,18 @@ OidStash_getData(OidStash_Node *root,
  * @param serverarg
  * @param clientarg A pointer to a netsnmp_oid_stash_save_info structure.
  */
-int
-OidStash_storeAll(int majorID, int minorID,
-                            void *serverarg, void *clientarg) {
-    oid oidbase[TYPES_MAX_OID_LEN];
-    OidStash_SaveInfo *sinfo;
+int OidStash_storeAll( int majorID, int minorID,
+    void* serverarg, void* clientarg )
+{
+    oid oidbase[ TYPES_MAX_OID_LEN ];
+    OidStash_SaveInfo* sinfo;
 
-    if (!clientarg)
+    if ( !clientarg )
         return PRIOT_ERR_NOERROR;
 
-    sinfo = (OidStash_SaveInfo *) clientarg;
-    OidStash_store(*(sinfo->root), sinfo->token, sinfo->dumpfn,
-                            oidbase,0);
+    sinfo = ( OidStash_SaveInfo* )clientarg;
+    OidStash_store( *( sinfo->root ), sinfo->token, sinfo->dumpfn,
+        oidbase, 0 );
     return PRIOT_ERR_NOERROR;
 }
 
@@ -327,43 +319,43 @@ OidStash_storeAll(int majorID, int minorID,
 
     @param root the top of the stash to store.
     @param tokenname the file token name to save in (passing "priotd" will
-    save things into snmpd.conf).
+    save things into priotd.conf).
     @param dumpfn A function which can dump the data stored at a particular
     node into a char buffer.
-    @param curoid must be a pointer to a OID array of length MAX_OID_LEN.
+    @param curoid must be a pointer to a OID array of length ASN01_MAX_OID_LEN.
     @param curoid_len must be 0 for the top level call.
 */
-void
-OidStash_store(OidStash_Node *root,
-                        const char *tokenname, OidStash_FuncStashDump *dumpfn,
-                        oid *curoid, size_t curoid_len) {
+void OidStash_store( OidStash_Node* root,
+    const char* tokenname, OidStash_FuncStashDump* dumpfn,
+    oid* curoid, size_t curoid_len )
+{
 
-    char buf[TOOLS_MAXBUF];
-    OidStash_Node *tmpp;
-    char *cp;
-    char *appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                          DsStr_APPTYPE);
+    char buf[ TOOLS_MAXBUF ];
+    OidStash_Node* tmpp;
+    char* cp;
+    char* appname = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_APPTYPE );
     int i;
 
-    if (!tokenname || !root || !curoid || !dumpfn)
+    if ( !tokenname || !root || !curoid || !dumpfn )
         return;
 
-    for (i = 0; i < (int)root->childrenSize; i++) {
-        if (root->children[i]) {
-            for (tmpp = root->children[i]; tmpp; tmpp = tmpp->nextSibling) {
-                curoid[curoid_len] = tmpp->value;
-                if (tmpp->thedata) {
-                    snprintf(buf, sizeof(buf), "%s ", tokenname);
-                    cp = ReadConfig_saveObjid(buf+strlen(buf), curoid,
-                                                curoid_len+1);
+    for ( i = 0; i < ( int )root->childrenSize; i++ ) {
+        if ( root->children[ i ] ) {
+            for ( tmpp = root->children[ i ]; tmpp; tmpp = tmpp->nextSibling ) {
+                curoid[ curoid_len ] = tmpp->value;
+                if ( tmpp->thedata ) {
+                    snprintf( buf, sizeof( buf ), "%s ", tokenname );
+                    cp = ReadConfig_saveObjid( buf + strlen( buf ), curoid,
+                        curoid_len + 1 );
                     *cp++ = ' ';
                     *cp = '\0';
-                    if ((*dumpfn)(cp, sizeof(buf) - strlen(buf),
-                                  tmpp->thedata, tmpp))
-                        ReadConfig_store(appname, buf);
+                    if ( ( *dumpfn )( cp, sizeof( buf ) - strlen( buf ),
+                             tmpp->thedata, tmpp ) )
+                        ReadConfig_store( appname, buf );
                 }
-                OidStash_store(tmpp, tokenname, dumpfn,
-                                        curoid, curoid_len+1);
+                OidStash_store( tmpp, tokenname, dumpfn,
+                    curoid, curoid_len + 1 );
             }
         }
     }
@@ -373,22 +365,25 @@ OidStash_store(OidStash_Node *root,
     @param root The top of the tree
     @param prefix a character string prefix printed to the beginning of each line.
 */
-void OidStash_dump(OidStash_Node *root, char *prefix)
+void OidStash_dump( OidStash_Node* root, char* prefix )
 {
-    char            myprefix[TYPES_MAX_OID_LEN * 4];
-    OidStash_Node *tmpp;
-    int             prefix_len = strlen(prefix) + 1;    /* actually it's +2 */
-    unsigned int    i;
+    char myprefix[ TYPES_MAX_OID_LEN * 4 ];
+    OidStash_Node* tmpp;
+    int prefix_len = strlen( prefix ) + 1; /* actually it's +2 */
+    unsigned int i;
 
-    memset(myprefix, ' ', TYPES_MAX_OID_LEN * 4);
-    myprefix[prefix_len] = '\0';
+    memset( myprefix, ' ', TYPES_MAX_OID_LEN * 4 );
+    myprefix[ prefix_len ] = '\0';
 
-    for (i = 0; i < root->childrenSize; i++) {
-        if (root->children[i]) {
-            for (tmpp = root->children[i]; tmpp; tmpp = tmpp->nextSibling) {
-                printf("%s%" "l" "d@%d: %s\n", prefix, tmpp->value, i,
-                       (tmpp->thedata) ? "DATA" : "");
-                OidStash_dump(tmpp, myprefix);
+    for ( i = 0; i < root->childrenSize; i++ ) {
+        if ( root->children[ i ] ) {
+            for ( tmpp = root->children[ i ]; tmpp; tmpp = tmpp->nextSibling ) {
+                printf( "%s%"
+                        "l"
+                        "d@%d: %s\n",
+                    prefix, tmpp->value, i,
+                    ( tmpp->thedata ) ? "DATA" : "" );
+                OidStash_dump( tmpp, myprefix );
             }
         }
     }
@@ -399,32 +394,32 @@ void OidStash_dump(OidStash_Node *root, char *prefix)
     @param freefn The function to be called on each data (void *)
     pointer.  If left NULL the system free() function will be called
 */
-void
-OidStash_free(OidStash_Node **root,
-                       OidStash_FuncStashFreeNode *freefn) {
+void OidStash_free( OidStash_Node** root,
+    OidStash_FuncStashFreeNode* freefn )
+{
 
     OidStash_Node *curnode, *tmpp;
-    unsigned int    i;
+    unsigned int i;
 
-    if (!root || !*root)
+    if ( !root || !*root )
         return;
 
     /* loop through all our children and free each node */
-    for (i = 0; i < (*root)->childrenSize; i++) {
-        if ((*root)->children[i]) {
-            for(tmpp = (*root)->children[i]; tmpp; tmpp = curnode) {
-                if (tmpp->thedata) {
-                    if (freefn)
-                        (*freefn)(tmpp->thedata);
+    for ( i = 0; i < ( *root )->childrenSize; i++ ) {
+        if ( ( *root )->children[ i ] ) {
+            for ( tmpp = ( *root )->children[ i ]; tmpp; tmpp = curnode ) {
+                if ( tmpp->thedata ) {
+                    if ( freefn )
+                        ( *freefn )( tmpp->thedata );
                     else
-                        free(tmpp->thedata);
+                        free( tmpp->thedata );
                 }
                 curnode = tmpp->nextSibling;
-                OidStash_free(&tmpp, freefn);
+                OidStash_free( &tmpp, freefn );
             }
         }
     }
-    free((*root)->children);
-    free (*root);
+    free( ( *root )->children );
+    free( *root );
     *root = NULL;
 }

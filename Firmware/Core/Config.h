@@ -1,7 +1,6 @@
 #ifndef PRIO_CONFIG_H
 #define PRIO_CONFIG_H
 
-
 /* Portions of this file are subject to the following copyright(s).  See
  * the PRIOT's COPYING file for more details and other copyrights
  * that may apply:
@@ -11,7 +10,7 @@
 /* Optionally, this may point to the location in the tree your  */
 /* company/organization has been allocated.                     */
 /* The assigned enterprise number for the NET_SNMP MIB modules. */
-#define ENTERPRISE_OID			8072
+#define ENTERPRISE_OID 8072
 
 /* Set if snmpgets should block and never timeout */
 /* The original CMU code had this hardcoded as = 1 */
@@ -20,10 +19,10 @@
 /* this is the location of the net-snmp mib tree.  It shouldn't be
    changed, as the places it is used are expected to be constant
    values or are directly tied to the UCD-SNMP-MIB. */
-#define NET_OID		    8072
-#define NET_MIB		    1,3,6,1,4,1,8072
-#define NET_DOT_MIB		1.3.6.1.4.1.8072
-#define NET_DOT_MIB_LENGTH	7
+#define NET_OID 8072
+#define NET_MIB 1, 3, 6, 1, 4, 1, 8072
+#define NET_DOT_MIB 1.3.6.1.4.1.8072
+#define NET_DOT_MIB_LENGTH 7
 
 /* Default (SNMP) version number for the tools to use */
 #define DEFAULT_PRIOT_VERSION 3
@@ -40,16 +39,12 @@
 /* ignore the -D flag and always print debugging information */
 #define DEBUG_ALWAYS_DEBUG 0
 
-
-
 /* default location to look for mibs to load using the above tokens and/or
    those in the MIBS envrionment variable */
-#define DEFAULT_MIBDIRS  "/priot/mibs" /** "$HOME/.priot/mibs:/usr/local/share/priot/mibs" */
-
+#define DEFAULT_MIBDIRS "/priot/mibs" /** "$HOME/.priot/mibs:/usr/local/share/priot/mibs" */
 
 /* umask permissions to set up persistent files with */
 #define PERSISTENT_MASK 077
-
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "PRIOT"
@@ -65,7 +60,6 @@
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "5.7.3"
-
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
@@ -83,9 +77,8 @@
 #define SIZEOF_SHORT 2
 
 /* reverse encoding BER packets is both faster and more efficient in space. */
-#define USE_REVERSE_ASNENCODING       1
+#define USE_REVERSE_ASNENCODING 1
 #define DEFAULT_ASNENCODING_DIRECTION 1 /* 1 = reverse, 0 = forwards */
-
 
 /* PERSISTENT_DIRECTORY: If defined, the library is capabile of saving
    persisant information to this directory in the form of configuration
@@ -126,18 +119,18 @@
 /* default list of mibs to load */
 #define PRIOT_DEFAULT_MIBS ":SNMPv2-MIB:IF-MIB:IP-MIB:TCP-MIB:UDP-MIB:HOST-RESOURCES-MIB:NOTIFICATION-LOG-MIB:DISMAN-EVENT-MIB:DISMAN-SCHEDULE-MIB:UCD-SNMP-MIB:UCD-DEMO-MIB:SNMP-TARGET-MIB:NET-SNMP-AGENT-MIB:HOST-RESOURCES-TYPES:SNMP-MPD-MIB:SNMP-USER-BASED-SM-MIB:SNMP-FRAMEWORK-MIB:SNMP-VIEW-BASED-ACM-MIB:SNMP-COMMUNITY-MIB:IP-FORWARD-MIB:NET-SNMP-PASS-MIB:NET-SNMP-EXTEND-MIB:UCD-DLMOD-MIB:SNMP-NOTIFICATION-MIB:SNMPv2-TM:NET-SNMP-VACM-MIB"
 
-
-#define CLASS_NAME(n) #n
-#define SHOW(a)  std::cout.precision(10); std::cout << #a << ": " << a << std::endl
+#define CLASS_NAME( n ) #n
+#define SHOW( a )              \
+    std::cout.precision( 10 ); \
+    std::cout << #a << ": " << a << std::endl
 
 #ifndef NULL
-#define NULL    0
+#define NULL 0
 #endif
 
-#define FALSE	0
-#define TRUE	1
-#define ONE_SEC         1000000L
-
+#define FALSE 0
+#define TRUE 1
+#define ONE_SEC 1000000L
 
 /* location of mount table list */
 #define ETC_MNTTAB "/etc/mtab"
@@ -158,10 +151,8 @@
 /* "Define if crytography support is possible" */
 #define NETSNMP_CAN_DO_CRYPTO 1
 
-
 /* configure options specified */
 #define NETSNMP_CONFIGURE_OPTIONS " '--with-default-snmp-version=3' '--with-sys-contact=duniansampa@outlook.com' '--with-sys-location=São José dos Campos' '--with-logfile=/var/log/snmpd.log' '--with-persistent-directory=/var/net-snmp'"
-
 
 /* define if you want to compile support for both authentication and privacy
    support. */
@@ -174,7 +165,6 @@
 /* Size prefix to use to printf a size_t or ssize_t */
 #define NETSNMP_PRIz "l"
 
-
 /* Define this if you have lm_sensors v3 or later */
 #define NETSNMP_USE_SENSORS_V3 1
 
@@ -185,11 +175,9 @@
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "net-snmp-coders@lists.sourceforge.net"
 
-
 /* Command to generate ps output, the final column must be the process name
    withOUT arguments */
 #define PSCMD "/usr/bin/ps -e"
-
 
 /* The size of `sockaddr_un.sun_path', as computed by sizeof. */
 #define SIZEOF_SOCKADDR_UN_SUN_PATH 108
@@ -210,9 +198,9 @@
 #define _ALL_SOURCE 1
 
 /* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
-#endif
+//#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+//#endif
 
 /* Enable threading extensions on Solaris.  */
 #define _POSIX_PTHREAD_SEMANTICS 1
@@ -226,12 +214,10 @@
 /* Define if you have RPM 4.6 or newer to turn on legacy API */
 #define _RPM_4_4_COMPAT /**/
 
-
 #define NETSNMP_USE_OPENSSL 1
 
 /* Default (SNMP) version number for the tools to use */
 #define NETSNMP_DEFAULT_SNMP_VERSION 3
-
 
 /* default list of mibs to load */
 #define NETSNMP_DEFAULT_MIBS ":SNMPv2-MIB:IF-MIB:IP-MIB:TCP-MIB:UDP-MIB:HOST-RESOURCES-MIB:NOTIFICATION-LOG-MIB:DISMAN-EVENT-MIB:DISMAN-SCHEDULE-MIB:UCD-SNMP-MIB:UCD-DEMO-MIB:SNMP-TARGET-MIB:NET-SNMP-AGENT-MIB:HOST-RESOURCES-TYPES:SNMP-MPD-MIB:SNMP-USER-BASED-SM-MIB:SNMP-FRAMEWORK-MIB:SNMP-VIEW-BASED-ACM-MIB:SNMP-COMMUNITY-MIB:IP-FORWARD-MIB:NET-SNMP-PASS-MIB:NET-SNMP-EXTEND-MIB:UCD-DLMOD-MIB:SNMP-NOTIFICATION-MIB:SNMPv2-TM:NET-SNMP-VACM-MIB"
@@ -242,12 +228,11 @@
 /* ignore the -D flag and always print debugging information */
 #define NETSNMP_ALWAYS_DEBUG 0
 
-
 /* Mib-2 tree Info */
 /* These are the system information variables. */
 
-#define NETSNMP_VERS_DESC   "unknown"             /* overridden at run time */
-#define NETSNMP_SYS_NAME    "unknown"             /* overridden at run time */
+#define NETSNMP_VERS_DESC "unknown" /* overridden at run time */
+#define NETSNMP_SYS_NAME "unknown" /* overridden at run time */
 
 /* comment out the second define to turn off functionality for any of
    these: (See README for details) */
@@ -282,41 +267,38 @@
    value returned by a query to sysObjectID is
    EXTENSIBLEMIB.AGENTID.???, where ??? is defined below by OSTYPE */
 
-
 #define NETSNMP_LINUXID 10
-
 
 #define NETSNMP_OSTYPE NETSNMP_LINUXID
 
-
-#define NETSNMP_ENTERPRISE_MIB			1,3,6,1,4,1,8072
-#define NETSNMP_ENTERPRISE_DOT_MIB		1.3.6.1.4.1.8072
-#define NETSNMP_ENTERPRISE_DOT_MIB_LENGTH	7
+#define NETSNMP_ENTERPRISE_MIB 1, 3, 6, 1, 4, 1, 8072
+#define NETSNMP_ENTERPRISE_DOT_MIB 1.3.6.1.4.1.8072
+#define NETSNMP_ENTERPRISE_DOT_MIB_LENGTH 7
 
 /* The assigned enterprise number for sysObjectID. */
-#define NETSNMP_SYSTEM_MIB		1,3,6,1,4,1,8072,3,2,NETSNMP_OSTYPE
-#define NETSNMP_SYSTEM_DOT_MIB		1.3.6.1.4.1.8072.3.2.NETSNMP_OSTYPE
-#define NETSNMP_SYSTEM_DOT_MIB_LENGTH	10
+#define NETSNMP_SYSTEM_MIB 1, 3, 6, 1, 4, 1, 8072, 3, 2, NETSNMP_OSTYPE
+#define NETSNMP_SYSTEM_DOT_MIB 1.3.6.1.4.1.8072.3.2.NETSNMP_OSTYPE
+#define NETSNMP_SYSTEM_DOT_MIB_LENGTH 10
 
 /* The assigned enterprise number for notifications. */
-#define NETSNMP_NOTIFICATION_MIB		1,3,6,1,4,1,8072,4
-#define NETSNMP_NOTIFICATION_DOT_MIB		1.3.6.1.4.1.8072.4
-#define NETSNMP_NOTIFICATION_DOT_MIB_LENGTH	8
+#define NETSNMP_NOTIFICATION_MIB 1, 3, 6, 1, 4, 1, 8072, 4
+#define NETSNMP_NOTIFICATION_DOT_MIB 1.3.6.1.4.1.8072.4
+#define NETSNMP_NOTIFICATION_DOT_MIB_LENGTH 8
 
 /* this is the location of the ucdavis mib tree.  It shouldn't be
    changed, as the places it is used are expected to be constant
    values or are directly tied to the UCD-SNMP-MIB. */
-#define NETSNMP_UCDAVIS_OID		2021
-#define NETSNMP_UCDAVIS_MIB		1,3,6,1,4,1,2021
-#define NETSNMP_UCDAVIS_DOT_MIB		1.3.6.1.4.1.2021
-#define NETSNMP_UCDAVIS_DOT_MIB_LENGTH	7
+#define NETSNMP_UCDAVIS_OID 2021
+#define NETSNMP_UCDAVIS_MIB 1, 3, 6, 1, 4, 1, 2021
+#define NETSNMP_UCDAVIS_DOT_MIB 1.3.6.1.4.1.2021
+#define NETSNMP_UCDAVIS_DOT_MIB_LENGTH 7
 
 /* how long to wait (seconds) for error querys before reseting the error trap.*/
 #define NETSNMP_ERRORTIMELENGTH 600
 
 #define NETSNMP_EXCACHETIME 30
 #define NETSNMP_CACHEFILE ".priot-exec-cache"
-#define NETSNMP_MAXCACHESIZE (1500*80)   /* roughly 1500 lines max */
+#define NETSNMP_MAXCACHESIZE ( 1500 * 80 ) /* roughly 1500 lines max */
 
 /* misc defaults */
 
@@ -345,7 +327,7 @@
 /* #define NETSNMP_NO_ZEROLENGTH_COMMUNITY 1 */
 
 /* Number of community strings to store */
-#define NETSNMP_NUM_COMMUNITIES	5
+#define NETSNMP_NUM_COMMUNITIES 5
 
 /* internal define */
 #define NETSNMP_LASTFIELD -1
@@ -381,20 +363,17 @@
 /* this is the location of the net-snmp mib tree.  It shouldn't be
    changed, as the places it is used are expected to be constant
    values or are directly tied to the UCD-SNMP-MIB. */
-#define NETSNMP_OID		8072
-#define NETSNMP_MIB		1,3,6,1,4,1,8072
-#define NETSNMP_DOT_MIB		1.3.6.1.4.1.8072
-#define NETSNMP_DOT_MIB_LENGTH	7
-
+#define NETSNMP_OID 8072
+#define NETSNMP_MIB 1, 3, 6, 1, 4, 1, 8072
+#define NETSNMP_DOT_MIB 1.3.6.1.4.1.8072
+#define NETSNMP_DOT_MIB_LENGTH 7
 
 /* comment the next line if you are compiling with libsnmp.h
    and are not using the UC-Davis SNMP library. */
 #define UCD_SNMP_LIBRARY 1
 
+#define DONT_USE_NLIST 1 //NETSNMP_DONT_USE_NLIST
 
-#define DONT_USE_NLIST 1  //NETSNMP_DONT_USE_NLIST
-
-
-#define config_UNUSED(x) (void)(x)
+#define config_UNUSED( x ) ( void )( x )
 
 #endif // PRIO_CONFIG_H

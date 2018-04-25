@@ -1,0 +1,4 @@
+#ifndef HEADERGENERIC_H
+#define HEADERGENERIC_H
+
+#endif // HEADERGENERIC_H

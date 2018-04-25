@@ -1,31 +1,31 @@
 #include "Vars.h"
-#include "PriotSettings.h"
 #include "../Plugin/PluginModules.h"
-#include "VarStruct.h"
-#include "Logger.h"
-#include "AgentRegistry.h"
-#include "DefaultStore.h"
 #include "AgentReadConfig.h"
-#include "Debug.h"
-#include "DsAgent.h"
+#include "AgentRegistry.h"
+#include "Agentx/AgentxConfig.h"
+#include "Agentx/Subagent.h"
 #include "AllHelpers.h"
-#include "Trap.h"
+#include "Debug.h"
+#include "DefaultStore.h"
+#include "DsAgent.h"
+#include "Enum.h"
+#include "Logger.h"
+#include "PriotSettings.h"
+#include "Secmod.h"
 #include "SysORTable.h"
+#include "Transports/CallbackDomain.h"
 #include "Transports/UDPDomain.h"
 #include "Transports/UnixDomain.h"
-#include "Secmod.h"
-#include "Enum.h"
-#include "Utilities/Iquery.h"
-#include "MibII/VacmConf.h"
-#include "Agentx/Subagent.h"
-#include "Agentx/AgentxConfig.h"
-#include "V3/UsmConf.h"
-#include "Transports/CallbackDomain.h"
+#include "Trap.h"
+#include "VarStruct.h"
+#include "mibII/VacmConf.h"
+#include "utilities/Iquery.h"
+#include "v3/UsmConf.h"
 
-static char     _vars_doneInitAgent = 0;
+static char _vars_doneInitAgent = 0;
 
-ModuleInitList *vars_initlist = NULL;
-ModuleInitList *vars_noinitlist = NULL;
+ModuleInitList* vars_initlist = NULL;
+ModuleInitList* vars_noinitlist = NULL;
 
 /*
  * mib clients are passed a pointer to a oid buffer.  Some mib clients
@@ -40,7 +40,7 @@ ModuleInitList *vars_noinitlist = NULL;
  */
 #define MIB_CLIENTS_ARE_EVIL 1
 
-extern Subtree *vars_subtrees;
+extern Subtree* vars_subtrees;
 
 /*
  *      Each variable name is placed in the variable table, without the
@@ -65,25 +65,25 @@ extern Subtree *vars_subtrees;
  *     The writeVar function is returned to handle row addition or complex
  * writes that require boundary checking or executing an action.
  * This routine will be called three times for each varbind in the packet.
- * The first time for each varbind, action is set to RESERVE1.  The type
+ * The first time for each varbind, action is set to IMPL_RESERVE1.  The type
  * and value should be checked during this pass.  If any other variables
  * in the MIB depend on this variable, this variable will be stored away
  * (but *not* committed!) in a place where it can be found by a call to
  * writeVar for a dependent variable, even in the same PDU.  During
- * the second pass, action is set to RESERVE2.  If this variable is dependent
+ * the second pass, action is set to IMPL_RESERVE2.  If this variable is dependent
  * on any other variables, it will check them now.  It must check to see
  * if any non-committed values have been stored for variables in the same
  * PDU that it depends on.  Sometimes resources will need to be reserved
  * in the first two passes to guarantee that the operation can proceed
  * during the third pass.  During the third pass, if there were no errors
  * in the first two passes, writeVar is called for every varbind with action
- * set to COMMIT.  It is now that the values should be written.  If there
+ * set to IMPL_COMMIT.  It is now that the values should be written.  If there
  * were errors during the first two passes, writeVar is called in the third
- * pass once for each varbind, with the action set to FREE.  An opportunity
+ * pass once for each varbind, with the action set to IMPL_FREE.  An opportunity
  * is thus provided to free those resources reserved in the first two passes.
  *
  * writeVar(action, var_val, var_val_type, var_val_len, statP, name, name_len)
- * int      action;         IN - RESERVE1, RESERVE2, COMMIT, or FREE
+ * int      action;         IN - IMPL_RESERVE1, IMPL_RESERVE2, IMPL_COMMIT, or IMPL_FREE
  * u_char   *var_val;       IN - input or output buffer space
  * u_char   var_val_type;   IN - type of input buffer
  * int      var_val_len;    IN - input and output buffer len
@@ -92,33 +92,31 @@ extern Subtree *vars_subtrees;
  * int      name_len        IN - number of sub-ids in the name
  */
 
-long            vars_longReturn;
+long vars_longReturn;
 
-u_char          vars_returnBuf[258];
+u_char vars_returnBuf[ 258 ];
 
+int vars_callbackMasterNum = -1;
 
-int             vars_callbackMasterNum = -1;
-
-Types_Session *vars_callbackMasterSess = NULL;
+Types_Session* vars_callbackMasterSess = NULL;
 
 static void
-_Vars_initAgentCallbackTransport(void)
+_Vars_initAgentCallbackTransport( void )
 {
     /*
      * always register a callback transport for internal use
      */
-    vars_callbackMasterSess = CallbackDomain_open(0, Agent_handlePriotPacket,
-                                                 Agent_checkPacket,
-                                                 Agent_checkParse );
-    if (vars_callbackMasterSess)
+    vars_callbackMasterSess = CallbackDomain_open( 0, Agent_handlePriotPacket,
+        Agent_checkPacket,
+        Agent_checkParse );
+    if ( vars_callbackMasterSess )
         vars_callbackMasterNum = vars_callbackMasterSess->local_port;
 }
-
 
 /**
  * Initialize the agent.  Calls into init_agent_read_config to set tha app's
  * configuration file in the appropriate default storage space,
- *  NETSNMP_DS_LIB_APPTYPE.  Need to call Vars_initAgent before calling init_snmp.
+ *  DsStr_LIB_APPTYPE.  Need to call Vars_initAgent before calling init_snmp.
  *
  * @param app the configuration file to be read in, gets stored in default
  *        storage
@@ -127,31 +125,30 @@ _Vars_initAgentCallbackTransport(void)
  *
  * @see init_snmp
  */
-int
-Vars_initAgent(const char *app)
+int Vars_initAgent( const char* app )
 {
-    int             r = 0;
+    int r = 0;
 
-    if(++_vars_doneInitAgent > 1) {
-        Logger_log(LOGGER_PRIORITY_WARNING, "ignoring extra call to Vars_initAgent (%d)\n",
-                 _vars_doneInitAgent);
+    if ( ++_vars_doneInitAgent > 1 ) {
+        Logger_log( LOGGER_PRIORITY_WARNING, "ignoring extra call to Vars_initAgent (%d)\n",
+            _vars_doneInitAgent );
         return r;
     }
 
     /*
      * get current time (ie, the time the agent started)
      */
-    Agent_setAgentStarttime(NULL);
+    Agent_setAgentStarttime( NULL );
 
     /*
      * we handle alarm signals ourselves in the select loop
      */
-    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
-               DsBool_ALARM_DONT_USE_SIG, 1);
+    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+        DsBool_ALARM_DONT_USE_SIG, 1 );
 
     AgentRegistry_setupTree();
 
-    AgentReadConfig_initAgentReadConfig(app);
+    AgentReadConfig_initAgentReadConfig( app );
 
     _Vars_initAgentCallbackTransport();
 
@@ -164,8 +161,9 @@ Vars_initAgent(const char *app)
      * initialize agentx configs
      */
     AgentxConfig_init();
-    if(DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
-                              DsAgentBoolean_ROLE) == SUB_AGENT)
+    if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+             DsAgentBoolean_ROLE )
+        == SUB_AGENT )
         Subagent_init();
 
     /*
@@ -178,20 +176,21 @@ Vars_initAgent(const char *app)
     /*
      * don't init agent modules for a sub-agent
      */
-    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
-                   DsAgentBoolean_ROLE) == SUB_AGENT)
+    if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+             DsAgentBoolean_ROLE )
+        == SUB_AGENT )
         return r;
 
 #include "AgentModuleInits.h"
 
     return r;
-}                               /* end Vars_initAgent() */
+} /* end Vars_initAgent() */
 
-oid             vars_nullOid[] = { 0, 0 };
-int             vars_nullOidLen = sizeof(vars_nullOid);
+oid vars_nullOid[] = { 0, 0 };
+int vars_nullOidLen = sizeof( vars_nullOid );
 
-void
-Vars_shutdownAgent(void) {
+void Vars_shutdownAgent( void )
+{
 
     /* probably some of this can be called as shutdown callback */
     AgentRegistry_shutdownTree();
@@ -210,74 +209,71 @@ Vars_shutdownAgent(void) {
     _vars_doneInitAgent = 0;
 }
 
-
-void
-Vars_addToInitList(char *module_list)
+void Vars_addToInitList( char* module_list )
 {
     ModuleInitList *newitem, **list;
-    char           *cp;
-    char           *st;
+    char* cp;
+    char* st;
 
-    if (module_list == NULL) {
+    if ( module_list == NULL ) {
         return;
     } else {
-        cp = (char *) module_list;
+        cp = ( char* )module_list;
     }
 
-    if (*cp == '-' || *cp == '!') {
+    if ( *cp == '-' || *cp == '!' ) {
         cp++;
         list = &vars_noinitlist;
     } else {
         list = &vars_initlist;
     }
 
-    cp = strtok_r(cp, ", :", &st);
-    while (cp) {
-        newitem = (ModuleInitList *) calloc(1, sizeof(*vars_initlist));
-        newitem->module_name = strdup(cp);
+    cp = strtok_r( cp, ", :", &st );
+    while ( cp ) {
+        newitem = ( ModuleInitList* )calloc( 1, sizeof( *vars_initlist ) );
+        newitem->module_name = strdup( cp );
         newitem->next = *list;
         *list = newitem;
-        cp = strtok_r(NULL, ", :", &st);
+        cp = strtok_r( NULL, ", :", &st );
     }
 }
 
-int
-Vars_shouldInit(const char *module_name)
+int Vars_shouldInit( const char* module_name )
 {
-    ModuleInitList *listp;
+    ModuleInitList* listp;
 
     /*
      * a definitive list takes priority
      */
-    if (vars_initlist) {
+    if ( vars_initlist ) {
         listp = vars_initlist;
-        while (listp) {
-            if (strcmp(listp->module_name, module_name) == 0) {
-                DEBUG_MSGTL(("mib_init", "initializing: %s\n",
-                            module_name));
+        while ( listp ) {
+            if ( strcmp( listp->module_name, module_name ) == 0 ) {
+                DEBUG_MSGTL( ( "mib_init", "initializing: %s\n",
+                    module_name ) );
                 return DO_INITIALIZE;
             }
             listp = listp->next;
         }
-        DEBUG_MSGTL(("mib_init", "skipping:     %s\n", module_name));
+        DEBUG_MSGTL( ( "mib_init", "skipping:     %s\n", module_name ) );
         return DONT_INITIALIZE;
     }
 
     /*
      * initialize it only if not on the bad list (bad module, no bone)
      */
-    if (vars_noinitlist) {
+    if ( vars_noinitlist ) {
         listp = vars_noinitlist;
-        while (listp) {
-            if (strcmp(listp->module_name, module_name) == 0) {
-                DEBUG_MSGTL(("mib_init", "skipping:     %s\n",
-                            module_name));
+        while ( listp ) {
+            if ( strcmp( listp->module_name, module_name ) == 0 ) {
+                DEBUG_MSGTL( ( "mib_init", "skipping:     %s\n",
+                    module_name ) );
                 return DONT_INITIALIZE;
             }
             listp = listp->next;
         }
     }
-    DEBUG_MSGTL(("mib_init", "initializing: %s\n", module_name));
+    DEBUG_MSGTL( ( "mib_init", "initializing: %s\n", module_name ) );
 
     /*
      * initialize it

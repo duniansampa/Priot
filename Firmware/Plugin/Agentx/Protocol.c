@@ -1471,7 +1471,7 @@ Protocol_parse(Types_Session * session, Types_Pdu *pdu, u_char * data,
      *
      *  I'll come back to this once Wes is speaking to me again.
      */
-#define SNMPERR_INCOMPLETE_PACKET ErrorCode_ASN_PARSE_ERR
+#define ErrorCode_INCOMPLETE_PACKET ErrorCode_ASN_PARSE_ERR
 
 
     /*
@@ -1479,7 +1479,7 @@ Protocol_parse(Types_Session * session, Types_Pdu *pdu, u_char * data,
      */
     bufp = Protocol_parseHeader(pdu, bufp, length);
     if (bufp == NULL)
-        return SNMPERR_INCOMPLETE_PACKET;       /* i.e. wait for the rest */
+        return ErrorCode_INCOMPLETE_PACKET;       /* i.e. wait for the rest */
 
     /*
      * Control PDU handling

@@ -1305,7 +1305,7 @@ AgentRegistry_registerMibDetach(void)
  *  @param  var        Array of variables to be registered in the module.
  *
  *  @param  varsize    Size of a single variable in var array.
- *                     The size is normally equal to sizeof(struct variable),
+ *                     The size is normally equal to sizeof(struct Variable_s),
  *                     but if we wish to use shorter (or longer) OIDs, then we
  *                     could use different variant of the variable structure.
  *
@@ -1337,7 +1337,7 @@ AgentRegistry_registerMibDetach(void)
  *  @param timeout
  *  @param flags
  *
- *  @return gives SNMPERR_SUCCESS or SNMPERR_* error code.
+ *  @return gives ErrorCode_SUCCESS or ErrorCode_* error code.
  *
  *  @see AgentRegistry_registerMib()
  *  @see AgentRegistry_registerMibPriority()
@@ -1373,7 +1373,7 @@ AgentRegistry_registerMibContext(const char *moduleName,
  *  @param  var        Array of variables to be registered in the module.
  *
  *  @param  varsize    Size of a single variable in var array.
- *                     The size is normally equal to sizeof(struct variable),
+ *                     The size is normally equal to sizeof(struct Variable_s),
  *                     but if we wish to use shorter (or longer) OIDs, then we
  *                     could use different variant of the variable structure.
  *
@@ -1402,7 +1402,7 @@ AgentRegistry_registerMibContext(const char *moduleName,
  *
  *  @param ss
  *
- *  @return gives SNMPERR_SUCCESS or SNMPERR_* error code.
+ *  @return gives ErrorCode_SUCCESS or ErrorCode_* error code.
  *
  *  @see AgentRegistry_registerMib()
  *  @see AgentRegistry_registerMibPriority()
@@ -1435,7 +1435,7 @@ AgentRegistry_registerMibRange(const char *moduleName,
  *  @param  var        Array of variables to be registered in the module.
  *
  *  @param  varsize    Size of a single variable in var array.
- *                     The size is normally equal to sizeof(struct variable),
+ *                     The size is normally equal to sizeof(struct Variable_s),
  *                     but if we wish to use shorter (or longer) OIDs, then we
  *                     could use different variant of the variable structure.
  *
@@ -1453,7 +1453,7 @@ AgentRegistry_registerMibRange(const char *moduleName,
  *                     sessions register identical or overlapping regions.
  *                     Primarily used with AgentX subagent registrations.
  *
- *  @return gives SNMPERR_SUCCESS or SNMPERR_* error code.
+ *  @return gives ErrorCode_SUCCESS or ErrorCode_* error code.
  *
  *  @see AgentRegistry_registerMib()
  *  @see AgentRegistry_registerMibRange()
@@ -1482,7 +1482,7 @@ AgentRegistry_registerMibPriority(const char *moduleName,
  *  @param  var        Array of variables to be registered in the module.
  *
  *  @param  varsize    Size of a single variable in var array.
- *                     The size is normally equal to sizeof(struct variable),
+ *                     The size is normally equal to sizeof(struct Variable_s),
  *                     but if we wish to use shorter (or longer) OIDs, then we
  *                     could use different variant of the variable structure.
  *
@@ -1495,7 +1495,7 @@ AgentRegistry_registerMibPriority(const char *moduleName,
  *  @param  mibloclen  Length of the base OID.
  *                     Number of integers making up the base OID.
  *
- *  @return gives SNMPERR_SUCCESS or SNMPERR_* error code.
+ *  @return gives ErrorCode_SUCCESS or ErrorCode_* error code.
  *
  *  @see AgentRegistry_registerMibPriority()
  *  @see AgentRegistry_registerMibRange()
@@ -1588,7 +1588,7 @@ AgentRegistry_subtreeUnload(Subtree *sub, Subtree *prev, const char *context)
  * @param name  the specific OID to unregister if it conatins the associated
  *              context.
  *
- * @param len   the length of the OID, use  OID_LENGTH macro.
+ * @param len   the length of the OID, use  ASN01_OID_LENGTH macro.
  *
  * @param priority  a value between 1 and 255, used to achieve a desired
  *                  configuration when different sessions register identical or
@@ -1798,7 +1798,7 @@ AgentRegistry_unregisterMibTableRow(oid * name, size_t len, int priority,
  * @param name  the specific OID to unregister if it conatins the associated
  *              context.
  *
- * @param len   the length of the OID, use  OID_LENGTH macro.
+ * @param len   the length of the OID, use  ASN01_OID_LENGTH macro.
  *
  * @param priority  a value between 1 and 255, used to achieve a desired
  *                  configuration when different sessions register identical or
@@ -1834,7 +1834,7 @@ AgentRegistry_unregisterMibRange(oid * name, size_t len, int priority,
  * @param name  the specific OID to unregister if it conatins the associated
  *              context.
  *
- * @param len   the length of the OID, use  OID_LENGTH macro.
+ * @param len   the length of the OID, use  ASN01_OID_LENGTH macro.
  *
  * @param priority  a value between 1 and 255, used to achieve a desired
  *                  configuration when different sessions register identical or
@@ -1860,7 +1860,7 @@ AgentRegistry_unregisterMibPriority(oid * name, size_t len, int priority)
  * @param name  the specific OID to unregister if it conatins the associated
  *              context.
  *
- * @param len   the length of the OID, use  OID_LENGTH macro.
+ * @param len   the length of the OID, use  ASN01_OID_LENGTH macro.
  *
  * @return gives MIB_UNREGISTERED_OK or MIB_* error code.
  *

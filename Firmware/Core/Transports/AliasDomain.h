@@ -6,7 +6,7 @@
 
 /*
  * Simple aliases for complex transport strings that can be specified
- * via the snmp.conf file and the 'alias' token.
+ * via the priot.conf file and the 'alias' token.
  */
 
 //#define TRANSPORT_DOMAIN_ALIAS_IP		1,3,6,1,2,1,100,1,5

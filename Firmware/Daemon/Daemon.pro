@@ -10,13 +10,13 @@ QMAKE_CFLAGS += -Werror=implicit-function-declaration
 
 
 SOURCES += \
-    ../Plugin/UtilFuncs/Restart.c \
+    ../Plugin/utilities/Restart.c \
     Daemon.c
 
 
 HEADERS += \
     M2M.h \
-    ../Plugin/UtilFuncs/Restart.h \
+    ../Plugin/utilities/Restart.h \
     Daemon.h
 
 unix:!macx: LIBS += -L$$OUT_PWD/../Core/ -lcore

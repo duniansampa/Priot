@@ -390,7 +390,7 @@ int Md5_sign(const u_char * data, size_t len, u_char * mac, size_t maclen,
     if (secretlen != 16 || secret == NULL || mac == NULL || data == NULL ||
         len <= 0 || maclen <= 0) {
         /*
-         * DEBUGMSGTL(("md5","MD5 signing not properly initialized"));
+         * DEBUG_MSGTL(("md5","MD5 signing not properly initialized"));
          */
         return -1;
     }

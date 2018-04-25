@@ -1,10 +1,10 @@
 #include "TableContainer.h"
-#include "Logger.h"
-#include "Api.h"
 #include "AgentRegistry.h"
+#include "Api.h"
 #include "Assert.h"
-#include "Mib.h"
 #include "Enum.h"
+#include "Logger.h"
+#include "Mib.h"
 
 /*
  * snmp.h:#define SNMP_MSG_INTERNAL_SET_BEGIN        -1
@@ -24,18 +24,18 @@ typedef struct ContainerTableData_s {
     /** Number of handlers whose myvoid pointer points to this structure. */
     int refcnt;
 
-   /** registration info for the table */
-    TableRegistrationInfo *tblreg_info;
+    /** registration info for the table */
+    TableRegistrationInfo* tblreg_info;
 
-   /** container for the table rows */
-    Container_Container          *table;
+    /** container for the table rows */
+    Container_Container* table;
 
     /*
      * mutex_type                lock;
      */
 
-   /* what type of key do we want? */
-   char            key_type;
+    /* what type of key do we want? */
+    char key_type;
 
 } ContainerTableData;
 
@@ -85,7 +85,7 @@ typedef struct ContainerTableData_s {
  *
  *  This handler will only register to process 'data lookup' modes. In
  *  traditional net-snmp modes, that is any GET-like mode (GET, GET-NEXT,
- *  GET-BULK) or the first phase of a SET (RESERVE1). In the new baby-steps
+ *  GET-BULK) or the first phase of a SET (IMPL_RESERVE1). In the new baby-steps
  *  mode, DATA_LOOKUP is it's own mode, and is a pre-cursor to other modes.
  *
  *  When called, the handler will call the appropriate container method
@@ -114,7 +114,7 @@ typedef struct ContainerTableData_s {
  *
  *  If a row is found, it will be inserted into
  *  the request's data list. The sub-handler may retrieve it by calling
- *      netsnmp_container_table_extract_context(request); *
+ *      tableContainer_tableExtractContext(request); *
  *  NOTE NOTE NOTE:
  *
  *  This helper and it's API are still being tested and are subject to change.
@@ -123,15 +123,15 @@ typedef struct ContainerTableData_s {
  */
 
 static int
-_TableContainer_handler(MibHandler *handler,
-                         HandlerRegistration *reginfo,
-                         AgentRequestInfo *agtreq_info,
-                         RequestInfo *requests);
+_TableContainer_handler( MibHandler* handler,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* agtreq_info,
+    RequestInfo* requests );
 
-static void *
-_TableContainer_findNextRow(Container_Container *c,
-               TableRequestInfo *tblreq,
-               void * key);
+static void*
+_TableContainer_findNextRow( Container_Container* c,
+    TableRequestInfo* tblreq,
+    void* key );
 
 /**********************************************************************
  **********************************************************************
@@ -149,89 +149,85 @@ _TableContainer_findNextRow(Container_Container *c,
  *
  * ================================== */
 
-ContainerTableData *
-TableContainer_createTable( const char *name,
-                                 Container_Container *container, long flags )
+ContainerTableData*
+TableContainer_createTable( const char* name,
+    Container_Container* container, long flags )
 {
-    ContainerTableData *table;
+    ContainerTableData* table;
 
-    table = TOOLS_MALLOC_TYPEDEF(ContainerTableData);
-    if (!table)
+    table = TOOLS_MALLOC_TYPEDEF( ContainerTableData );
+    if ( !table )
         return NULL;
-    if (container)
+    if ( container )
         table->table = container;
     else {
-        table->table = Container_find("tableContainer");
-        if (!table->table) {
-            TOOLS_FREE(table);
+        table->table = Container_find( "tableContainer" );
+        if ( !table->table ) {
+            TOOLS_FREE( table );
             return NULL;
         }
     }
 
-    if (flags)
-        table->key_type = (char)(flags & 0x03);  /* Use lowest two bits */
+    if ( flags )
+        table->key_type = ( char )( flags & 0x03 ); /* Use lowest two bits */
     else
         table->key_type = TABLE_CONTAINER_KEY_NETSNMP_INDEX;
 
-    if (!table->table->compare)
-         table->table->compare  = Container_compareIndex;
-    if (!table->table->nCompare)
-         table->table->nCompare = Container_nCompareIndex;
+    if ( !table->table->compare )
+        table->table->compare = Container_compareIndex;
+    if ( !table->table->nCompare )
+        table->table->nCompare = Container_nCompareIndex;
 
     return table;
 }
 
-void
-TableContainer_deleteTable( ContainerTableData *table )
+void TableContainer_deleteTable( ContainerTableData* table )
 {
-    if (!table)
-       return;
+    if ( !table )
+        return;
 
-    if (table->table)
-       CONTAINER_FREE(table->table);
+    if ( table->table )
+        CONTAINER_FREE( table->table );
 
-    TOOLS_FREE(table);
+    TOOLS_FREE( table );
     return;
 }
 
-    /*
+/*
      * The various standalone row operation routines
      *    (create/clone/copy/delete)
      * will be specific to a particular table,
      *    so can't be implemented here.
      */
 
-int
-TableContainer_addRow( ContainerTableData *table, Types_Index *row )
+int TableContainer_addRow( ContainerTableData* table, Types_Index* row )
 {
-    if (!table || !table->table || !row)
+    if ( !table || !table->table || !row )
         return -1;
     CONTAINER_INSERT( table->table, row );
     return 0;
 }
 
-Types_Index *
-TableContainer_removeRow( ContainerTableData *table, Types_Index *row )
+Types_Index*
+TableContainer_removeRow( ContainerTableData* table, Types_Index* row )
 {
-    if (!table || !table->table || !row)
+    if ( !table || !table->table || !row )
         return NULL;
     CONTAINER_REMOVE( table->table, row );
     return NULL;
 }
 
-int
-TableContainer_replaceRow( ContainerTableData *table,
-                                Types_Index *old_row, Types_Index *new_row )
+int TableContainer_replaceRow( ContainerTableData* table,
+    Types_Index* old_row, Types_Index* new_row )
 {
-    if (!table || !table->table || !old_row || !new_row)
+    if ( !table || !table->table || !old_row || !new_row )
         return -1;
     TableContainer_removeRow( table, old_row );
-    TableContainer_addRow(    table, new_row );
+    TableContainer_addRow( table, new_row );
     return 0;
 }
 
-    /* netsnmp_tcontainer_remove_delete_row() will be table-specific too */
-
+/* netsnmp_tcontainer_remove_delete_row() will be table-specific too */
 
 /* ==================================
  *
@@ -239,102 +235,102 @@ TableContainer_replaceRow( ContainerTableData *table,
  *
  * ================================== */
 
-static ContainerTableData *
-_TableContainer_dataClone(ContainerTableData *tad)
+static ContainerTableData*
+_TableContainer_dataClone( ContainerTableData* tad )
 {
     ++tad->refcnt;
     return tad;
 }
 
 static void
-_TableContainer_dataFree(ContainerTableData *tad)
+_TableContainer_dataFree( ContainerTableData* tad )
 {
-    if (--tad->refcnt == 0)
-    free(tad);
+    if ( --tad->refcnt == 0 )
+        free( tad );
 }
 
 /** returns a MibHandler object for the table_container helper */
-MibHandler *
-TableContainer_handlerGet(TableRegistrationInfo *tabreg,
-                                    Container_Container *container, char key_type)
+MibHandler*
+TableContainer_handlerGet( TableRegistrationInfo* tabreg,
+    Container_Container* container, char key_type )
 {
-    ContainerTableData *tad;
-    MibHandler *handler;
+    ContainerTableData* tad;
+    MibHandler* handler;
 
-    if (NULL == tabreg) {
-        Logger_log(LOGGER_PRIORITY_ERR, "bad param in TableContainer_register\n");
+    if ( NULL == tabreg ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "bad param in TableContainer_register\n" );
         return NULL;
     }
 
-    tad = TOOLS_MALLOC_TYPEDEF(ContainerTableData);
-    handler = AgentHandler_createHandler("tableContainer",
-                                     _TableContainer_handler);
-    if((NULL == tad) || (NULL == handler)) {
-        if(tad) free(tad); /* TOOLS_FREE wasted on locals */
-        if(handler) free(handler); /* TOOLS_FREE wasted on locals */
-        Logger_log(LOGGER_PRIORITY_ERR,
-                 "malloc failure in TableContainer_register\n");
+    tad = TOOLS_MALLOC_TYPEDEF( ContainerTableData );
+    handler = AgentHandler_createHandler( "tableContainer",
+        _TableContainer_handler );
+    if ( ( NULL == tad ) || ( NULL == handler ) ) {
+        if ( tad )
+            free( tad ); /* TOOLS_FREE wasted on locals */
+        if ( handler )
+            free( handler ); /* TOOLS_FREE wasted on locals */
+        Logger_log( LOGGER_PRIORITY_ERR,
+            "malloc failure in TableContainer_register\n" );
         return NULL;
     }
 
     tad->refcnt = 1;
-    tad->tblreg_info = tabreg;  /* we need it too, but it really is not ours */
-    if(key_type)
+    tad->tblreg_info = tabreg; /* we need it too, but it really is not ours */
+    if ( key_type )
         tad->key_type = key_type;
     else
         tad->key_type = TABLE_CONTAINER_KEY_NETSNMP_INDEX;
 
-    if(NULL == container)
-        container = Container_find("tableContainer");
+    if ( NULL == container )
+        container = Container_find( "tableContainer" );
     tad->table = container;
 
-    if (NULL==container->compare)
+    if ( NULL == container->compare )
         container->compare = Container_compareIndex;
-    if (NULL==container->nCompare)
+    if ( NULL == container->nCompare )
         container->nCompare = Container_nCompareIndex;
 
-    handler->myvoid = (void*)tad;
-    handler->data_clone = (void *(*)(void *))_TableContainer_dataClone;
-    handler->data_free = (void (*)(void *))_TableContainer_dataFree;
+    handler->myvoid = ( void* )tad;
+    handler->data_clone = ( void* ( * )( void* ))_TableContainer_dataClone;
+    handler->data_free = ( void ( * )( void* ) )_TableContainer_dataFree;
     handler->flags |= MIB_HANDLER_AUTO_NEXT;
 
     return handler;
 }
 
-int
-TableContainer_register(HandlerRegistration *reginfo,
-                                 TableRegistrationInfo *tabreg,
-                                 Container_Container *container, char key_type )
+int TableContainer_register( HandlerRegistration* reginfo,
+    TableRegistrationInfo* tabreg,
+    Container_Container* container, char key_type )
 {
-    MibHandler *handler;
+    MibHandler* handler;
 
-    if ((NULL == reginfo) || (NULL == reginfo->handler) || (NULL == tabreg)) {
-        Logger_log(LOGGER_PRIORITY_ERR, "bad param in TableContainer_register\n");
+    if ( ( NULL == reginfo ) || ( NULL == reginfo->handler ) || ( NULL == tabreg ) ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "bad param in TableContainer_register\n" );
         return ErrorCode_GENERR;
     }
 
-    if (NULL==container)
-        container = Container_find(reginfo->handlerName);
+    if ( NULL == container )
+        container = Container_find( reginfo->handlerName );
 
-    handler = TableContainer_handlerGet(tabreg, container, key_type);
-    AgentHandler_injectHandler(reginfo, handler );
+    handler = TableContainer_handlerGet( tabreg, container, key_type );
+    AgentHandler_injectHandler( reginfo, handler );
 
-    return Table_registerTable(reginfo, tabreg);
+    return Table_registerTable( reginfo, tabreg );
 }
 
-int
-TableContainer_unregister(HandlerRegistration *reginfo)
+int TableContainer_unregister( HandlerRegistration* reginfo )
 {
-    ContainerTableData *tad;
+    ContainerTableData* tad;
 
-    if (!reginfo)
+    if ( !reginfo )
         return MIB_UNREGISTRATION_FAILED;
-    tad = (ContainerTableData *)
-        AgentHandler_findHandlerDataByName(reginfo, "tableContainer");
-    if (tad) {
+    tad = ( ContainerTableData* )
+        AgentHandler_findHandlerDataByName( reginfo, "tableContainer" );
+    if ( tad ) {
         CONTAINER_FREE( tad->table );
         tad->table = NULL;
-    /*
+        /*
      * Note: don't free the memory tad points at here - that is done
      * by TableContainer_dataFree().
      */
@@ -344,28 +340,26 @@ TableContainer_unregister(HandlerRegistration *reginfo)
 
 /** retrieve the container used by the table_container helper */
 Container_Container*
-TableContainer_containerExtract(RequestInfo *request)
+TableContainer_containerExtract( RequestInfo* request )
 {
-    return (Container_Container *)
-         AgentHandler_requestGetListData(request, TABLE_CONTAINER_CONTAINER);
+    return ( Container_Container* )
+        AgentHandler_requestGetListData( request, TABLE_CONTAINER_CONTAINER );
 }
 
-
 /** inserts a newly created table_container entry into a request list */
-void
-TableContainer_rowInsert(RequestInfo *request,
-                                   Types_Index        *row)
+void TableContainer_rowInsert( RequestInfo* request,
+    Types_Index* row )
 {
-    RequestInfo       *req;
-    TableRequestInfo *table_info = NULL;
-    Types_VariableList      *this_index = NULL;
-    Types_VariableList      *that_index = NULL;
-    oid      base_oid[] = {0, 0};	/* Make sure index OIDs are legal! */
-    oid      this_oid[ASN01_MAX_OID_LEN];
-    oid      that_oid[ASN01_MAX_OID_LEN];
-    size_t   this_oid_len, that_oid_len;
+    RequestInfo* req;
+    TableRequestInfo* table_info = NULL;
+    Types_VariableList* this_index = NULL;
+    Types_VariableList* that_index = NULL;
+    oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
+    oid this_oid[ ASN01_MAX_OID_LEN ];
+    oid that_oid[ ASN01_MAX_OID_LEN ];
+    size_t this_oid_len, that_oid_len;
 
-    if (!request)
+    if ( !request )
         return;
 
     /*
@@ -376,10 +370,10 @@ TableContainer_rowInsert(RequestInfo *request,
      * So construct an OID based on these index values.
      */
 
-    table_info = Table_extractTableInfo(request);
+    table_info = Table_extractTableInfo( request );
     this_index = table_info->indexes;
-    Mib_buildOidNoalloc(this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
-                      base_oid, 2, this_index);
+    Mib_buildOidNoalloc( this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
+        base_oid, 2, this_index );
 
     /*
      * We need to look through the whole of the request list
@@ -391,71 +385,69 @@ TableContainer_rowInsert(RequestInfo *request,
      *
      * So first, we rewind to the head of the list....
      */
-    for (req=request; req->prev; req=req->prev)
+    for ( req = request; req->prev; req = req->prev )
         ;
 
     /*
      * ... and then start looking for matching indexes
      * (by constructing OIDs from these index values)
      */
-    for (; req; req=req->next) {
-        if (req->processed)
+    for ( ; req; req = req->next ) {
+        if ( req->processed )
             continue;
 
-        table_info = Table_extractTableInfo(req);
+        table_info = Table_extractTableInfo( req );
         that_index = table_info->indexes;
-        Mib_buildOidNoalloc(that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
-                          base_oid, 2, that_index);
+        Mib_buildOidNoalloc( that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
+            base_oid, 2, that_index );
 
         /*
          * This request has the same index values,
          * so add the newly-created row information.
          */
-        if (Api_oidCompare(this_oid, this_oid_len,
-                             that_oid, that_oid_len) == 0) {
-            AgentHandler_requestAddListData(req,
-                DataList_create(TABLE_CONTAINER_ROW, row, NULL));
+        if ( Api_oidCompare( this_oid, this_oid_len,
+                 that_oid, that_oid_len )
+            == 0 ) {
+            AgentHandler_requestAddListData( req,
+                DataList_create( TABLE_CONTAINER_ROW, row, NULL ) );
         }
     }
 }
 
 /** find the context data used by the table_container helper */
 
-void *
-TableContainer_rowExtract(RequestInfo *request)
+void* TableContainer_rowExtract( RequestInfo* request )
 {
     /*
      * NOTE: this function must match in table_container.c and table_container.h.
      *       if you change one, change them both!
      */
-    return AgentHandler_requestGetListData(request, TABLE_CONTAINER_ROW);
+    return AgentHandler_requestGetListData( request, TABLE_CONTAINER_ROW );
 }
 
-void *
-TableContainer_extractContext(RequestInfo *request)
+void* TableContainer_extractContext( RequestInfo* request )
 {
     /*
      * NOTE: this function must match in table_container.c and table_container.h.
      *       if you change one, change them both!
      */
-    return AgentHandler_requestGetListData(request, TABLE_CONTAINER_ROW);
+    return AgentHandler_requestGetListData( request, TABLE_CONTAINER_ROW );
 }
 
 /** removes a table_container entry from a request list */
-void
-TableContainer_rowRemove(RequestInfo *request,
-                                   Types_Index        *row)
+void TableContainer_rowRemove( RequestInfo* request,
+    Types_Index* row )
 {
-    RequestInfo       *req;
-    TableRequestInfo *table_info = NULL;
-    Types_VariableList      *this_index = NULL;
-    Types_VariableList      *that_index = NULL;
-    oid      base_oid[] = {0, 0};	/* Make sure index OIDs are legal! */
-    oid      this_oid[ASN01_MAX_OID_LEN];
-    oid      that_oid[ASN01_MAX_OID_LEN];
-    size_t   this_oid_len, that_oid_len;
+    RequestInfo* req;
+    TableRequestInfo* table_info = NULL;
+    Types_VariableList* this_index = NULL;
+    Types_VariableList* that_index = NULL;
+    oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
+    oid this_oid[ ASN01_MAX_OID_LEN ];
+    oid that_oid[ ASN01_MAX_OID_LEN ];
+    size_t this_oid_len, that_oid_len;
 
-    if (!request)
+    if ( !request )
         return;
 
     /*
@@ -466,10 +458,10 @@ TableContainer_rowRemove(RequestInfo *request,
      * So construct an OID based on these index values.
      */
 
-    table_info = Table_extractTableInfo(request);
+    table_info = Table_extractTableInfo( request );
     this_index = table_info->indexes;
-    Mib_buildOidNoalloc(this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
-                      base_oid, 2, this_index);
+    Mib_buildOidNoalloc( this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
+        base_oid, 2, this_index );
 
     /*
      * We need to look through the whole of the request list
@@ -481,29 +473,30 @@ TableContainer_rowRemove(RequestInfo *request,
      *
      * So first, we rewind to the head of the list....
      */
-    for (req=request; req->prev; req=req->prev)
+    for ( req = request; req->prev; req = req->prev )
         ;
 
     /*
      * ... and then start looking for matching indexes
      * (by constructing OIDs from these index values)
      */
-    for (; req; req=req->next) {
-        if (req->processed)
+    for ( ; req; req = req->next ) {
+        if ( req->processed )
             continue;
 
-        table_info = Table_extractTableInfo(req);
+        table_info = Table_extractTableInfo( req );
         that_index = table_info->indexes;
-        Mib_buildOidNoalloc(that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
-                          base_oid, 2, that_index);
+        Mib_buildOidNoalloc( that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
+            base_oid, 2, that_index );
 
         /*
          * This request has the same index values,
          * so add the newly-created row information.
          */
-        if (Api_oidCompare(this_oid, this_oid_len,
-                             that_oid, that_oid_len) == 0) {
-            AgentHandler_requestRemoveListData(req, TABLE_CONTAINER_ROW);
+        if ( Api_oidCompare( this_oid, this_oid_len,
+                 that_oid, that_oid_len )
+            == 0 ) {
+            AgentHandler_requestRemoveListData( req, TABLE_CONTAINER_ROW );
         }
     }
 }
@@ -519,104 +512,98 @@ TableContainer_rowRemove(RequestInfo *request,
  **********************************************************************
  **********************************************************************/
 static inline void
-_TableContainer_setKey( ContainerTableData * tad, RequestInfo *request,
-          TableRequestInfo *tblreq_info,
-          void **key, Types_Index *index )
+_TableContainer_setKey( ContainerTableData* tad, RequestInfo* request,
+    TableRequestInfo* tblreq_info,
+    void** key, Types_Index* index )
 {
-    if (TABLE_CONTAINER_KEY_NETSNMP_INDEX == tad->key_type) {
+    if ( TABLE_CONTAINER_KEY_NETSNMP_INDEX == tad->key_type ) {
         index->oids = tblreq_info->index_oid;
         index->len = tblreq_info->index_oid_len;
         *key = index;
-    }
-    else if (TABLE_CONTAINER_KEY_VARBIND_INDEX == tad->key_type) {
+    } else if ( TABLE_CONTAINER_KEY_VARBIND_INDEX == tad->key_type ) {
         *key = tblreq_info->indexes;
-    }
-    else
+    } else
         *key = NULL;
 }
 
-
 static inline void
-_TableContainer_dataLookup(HandlerRegistration *reginfo,
-            AgentRequestInfo *agtreq_info,
-            RequestInfo *request, ContainerTableData * tad)
+_TableContainer_dataLookup( HandlerRegistration* reginfo,
+    AgentRequestInfo* agtreq_info,
+    RequestInfo* request, ContainerTableData* tad )
 {
-    Types_Index *row = NULL;
-    TableRequestInfo *tblreq_info;
-    Types_VariableList *var;
+    Types_Index* row = NULL;
+    TableRequestInfo* tblreq_info;
+    Types_VariableList* var;
     Types_Index index;
-    void *key;
+    void* key;
 
     var = request->requestvb;
 
-    DEBUG_IF("tableContainer") {
-        DEBUG_MSGTL(("tableContainer", "  data_lookup oid:"));
-        DEBUG_MSGOID(("tableContainer", var->name, var->nameLength));
-        DEBUG_MSG(("tableContainer", "\n"));
+    DEBUG_IF( "tableContainer" )
+    {
+        DEBUG_MSGTL( ( "tableContainer", "  data_lookup oid:" ) );
+        DEBUG_MSGOID( ( "tableContainer", var->name, var->nameLength ) );
+        DEBUG_MSG( ( "tableContainer", "\n" ) );
     }
 
     /*
      * Get pointer to the table information for this request. This
      * information was saved by table_helper_handler.
      */
-    tblreq_info = Table_extractTableInfo(request);
+    tblreq_info = Table_extractTableInfo( request );
     /** the table_helper_handler should enforce column boundaries. */
-    Assert_assert((NULL != tblreq_info) &&
-                   (tblreq_info->colnum <= tad->tblreg_info->max_column));
+    Assert_assert( ( NULL != tblreq_info ) && ( tblreq_info->colnum <= tad->tblreg_info->max_column ) );
 
-    if ((agtreq_info->mode == MODE_GETNEXT) ||
-        (agtreq_info->mode == MODE_GETBULK)) {
+    if ( ( agtreq_info->mode == MODE_GETNEXT ) || ( agtreq_info->mode == MODE_GETBULK ) ) {
         /*
          * find the row. This will automatically move to the next
          * column, if necessary.
          */
         _TableContainer_setKey( tad, request, tblreq_info, &key, &index );
-        row = (Types_Index*)_TableContainer_findNextRow(tad->table, tblreq_info, key);
-        if (row) {
+        row = ( Types_Index* )_TableContainer_findNextRow( tad->table, tblreq_info, key );
+        if ( row ) {
             /*
              * update indexes in tblreq_info (index & varbind),
              * then update request varbind oid
              */
-            if(TABLE_CONTAINER_KEY_NETSNMP_INDEX == tad->key_type) {
+            if ( TABLE_CONTAINER_KEY_NETSNMP_INDEX == tad->key_type ) {
                 tblreq_info->index_oid_len = row->len;
-                memcpy(tblreq_info->index_oid, row->oids,
-                       row->len * sizeof(oid));
-                Table_updateVariableListFromIndex(tblreq_info);
-            }
-            else if (TABLE_CONTAINER_KEY_VARBIND_INDEX == tad->key_type) {
+                memcpy( tblreq_info->index_oid, row->oids,
+                    row->len * sizeof( oid ) );
+                Table_updateVariableListFromIndex( tblreq_info );
+            } else if ( TABLE_CONTAINER_KEY_VARBIND_INDEX == tad->key_type ) {
                 /** xxx-rks: shouldn't tblreq_info->indexes be updated
                     before we call this?? */
-                Table_updateIndexesFromVariableList(tblreq_info);
+                Table_updateIndexesFromVariableList( tblreq_info );
             }
 
-            if (TABLE_CONTAINER_KEY_VARBIND_RAW != tad->key_type) {
-                Table_buildOidFromIndex(reginfo, request,
-                                                   tblreq_info);
+            if ( TABLE_CONTAINER_KEY_VARBIND_RAW != tad->key_type ) {
+                Table_buildOidFromIndex( reginfo, request,
+                    tblreq_info );
             }
-        }
-        else {
+        } else {
             /*
              * no results found. Flag the request so lower handlers will
              * ignore it, but it is not an error - getnext will move
              * on to another handler to process this request.
              */
-            Agent_setRequestError(agtreq_info, request, PRIOT_ENDOFMIBVIEW);
-            DEBUG_MSGTL(("tableContainer", "no row found\n"));
+            Agent_setRequestError( agtreq_info, request, PRIOT_ENDOFMIBVIEW );
+            DEBUG_MSGTL( ( "tableContainer", "no row found\n" ) );
         }
     } /** GETNEXT/GETBULK */
     else {
 
         _TableContainer_setKey( tad, request, tblreq_info, &key, &index );
-        row = (Types_Index*)CONTAINER_FIND(tad->table, key);
-        if (NULL == row) {
+        row = ( Types_Index* )CONTAINER_FIND( tad->table, key );
+        if ( NULL == row ) {
             /*
              * not results found. For a get, that is an error
              */
-            DEBUG_MSGTL(("tableContainer", "no row found\n"));
-            if((agtreq_info->mode != MODE_SET_RESERVE1) || /* get */
-               (reginfo->modes & HANDLER_CAN_NOT_CREATE)) { /* no create */
-                Agent_setRequestError(agtreq_info, request,
-                                          PRIOT_NOSUCHINSTANCE);
+            DEBUG_MSGTL( ( "tableContainer", "no row found\n" ) );
+            if ( ( agtreq_info->mode != MODE_SET_RESERVE1 ) || /* get */
+                ( reginfo->modes & HANDLER_CAN_NOT_CREATE ) ) { /* no create */
+                Agent_setRequestError( agtreq_info, request,
+                    PRIOT_NOSUCHINSTANCE );
             }
         }
     } /** GET/SET */
@@ -624,16 +611,14 @@ _TableContainer_dataLookup(HandlerRegistration *reginfo,
     /*
      * save the data and table in the request.
      */
-    if (PRIOT_ENDOFMIBVIEW != request->requestvb->type) {
-        if (NULL != row)
-            AgentHandler_requestAddListData(request,
-                                          DataList_create
-                                          (TABLE_CONTAINER_ROW,
-                                           row, NULL));
-        AgentHandler_requestAddListData(request,
-                                      DataList_create
-                                      (TABLE_CONTAINER_CONTAINER,
-                                       tad->table, NULL));
+    if ( PRIOT_ENDOFMIBVIEW != request->requestvb->type ) {
+        if ( NULL != row )
+            AgentHandler_requestAddListData( request,
+                DataList_create( TABLE_CONTAINER_ROW,
+                                                 row, NULL ) );
+        AgentHandler_requestAddListData( request,
+            DataList_create( TABLE_CONTAINER_CONTAINER,
+                                             tad->table, NULL ) );
     }
 }
 
@@ -647,21 +632,21 @@ _TableContainer_dataLookup(HandlerRegistration *reginfo,
  **********************************************************************
  **********************************************************************/
 static int
-_TableContainer_handler(MibHandler *handler,
-                         HandlerRegistration *reginfo,
-                         AgentRequestInfo *agtreq_info,
-                         RequestInfo *requests)
+_TableContainer_handler( MibHandler* handler,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* agtreq_info,
+    RequestInfo* requests )
 {
-    int             rc = PRIOT_ERR_NOERROR;
-    int             oldmode, need_processing = 0;
-    ContainerTableData *tad;
+    int rc = PRIOT_ERR_NOERROR;
+    int oldmode, need_processing = 0;
+    ContainerTableData* tad;
 
     /** sanity checks */
-    Assert_assert((NULL != handler) && (NULL != handler->myvoid));
-    Assert_assert((NULL != reginfo) && (NULL != agtreq_info));
+    Assert_assert( ( NULL != handler ) && ( NULL != handler->myvoid ) );
+    Assert_assert( ( NULL != reginfo ) && ( NULL != agtreq_info ) );
 
-    DEBUG_MSGTL(("tableContainer", "Mode %s, Got request:\n",
-                Enum_seFindLabelInSlist("agentMode",agtreq_info->mode)));
+    DEBUG_MSGTL( ( "tableContainer", "Mode %s, Got request:\n",
+        Enum_seFindLabelInSlist( "agentMode", agtreq_info->mode ) ) );
 
     /*
      * First off, get our pointer from the handler. This
@@ -669,7 +654,7 @@ _TableContainer_handler(MibHandler *handler,
      * saved in get_table_container_handler(), as well as the
      * container where the actual table data is stored.
      */
-    tad = (ContainerTableData *)handler->myvoid;
+    tad = ( ContainerTableData* )handler->myvoid;
 
     /*
      * only do data lookup for first pass
@@ -679,29 +664,28 @@ _TableContainer_handler(MibHandler *handler,
      * registration.
      */
     oldmode = agtreq_info->mode;
-    if(MODE_IS_GET(oldmode)
-       || (MODE_SET_RESERVE1 == oldmode)
-        ) {
-        RequestInfo *curr_request;
+    if ( MODE_IS_GET( oldmode )
+        || ( MODE_SET_RESERVE1 == oldmode ) ) {
+        RequestInfo* curr_request;
         /*
          * Loop through each of the requests, and
          * try to find the appropriate row from the container.
          */
-        for (curr_request = requests; curr_request; curr_request = curr_request->next) {
+        for ( curr_request = requests; curr_request; curr_request = curr_request->next ) {
             /*
              * skip anything that doesn't need processing.
              */
-            if (curr_request->processed != 0) {
-                DEBUG_MSGTL(("tableContainer", "already processed\n"));
+            if ( curr_request->processed != 0 ) {
+                DEBUG_MSGTL( ( "tableContainer", "already processed\n" ) );
                 continue;
             }
 
             /*
              * find data for this request
              */
-            _TableContainer_dataLookup(reginfo, agtreq_info, curr_request, tad);
+            _TableContainer_dataLookup( reginfo, agtreq_info, curr_request, tad );
 
-            if(curr_request->processed)
+            if ( curr_request->processed )
                 continue;
 
             ++need_processing;
@@ -712,7 +696,7 @@ _TableContainer_handler(MibHandler *handler,
      * send GET instead of GETNEXT to sub-handlers
      * xxx-rks: again, this should be handled further up.
      */
-    if ((oldmode == MODE_GETNEXT) && (handler->next)) {
+    if ( ( oldmode == MODE_GETNEXT ) && ( handler->next ) ) {
         /*
          * tell agent handlder not to auto call next handler
          */
@@ -722,13 +706,13 @@ _TableContainer_handler(MibHandler *handler,
          * if we found rows to process, pretend to be a get request
          * and call handler below us.
          */
-        if(need_processing > 0) {
+        if ( need_processing > 0 ) {
             agtreq_info->mode = MODE_GET;
-            rc = AgentHandler_callNextHandler(handler, reginfo, agtreq_info,
-                                           requests);
-            if (rc != PRIOT_ERR_NOERROR) {
-                DEBUG_MSGTL(("tableContainer",
-                            "next handler returned %d\n", rc));
+            rc = AgentHandler_callNextHandler( handler, reginfo, agtreq_info,
+                requests );
+            if ( rc != PRIOT_ERR_NOERROR ) {
+                DEBUG_MSGTL( ( "tableContainer",
+                    "next handler returned %d\n", rc ) );
             }
 
             agtreq_info->mode = oldmode; /* restore saved mode */
@@ -739,59 +723,57 @@ _TableContainer_handler(MibHandler *handler,
 }
 /** @endcond */
 
-
 /* ==================================
  *
  * Container Table API: Row operations
  *
  * ================================== */
 
-static void *
-_TableContainer_findNextRow(Container_Container *c,
-               TableRequestInfo *tblreq,
-               void * key)
+static void*
+_TableContainer_findNextRow( Container_Container* c,
+    TableRequestInfo* tblreq,
+    void* key )
 {
-    void *row = NULL;
+    void* row = NULL;
 
-    if (!c || !tblreq || !tblreq->reg_info ) {
-        Logger_log(LOGGER_PRIORITY_ERR,"TableContainer_findNextRow param error\n");
+    if ( !c || !tblreq || !tblreq->reg_info ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "TableContainer_findNextRow param error\n" );
         return NULL;
     }
 
     /*
      * table helper should have made sure we aren't below our minimum column
      */
-    Assert_assert(tblreq->colnum >= tblreq->reg_info->min_column);
+    Assert_assert( tblreq->colnum >= tblreq->reg_info->min_column );
 
     /*
      * if no indexes then use first row.
      */
-    if(tblreq->number_indexes == 0) {
-        row = CONTAINER_FIRST(c);
+    if ( tblreq->number_indexes == 0 ) {
+        row = CONTAINER_FIRST( c );
     } else {
 
-        if(NULL == key) {
+        if ( NULL == key ) {
             Types_Index index;
             index.oids = tblreq->index_oid;
             index.len = tblreq->index_oid_len;
-            row = CONTAINER_NEXT(c, &index);
-        }
-        else
-            row = CONTAINER_NEXT(c, key);
+            row = CONTAINER_NEXT( c, &index );
+        } else
+            row = CONTAINER_NEXT( c, key );
 
         /*
          * we don't have a row, but we might be at the end of a
          * column, so try the next column.
          */
-        if (NULL == row) {
+        if ( NULL == row ) {
             /*
              * don't set tblreq next_col unless we know there is one,
              * so we don't mess up table handler sparse table processing.
              */
-            oid next_col = Table_nextColumn(tblreq);
-            if (0 != next_col) {
+            oid next_col = Table_nextColumn( tblreq );
+            if ( 0 != next_col ) {
                 tblreq->colnum = next_col;
-                row = CONTAINER_FIRST(c);
+                row = CONTAINER_FIRST( c );
             }
         }
     }
@@ -808,11 +790,11 @@ _TableContainer_findNextRow(Container_Container *c,
  * replacement: none
  *  - never should have been a public method in the first place
  */
-Types_Index *
-TableContainer_indexFindNextRow(Container_Container *c,
-                                  TableRequestInfo *tblreq)
+Types_Index*
+TableContainer_indexFindNextRow( Container_Container* c,
+    TableRequestInfo* tblreq )
 {
-    return (Types_Index*)_TableContainer_findNextRow(c, tblreq, NULL );
+    return ( Types_Index* )_TableContainer_findNextRow( c, tblreq, NULL );
 }
 
 /* ==================================

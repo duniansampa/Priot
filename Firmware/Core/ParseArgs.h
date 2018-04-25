@@ -4,46 +4,45 @@
 #include "Generals.h"
 #include "Types.h"
 
-
 /**
  * @file ParseArgs.h
  *
- * Support for initializing variables of type netsnmp_session from command
+ * Support for initializing variables of type Types_Session from command
  * line arguments
  */
 
 /** Don't enable any logging even if there is no -L argument */
-#define PARSEARGS_NOLOGGING    0x0001
+#define PARSEARGS_NOLOGGING 0x0001
 /** Don't zero out sensitive arguments as they are not on the command line
  *  anyway, typically used when the function is called from an internal
  *  config-line handler
  */
-#define PARSEARGS_NOZERO       0x0002
+#define PARSEARGS_NOZERO 0x0002
 
 /**
  * Parsing of command line arguments succeeded and application is expected
  * to continue with normal operation.
  */
-#define PARSEARGS_SUCCESS       0
+#define PARSEARGS_SUCCESS 0
 /**
   * Parsing of command line arguments succeeded, but the application is expected
   * to exit with zero exit code. For example, '-V' parameter has been found.
   */
-#define PARSEARGS_SUCCESS_EXIT  -2
+#define PARSEARGS_SUCCESS_EXIT -2
 /**
  * Parsing of command line arguments failed and application is expected to show
  * usage (i.e. list of parameters) and exit with nozero exit code.
  */
-#define PARSEARGS_ERROR_USAGE   -1
+#define PARSEARGS_ERROR_USAGE -1
 /**
  * Parsing of command line arguments failed and application is expected to exit
  * with nozero exit code.  ParseArgs_parseArgs() has already printed what went
  * wrong.
  */
-#define PARSEARGS_ERROR         -3
+#define PARSEARGS_ERROR -3
 
 /**
- *  Parse an argument list and initialize \link netsnmp_session
+ *  Parse an argument list and initialize \link Types_Session
  *  session\endlink
  *  from it.
  *  @param argc Number of elements in argv
@@ -65,24 +64,22 @@
  *  The proc function is called with argc, argv and the currently processed
  *  option as arguments
  */
- int ParseArgs_parseArgs(int argc, char **argv, Types_Session *session,
-                   const char *localOpts, void (*proc)(int, char *const *, int),
-                   int flags);
+int ParseArgs_parseArgs( int argc, char** argv, Types_Session* session,
+    const char* localOpts, void ( *proc )( int, char* const*, int ),
+    int flags );
 
 /**
  *  Calls \link netsnmp_parse_args()
  *  netsnmp_parse_args(argc, argv, session, localOpts, proc, 0)\endlink
  */
 
-int ParseArgs_parseArgs2(int argc, char **argv, Types_Session *session,
-        const char *localOpts, void (*proc)(int, char *const *, int));
+int ParseArgs_parseArgs2( int argc, char** argv, Types_Session* session,
+    const char* localOpts, void ( *proc )( int, char* const*, int ) );
 
+void ParseArgs_descriptions( FILE* );
 
-void ParseArgs_descriptions(FILE *);
+void ParseArgs_usage( FILE* );
 
-
-void ParseArgs_usage(FILE *);
-
-void  ParseArgs_handleLongOpt(const char *myoptarg);
+void ParseArgs_handleLongOpt( const char* myoptarg );
 
 #endif // PARSEARGS_H

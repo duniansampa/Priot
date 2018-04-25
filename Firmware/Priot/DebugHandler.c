@@ -13,7 +13,7 @@
  *  command line flag to see the output when running the snmpd
  *  demon. It's not recommended you compile this into a handler chain
  *  during compile time, but instead use the "injectHandler" token in
- *  the snmpd.conf file (or similar) to add it to the chain later:
+ *  the priotd.conf file (or similar) to add it to the chain later:
  *
  *     injectHandler debug my_module_name
  *

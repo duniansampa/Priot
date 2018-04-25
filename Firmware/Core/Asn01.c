@@ -1714,7 +1714,7 @@ u_char * Asn01_parseUnsignedInt64(u_char * data,
         ((*(bufp + 1) == ASN01_OPAQUE_COUNTER64) ||
          (*(bufp + 1) == ASN01_OPAQUE_U64))) {
         /*
-         * change type to Counter64 or U64
+         * change type to Counter64 or Int64_U64
          */
         *type = *(bufp + 1);
         /*
@@ -3252,7 +3252,7 @@ int Asn01_reallocRbuildUnsignedInt64(u_char ** pkt, size_t * pkt_len,
     }
 
     DEBUG_DUMPSETUP("send", (*pkt + *pkt_len - *offset), intsize);
-    DEBUG_MSG(("dumpvSend", "  U64:\t%lu %lu\n", cp->high, cp->low));
+    DEBUG_MSG(("dumpvSend", "  Int64_U64:\t%lu %lu\n", cp->high, cp->low));
     return 1;
 }
 

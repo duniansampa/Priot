@@ -1,18 +1,17 @@
 #include "ReadConfig.h"
-#include "DefaultStore.h"
-#include "Debug.h"
-#include "Tools.h"
-#include "Logger.h"
-#include "System.h"
 #include "Asn01.h"
-#include "Mib.h"
+#include "Callback.h"
+#include "Debug.h"
+#include "DefaultStore.h"
+#include "Impl.h"
 #include "Int64.h"
+#include "Logger.h"
+#include "Mib.h"
+#include "Priot.h"
 #include "Strlcat.h"
 #include "Strlcpy.h"
-#include "Priot.h"
-#include "Callback.h"
-#include "Impl.h"
-
+#include "System.h"
+#include "Tools.h"
 
 #include <arpa/inet.h>
 
@@ -30,7 +29,7 @@
  * to the appropriately registered handler.
  *
  * For persistent configuration storage you will need to use the
- * read_config_read_data, read_config_store, and read_config_store_data
+ * ReadConfig_readData, ReadConfig_store, and ReadConfig_storeData
  * APIs in conjunction with first registering a
  * callback so when the agent shutsdown for whatever reason data is written
  * to your configuration files.  The following explains in more detail the
@@ -39,12 +38,12 @@
  * This is the callback registration API, you need to call this API with
  * the appropriate parameters in order to configure persistent storage needs.
  *
- *        int snmp_register_callback(int major, int minor,
+ *        int Callback_registerCallback(int major, int minor,
  *                                   SNMPCallback *new_callback,
  *                                   void *arg);
  *
  * You will need to set major to CALLBACK_LIBRARY, minor to
- * SNMP_CALLBACK_STORE_DATA. arg is whatever you want.
+ * CALLBACK_STORE_DATA. arg is whatever you want.
  *
  * Your callback function's prototype is:
  * int     (SNMPCallback) (int majorID, int minorID, void *serverarg,
@@ -56,10 +55,10 @@
  * configuration lines into a buffer.  The lines are of the form token
  * followed by token parameters.
  *
- * Finally storing is done using read_config_store(type, buffer);
+ * Finally storing is done using ReadConfig_store(type, buffer);
  * type is the application name this can be obtained from:
  *
- * DefaultStore_getString(DsStorage_LIBRARY_ID, NETSNMP_DS_LIB_APPTYPE);
+ * DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_LIB_APPTYPE);
  *
  * Now, reading back the data: This is done by registering a config handler
  * for your token using the ReadConfig_registerConfigHandler function. Your
@@ -69,49 +68,47 @@
  *  @{
  */
 
-# include <dirent.h>
-# define READCONFIG_NAMLEN(dirent) strlen((dirent)->d_name)
+#include <dirent.h>
+#define READCONFIG_NAMLEN( dirent ) strlen( ( dirent )->d_name )
 
-static int      _readConfig_configErrors;
+static int _readConfig_configErrors;
 
-struct ReadConfig_ConfigFiles_s *readConfig_configFiles = NULL;
+struct ReadConfig_ConfigFiles_s* readConfig_configFiles = NULL;
 
-
-
-static struct ReadConfig_ConfigLine_s *
-_ReadConfig_internalRegisterConfigHandler(const char *type_param,
-                 const char *token,
-                 void (*parser) (const char *, char *),
-                 void (*releaser) (void), const char *help,
-                 int when)
+static struct ReadConfig_ConfigLine_s*
+_ReadConfig_internalRegisterConfigHandler( const char* type_param,
+    const char* token,
+    void ( *parser )( const char*, char* ),
+    void ( *releaser )( void ), const char* help,
+    int when )
 {
-    struct ReadConfig_ConfigFiles_s **ctmp = &readConfig_configFiles;
-    struct ReadConfig_ConfigLine_s  **ltmp;
-    const char           *type = type_param;
+    struct ReadConfig_ConfigFiles_s** ctmp = &readConfig_configFiles;
+    struct ReadConfig_ConfigLine_s** ltmp;
+    const char* type = type_param;
 
-    if (type == NULL || *type == '\0') {
-        type = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                    DsStr_APPTYPE);
+    if ( type == NULL || *type == '\0' ) {
+        type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+            DsStr_APPTYPE );
     }
 
     /*
      * Handle multiple types (recursively)
      */
-    if (strchr(type, ':')) {
-        struct ReadConfig_ConfigLine_s *ltmp2 = NULL;
-        char                buf[READCONFIG_STRINGMAX];
-        char               *cptr = buf;
+    if ( strchr( type, ':' ) ) {
+        struct ReadConfig_ConfigLine_s* ltmp2 = NULL;
+        char buf[ READCONFIG_STRINGMAX ];
+        char* cptr = buf;
 
-        Strlcpy_strlcpy(buf, type, READCONFIG_STRINGMAX);
-        while (cptr) {
+        Strlcpy_strlcpy( buf, type, READCONFIG_STRINGMAX );
+        while ( cptr ) {
             char* c = cptr;
-            cptr = strchr(cptr, ':');
-            if(cptr) {
+            cptr = strchr( cptr, ':' );
+            if ( cptr ) {
                 *cptr = '\0';
                 ++cptr;
             }
-            ltmp2 = _ReadConfig_internalRegisterConfigHandler(c, token, parser,
-                                                     releaser, help, when);
+            ltmp2 = _ReadConfig_internalRegisterConfigHandler( c, token, parser,
+                releaser, help, when );
         }
         return ltmp2;
     }
@@ -119,79 +116,78 @@ _ReadConfig_internalRegisterConfigHandler(const char *type_param,
     /*
      * Find type in current list  -OR-  create a new file type.
      */
-    while (*ctmp != NULL && strcmp((*ctmp)->fileHeader, type)) {
-        ctmp = &((*ctmp)->next);
+    while ( *ctmp != NULL && strcmp( ( *ctmp )->fileHeader, type ) ) {
+        ctmp = &( ( *ctmp )->next );
     }
 
-    if (*ctmp == NULL) {
-        *ctmp = (struct ReadConfig_ConfigFiles_s *)
-            calloc(1, sizeof(struct ReadConfig_ConfigFiles_s));
-        if (!*ctmp) {
+    if ( *ctmp == NULL ) {
+        *ctmp = ( struct ReadConfig_ConfigFiles_s* )
+            calloc( 1, sizeof( struct ReadConfig_ConfigFiles_s ) );
+        if ( !*ctmp ) {
             return NULL;
         }
 
-        (*ctmp)->fileHeader = strdup(type);
-        DEBUG_MSGTL(("9:read_config:type", "new type %s\n", type));
+        ( *ctmp )->fileHeader = strdup( type );
+        DEBUG_MSGTL( ( "9:read_config:type", "new type %s\n", type ) );
     }
 
-    DEBUG_MSGTL(("9:read_config:register_handler", "registering %s %s\n",
-                type, token));
+    DEBUG_MSGTL( ( "9:read_config:register_handler", "registering %s %s\n",
+        type, token ) );
     /*
      * Find parser type in current list  -OR-  create a new
      * line parser entry.
      */
-    ltmp = &((*ctmp)->start);
+    ltmp = &( ( *ctmp )->start );
 
-    while (*ltmp != NULL && strcmp((*ltmp)->config_token, token)) {
-        ltmp = &((*ltmp)->next);
+    while ( *ltmp != NULL && strcmp( ( *ltmp )->config_token, token ) ) {
+        ltmp = &( ( *ltmp )->next );
     }
 
-    if (*ltmp == NULL) {
-        *ltmp = (struct ReadConfig_ConfigLine_s *)
-            calloc(1, sizeof(struct ReadConfig_ConfigLine_s));
-        if (!*ltmp) {
+    if ( *ltmp == NULL ) {
+        *ltmp = ( struct ReadConfig_ConfigLine_s* )
+            calloc( 1, sizeof( struct ReadConfig_ConfigLine_s ) );
+        if ( !*ltmp ) {
             return NULL;
         }
 
-        (*ltmp)->config_time = when;
-        (*ltmp)->config_token = strdup(token);
-        if (help != NULL)
-            (*ltmp)->help = strdup(help);
+        ( *ltmp )->config_time = when;
+        ( *ltmp )->config_token = strdup( token );
+        if ( help != NULL )
+            ( *ltmp )->help = strdup( help );
     }
 
     /*
      * Add/Replace the parse/free functions for the given line type
      * in the given file type.
      */
-    (*ltmp)->parse_line = parser;
-    (*ltmp)->free_func = releaser;
+    ( *ltmp )->parse_line = parser;
+    ( *ltmp )->free_func = releaser;
 
-    return (*ltmp);
+    return ( *ltmp );
 
-}                               /* end ReadConfig_registerConfigHandler() */
+} /* end ReadConfig_registerConfigHandler() */
 
-struct ReadConfig_ConfigLine_s *
-ReadConfig_registerPrenetMibHandler(const char *type,
-                                const char *token,
-                                void (*parser) (const char *, char *),
-                                void (*releaser) (void), const char *help)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_registerPrenetMibHandler( const char* type,
+    const char* token,
+    void ( *parser )( const char*, char* ),
+    void ( *releaser )( void ), const char* help )
 {
-    return _ReadConfig_internalRegisterConfigHandler(type, token, parser, releaser,
-                        help, PREMIB_CONFIG);
+    return _ReadConfig_internalRegisterConfigHandler( type, token, parser, releaser,
+        help, PREMIB_CONFIG );
 }
 
-struct ReadConfig_ConfigLine_s *
-ReadConfig_registerAppPrenetMibHandler(const char *token,
-                                    void (*parser) (const char *, char *),
-                                    void (*releaser) (void),
-                                    const char *help)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_registerAppPrenetMibHandler( const char* token,
+    void ( *parser )( const char*, char* ),
+    void ( *releaser )( void ),
+    const char* help )
 {
-    return (ReadConfig_registerPrenetMibHandler
-            (NULL, token, parser, releaser, help));
+    return ( ReadConfig_registerPrenetMibHandler( NULL, token, parser, releaser, help ) );
 }
 
 /**
- * register_config_handler registers handlers for certain tokens specified in
+ * ReadConfig_registerConfigHandler registers handlers for certain tokens specified in
  * certain types of files.
  *
  * Allows a module writer use/register multiple configuration files based off
@@ -200,7 +196,7 @@ ReadConfig_registerAppPrenetMibHandler(const char *token,
  * management of where to put tokens as the module or modules get more complex
  * in regard to handling token registrations.
  *
- * @param type     the configuration file used, e.g., if snmp.conf is the
+ * @param type     the configuration file used, e.g., if priot.conf is the
  *                 file where the token is located use "priot" here.
  *                 Multiple colon separated tokens might be used.
  *                 If NULL or "" then the configuration file used will be
@@ -223,37 +219,36 @@ ReadConfig_registerAppPrenetMibHandler(const char *token,
  *
  * @return Pointer to a new config line entry or NULL on error.
  */
-struct ReadConfig_ConfigLine_s *
-ReadConfig_registerConfigHandler(const char *type,
-            const char *token,
-            void (*parser) (const char *, char *),
-            void (*releaser) (void), const char *help)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_registerConfigHandler( const char* type,
+    const char* token,
+    void ( *parser )( const char*, char* ),
+    void ( *releaser )( void ), const char* help )
 {
-    return _ReadConfig_internalRegisterConfigHandler(type, token, parser, releaser,
-                        help, NORMAL_CONFIG);
+    return _ReadConfig_internalRegisterConfigHandler( type, token, parser, releaser,
+        help, NORMAL_CONFIG );
 }
 
-struct ReadConfig_ConfigLine_s *
-ReadConfig_registerConstConfigHandler(const char *type,
-                              const char *token,
-                              void (*parser) (const char *, const char *),
-                              void (*releaser) (void), const char *help)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_registerConstConfigHandler( const char* type,
+    const char* token,
+    void ( *parser )( const char*, const char* ),
+    void ( *releaser )( void ), const char* help )
 {
-    return _ReadConfig_internalRegisterConfigHandler(type, token,
-                                            (void(*)(const char *, char *))
-                                            parser, releaser,
-                        help, NORMAL_CONFIG);
+    return _ReadConfig_internalRegisterConfigHandler( type, token,
+        ( void ( * )( const char*, char* ) )
+            parser,
+        releaser,
+        help, NORMAL_CONFIG );
 }
 
-struct ReadConfig_ConfigLine_s *
-ReadConfig_registerAppConfigHandler(const char *token,
-                            void (*parser) (const char *, char *),
-                            void (*releaser) (void), const char *help)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_registerAppConfigHandler( const char* token,
+    void ( *parser )( const char*, char* ),
+    void ( *releaser )( void ), const char* help )
 {
-    return (ReadConfig_registerConfigHandler(NULL, token, parser, releaser, help));
+    return ( ReadConfig_registerConfigHandler( NULL, token, parser, releaser, help ) );
 }
-
-
 
 /**
  * uregister_config_handler un-registers handlers given a specific type_param
@@ -266,34 +261,33 @@ ReadConfig_registerAppConfigHandler(const char *token,
  *
  * @return void
  */
-void
-ReadConfig_unregisterConfigHandler(const char *type_param, const char *token)
+void ReadConfig_unregisterConfigHandler( const char* type_param, const char* token )
 {
-    struct ReadConfig_ConfigFiles_s **ctmp = &readConfig_configFiles;
-    struct ReadConfig_ConfigLine_s  **ltmp;
-    const char           *type = type_param;
+    struct ReadConfig_ConfigFiles_s** ctmp = &readConfig_configFiles;
+    struct ReadConfig_ConfigLine_s** ltmp;
+    const char* type = type_param;
 
-    if (type == NULL || *type == '\0') {
-        type = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                            DsStr_APPTYPE);
+    if ( type == NULL || *type == '\0' ) {
+        type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+            DsStr_APPTYPE );
     }
 
     /*
      * Handle multiple types (recursively)
      */
-    if (strchr(type, ':')) {
-        char                buf[READCONFIG_STRINGMAX];
-        char               *cptr = buf;
+    if ( strchr( type, ':' ) ) {
+        char buf[ READCONFIG_STRINGMAX ];
+        char* cptr = buf;
 
-        Strlcpy_strlcpy(buf, type, READCONFIG_STRINGMAX);
-        while (cptr) {
+        Strlcpy_strlcpy( buf, type, READCONFIG_STRINGMAX );
+        while ( cptr ) {
             char* c = cptr;
-            cptr = strchr(cptr, ':');
-            if(cptr) {
+            cptr = strchr( cptr, ':' );
+            if ( cptr ) {
                 *cptr = '\0';
                 ++cptr;
             }
-            ReadConfig_unregisterConfigHandler(c, token);
+            ReadConfig_unregisterConfigHandler( c, token );
         }
         return;
     }
@@ -301,166 +295,159 @@ ReadConfig_unregisterConfigHandler(const char *type_param, const char *token)
     /*
      * find type in current list
      */
-    while (*ctmp != NULL && strcmp((*ctmp)->fileHeader, type)) {
-        ctmp = &((*ctmp)->next);
+    while ( *ctmp != NULL && strcmp( ( *ctmp )->fileHeader, type ) ) {
+        ctmp = &( ( *ctmp )->next );
     }
 
-    if (*ctmp == NULL) {
+    if ( *ctmp == NULL ) {
         /*
          * Not found, return.
          */
         return;
     }
 
-    ltmp = &((*ctmp)->start);
-    if (*ltmp == NULL) {
+    ltmp = &( ( *ctmp )->start );
+    if ( *ltmp == NULL ) {
         /*
          * Not found, return.
          */
         return;
     }
-    if (strcmp((*ltmp)->config_token, token) == 0) {
+    if ( strcmp( ( *ltmp )->config_token, token ) == 0 ) {
         /*
          * found it at the top of the list
          */
-        struct ReadConfig_ConfigLine_s *ltmp2 = (*ltmp)->next;
-        if ((*ltmp)->free_func)
-            (*ltmp)->free_func();
-        TOOLS_FREE((*ltmp)->config_token);
-        TOOLS_FREE((*ltmp)->help);
-        TOOLS_FREE(*ltmp);
-        (*ctmp)->start = ltmp2;
+        struct ReadConfig_ConfigLine_s* ltmp2 = ( *ltmp )->next;
+        if ( ( *ltmp )->free_func )
+            ( *ltmp )->free_func();
+        TOOLS_FREE( ( *ltmp )->config_token );
+        TOOLS_FREE( ( *ltmp )->help );
+        TOOLS_FREE( *ltmp );
+        ( *ctmp )->start = ltmp2;
         return;
     }
-    while ((*ltmp)->next != NULL
-           && strcmp((*ltmp)->next->config_token, token)) {
-        ltmp = &((*ltmp)->next);
+    while ( ( *ltmp )->next != NULL
+        && strcmp( ( *ltmp )->next->config_token, token ) ) {
+        ltmp = &( ( *ltmp )->next );
     }
-    if ((*ltmp)->next != NULL) {
-        struct ReadConfig_ConfigLine_s *ltmp2 = (*ltmp)->next->next;
-        if ((*ltmp)->next->free_func)
-            (*ltmp)->next->free_func();
-        TOOLS_FREE((*ltmp)->next->config_token);
-        TOOLS_FREE((*ltmp)->next->help);
-        TOOLS_FREE((*ltmp)->next);
-        (*ltmp)->next = ltmp2;
+    if ( ( *ltmp )->next != NULL ) {
+        struct ReadConfig_ConfigLine_s* ltmp2 = ( *ltmp )->next->next;
+        if ( ( *ltmp )->next->free_func )
+            ( *ltmp )->next->free_func();
+        TOOLS_FREE( ( *ltmp )->next->config_token );
+        TOOLS_FREE( ( *ltmp )->next->help );
+        TOOLS_FREE( ( *ltmp )->next );
+        ( *ltmp )->next = ltmp2;
     }
 }
 
-void ReadConfig_unregisterAppConfigHandler(const char *token)
+void ReadConfig_unregisterAppConfigHandler( const char* token )
 {
-    ReadConfig_unregisterConfigHandler(NULL, token);
+    ReadConfig_unregisterConfigHandler( NULL, token );
 }
 
-void ReadConfig_unregisterAllConfigHandlers(void)
+void ReadConfig_unregisterAllConfigHandlers( void )
 {
     struct ReadConfig_ConfigFiles_s *ctmp, *save;
-    struct ReadConfig_ConfigLine_s *ltmp;
+    struct ReadConfig_ConfigLine_s* ltmp;
 
     /*
      * Keep using config_files until there are no more!
      */
-    for (ctmp = readConfig_configFiles; ctmp;) {
-        for (ltmp = ctmp->start; ltmp; ltmp = ctmp->start) {
-            ReadConfig_unregisterConfigHandler(ctmp->fileHeader,
-                                      ltmp->config_token);
+    for ( ctmp = readConfig_configFiles; ctmp; ) {
+        for ( ltmp = ctmp->start; ltmp; ltmp = ctmp->start ) {
+            ReadConfig_unregisterConfigHandler( ctmp->fileHeader,
+                ltmp->config_token );
         }
-        TOOLS_FREE(ctmp->fileHeader);
+        TOOLS_FREE( ctmp->fileHeader );
         save = ctmp->next;
-        TOOLS_FREE(ctmp);
+        TOOLS_FREE( ctmp );
         ctmp = save;
         readConfig_configFiles = save;
     }
 }
 
-static unsigned int  _readConfig_linecount;
-static const char   *_readConfig_curfilename;
+static unsigned int _readConfig_linecount;
+static const char* _readConfig_curfilename;
 
-struct ReadConfig_ConfigLine_s *
-ReadConfig_getHandlers(const char *type)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_getHandlers( const char* type )
 {
-    struct ReadConfig_ConfigFiles_s *ctmp = readConfig_configFiles;
-    for (; ctmp != NULL && strcmp(ctmp->fileHeader, type);
-         ctmp = ctmp->next);
-    if (ctmp)
+    struct ReadConfig_ConfigFiles_s* ctmp = readConfig_configFiles;
+    for ( ; ctmp != NULL && strcmp( ctmp->fileHeader, type );
+          ctmp = ctmp->next )
+        ;
+    if ( ctmp )
         return ctmp->start;
     return NULL;
 }
 
-int
-ReadConfig_withTypeWhen(const char *filename, const char *type, int when)
+int ReadConfig_withTypeWhen( const char* filename, const char* type, int when )
 {
-    struct ReadConfig_ConfigLine_s *ctmp = ReadConfig_getHandlers(type);
-    if (ctmp)
-        return ReadConfig_readConfig(filename, ctmp, when);
+    struct ReadConfig_ConfigLine_s* ctmp = ReadConfig_getHandlers( type );
+    if ( ctmp )
+        return ReadConfig_readConfig( filename, ctmp, when );
     else
-        DEBUG_MSGTL(("read_config",
-                    "read_config: I have no registrations for type:%s,file:%s\n",
-                    type, filename));
-    return ErrorCode_GENERR;     /* No config files read */
+        DEBUG_MSGTL( ( "read_config",
+            "read_config: I have no registrations for type:%s,file:%s\n",
+            type, filename ) );
+    return ErrorCode_GENERR; /* No config files read */
 }
 
-int
-ReadConfig_withType(const char *filename, const char *type)
+int ReadConfig_withType( const char* filename, const char* type )
 {
-    return ReadConfig_withTypeWhen(filename, type, EITHER_CONFIG);
+    return ReadConfig_withTypeWhen( filename, type, EITHER_CONFIG );
 }
 
-
-struct ReadConfig_ConfigLine_s *
-ReadConfig_findHandler(struct ReadConfig_ConfigLine_s *line_handlers,
-                         const char *token)
+struct ReadConfig_ConfigLine_s*
+ReadConfig_findHandler( struct ReadConfig_ConfigLine_s* line_handlers,
+    const char* token )
 {
-    struct ReadConfig_ConfigLine_s *lptr;
+    struct ReadConfig_ConfigLine_s* lptr;
 
-    for (lptr = line_handlers; lptr != NULL; lptr = lptr->next) {
-        if (!strcasecmp(token, lptr->config_token)) {
+    for ( lptr = line_handlers; lptr != NULL; lptr = lptr->next ) {
+        if ( !strcasecmp( token, lptr->config_token ) ) {
             return lptr;
         }
     }
     return NULL;
 }
 
-
 /*
  * searches a config_line linked list for a match
  */
-int
-ReadConfig_runConfigHandler(struct ReadConfig_ConfigLine_s *lptr,
-    const char *token, char *cptr, int when)
+int ReadConfig_runConfigHandler( struct ReadConfig_ConfigLine_s* lptr,
+    const char* token, char* cptr, int when )
 {
-    char           *cp;
-    lptr = ReadConfig_findHandler(lptr, token);
-    if (lptr != NULL) {
-        if (when == EITHER_CONFIG || lptr->config_time == when) {
-            char tmpbuf[1];
-            DEBUG_MSGTL(("read_config:parser",
-                        "Found a parser.  Calling it: %s / %s\n", token,
-                        cptr));
+    char* cp;
+    lptr = ReadConfig_findHandler( lptr, token );
+    if ( lptr != NULL ) {
+        if ( when == EITHER_CONFIG || lptr->config_time == when ) {
+            char tmpbuf[ 1 ];
+            DEBUG_MSGTL( ( "read_config:parser",
+                "Found a parser.  Calling it: %s / %s\n", token,
+                cptr ) );
             /*
              * Make sure cptr is non-null
              */
-            if (!cptr) {
-                tmpbuf[0] = '\0';
+            if ( !cptr ) {
+                tmpbuf[ 0 ] = '\0';
                 cptr = tmpbuf;
             }
 
             /*
              * Stomp on any trailing whitespace
              */
-            cp = &(cptr[strlen(cptr)-1]);
-            while ((cp > cptr) && isspace((unsigned char)(*cp))) {
-                *(cp--) = '\0';
+            cp = &( cptr[ strlen( cptr ) - 1 ] );
+            while ( ( cp > cptr ) && isspace( ( unsigned char )( *cp ) ) ) {
+                *( cp-- ) = '\0';
             }
-            (*(lptr->parse_line)) (token, cptr);
-        }
-        else
-            DEBUG_MSGTL(("9:read_config:parser",
-                        "%s handler not registered for this time\n", token));
-    } else if (when != PREMIB_CONFIG &&
-           !DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                       DsBool_NO_TOKEN_WARNINGS)) {
-    ReadConfig_warn("Unknown token: %s.", token);
+            ( *( lptr->parse_line ) )( token, cptr );
+        } else
+            DEBUG_MSGTL( ( "9:read_config:parser",
+                "%s handler not registered for this time\n", token ) );
+    } else if ( when != PREMIB_CONFIG && !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS ) ) {
+        ReadConfig_warn( "Unknown token: %s.", token );
         return ErrorCode_GENERR;
     }
     return ErrorCode_SUCCESS;
@@ -478,146 +465,140 @@ ReadConfig_runConfigHandler(struct ReadConfig_ConfigLine_s *lptr,
  */
 #define READCONFIG_CONFIG_DELIMETERS " \t="
 
-int ReadConfig_configWhen(char *line, int when)
+int ReadConfig_configWhen( char* line, int when )
 {
-    char           *cptr, buf[READCONFIG_STRINGMAX];
-    struct ReadConfig_ConfigLine_s *lptr = NULL;
-    struct ReadConfig_ConfigFiles_s *ctmp = readConfig_configFiles;
-    char           *st;
+    char *cptr, buf[ READCONFIG_STRINGMAX ];
+    struct ReadConfig_ConfigLine_s* lptr = NULL;
+    struct ReadConfig_ConfigFiles_s* ctmp = readConfig_configFiles;
+    char* st;
 
-    if (line == NULL) {
-        ReadConfig_configPerror("priot_config() called with a null string.");
+    if ( line == NULL ) {
+        ReadConfig_configPerror( "priot_config() called with a null string." );
         return ErrorCode_GENERR;
     }
 
-    Strlcpy_strlcpy(buf, line, READCONFIG_STRINGMAX);
-    cptr = strtok_r(buf, READCONFIG_CONFIG_DELIMETERS, &st);
-    if (!cptr) {
-        ReadConfig_warn("Wrong format: %s", line);
+    Strlcpy_strlcpy( buf, line, READCONFIG_STRINGMAX );
+    cptr = strtok_r( buf, READCONFIG_CONFIG_DELIMETERS, &st );
+    if ( !cptr ) {
+        ReadConfig_warn( "Wrong format: %s", line );
         return ErrorCode_GENERR;
     }
-    if (cptr[0] == '[') {
-        if (cptr[strlen(cptr) - 1] != ']') {
-        ReadConfig_error("no matching ']' for type %s.", cptr + 1);
+    if ( cptr[ 0 ] == '[' ) {
+        if ( cptr[ strlen( cptr ) - 1 ] != ']' ) {
+            ReadConfig_error( "no matching ']' for type %s.", cptr + 1 );
             return ErrorCode_GENERR;
         }
-        cptr[strlen(cptr) - 1] = '\0';
-        lptr = ReadConfig_getHandlers(cptr + 1);
-        if (lptr == NULL) {
-        ReadConfig_error("No handlers regestered for type %s.",
-                 cptr + 1);
+        cptr[ strlen( cptr ) - 1 ] = '\0';
+        lptr = ReadConfig_getHandlers( cptr + 1 );
+        if ( lptr == NULL ) {
+            ReadConfig_error( "No handlers regestered for type %s.",
+                cptr + 1 );
             return ErrorCode_GENERR;
         }
-        cptr = strtok_r(NULL, READCONFIG_CONFIG_DELIMETERS, &st);
-        lptr = ReadConfig_findHandler(lptr, cptr);
+        cptr = strtok_r( NULL, READCONFIG_CONFIG_DELIMETERS, &st );
+        lptr = ReadConfig_findHandler( lptr, cptr );
     } else {
         /*
          * we have to find a token
          */
-        for (; ctmp != NULL && lptr == NULL; ctmp = ctmp->next)
-            lptr = ReadConfig_findHandler(ctmp->start, cptr);
+        for ( ; ctmp != NULL && lptr == NULL; ctmp = ctmp->next )
+            lptr = ReadConfig_findHandler( ctmp->start, cptr );
     }
-    if (lptr == NULL && DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                      DsBool_NO_TOKEN_WARNINGS)) {
-    ReadConfig_warn("Unknown token: %s.", cptr);
+    if ( lptr == NULL && DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+                             DsBool_NO_TOKEN_WARNINGS ) ) {
+        ReadConfig_warn( "Unknown token: %s.", cptr );
         return ErrorCode_GENERR;
     }
 
     /*
      * use the original string instead since strtok_r messed up the original
      */
-    line = ReadConfig_skipWhite(line + (cptr - buf) + strlen(cptr) + 1);
+    line = ReadConfig_skipWhite( line + ( cptr - buf ) + strlen( cptr ) + 1 );
 
-    return (ReadConfig_runConfigHandler(lptr, cptr, line, when));
+    return ( ReadConfig_runConfigHandler( lptr, cptr, line, when ) );
 }
 
-int ReadConfig_config(char *line)
+int ReadConfig_config( char* line )
 {
-    int             ret = PRIOT_ERR_NOERROR;
-    DEBUG_MSGTL(("priot_config", "remembering line \"%s\"\n", line));
-    ReadConfig_remember(line);      /* always remember it so it's read
+    int ret = PRIOT_ERR_NOERROR;
+    DEBUG_MSGTL( ( "priot_config", "remembering line \"%s\"\n", line ) );
+    ReadConfig_remember( line ); /* always remember it so it's read
                                          * processed after a ReadConfig_freeConfig()
                                          * call */
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                   DsBool_HAVE_READ_CONFIG)) {
-        DEBUG_MSGTL(("priot_config", "  ... processing it now\n"));
-        ret = ReadConfig_configWhen(line, NORMAL_CONFIG);
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+             DsBool_HAVE_READ_CONFIG ) ) {
+        DEBUG_MSGTL( ( "priot_config", "  ... processing it now\n" ) );
+        ret = ReadConfig_configWhen( line, NORMAL_CONFIG );
     }
     return ret;
 }
 
-void
-ReadConfig_rememberInList(char *line,
-                                struct ReadConfig_Memory_s **mem)
+void ReadConfig_rememberInList( char* line,
+    struct ReadConfig_Memory_s** mem )
 {
-    if (mem == NULL)
+    if ( mem == NULL )
         return;
 
-    while (*mem != NULL)
-        mem = &((*mem)->next);
+    while ( *mem != NULL )
+        mem = &( ( *mem )->next );
 
-    *mem = TOOLS_MALLOC_STRUCT(ReadConfig_Memory_s);
-    if (*mem != NULL) {
-        if (line)
-            (*mem)->line = strdup(line);
+    *mem = TOOLS_MALLOC_STRUCT( ReadConfig_Memory_s );
+    if ( *mem != NULL ) {
+        if ( line )
+            ( *mem )->line = strdup( line );
     }
 }
 
-void
-ReadConfig_rememberFreeList(struct ReadConfig_Memory_s **mem)
+void ReadConfig_rememberFreeList( struct ReadConfig_Memory_s** mem )
 {
-    struct ReadConfig_Memory_s *tmpmem;
-    while (*mem) {
-        TOOLS_FREE((*mem)->line);
-        tmpmem = (*mem)->next;
-        TOOLS_FREE(*mem);
+    struct ReadConfig_Memory_s* tmpmem;
+    while ( *mem ) {
+        TOOLS_FREE( ( *mem )->line );
+        tmpmem = ( *mem )->next;
+        TOOLS_FREE( *mem );
         *mem = tmpmem;
     }
 }
 
-void
-ReadConfig_processMemoryList(struct ReadConfig_Memory_s **memp,
-                                   int when, int clear)
+void ReadConfig_processMemoryList( struct ReadConfig_Memory_s** memp,
+    int when, int clear )
 {
 
-    struct ReadConfig_Memory_s *mem;
+    struct ReadConfig_Memory_s* mem;
 
-    if (!memp)
+    if ( !memp )
         return;
 
     mem = *memp;
 
-    while (mem) {
-        DEBUG_MSGTL(("read_config:mem", "processing memory: %s\n", mem->line));
-        ReadConfig_configWhen(mem->line, when);
+    while ( mem ) {
+        DEBUG_MSGTL( ( "read_config:mem", "processing memory: %s\n", mem->line ) );
+        ReadConfig_configWhen( mem->line, when );
         mem = mem->next;
     }
 
-    if (clear)
-        ReadConfig_rememberFreeList(memp);
+    if ( clear )
+        ReadConfig_rememberFreeList( memp );
 }
 
 /*
  * default storage location implementation
  */
-static struct ReadConfig_Memory_s * _readConfig_memorylist = NULL;
+static struct ReadConfig_Memory_s* _readConfig_memorylist = NULL;
 
-void
-ReadConfig_remember(char *line)
+void ReadConfig_remember( char* line )
 {
-    ReadConfig_rememberInList(line, &_readConfig_memorylist);
+    ReadConfig_rememberInList( line, &_readConfig_memorylist );
 }
 
-void
-ReadConfig_processMemories(void)
+void ReadConfig_processMemories( void )
 {
-    ReadConfig_processMemoryList(&_readConfig_memorylist, EITHER_CONFIG, 1);
+    ReadConfig_processMemoryList( &_readConfig_memorylist, EITHER_CONFIG, 1 );
 }
 
-void
-ReadConfig_processMemoriesWhen(int when, int clear)
+void ReadConfig_processMemoriesWhen( int when, int clear )
 {
-    ReadConfig_processMemoryList(&_readConfig_memorylist, when, clear);
+    ReadConfig_processMemoryList( &_readConfig_memorylist, when, clear );
 }
 
 /*******************************************************************-o-******
@@ -644,51 +625,48 @@ ReadConfig_processMemoriesWhen(int when, int clear)
  *    Note that individual config token errors do not trigger ErrorCode_GENERR
  *    It's only if the whole file cannot be processed for some reason.
  */
-int
-ReadConfig_readConfig(const char *filename,
-            struct ReadConfig_ConfigLine_s *line_handler, int when)
+int ReadConfig_readConfig( const char* filename,
+    struct ReadConfig_ConfigLine_s* line_handler, int when )
 {
-    static int      depth = 0;
-    static int      files = 0;
+    static int depth = 0;
+    static int files = 0;
 
-    const char * const prev_filename = _readConfig_curfilename;
+    const char* const prev_filename = _readConfig_curfilename;
     const unsigned int prev_linecount = _readConfig_linecount;
 
-    FILE           *ifile;
-    char           *line = NULL;  /* current line buffer */
-    size_t          linesize = 0; /* allocated size of line */
+    FILE* ifile;
+    char* line = NULL; /* current line buffer */
+    size_t linesize = 0; /* allocated size of line */
 
     /* reset file counter when recursion depth is 0 */
-    if (depth == 0)
+    if ( depth == 0 )
         files = 0;
 
-    if ((ifile = fopen(filename, "r")) == NULL) {
-        if (errno == ENOENT) {
-            DEBUG_MSGTL(("read_config", "%s: %s\n", filename,
-                        strerror(errno)));
-        } else
-        if (errno == EACCES) {
-            DEBUG_MSGTL(("read_config", "%s: %s\n", filename,
-                        strerror(errno)));
-        } else
-        {
-            Logger_logPerror(filename);
+    if ( ( ifile = fopen( filename, "r" ) ) == NULL ) {
+        if ( errno == ENOENT ) {
+            DEBUG_MSGTL( ( "read_config", "%s: %s\n", filename,
+                strerror( errno ) ) );
+        } else if ( errno == EACCES ) {
+            DEBUG_MSGTL( ( "read_config", "%s: %s\n", filename,
+                strerror( errno ) ) );
+        } else {
+            Logger_logPerror( filename );
         }
         return ErrorCode_GENERR;
     }
 
 #define CONFIG_MAX_FILES 4096
-    if (files > CONFIG_MAX_FILES) {
-        ReadConfig_error("maximum conf file count (%d) exceeded\n",
-                             CONFIG_MAX_FILES);
-    fclose(ifile);
+    if ( files > CONFIG_MAX_FILES ) {
+        ReadConfig_error( "maximum conf file count (%d) exceeded\n",
+            CONFIG_MAX_FILES );
+        fclose( ifile );
         return ErrorCode_GENERR;
     }
 #define CONFIG_MAX_RECURSE_DEPTH 16
-    if (depth > CONFIG_MAX_RECURSE_DEPTH) {
-        ReadConfig_error("nested include depth > %d\n",
-                             CONFIG_MAX_RECURSE_DEPTH);
-    fclose(ifile);
+    if ( depth > CONFIG_MAX_RECURSE_DEPTH ) {
+        ReadConfig_error( "nested include depth > %d\n",
+            CONFIG_MAX_RECURSE_DEPTH );
+        fclose( ifile );
         return ErrorCode_GENERR;
     }
 
@@ -698,70 +676,70 @@ ReadConfig_readConfig(const char *filename,
     ++files;
     ++depth;
 
-    DEBUG_MSGTL(("read_config:file", "Reading configuration %s (%d)\n",
-                filename, when));
+    DEBUG_MSGTL( ( "read_config:file", "Reading configuration %s (%d)\n",
+        filename, when ) );
 
-    while (ifile) {
-        size_t              linelen = 0; /* strlen of the current line */
-        char               *cptr;
-        struct ReadConfig_ConfigLine_s *lptr = line_handler;
+    while ( ifile ) {
+        size_t linelen = 0; /* strlen of the current line */
+        char* cptr;
+        struct ReadConfig_ConfigLine_s* lptr = line_handler;
 
-        for (;;) {
-            if (linesize <= linelen + 1) {
-                char *tmp = (char *)realloc(line, linesize + 256);
-                if (tmp) {
+        for ( ;; ) {
+            if ( linesize <= linelen + 1 ) {
+                char* tmp = ( char* )realloc( line, linesize + 256 );
+                if ( tmp ) {
                     line = tmp;
                     linesize += 256;
                 } else {
-                    ReadConfig_error("Failed to allocate memory\n");
-                    free(line);
-                    fclose(ifile);
+                    ReadConfig_error( "Failed to allocate memory\n" );
+                    free( line );
+                    fclose( ifile );
                     return ErrorCode_GENERR;
                 }
             }
-            if (fgets(line + linelen, linesize - linelen, ifile) == NULL) {
-                line[linelen] = '\0';
-                fclose (ifile);
+            if ( fgets( line + linelen, linesize - linelen, ifile ) == NULL ) {
+                line[ linelen ] = '\0';
+                fclose( ifile );
                 ifile = NULL;
                 break;
             }
 
-            linelen += strlen(line + linelen);
+            linelen += strlen( line + linelen );
 
-            if (line[linelen - 1] == '\n') {
-              line[linelen - 1] = '\0';
-              break;
+            if ( line[ linelen - 1 ] == '\n' ) {
+                line[ linelen - 1 ] = '\0';
+                break;
             }
         }
 
         ++_readConfig_linecount;
-        DEBUG_MSGTL(("9:read_config:line", "%s:%d examining: %s\n",
-                    filename, _readConfig_linecount, line));
+        DEBUG_MSGTL( ( "9:read_config:line", "%s:%d examining: %s\n",
+            filename, _readConfig_linecount, line ) );
         /*
          * check blank line or # comment
          */
-        if ((cptr = ReadConfig_skipWhite(line))) {
-            char token[READCONFIG_STRINGMAX];
+        if ( ( cptr = ReadConfig_skipWhite( line ) ) ) {
+            char token[ READCONFIG_STRINGMAX ];
 
-            cptr = ReadConfig_copyNword(cptr, token, sizeof(token));
-            if (token[0] == '[') {
-                if (token[strlen(token) - 1] != ']') {
-            ReadConfig_error("no matching ']' for type %s.",
-                     &token[1]);
+            cptr = ReadConfig_copyNword( cptr, token, sizeof( token ) );
+            if ( token[ 0 ] == '[' ) {
+                if ( token[ strlen( token ) - 1 ] != ']' ) {
+                    ReadConfig_error( "no matching ']' for type %s.",
+                        &token[ 1 ] );
                     continue;
                 }
-                token[strlen(token) - 1] = '\0';
-                lptr = ReadConfig_getHandlers(&token[1]);
-                if (lptr == NULL) {
-            ReadConfig_error("No handlers regestered for type %s.",
-                     &token[1]);
+                token[ strlen( token ) - 1 ] = '\0';
+                lptr = ReadConfig_getHandlers( &token[ 1 ] );
+                if ( lptr == NULL ) {
+                    ReadConfig_error( "No handlers regestered for type %s.",
+                        &token[ 1 ] );
                     continue;
                 }
-                DEBUG_MSGTL(("read_config:context",
-                            "Switching to new context: %s%s\n",
-                            ((cptr) ? "(this line only) " : ""),
-                            &token[1]));
-                if (cptr == NULL) {
+                DEBUG_MSGTL( ( "read_config:context",
+                    "Switching to new context: %s%s\n",
+                    ( ( cptr ) ? "(this line only) " : "" ),
+                    &token[ 1 ] ) );
+                if ( cptr == NULL ) {
                     /*
                      * change context permanently
                      */
@@ -771,88 +749,85 @@ ReadConfig_readConfig(const char *filename,
                     /*
                      * the rest of this line only applies.
                      */
-                    cptr = ReadConfig_copyNword(cptr, token, sizeof(token));
+                    cptr = ReadConfig_copyNword( cptr, token, sizeof( token ) );
                 }
-            } else if ((token[0] == 'i') && (strncasecmp(token,"include", 7 )==0)) {
-                if ( strcasecmp( token, "include" )==0) {
-                    if (when != PREMIB_CONFIG &&
-                    !DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                                DsBool_NO_TOKEN_WARNINGS)) {
-                    ReadConfig_warn("Ambiguous token '%s' - use 'includeSearch' (or 'includeFile') instead.", token);
+            } else if ( ( token[ 0 ] == 'i' ) && ( strncasecmp( token, "include", 7 ) == 0 ) ) {
+                if ( strcasecmp( token, "include" ) == 0 ) {
+                    if ( when != PREMIB_CONFIG && !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS ) ) {
+                        ReadConfig_warn( "Ambiguous token '%s' - use 'includeSearch' (or 'includeFile') instead.", token );
                     }
                     continue;
-                } else if ( strcasecmp( token, "includedir" )==0) {
-                    DIR *d;
-                    struct dirent *entry;
-                    char  fname[TOOLS_MAXPATH];
-                    int   len;
+                } else if ( strcasecmp( token, "includedir" ) == 0 ) {
+                    DIR* d;
+                    struct dirent* entry;
+                    char fname[ TOOLS_MAXPATH ];
+                    int len;
 
-                    if (cptr == NULL) {
-                        if (when != PREMIB_CONFIG)
-                    ReadConfig_error("Blank line following %s token.", token);
+                    if ( cptr == NULL ) {
+                        if ( when != PREMIB_CONFIG )
+                            ReadConfig_error( "Blank line following %s token.", token );
                         continue;
                     }
-                    if ((d=opendir(cptr)) == NULL ) {
-                        if (when != PREMIB_CONFIG)
-                            ReadConfig_error("Can't open include dir '%s'.", cptr);
+                    if ( ( d = opendir( cptr ) ) == NULL ) {
+                        if ( when != PREMIB_CONFIG )
+                            ReadConfig_error( "Can't open include dir '%s'.", cptr );
                         continue;
                     }
-                    while ((entry = readdir( d )) != NULL ) {
-                        if ( entry->d_name[0] != '.') {
-                            len = READCONFIG_NAMLEN(entry);
-                            if ((len > 5) && (strcmp(&(entry->d_name[len-5]),".conf") == 0)) {
-                                snprintf(fname, TOOLS_MAXPATH, "%s/%s",
-                                         cptr, entry->d_name);
-                                (void)ReadConfig_readConfig(fname, line_handler, when);
+                    while ( ( entry = readdir( d ) ) != NULL ) {
+                        if ( entry->d_name[ 0 ] != '.' ) {
+                            len = READCONFIG_NAMLEN( entry );
+                            if ( ( len > 5 ) && ( strcmp( &( entry->d_name[ len - 5 ] ), ".conf" ) == 0 ) ) {
+                                snprintf( fname, TOOLS_MAXPATH, "%s/%s",
+                                    cptr, entry->d_name );
+                                ( void )ReadConfig_readConfig( fname, line_handler, when );
                             }
                         }
                     }
-                    closedir(d);
+                    closedir( d );
                     continue;
-                } else if ( strcasecmp( token, "includefile" )==0) {
-                    char  fname[TOOLS_MAXPATH], *cp;
+                } else if ( strcasecmp( token, "includefile" ) == 0 ) {
+                    char fname[ TOOLS_MAXPATH ], *cp;
 
-                    if (cptr == NULL) {
-                        if (when != PREMIB_CONFIG)
-                    ReadConfig_error("Blank line following %s token.", token);
+                    if ( cptr == NULL ) {
+                        if ( when != PREMIB_CONFIG )
+                            ReadConfig_error( "Blank line following %s token.", token );
                         continue;
                     }
-                    if ( cptr[0] == '/' ) {
-                        Strlcpy_strlcpy(fname, cptr, TOOLS_MAXPATH);
+                    if ( cptr[ 0 ] == '/' ) {
+                        Strlcpy_strlcpy( fname, cptr, TOOLS_MAXPATH );
                     } else {
-                        Strlcpy_strlcpy(fname, filename, TOOLS_MAXPATH);
-                        cp = strrchr(fname, '/');
-                        if (!cp)
-                            fname[0] = '\0';
+                        Strlcpy_strlcpy( fname, filename, TOOLS_MAXPATH );
+                        cp = strrchr( fname, '/' );
+                        if ( !cp )
+                            fname[ 0 ] = '\0';
                         else
-                            *(++cp) = '\0';
-                        Strlcat_strlcat(fname, cptr, TOOLS_MAXPATH);
+                            *( ++cp ) = '\0';
+                        Strlcat_strlcat( fname, cptr, TOOLS_MAXPATH );
                     }
-                    if (ReadConfig_readConfig(fname, line_handler, when) !=
-                        ErrorCode_SUCCESS && when != PREMIB_CONFIG)
-                        ReadConfig_error("Included file '%s' not found.",
-                                             fname);
+                    if ( ReadConfig_readConfig( fname, line_handler, when ) != ErrorCode_SUCCESS && when != PREMIB_CONFIG )
+                        ReadConfig_error( "Included file '%s' not found.",
+                            fname );
                     continue;
-                } else if ( strcasecmp( token, "includesearch" )==0) {
+                } else if ( strcasecmp( token, "includesearch" ) == 0 ) {
                     struct ReadConfig_ConfigFiles_s ctmp;
                     int len, ret;
 
-                    if (cptr == NULL) {
-                        if (when != PREMIB_CONFIG)
-                    ReadConfig_error("Blank line following %s token.", token);
+                    if ( cptr == NULL ) {
+                        if ( when != PREMIB_CONFIG )
+                            ReadConfig_error( "Blank line following %s token.", token );
                         continue;
                     }
-                    len = strlen(cptr);
+                    len = strlen( cptr );
                     ctmp.fileHeader = cptr;
                     ctmp.start = line_handler;
                     ctmp.next = NULL;
-                    if ((len > 5) && (strcmp(&cptr[len-5],".conf") == 0))
-                       cptr[len-5] = 0; /* chop off .conf */
-                    ret = ReadConfig_filesOfType(when,&ctmp);
-                    if ((len > 5) && (cptr[len-5] == 0))
-                       cptr[len-5] = '.'; /* restore .conf */
-                    if (( ret != ErrorCode_SUCCESS ) && (when != PREMIB_CONFIG))
-                ReadConfig_error("Included config '%s' not found.", cptr);
+                    if ( ( len > 5 ) && ( strcmp( &cptr[ len - 5 ], ".conf" ) == 0 ) )
+                        cptr[ len - 5 ] = 0; /* chop off .conf */
+                    ret = ReadConfig_filesOfType( when, &ctmp );
+                    if ( ( len > 5 ) && ( cptr[ len - 5 ] == 0 ) )
+                        cptr[ len - 5 ] = '.'; /* restore .conf */
+                    if ( ( ret != ErrorCode_SUCCESS ) && ( when != PREMIB_CONFIG ) )
+                        ReadConfig_error( "Included config '%s' not found.", cptr );
                     continue;
                 } else {
                     lptr = line_handler;
@@ -860,35 +835,32 @@ ReadConfig_readConfig(const char *filename,
             } else {
                 lptr = line_handler;
             }
-            if (cptr == NULL) {
-        ReadConfig_error("Blank line following %s token.", token);
+            if ( cptr == NULL ) {
+                ReadConfig_error( "Blank line following %s token.", token );
             } else {
-                DEBUG_MSGTL(("read_config:line", "%s:%d examining: %s\n",
-                            filename, _readConfig_linecount, line));
-                ReadConfig_runConfigHandler(lptr, token, cptr, when);
+                DEBUG_MSGTL( ( "read_config:line", "%s:%d examining: %s\n",
+                    filename, _readConfig_linecount, line ) );
+                ReadConfig_runConfigHandler( lptr, token, cptr, when );
             }
         }
     }
-    free(line);
+    free( line );
     _readConfig_linecount = prev_linecount;
     _readConfig_curfilename = prev_filename;
     --depth;
     return ErrorCode_SUCCESS;
 
-}                               /* end read_config() */
+} /* end read_config() */
 
-
-
-void
-ReadConfig_freeConfig(void)
+void ReadConfig_freeConfig( void )
 {
-    struct ReadConfig_ConfigFiles_s *ctmp = readConfig_configFiles;
-    struct ReadConfig_ConfigLine_s *ltmp;
+    struct ReadConfig_ConfigFiles_s* ctmp = readConfig_configFiles;
+    struct ReadConfig_ConfigLine_s* ltmp;
 
-    for (; ctmp != NULL; ctmp = ctmp->next)
-        for (ltmp = ctmp->start; ltmp != NULL; ltmp = ltmp->next)
-            if (ltmp->free_func)
-                (*(ltmp->free_func)) ();
+    for ( ; ctmp != NULL; ctmp = ctmp->next )
+        for ( ltmp = ctmp->start; ltmp != NULL; ltmp = ltmp->next )
+            if ( ltmp->free_func )
+                ( *( ltmp->free_func ) )();
 }
 
 /*
@@ -896,101 +868,98 @@ ReadConfig_freeConfig(void)
  * Return ErrorCode_GENERR if _no_ config files are processed
  *    Whether this is actually an error is left to the application
  */
-int
-ReadConfig_optional(const char *optional_config, int when)
+int ReadConfig_optional( const char* optional_config, int when )
 {
     char *newp, *cp, *st = NULL;
-    int              ret = ErrorCode_GENERR;
-    char *type = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                       DsStr_APPTYPE);
+    int ret = ErrorCode_GENERR;
+    char* type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_APPTYPE );
 
-    if ((NULL == optional_config) || (NULL == type))
+    if ( ( NULL == optional_config ) || ( NULL == type ) )
         return ret;
 
-    DEBUG_MSGTL(("ReadConfig_optional",
-                "reading optional configuration tokens for %s\n", type));
+    DEBUG_MSGTL( ( "ReadConfig_optional",
+        "reading optional configuration tokens for %s\n", type ) );
 
-    newp = strdup(optional_config);      /* strtok_r messes it up */
-    cp = strtok_r(newp, ",", &st);
-    while (cp) {
-        struct stat     statbuf;
-        if (stat(cp, &statbuf)) {
-            DEBUG_MSGTL(("read_config",
-                        "Optional File \"%s\" does not exist.\n", cp));
-            Logger_logPerror(cp);
+    newp = strdup( optional_config ); /* strtok_r messes it up */
+    cp = strtok_r( newp, ",", &st );
+    while ( cp ) {
+        struct stat statbuf;
+        if ( stat( cp, &statbuf ) ) {
+            DEBUG_MSGTL( ( "read_config",
+                "Optional File \"%s\" does not exist.\n", cp ) );
+            Logger_logPerror( cp );
         } else {
-            DEBUG_MSGTL(("read_config:opt",
-                        "Reading optional config file: \"%s\"\n", cp));
-            if ( ReadConfig_withTypeWhen(cp, type, when) == ErrorCode_SUCCESS )
+            DEBUG_MSGTL( ( "read_config:opt",
+                "Reading optional config file: \"%s\"\n", cp ) );
+            if ( ReadConfig_withTypeWhen( cp, type, when ) == ErrorCode_SUCCESS )
                 ret = ErrorCode_SUCCESS;
         }
-        cp = strtok_r(NULL, ",", &st);
+        cp = strtok_r( NULL, ",", &st );
     }
-    free(newp);
+    free( newp );
     return ret;
 }
 
-void
-ReadConfig_readConfigs(void)
+void ReadConfig_readConfigs( void )
 {
-    char *optional_config = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                           DsStr_OPTIONALCONFIG);
+    char* optional_config = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_OPTIONALCONFIG );
 
-    Callback_callCallbacks(CALLBACK_LIBRARY,
-                        CALLBACK_PRE_READ_CONFIG, NULL);
+    Callback_callCallbacks( CALLBACK_LIBRARY,
+        CALLBACK_PRE_READ_CONFIG, NULL );
 
-    DEBUG_MSGTL(("read_config", "reading normal configuration tokens\n"));
+    DEBUG_MSGTL( ( "read_config", "reading normal configuration tokens\n" ) );
 
-    if ((NULL != optional_config) && (*optional_config == '-')) {
-        (void)ReadConfig_optional(++optional_config, NORMAL_CONFIG);
+    if ( ( NULL != optional_config ) && ( *optional_config == '-' ) ) {
+        ( void )ReadConfig_optional( ++optional_config, NORMAL_CONFIG );
         optional_config = NULL; /* clear, so we don't read them twice */
     }
 
-    (void)ReadConfig_files(NORMAL_CONFIG);
+    ( void )ReadConfig_files( NORMAL_CONFIG );
 
     /*
      * do this even when the normal above wasn't done
      */
-    if (NULL != optional_config)
-        (void)ReadConfig_optional(optional_config, NORMAL_CONFIG);
+    if ( NULL != optional_config )
+        ( void )ReadConfig_optional( optional_config, NORMAL_CONFIG );
 
-    ReadConfig_processMemoriesWhen(NORMAL_CONFIG, 1);
+    ReadConfig_processMemoriesWhen( NORMAL_CONFIG, 1 );
 
-    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
-               DsBool_HAVE_READ_CONFIG, 1);
+    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+        DsBool_HAVE_READ_CONFIG, 1 );
 
-    Callback_callCallbacks(CALLBACK_LIBRARY,
-                           CALLBACK_POST_READ_CONFIG, NULL);
+    Callback_callCallbacks( CALLBACK_LIBRARY,
+        CALLBACK_POST_READ_CONFIG, NULL );
 }
 
-void
-ReadConfig_readPremibConfigs(void)
+void ReadConfig_readPremibConfigs( void )
 {
-    char *optional_config = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                           DsStr_OPTIONALCONFIG);
+    char* optional_config = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_OPTIONALCONFIG );
 
-    Callback_callCallbacks(CALLBACK_LIBRARY,
-                           CALLBACK_PRE_PREMIB_READ_CONFIG, NULL);
+    Callback_callCallbacks( CALLBACK_LIBRARY,
+        CALLBACK_PRE_PREMIB_READ_CONFIG, NULL );
 
-    DEBUG_MSGTL(("read_config", "reading premib configuration tokens\n"));
+    DEBUG_MSGTL( ( "read_config", "reading premib configuration tokens\n" ) );
 
-    if ((NULL != optional_config) && (*optional_config == '-')) {
-        (void)ReadConfig_optional(++optional_config, PREMIB_CONFIG);
+    if ( ( NULL != optional_config ) && ( *optional_config == '-' ) ) {
+        ( void )ReadConfig_optional( ++optional_config, PREMIB_CONFIG );
         optional_config = NULL; /* clear, so we don't read them twice */
     }
 
-    (void)ReadConfig_files(PREMIB_CONFIG);
+    ( void )ReadConfig_files( PREMIB_CONFIG );
 
-    if (NULL != optional_config)
-        (void)ReadConfig_optional(optional_config, PREMIB_CONFIG);
+    if ( NULL != optional_config )
+        ( void )ReadConfig_optional( optional_config, PREMIB_CONFIG );
 
-    ReadConfig_processMemoriesWhen(PREMIB_CONFIG, 0);
+    ReadConfig_processMemoriesWhen( PREMIB_CONFIG, 0 );
 
-    DefaultStore_setBoolean(DsStorage_LIBRARY_ID,
-               DsBool_HAVE_READ_PREMIB_CONFIG, 1);
+    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+        DsBool_HAVE_READ_PREMIB_CONFIG, 1 );
 
-    Callback_callCallbacks(CALLBACK_LIBRARY,
-                           CALLBACK_POST_PREMIB_READ_CONFIG, NULL);
+    Callback_callCallbacks( CALLBACK_LIBRARY,
+        CALLBACK_POST_PREMIB_READ_CONFIG, NULL );
 }
 
 /*******************************************************************-o-******
@@ -1001,11 +970,10 @@ ReadConfig_readPremibConfigs(void)
  * Sets the configuration directory. Multiple directories can be
  * specified, but need to be seperated by 'ENV_SEPARATOR_CHAR'.
  */
-void
-ReadConfig_setConfigurationDirectory(const char *dir)
+void ReadConfig_setConfigurationDirectory( const char* dir )
 {
-    DefaultStore_setString(DsStorage_LIBRARY_ID,
-              DsStr_CONFIGURATION_DIR, dir);
+    DefaultStore_setString( DsStorage_LIBRARY_ID,
+        DsStr_CONFIGURATION_DIR, dir );
 }
 
 /*******************************************************************-o-******
@@ -1020,26 +988,26 @@ ReadConfig_setConfigurationDirectory(const char *dir)
  * Return the value.
  * We always retrieve it new, since we have to do it anyway if it is just set.
  */
-const char *
-ReadConfig_getConfigurationDirectory(void)
+const char*
+ReadConfig_getConfigurationDirectory( void )
 {
-    char            defaultPath[IMPL_SPRINT_MAX_LEN];
-    char           *homepath;
+    char defaultPath[ IMPL_SPRINT_MAX_LEN ];
+    char* homepath;
 
-    if (NULL == DefaultStore_getString(DsStorage_LIBRARY_ID,
-                      DsStr_CONFIGURATION_DIR)) {
-        homepath = Tools_getenv("HOME");
-        snprintf(defaultPath, sizeof(defaultPath), "%s%c%s%c%s%s%s%s",
-                SNMPCONFPATH, ENV_SEPARATOR_CHAR,
-                SNMPSHAREPATH, ENV_SEPARATOR_CHAR, SNMPLIBPATH,
-                ((homepath == NULL) ? "" : ENV_SEPARATOR),
-                ((homepath == NULL) ? "" : homepath),
-                ((homepath == NULL) ? "" : "/.priot"));
-        defaultPath[ sizeof(defaultPath)-1 ] = 0;
-        ReadConfig_setConfigurationDirectory(defaultPath);
+    if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
+                     DsStr_CONFIGURATION_DIR ) ) {
+        homepath = Tools_getenv( "HOME" );
+        snprintf( defaultPath, sizeof( defaultPath ), "%s%c%s%c%s%s%s%s",
+            SNMPCONFPATH, ENV_SEPARATOR_CHAR,
+            SNMPSHAREPATH, ENV_SEPARATOR_CHAR, SNMPLIBPATH,
+            ( ( homepath == NULL ) ? "" : ENV_SEPARATOR ),
+            ( ( homepath == NULL ) ? "" : homepath ),
+            ( ( homepath == NULL ) ? "" : "/.priot" ) );
+        defaultPath[ sizeof( defaultPath ) - 1 ] = 0;
+        ReadConfig_setConfigurationDirectory( defaultPath );
     }
-    return (DefaultStore_getString(DsStorage_LIBRARY_ID,
-                  DsStr_CONFIGURATION_DIR));
+    return ( DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_CONFIGURATION_DIR ) );
 }
 
 /*******************************************************************-o-******
@@ -1051,11 +1019,10 @@ ReadConfig_getConfigurationDirectory(void)
  * No multiple directories may be specified.
  * (However, this is not checked)
  */
-void
-ReadConfig_setPersistentDirectory(const char *dir)
+void ReadConfig_setPersistentDirectory( const char* dir )
 {
-    DefaultStore_setString(DsStorage_LIBRARY_ID,
-              DsStr_PERSISTENT_DIR, dir);
+    DefaultStore_setString( DsStorage_LIBRARY_ID,
+        DsStr_PERSISTENT_DIR, dir );
 }
 
 /*******************************************************************-o-******
@@ -1068,19 +1035,19 @@ ReadConfig_setPersistentDirectory(const char *dir)
  * Return the value.
  * We always retrieve it new, since we have to do it anyway if it is just set.
  */
-const char *
-ReadConfig_getPersistentDirectory(void)
+const char*
+ReadConfig_getPersistentDirectory( void )
 {
-    if (NULL == DefaultStore_getString(DsStorage_LIBRARY_ID,
-                      DsStr_PERSISTENT_DIR)) {
+    if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
+                     DsStr_PERSISTENT_DIR ) ) {
 
-        const char *persdir = Tools_getenv("PRIOT_PERSISTENT_DIR");
-        if (NULL == persdir)
+        const char* persdir = Tools_getenv( "PRIOT_PERSISTENT_DIR" );
+        if ( NULL == persdir )
             persdir = PERSISTENT_DIRECTORY;
-        ReadConfig_setPersistentDirectory(persdir);
+        ReadConfig_setPersistentDirectory( persdir );
     }
-    return (DefaultStore_getString(DsStorage_LIBRARY_ID,
-                  DsStr_PERSISTENT_DIR));
+    return ( DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_PERSISTENT_DIR ) );
 }
 
 /*******************************************************************-o-******
@@ -1092,11 +1059,10 @@ ReadConfig_getPersistentDirectory(void)
  * Multiple patterns may not be specified.
  * (However, this is not checked)
  */
-void
-ReadConfig_setTempFilePattern(const char *pattern)
+void ReadConfig_setTempFilePattern( const char* pattern )
 {
-    DefaultStore_setString(DsStorage_LIBRARY_ID,
-              DsStr_TEMP_FILE_PATTERN, pattern);
+    DefaultStore_setString( DsStorage_LIBRARY_ID,
+        DsStr_TEMP_FILE_PATTERN, pattern );
 }
 
 /*******************************************************************-o-******
@@ -1109,15 +1075,15 @@ ReadConfig_setTempFilePattern(const char *pattern)
  * Return the value.
  * We always retrieve it new, since we have to do it anyway if it is just set.
  */
-const char     *
-ReadConfig_getTempFilePattern(void)
+const char*
+ReadConfig_getTempFilePattern( void )
 {
-    if (NULL == DefaultStore_getString(DsStorage_LIBRARY_ID,
-                      DsStr_TEMP_FILE_PATTERN)) {
-        ReadConfig_setTempFilePattern(NETSNMP_TEMP_FILE_PATTERN);
+    if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
+                     DsStr_TEMP_FILE_PATTERN ) ) {
+        ReadConfig_setTempFilePattern( NETSNMP_TEMP_FILE_PATTERN );
     }
-    return (DefaultStore_getString(DsStorage_LIBRARY_ID,
-                  DsStr_TEMP_FILE_PATTERN));
+    return ( DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DsStr_TEMP_FILE_PATTERN ) );
 }
 
 /**
@@ -1128,46 +1094,46 @@ ReadConfig_getTempFilePattern(void)
  *    Whether this is actually an error is left to the application
  */
 static int
-_ReadConfig_filesInPath(const char *path, struct ReadConfig_ConfigFiles_s *ctmp,
-                          int when, const char *perspath, const char *persfile)
+_ReadConfig_filesInPath( const char* path, struct ReadConfig_ConfigFiles_s* ctmp,
+    int when, const char* perspath, const char* persfile )
 {
-    int             done, j;
-    char            configfile[300];
-    char           *cptr1, *cptr2, *envconfpath;
-    struct stat     statbuf;
-    int             ret = ErrorCode_GENERR;
+    int done, j;
+    char configfile[ 300 ];
+    char *cptr1, *cptr2, *envconfpath;
+    struct stat statbuf;
+    int ret = ErrorCode_GENERR;
 
-    if ((NULL == path) || (NULL == ctmp))
+    if ( ( NULL == path ) || ( NULL == ctmp ) )
         return ErrorCode_GENERR;
 
-    envconfpath = strdup(path);
+    envconfpath = strdup( path );
 
-    DEBUG_MSGTL(("read_config:path", " config path used for %s:%s (persistent path:%s)\n",
-                ctmp->fileHeader, envconfpath, perspath));
+    DEBUG_MSGTL( ( "read_config:path", " config path used for %s:%s (persistent path:%s)\n",
+        ctmp->fileHeader, envconfpath, perspath ) );
     cptr1 = cptr2 = envconfpath;
     done = 0;
-    while ((!done) && (*cptr2 != 0)) {
-        while (*cptr1 != 0 && *cptr1 != ENV_SEPARATOR_CHAR)
+    while ( ( !done ) && ( *cptr2 != 0 ) ) {
+        while ( *cptr1 != 0 && *cptr1 != ENV_SEPARATOR_CHAR )
             cptr1++;
-        if (*cptr1 == 0)
+        if ( *cptr1 == 0 )
             done = 1;
         else
             *cptr1 = 0;
 
-        DEBUG_MSGTL(("read_config:dir", " config dir: %s\n", cptr2 ));
-        if (stat(cptr2, &statbuf) != 0) {
+        DEBUG_MSGTL( ( "read_config:dir", " config dir: %s\n", cptr2 ) );
+        if ( stat( cptr2, &statbuf ) != 0 ) {
             /*
              * Directory not there, continue
              */
-            DEBUG_MSGTL(("read_config:dir", " Directory not present: %s\n", cptr2 ));
+            DEBUG_MSGTL( ( "read_config:dir", " Directory not present: %s\n", cptr2 ) );
             cptr2 = ++cptr1;
             continue;
         }
-        if (!S_ISDIR(statbuf.st_mode)) {
+        if ( !S_ISDIR( statbuf.st_mode ) ) {
             /*
              * Not a directory, continue
              */
-            DEBUG_MSGTL(("read_config:dir", " Not a directory: %s\n", cptr2 ));
+            DEBUG_MSGTL( ( "read_config:dir", " Not a directory: %s\n", cptr2 ) );
             cptr2 = ++cptr1;
             continue;
         }
@@ -1179,19 +1145,17 @@ _ReadConfig_filesInPath(const char *path, struct ReadConfig_ConfigFiles_s *ctmp,
          * then we read all the configuration files we can, starting with
          * the oldest first.
          */
-        if (strncmp(cptr2, perspath, strlen(perspath)) == 0 ||
-            (persfile != NULL &&
-             strncmp(cptr2, persfile, strlen(persfile)) == 0)) {
-            DEBUG_MSGTL(("read_config:persist", " persist dir: %s\n", cptr2 ));
+        if ( strncmp( cptr2, perspath, strlen( perspath ) ) == 0 || ( persfile != NULL && strncmp( cptr2, persfile, strlen( persfile ) ) == 0 ) ) {
+            DEBUG_MSGTL( ( "read_config:persist", " persist dir: %s\n", cptr2 ) );
             /*
              * limit this to the known storage directory only
              */
-            for (j = 0; j <= MAX_PERSISTENT_BACKUPS; j++) {
-                snprintf(configfile, sizeof(configfile),
-                         "%s/%s.%d.conf", cptr2,
-                         ctmp->fileHeader, j);
-                configfile[ sizeof(configfile)-1 ] = 0;
-                if (stat(configfile, &statbuf) != 0) {
+            for ( j = 0; j <= MAX_PERSISTENT_BACKUPS; j++ ) {
+                snprintf( configfile, sizeof( configfile ),
+                    "%s/%s.%d.conf", cptr2,
+                    ctmp->fileHeader, j );
+                configfile[ sizeof( configfile ) - 1 ] = 0;
+                if ( stat( configfile, &statbuf ) != 0 ) {
                     /*
                      * file not there, continue
                      */
@@ -1200,31 +1164,31 @@ _ReadConfig_filesInPath(const char *path, struct ReadConfig_ConfigFiles_s *ctmp,
                     /*
                      * backup exists, read it
                      */
-                    DEBUG_MSGTL(("read_config_files",
-                                "old config file found: %s, parsing\n",
-                                configfile));
-                    if (ReadConfig_readConfig(configfile, ctmp->start, when) == ErrorCode_SUCCESS)
+                    DEBUG_MSGTL( ( "read_config_files",
+                        "old config file found: %s, parsing\n",
+                        configfile ) );
+                    if ( ReadConfig_readConfig( configfile, ctmp->start, when ) == ErrorCode_SUCCESS )
                         ret = ErrorCode_SUCCESS;
                 }
             }
         }
-        snprintf(configfile, sizeof(configfile),
-                 "%s/%s.conf", cptr2, ctmp->fileHeader);
-        configfile[ sizeof(configfile)-1 ] = 0;
-        if (ReadConfig_readConfig(configfile, ctmp->start, when) == ErrorCode_SUCCESS)
+        snprintf( configfile, sizeof( configfile ),
+            "%s/%s.conf", cptr2, ctmp->fileHeader );
+        configfile[ sizeof( configfile ) - 1 ] = 0;
+        if ( ReadConfig_readConfig( configfile, ctmp->start, when ) == ErrorCode_SUCCESS )
             ret = ErrorCode_SUCCESS;
-        snprintf(configfile, sizeof(configfile),
-                 "%s/%s.local.conf", cptr2, ctmp->fileHeader);
-        configfile[ sizeof(configfile)-1 ] = 0;
-        if (ReadConfig_readConfig(configfile, ctmp->start, when) == ErrorCode_SUCCESS)
+        snprintf( configfile, sizeof( configfile ),
+            "%s/%s.local.conf", cptr2, ctmp->fileHeader );
+        configfile[ sizeof( configfile ) - 1 ] = 0;
+        if ( ReadConfig_readConfig( configfile, ctmp->start, when ) == ErrorCode_SUCCESS )
             ret = ErrorCode_SUCCESS;
 
-        if(done)
+        if ( done )
             break;
 
         cptr2 = ++cptr1;
     }
-    TOOLS_FREE(envconfpath);
+    TOOLS_FREE( envconfpath );
     return ret;
 }
 
@@ -1261,57 +1225,59 @@ _ReadConfig_filesInPath(const char *path, struct ReadConfig_ConfigFiles_s *ctmp,
  * Return ErrorCode_GENERR if _no_ config files are processed
  *    Whether this is actually an error is left to the application
  */
-int ReadConfig_filesOfType(int when, struct ReadConfig_ConfigFiles_s *ctmp)
+int ReadConfig_filesOfType( int when, struct ReadConfig_ConfigFiles_s* ctmp )
 {
-    const char     *confpath, *persfile, *envconfpath;
-    char           *perspath;
-    int             ret = ErrorCode_GENERR;
+    const char *confpath, *persfile, *envconfpath;
+    char* perspath;
+    int ret = ErrorCode_GENERR;
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DONT_PERSIST_STATE)
-        || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                                  DsBool_DONT_READ_CONFIGS)
-        || (NULL == ctmp)) return ret;
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+             DsBool_DONT_PERSIST_STATE )
+        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+               DsBool_DONT_READ_CONFIGS )
+        || ( NULL == ctmp ) )
+        return ret;
 
     /*
      * these shouldn't change
      */
     confpath = ReadConfig_getConfigurationDirectory();
-    persfile = Tools_getenv("PRIOT_PERSISTENT_FILE");
-    envconfpath = Tools_getenv("PRIOTCONFPATH");
+    persfile = Tools_getenv( "PRIOT_PERSISTENT_FILE" );
+    envconfpath = Tools_getenv( "PRIOTCONFPATH" );
 
-
-        /*
+    /*
          * read the config files. strdup() the result of
          * ReadConfig_getPersistentDirectory() to avoid that parsing the "persistentDir"
          * keyword transforms the perspath pointer into a dangling pointer.
          */
-        perspath = strdup(ReadConfig_getPersistentDirectory());
-        if (envconfpath == NULL) {
-            /*
+    perspath = strdup( ReadConfig_getPersistentDirectory() );
+    if ( envconfpath == NULL ) {
+        /*
              * read just the config files (no persistent stuff), since
              * persistent path can change via conf file. Then get the
              * current persistent directory, and read files there.
              */
-            if ( _ReadConfig_filesInPath(confpath, ctmp, when, perspath,
-                                      persfile) == ErrorCode_SUCCESS )
-                ret = ErrorCode_SUCCESS;
-            free(perspath);
-            perspath = strdup(ReadConfig_getPersistentDirectory());
-            if ( _ReadConfig_filesInPath(perspath, ctmp, when, perspath,
-                                      persfile) == ErrorCode_SUCCESS )
-                ret = ErrorCode_SUCCESS;
-        }
-        else {
-            /*
+        if ( _ReadConfig_filesInPath( confpath, ctmp, when, perspath,
+                 persfile )
+            == ErrorCode_SUCCESS )
+            ret = ErrorCode_SUCCESS;
+        free( perspath );
+        perspath = strdup( ReadConfig_getPersistentDirectory() );
+        if ( _ReadConfig_filesInPath( perspath, ctmp, when, perspath,
+                 persfile )
+            == ErrorCode_SUCCESS )
+            ret = ErrorCode_SUCCESS;
+    } else {
+        /*
              * only read path specified by user
              */
-            if ( _ReadConfig_filesInPath(envconfpath, ctmp, when, perspath,
-                                      persfile) == ErrorCode_SUCCESS )
-                ret = ErrorCode_SUCCESS;
-        }
-        free(perspath);
-        return ret;
+        if ( _ReadConfig_filesInPath( envconfpath, ctmp, when, perspath,
+                 persfile )
+            == ErrorCode_SUCCESS )
+            ret = ErrorCode_SUCCESS;
+    }
+    free( perspath );
+    return ret;
 }
 
 /*
@@ -1319,56 +1285,59 @@ int ReadConfig_filesOfType(int when, struct ReadConfig_ConfigFiles_s *ctmp)
  * Return ErrorCode_GENERR if _no_ config files are processed
  *    Whether this is actually an error is left to the application
  */
-int ReadConfig_files(int when) {
+int ReadConfig_files( int when )
+{
 
-    struct ReadConfig_ConfigFiles_s *ctmp = readConfig_configFiles;
-    int                  ret  = ErrorCode_GENERR;
+    struct ReadConfig_ConfigFiles_s* ctmp = readConfig_configFiles;
+    int ret = ErrorCode_GENERR;
 
     _readConfig_configErrors = 0;
 
-    if (when == PREMIB_CONFIG)
+    if ( when == PREMIB_CONFIG )
         ReadConfig_freeConfig();
 
     /*
      * read all config file types
      */
-    for (; ctmp != NULL; ctmp = ctmp->next) {
-        if ( ReadConfig_filesOfType(when, ctmp) == ErrorCode_SUCCESS )
+    for ( ; ctmp != NULL; ctmp = ctmp->next ) {
+        if ( ReadConfig_filesOfType( when, ctmp ) == ErrorCode_SUCCESS )
             ret = ErrorCode_SUCCESS;
     }
 
-    if (_readConfig_configErrors) {
-        Logger_log(LOGGER_PRIORITY_ERR, "priot: %d error(s) in config file(s)\n",
-                 _readConfig_configErrors);
+    if ( _readConfig_configErrors ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "priot: %d error(s) in config file(s)\n",
+            _readConfig_configErrors );
     }
     return ret;
 }
 
-void ReadConfig_printUsage(const char *lead)
+void ReadConfig_printUsage( const char* lead )
 {
-    struct ReadConfig_ConfigFiles_s *ctmp = readConfig_configFiles;
-    struct ReadConfig_ConfigLine_s *ltmp;
+    struct ReadConfig_ConfigFiles_s* ctmp = readConfig_configFiles;
+    struct ReadConfig_ConfigLine_s* ltmp;
 
-    if (lead == NULL)
+    if ( lead == NULL )
         lead = "";
 
-    for (ctmp = readConfig_configFiles; ctmp != NULL; ctmp = ctmp->next) {
-        Logger_log(LOGGER_PRIORITY_INFO, "%sIn %s.conf and %s.local.conf:\n", lead,
-                 ctmp->fileHeader, ctmp->fileHeader);
-        for (ltmp = ctmp->start; ltmp != NULL; ltmp = ltmp->next) {
-            DEBUG_IF("read_config_usage") {
-                if (ltmp->config_time == PREMIB_CONFIG)
-                    DEBUG_MSG(("read_config_usage", "*"));
+    for ( ctmp = readConfig_configFiles; ctmp != NULL; ctmp = ctmp->next ) {
+        Logger_log( LOGGER_PRIORITY_INFO, "%sIn %s.conf and %s.local.conf:\n", lead,
+            ctmp->fileHeader, ctmp->fileHeader );
+        for ( ltmp = ctmp->start; ltmp != NULL; ltmp = ltmp->next ) {
+            DEBUG_IF( "read_config_usage" )
+            {
+                if ( ltmp->config_time == PREMIB_CONFIG )
+                    DEBUG_MSG( ( "read_config_usage", "*" ) );
                 else
-                    DEBUG_MSG(("read_config_usage", " "));
+                    DEBUG_MSG( ( "read_config_usage", " " ) );
             }
-            if (ltmp->help) {
-                Logger_log(LOGGER_PRIORITY_INFO, "%s%s%-24s %s\n", lead, lead,
-                         ltmp->config_token, ltmp->help);
+            if ( ltmp->help ) {
+                Logger_log( LOGGER_PRIORITY_INFO, "%s%s%-24s %s\n", lead, lead,
+                    ltmp->config_token, ltmp->help );
             } else {
-                DEBUG_IF("read_config_usage") {
-                    Logger_log(LOGGER_PRIORITY_INFO, "%s%s%-24s [NO HELP]\n", lead, lead,
-                             ltmp->config_token);
+                DEBUG_IF( "read_config_usage" )
+                {
+                    Logger_log( LOGGER_PRIORITY_INFO, "%s%s%-24s [NO HELP]\n", lead, lead,
+                        ltmp->config_token );
                 }
             }
         }
@@ -1376,7 +1345,7 @@ void ReadConfig_printUsage(const char *lead)
 }
 
 /**
- * read_config_store intended for use by applications to store permenant
+ * ReadConfig_store intended for use by applications to store permenant
  * configuration information generated by sets or persistent counters.
  * Appends line to a file named either ENV(SNMP_PERSISTENT_FILE) or
  *   "<NETSNMP_PERSISTENT_DIRECTORY>/<type>.conf".
@@ -1388,58 +1357,55 @@ void ReadConfig_printUsage(const char *lead)
  *
  * @return void
   */
-void
-ReadConfig_store(const char *type, const char *line)
+void ReadConfig_store( const char* type, const char* line )
 {
-    char            file[512], *filep;
-    FILE           *fout;
-    mode_t          oldmask;
+    char file[ 512 ], *filep;
+    FILE* fout;
+    mode_t oldmask;
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DONT_PERSIST_STATE)
-     || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DISABLE_PERSISTENT_LOAD)) return;
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+             DsBool_DONT_PERSIST_STATE )
+        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+               DsBool_DISABLE_PERSISTENT_LOAD ) )
+        return;
 
     /*
      * store configuration directives in the following order of preference:
      * 1. ENV variable SNMP_PERSISTENT_FILE
      * 2. configured <NETSNMP_PERSISTENT_DIRECTORY>/<type>.conf
      */
-    if ((filep = Tools_getenv("PRIOT_PERSISTENT_FILE")) == NULL) {
-        snprintf(file, sizeof(file),
-                 "%s/%s.conf", ReadConfig_getPersistentDirectory(), type);
-        file[ sizeof(file)-1 ] = 0;
+    if ( ( filep = Tools_getenv( "PRIOT_PERSISTENT_FILE" ) ) == NULL ) {
+        snprintf( file, sizeof( file ),
+            "%s/%s.conf", ReadConfig_getPersistentDirectory(), type );
+        file[ sizeof( file ) - 1 ] = 0;
         filep = file;
     }
-    oldmask = umask(PERSISTENT_MASK);
+    oldmask = umask( PERSISTENT_MASK );
 
-    if (System_mkdirhier(filep, AGENT_DIRECTORY_MODE, 1)) {
-        Logger_log(LOGGER_PRIORITY_ERR,
-                 "Failed to create the persistent directory for %s\n",
-                 file);
+    if ( System_mkdirhier( filep, AGENT_DIRECTORY_MODE, 1 ) ) {
+        Logger_log( LOGGER_PRIORITY_ERR,
+            "Failed to create the persistent directory for %s\n",
+            file );
     }
-    if ((fout = fopen(filep, "a")) != NULL) {
-        fprintf(fout, "%s", line);
-        if (line[strlen(line)] != '\n')
-            fprintf(fout, "\n");
-        DEBUG_MSGTL(("read_config:store", "storing: %s\n", line));
-        fclose(fout);
+    if ( ( fout = fopen( filep, "a" ) ) != NULL ) {
+        fprintf( fout, "%s", line );
+        if ( line[ strlen( line ) ] != '\n' )
+            fprintf( fout, "\n" );
+        DEBUG_MSGTL( ( "read_config:store", "storing: %s\n", line ) );
+        fclose( fout );
     } else {
-        Logger_log(LOGGER_PRIORITY_ERR, "read_config_store open failure on %s\n", filep);
+        Logger_log( LOGGER_PRIORITY_ERR, "ReadConfig_store open failure on %s\n", filep );
     }
-    umask(oldmask);
+    umask( oldmask );
 
-}                               /* end read_config_store() */
+} /* end ReadConfig_store() */
 
-void
-ReadConfig_readAppConfigStore(const char *line)
+void ReadConfig_readAppConfigStore( const char* line )
 {
-    ReadConfig_store(DefaultStore_getString(DsStorage_LIBRARY_ID,
-                        DsStr_APPTYPE), line);
+    ReadConfig_store( DefaultStore_getString( DsStorage_LIBRARY_ID,
+                          DsStr_APPTYPE ),
+        line );
 }
-
-
-
 
 /*******************************************************************-o-******
  * ReadConfig_savePersistent
@@ -1460,37 +1426,37 @@ ReadConfig_readAppConfigStore(const char *line)
  * Note: on an rename error, the files are removed rather than saved.
  *
  */
-void
-ReadConfig_savePersistent(const char *type)
+void ReadConfig_savePersistent( const char* type )
 {
-    char            file[512], fileold[IMPL_SPRINT_MAX_LEN];
-    struct stat     statbuf;
-    int             j;
+    char file[ 512 ], fileold[ IMPL_SPRINT_MAX_LEN ];
+    struct stat statbuf;
+    int j;
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DONT_PERSIST_STATE)
-     || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DISABLE_PERSISTENT_SAVE)) return;
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+             DsBool_DONT_PERSIST_STATE )
+        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+               DsBool_DISABLE_PERSISTENT_SAVE ) )
+        return;
 
-    DEBUG_MSGTL(("snmp_save_persistent", "saving %s files...\n", type));
-    snprintf(file, sizeof(file),
-             "%s/%s.conf", ReadConfig_getPersistentDirectory(), type);
-    file[ sizeof(file)-1 ] = 0;
-    if (stat(file, &statbuf) == 0) {
-        for (j = 0; j <= MAX_PERSISTENT_BACKUPS; j++) {
-            snprintf(fileold, sizeof(fileold),
-                     "%s/%s.%d.conf", ReadConfig_getPersistentDirectory(), type, j);
-            fileold[ sizeof(fileold)-1 ] = 0;
-            if (stat(fileold, &statbuf) != 0) {
-                DEBUG_MSGTL(("snmp_save_persistent",
-                            " saving old config file: %s -> %s.\n", file,
-                            fileold));
-                if (rename(file, fileold)) {
-                    Logger_log(LOGGER_PRIORITY_ERR, "Cannot rename %s to %s\n", file, fileold);
-                     /* moving it failed, try nuking it, as leaving
+    DEBUG_MSGTL( ( "snmp_save_persistent", "saving %s files...\n", type ) );
+    snprintf( file, sizeof( file ),
+        "%s/%s.conf", ReadConfig_getPersistentDirectory(), type );
+    file[ sizeof( file ) - 1 ] = 0;
+    if ( stat( file, &statbuf ) == 0 ) {
+        for ( j = 0; j <= MAX_PERSISTENT_BACKUPS; j++ ) {
+            snprintf( fileold, sizeof( fileold ),
+                "%s/%s.%d.conf", ReadConfig_getPersistentDirectory(), type, j );
+            fileold[ sizeof( fileold ) - 1 ] = 0;
+            if ( stat( fileold, &statbuf ) != 0 ) {
+                DEBUG_MSGTL( ( "snmp_save_persistent",
+                    " saving old config file: %s -> %s.\n", file,
+                    fileold ) );
+                if ( rename( file, fileold ) ) {
+                    Logger_log( LOGGER_PRIORITY_ERR, "Cannot rename %s to %s\n", file, fileold );
+                    /* moving it failed, try nuking it, as leaving
                       * it around is very bad. */
-                    if (unlink(file) == -1)
-                        Logger_log(LOGGER_PRIORITY_ERR, "Cannot unlink %s\n", file);
+                    if ( unlink( file ) == -1 )
+                        Logger_log( LOGGER_PRIORITY_ERR, "Cannot unlink %s\n", file );
                 }
                 break;
             }
@@ -1499,16 +1465,15 @@ ReadConfig_savePersistent(const char *type)
     /*
      * save a warning header to the top of the new file
      */
-    snprintf(fileold, sizeof(fileold),
-            "%s%s# Please save normal configuration tokens for %s in SNMPCONFPATH/%s.conf.\n# Only \"createUser\" tokens should be placed here by %s administrators.\n%s",
-            "#\n# net-snmp (or ucd-snmp) persistent data file.\n#\n############################################################################\n# STOP STOP STOP STOP STOP STOP STOP STOP STOP \n",
-            "#\n#          **** DO NOT EDIT THIS FILE ****\n#\n# STOP STOP STOP STOP STOP STOP STOP STOP STOP \n############################################################################\n#\n# DO NOT STORE CONFIGURATION ENTRIES HERE.\n",
-            type, type, type,
-        "# (Did I mention: do not edit this file?)\n#\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    fileold[ sizeof(fileold)-1 ] = 0;
-    ReadConfig_store(type, fileold);
+    snprintf( fileold, sizeof( fileold ),
+        "%s%s# Please save normal configuration tokens for %s in SNMPCONFPATH/%s.conf.\n# Only \"createUser\" tokens should be placed here by %s administrators.\n%s",
+        "#\n# net-snmp (or ucd-snmp) persistent data file.\n#\n############################################################################\n# STOP STOP STOP STOP STOP STOP STOP STOP STOP \n",
+        "#\n#          **** DO NOT EDIT THIS FILE ****\n#\n# STOP STOP STOP STOP STOP STOP STOP STOP STOP \n############################################################################\n#\n# DO NOT STORE CONFIGURATION ENTRIES HERE.\n",
+        type, type, type,
+        "# (Did I mention: do not edit this file?)\n#\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" );
+    fileold[ sizeof( fileold ) - 1 ] = 0;
+    ReadConfig_store( type, fileold );
 }
-
 
 /*******************************************************************-o-******
  * snmp_clean_persistent
@@ -1527,144 +1492,134 @@ ReadConfig_savePersistent(const char *type)
  *	data persists in memory or swap.  Only important if secrets
  *	will be stored here.
  */
-void
-ReadConfig_cleanPersistent(const char *type)
+void ReadConfig_cleanPersistent( const char* type )
 {
-    char            file[512];
-    struct stat     statbuf;
-    int             j;
+    char file[ 512 ];
+    struct stat statbuf;
+    int j;
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DONT_PERSIST_STATE)
-     || DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                               DsBool_DISABLE_PERSISTENT_SAVE)) return;
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+             DsBool_DONT_PERSIST_STATE )
+        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+               DsBool_DISABLE_PERSISTENT_SAVE ) )
+        return;
 
-    DEBUG_MSGTL(("snmp_clean_persistent", "cleaning %s files...\n", type));
-    snprintf(file, sizeof(file),
-             "%s/%s.conf", ReadConfig_getPersistentDirectory(), type);
-    file[ sizeof(file)-1 ] = 0;
-    if (stat(file, &statbuf) == 0) {
-        for (j = 0; j <= MAX_PERSISTENT_BACKUPS; j++) {
-            snprintf(file, sizeof(file),
-                     "%s/%s.%d.conf", ReadConfig_getPersistentDirectory(), type, j);
-            file[ sizeof(file)-1 ] = 0;
-            if (stat(file, &statbuf) == 0) {
-                DEBUG_MSGTL(("snmp_clean_persistent",
-                            " removing old config file: %s\n", file));
-                if (unlink(file) == -1)
-                    Logger_log(LOGGER_PRIORITY_ERR, "Cannot unlink %s\n", file);
+    DEBUG_MSGTL( ( "snmp_clean_persistent", "cleaning %s files...\n", type ) );
+    snprintf( file, sizeof( file ),
+        "%s/%s.conf", ReadConfig_getPersistentDirectory(), type );
+    file[ sizeof( file ) - 1 ] = 0;
+    if ( stat( file, &statbuf ) == 0 ) {
+        for ( j = 0; j <= MAX_PERSISTENT_BACKUPS; j++ ) {
+            snprintf( file, sizeof( file ),
+                "%s/%s.%d.conf", ReadConfig_getPersistentDirectory(), type, j );
+            file[ sizeof( file ) - 1 ] = 0;
+            if ( stat( file, &statbuf ) == 0 ) {
+                DEBUG_MSGTL( ( "snmp_clean_persistent",
+                    " removing old config file: %s\n", file ) );
+                if ( unlink( file ) == -1 )
+                    Logger_log( LOGGER_PRIORITY_ERR, "Cannot unlink %s\n", file );
             }
         }
     }
 }
 
-
-
-
 /*
  * ReadConfig_configPerror: prints a warning string associated with a file and
  * line number of a .conf file and increments the error count.
  */
-static void _ReadConfig_configVlog(int level, const char *levelmsg, const char *str, va_list args)
+static void _ReadConfig_configVlog( int level, const char* levelmsg, const char* str, va_list args )
 {
-    char tmpbuf[256];
+    char tmpbuf[ 256 ];
     char* buf = tmpbuf;
-    int len = snprintf(tmpbuf, sizeof(tmpbuf), "%s: line %d: %s: %s\n",
-               _readConfig_curfilename, _readConfig_linecount, levelmsg, str);
-    if (len >= (int)sizeof(tmpbuf)) {
-    buf = (char*)malloc(len + 1);
-    sprintf(buf, "%s: line %d: %s: %s\n",
-        _readConfig_curfilename, _readConfig_linecount, levelmsg, str);
+    int len = snprintf( tmpbuf, sizeof( tmpbuf ), "%s: line %d: %s: %s\n",
+        _readConfig_curfilename, _readConfig_linecount, levelmsg, str );
+    if ( len >= ( int )sizeof( tmpbuf ) ) {
+        buf = ( char* )malloc( len + 1 );
+        sprintf( buf, "%s: line %d: %s: %s\n",
+            _readConfig_curfilename, _readConfig_linecount, levelmsg, str );
     }
-    Logger_vlog(level, buf, args);
-    if (buf != tmpbuf)
-    free(buf);
+    Logger_vlog( level, buf, args );
+    if ( buf != tmpbuf )
+        free( buf );
 }
 
-void
-ReadConfig_error(const char *str, ...)
+void ReadConfig_error( const char* str, ... )
 {
     va_list args;
-    va_start(args, str);
-    _ReadConfig_configVlog(LOGGER_PRIORITY_ERR, "Error", str, args);
-    va_end(args);
+    va_start( args, str );
+    _ReadConfig_configVlog( LOGGER_PRIORITY_ERR, "Error", str, args );
+    va_end( args );
     _readConfig_configErrors++;
 }
 
-void
-ReadConfig_warn(const char *str, ...)
+void ReadConfig_warn( const char* str, ... )
 {
     va_list args;
-    va_start(args, str);
-    _ReadConfig_configVlog(LOGGER_PRIORITY_WARNING, "Warning", str, args);
-    va_end(args);
+    va_start( args, str );
+    _ReadConfig_configVlog( LOGGER_PRIORITY_WARNING, "Warning", str, args );
+    va_end( args );
 }
 
-void
-ReadConfig_configPerror(const char *str)
+void ReadConfig_configPerror( const char* str )
 {
-    ReadConfig_error("%s", str);
+    ReadConfig_error( "%s", str );
 }
 
-void
-ReadConfig_configPwarn(const char *str)
+void ReadConfig_configPwarn( const char* str )
 {
-    ReadConfig_warn("%s", str);
+    ReadConfig_warn( "%s", str );
 }
 
 /*
  * skip all white spaces and return 1 if found something either end of
  * line or a comment character
  */
-char   *
-ReadConfig_skipWhite(char *ptr)
+char* ReadConfig_skipWhite( char* ptr )
 {
-    return TOOLS_REMOVE_CONST(char *, ReadConfig_skipWhiteConst(ptr));
+    return TOOLS_REMOVE_CONST( char*, ReadConfig_skipWhiteConst( ptr ) );
 }
 
-const char  *
-ReadConfig_skipWhiteConst(const char *ptr)
+const char*
+ReadConfig_skipWhiteConst( const char* ptr )
 {
-    if (ptr == NULL)
-        return (NULL);
-    while (*ptr != 0 && isspace((unsigned char)*ptr))
+    if ( ptr == NULL )
+        return ( NULL );
+    while ( *ptr != 0 && isspace( ( unsigned char )*ptr ) )
         ptr++;
-    if (*ptr == 0 || *ptr == '#')
-        return (NULL);
-    return (ptr);
+    if ( *ptr == 0 || *ptr == '#' )
+        return ( NULL );
+    return ( ptr );
 }
 
-char *
-ReadConfig_skipNotWhite(char *ptr)
+char* ReadConfig_skipNotWhite( char* ptr )
 {
-    return TOOLS_REMOVE_CONST(char *, ReadConfig_skipNotWhiteConst(ptr));
+    return TOOLS_REMOVE_CONST( char*, ReadConfig_skipNotWhiteConst( ptr ) );
 }
 
-const char *
-ReadConfig_skipNotWhiteConst(const char *ptr)
+const char*
+ReadConfig_skipNotWhiteConst( const char* ptr )
 {
-    if (ptr == NULL)
-        return (NULL);
-    while (*ptr != 0 && !isspace((unsigned char)*ptr))
+    if ( ptr == NULL )
+        return ( NULL );
+    while ( *ptr != 0 && !isspace( ( unsigned char )*ptr ) )
         ptr++;
-    if (*ptr == 0 || *ptr == '#')
-        return (NULL);
-    return (ptr);
+    if ( *ptr == 0 || *ptr == '#' )
+        return ( NULL );
+    return ( ptr );
 }
 
-char  *
-ReadConfig_skipToken(char *ptr)
+char* ReadConfig_skipToken( char* ptr )
 {
-    return TOOLS_REMOVE_CONST(char *, ReadConfig_skipTokenConst(ptr));
+    return TOOLS_REMOVE_CONST( char*, ReadConfig_skipTokenConst( ptr ) );
 }
 
-const char     *
-ReadConfig_skipTokenConst(const char *ptr)
+const char*
+ReadConfig_skipTokenConst( const char* ptr )
 {
-    ptr = ReadConfig_skipWhiteConst(ptr);
-    ptr = ReadConfig_skipNotWhiteConst(ptr);
-    ptr = ReadConfig_skipWhiteConst(ptr);
-    return (ptr);
+    ptr = ReadConfig_skipWhiteConst( ptr );
+    ptr = ReadConfig_skipNotWhiteConst( ptr );
+    ptr = ReadConfig_skipWhiteConst( ptr );
+    return ( ptr );
 }
 
 /*
@@ -1681,66 +1636,65 @@ ReadConfig_skipTokenConst(const char *ptr)
  * Note: partially copied words are, however, null terminated.
  */
 
-char *
-ReadConfig_copyNword(char *from, char *to, int len)
+char* ReadConfig_copyNword( char* from, char* to, int len )
 {
-    return TOOLS_REMOVE_CONST(char *, ReadConfig_copyNwordConst(from, to, len));
+    return TOOLS_REMOVE_CONST( char*, ReadConfig_copyNwordConst( from, to, len ) );
 }
 
-const char *
-ReadConfig_copyNwordConst(const char *from, char *to, int len)
+const char*
+ReadConfig_copyNwordConst( const char* from, char* to, int len )
 {
-    char            quote;
-    if (!from || !to)
+    char quote;
+    if ( !from || !to )
         return NULL;
-    if ((*from == '\"') || (*from == '\'')) {
-        quote = *(from++);
-        while ((*from != quote) && (*from != 0)) {
-            if ((*from == '\\') && (*(from + 1) != 0)) {
-                if (len > 0) {  /* don't copy beyond len bytes */
-                    *to++ = *(from + 1);
-                    if (--len == 0)
-                        *(to - 1) = '\0';       /* null protect the last spot */
+    if ( ( *from == '\"' ) || ( *from == '\'' ) ) {
+        quote = *( from++ );
+        while ( ( *from != quote ) && ( *from != 0 ) ) {
+            if ( ( *from == '\\' ) && ( *( from + 1 ) != 0 ) ) {
+                if ( len > 0 ) { /* don't copy beyond len bytes */
+                    *to++ = *( from + 1 );
+                    if ( --len == 0 )
+                        *( to - 1 ) = '\0'; /* null protect the last spot */
                 }
                 from = from + 2;
             } else {
-                if (len > 0) {  /* don't copy beyond len bytes */
+                if ( len > 0 ) { /* don't copy beyond len bytes */
                     *to++ = *from++;
-                    if (--len == 0)
-                        *(to - 1) = '\0';       /* null protect the last spot */
+                    if ( --len == 0 )
+                        *( to - 1 ) = '\0'; /* null protect the last spot */
                 } else
                     from++;
             }
         }
-        if (*from == 0) {
-            DEBUG_MSGTL(("read_config_copy_word",
-                        "no end quote found in config string\n"));
+        if ( *from == 0 ) {
+            DEBUG_MSGTL( ( "read_config_copy_word",
+                "no end quote found in config string\n" ) );
         } else
             from++;
     } else {
-        while (*from != 0 && !isspace((unsigned char)(*from))) {
-            if ((*from == '\\') && (*(from + 1) != 0)) {
-                if (len > 0) {  /* don't copy beyond len bytes */
-                    *to++ = *(from + 1);
-                    if (--len == 0)
-                        *(to - 1) = '\0';       /* null protect the last spot */
+        while ( *from != 0 && !isspace( ( unsigned char )( *from ) ) ) {
+            if ( ( *from == '\\' ) && ( *( from + 1 ) != 0 ) ) {
+                if ( len > 0 ) { /* don't copy beyond len bytes */
+                    *to++ = *( from + 1 );
+                    if ( --len == 0 )
+                        *( to - 1 ) = '\0'; /* null protect the last spot */
                 }
                 from = from + 2;
             } else {
-                if (len > 0) {  /* don't copy beyond len bytes */
+                if ( len > 0 ) { /* don't copy beyond len bytes */
                     *to++ = *from++;
-                    if (--len == 0)
-                        *(to - 1) = '\0';       /* null protect the last spot */
+                    if ( --len == 0 )
+                        *( to - 1 ) = '\0'; /* null protect the last spot */
                 } else
                     from++;
             }
         }
     }
-    if (len > 0)
+    if ( len > 0 )
         *to = 0;
-    from = ReadConfig_skipWhiteConst(from);
-    return (from);
-}                               /* ReadConfig_copyNword */
+    from = ReadConfig_skipWhiteConst( from );
+    return ( from );
+} /* ReadConfig_copyNword */
 
 /*
  * copy_word
@@ -1754,17 +1708,16 @@ ReadConfig_copyNwordConst(const char *from, char *to, int len)
  * being copied or to 0 if we reach the end.
  */
 
-static int      _readConfig_haveWarned = 0;
-char           *
-ReadConfig_copyWord(char *from, char *to)
+static int _readConfig_haveWarned = 0;
+char* ReadConfig_copyWord( char* from, char* to )
 {
-    if (!_readConfig_haveWarned) {
-        Logger_log(LOGGER_PRIORITY_INFO,
-                 "copy_word() called.  Use ReadConfig_copyNword() instead.\n");
+    if ( !_readConfig_haveWarned ) {
+        Logger_log( LOGGER_PRIORITY_INFO,
+            "copy_word() called.  Use ReadConfig_copyNword() instead.\n" );
         _readConfig_haveWarned = 1;
     }
-    return ReadConfig_copyNword(from, to, IMPL_SPRINT_MAX_LEN);
-}                               /* copy_word */
+    return ReadConfig_copyNword( from, to, IMPL_SPRINT_MAX_LEN );
+} /* copy_word */
 
 /**
  * Stores an quoted version of the first len bytes from str into saveto.
@@ -1779,34 +1732,33 @@ ReadConfig_copyWord(char *from, char *to)
  * @param[in] len length of the data that is to be stored.
  * @return A pointer to saveto after str is added to it.
  */
-char *
-ReadConfig_saveOctetString(char *saveto, const u_char * str, size_t len)
+char* ReadConfig_saveOctetString( char* saveto, const u_char* str, size_t len )
 {
-    size_t          i;
-    const u_char   *cp;
+    size_t i;
+    const u_char* cp;
 
     /*
      * is everything easily printable
      */
-    for (i = 0, cp = str; i < len && cp &&
-         (isalpha(*cp) || isdigit(*cp) || *cp == ' '); cp++, i++);
+    for ( i = 0, cp = str; i < len && cp && ( isalpha( *cp ) || isdigit( *cp ) || *cp == ' ' ); cp++, i++ )
+        ;
 
-    if (len != 0 && i == len) {
+    if ( len != 0 && i == len ) {
         *saveto++ = '"';
-        memcpy(saveto, str, len);
+        memcpy( saveto, str, len );
         saveto += len;
         *saveto++ = '"';
         *saveto = '\0';
     } else {
-        if (str != NULL) {
-            sprintf(saveto, "0x");
+        if ( str != NULL ) {
+            sprintf( saveto, "0x" );
             saveto += 2;
-            for (i = 0; i < len; i++) {
-                sprintf(saveto, "%02x", str[i]);
+            for ( i = 0; i < len; i++ ) {
+                sprintf( saveto, "%02x", str[ i ] );
                 saveto = saveto + 2;
             }
         } else {
-            sprintf(saveto, "\"\"");
+            sprintf( saveto, "\"\"" );
             saveto += 2;
         }
     }
@@ -1815,7 +1767,7 @@ ReadConfig_saveOctetString(char *saveto, const u_char * str, size_t len)
 
 /**
  * Reads an octet string that was saved by the
- * read_config_save_octet_string() function.
+ * ReadConfig_saveOctetString() function.
  *
  * @param[in]     readfrom Pointer to the input data to be parsed.
  * @param[in,out] str      Pointer to the output buffer pointer. The data
@@ -1831,41 +1783,40 @@ ReadConfig_saveOctetString(char *saveto, const u_char * str, size_t len)
  *   parsing succeeded; NULL when the end of the input string has been reached
  *   or if an error occurred.
  */
-char *
-ReadConfig_readOctetString(const char *readfrom, u_char ** str,
-                              size_t * len)
+char* ReadConfig_readOctetString( const char* readfrom, u_char** str,
+    size_t* len )
 {
-    return TOOLS_REMOVE_CONST(char *,
-               ReadConfig_readOctetStringConst(readfrom, str, len));
+    return TOOLS_REMOVE_CONST( char*,
+        ReadConfig_readOctetStringConst( readfrom, str, len ) );
 }
 
-const char *
-ReadConfig_readOctetStringConst(const char *readfrom, u_char ** str,
-                                    size_t * len)
+const char*
+ReadConfig_readOctetStringConst( const char* readfrom, u_char** str,
+    size_t* len )
 {
-    u_char         *cptr;
-    const char     *cptr1;
-    u_int           tmp;
-    size_t          i, ilen;
+    u_char* cptr;
+    const char* cptr1;
+    u_int tmp;
+    size_t i, ilen;
 
-    if (readfrom == NULL || str == NULL || len == NULL)
+    if ( readfrom == NULL || str == NULL || len == NULL )
         return NULL;
 
-    if (strncasecmp(readfrom, "0x", 2) == 0) {
+    if ( strncasecmp( readfrom, "0x", 2 ) == 0 ) {
         /*
          * A hex string submitted. How long?
          */
         readfrom += 2;
-        cptr1 = ReadConfig_skipNotWhiteConst(readfrom);
-        if (cptr1)
-            ilen = (cptr1 - readfrom);
+        cptr1 = ReadConfig_skipNotWhiteConst( readfrom );
+        if ( cptr1 )
+            ilen = ( cptr1 - readfrom );
         else
-            ilen = strlen(readfrom);
+            ilen = strlen( readfrom );
 
-        if (ilen % 2) {
-            Logger_log(LOGGER_PRIORITY_WARNING,"invalid hex string: wrong length\n");
-            DEBUG_MSGTL(("read_config_read_octet_string",
-                        "invalid hex string: wrong length"));
+        if ( ilen % 2 ) {
+            Logger_log( LOGGER_PRIORITY_WARNING, "invalid hex string: wrong length\n" );
+            DEBUG_MSGTL( ( "read_config_read_octet_string",
+                "invalid hex string: wrong length" ) );
             return NULL;
         }
         ilen = ilen / 2;
@@ -1873,22 +1824,22 @@ ReadConfig_readOctetStringConst(const char *readfrom, u_char ** str,
         /*
          * malloc data space if needed (+1 for good measure)
          */
-        if (*str == NULL) {
-            *str = (u_char *) malloc(ilen + 1);
-            if (!*str)
+        if ( *str == NULL ) {
+            *str = ( u_char* )malloc( ilen + 1 );
+            if ( !*str )
                 return NULL;
         } else {
             /*
              * require caller to have +1, and bail if not enough space.
              */
-            if (ilen >= *len) {
-                Logger_log(LOGGER_PRIORITY_WARNING,"buffer too small to read octet string (%lu < %lu)\n",
-                         (unsigned long)*len, (unsigned long)ilen);
-                DEBUG_MSGTL(("read_config_read_octet_string",
-                            "buffer too small (%lu < %lu)", (unsigned long)*len, (unsigned long)ilen));
+            if ( ilen >= *len ) {
+                Logger_log( LOGGER_PRIORITY_WARNING, "buffer too small to read octet string (%lu < %lu)\n",
+                    ( unsigned long )*len, ( unsigned long )ilen );
+                DEBUG_MSGTL( ( "read_config_read_octet_string",
+                    "buffer too small (%lu < %lu)", ( unsigned long )*len, ( unsigned long )ilen ) );
                 *len = 0;
-                cptr1 = ReadConfig_skipNotWhiteConst(readfrom);
-                return ReadConfig_skipWhiteConst(cptr1);
+                cptr1 = ReadConfig_skipNotWhiteConst( readfrom );
+                return ReadConfig_skipWhiteConst( cptr1 );
             }
         }
 
@@ -1896,14 +1847,14 @@ ReadConfig_readOctetStringConst(const char *readfrom, u_char ** str,
          * copy validated data
          */
         cptr = *str;
-        for (i = 0; i < ilen; i++) {
-            if (1 == sscanf(readfrom, "%2x", &tmp))
-                *cptr++ = (u_char) tmp;
+        for ( i = 0; i < ilen; i++ ) {
+            if ( 1 == sscanf( readfrom, "%2x", &tmp ) )
+                *cptr++ = ( u_char )tmp;
             else {
                 /*
                  * we may lose memory, but don't know caller's buffer XX free(cptr);
                  */
-                return (NULL);
+                return ( NULL );
             }
             readfrom += 2;
         }
@@ -1912,7 +1863,7 @@ ReadConfig_readOctetStringConst(const char *readfrom, u_char ** str,
          */
         *cptr++ = '\0';
         *len = ilen;
-        readfrom = ReadConfig_skipWhiteConst(readfrom);
+        readfrom = ReadConfig_skipWhiteConst( readfrom );
     } else {
         /*
          * Normal string
@@ -1921,19 +1872,19 @@ ReadConfig_readOctetStringConst(const char *readfrom, u_char ** str,
         /*
          * malloc string space if needed (including NULL terminator)
          */
-        if (*str == NULL) {
-            char            buf[TOOLS_MAXBUF];
-            readfrom = ReadConfig_copyNwordConst(readfrom, buf, sizeof(buf));
+        if ( *str == NULL ) {
+            char buf[ TOOLS_MAXBUF ];
+            readfrom = ReadConfig_copyNwordConst( readfrom, buf, sizeof( buf ) );
 
-            *len = strlen(buf);
-            *str = (u_char *) malloc(*len + 1);
-            if (*str == NULL)
+            *len = strlen( buf );
+            *str = ( u_char* )malloc( *len + 1 );
+            if ( *str == NULL )
                 return NULL;
-            memcpy(*str, buf, *len + 1);
+            memcpy( *str, buf, *len + 1 );
         } else {
-            readfrom = ReadConfig_copyNwordConst(readfrom, (char *) *str, *len);
-            if (*len)
-                *len = strlen((char *) *str);
+            readfrom = ReadConfig_copyNwordConst( readfrom, ( char* )*str, *len );
+            if ( *len )
+                *len = strlen( ( char* )*str );
         }
     }
 
@@ -1941,52 +1892,55 @@ ReadConfig_readOctetStringConst(const char *readfrom, u_char ** str,
 }
 
 /*
- * read_config_save_objid(): saves an objid as a numerical string
+ * ReadConfig_saveObjid(): saves an objid as a numerical string
  */
-char * ReadConfig_saveObjid(char *saveto, oid * objid, size_t len)
+char* ReadConfig_saveObjid( char* saveto, oid* objid, size_t len )
 {
-    int             i;
+    int i;
 
-    if (len == 0) {
-        strcat(saveto, "NULL");
-        saveto += strlen(saveto);
+    if ( len == 0 ) {
+        strcat( saveto, "NULL" );
+        saveto += strlen( saveto );
         return saveto;
     }
 
     /*
      * in case len=0, this makes it easier to read it back in
      */
-    for (i = 0; i < (int) len; i++) {
-        sprintf(saveto, ".%" "l" "d", objid[i]);
-        saveto += strlen(saveto);
+    for ( i = 0; i < ( int )len; i++ ) {
+        sprintf( saveto, ".%"
+                         "l"
+                         "d",
+            objid[ i ] );
+        saveto += strlen( saveto );
     }
     return saveto;
 }
 
 /*
- * read_config_read_objid(): reads an objid from a format saved by the above
+ * ReadConfig_readObjid(): reads an objid from a format saved by the above
  */
-char * ReadConfig_readObjid(char *readfrom, oid ** objid, size_t * len)
+char* ReadConfig_readObjid( char* readfrom, oid** objid, size_t* len )
 {
-    return TOOLS_REMOVE_CONST(char *,
-             ReadConfig_readObjidConst(readfrom, objid, len));
+    return TOOLS_REMOVE_CONST( char*,
+        ReadConfig_readObjidConst( readfrom, objid, len ) );
 }
 
-const char  *
-ReadConfig_readObjidConst(const char *readfrom, oid ** objid, size_t * len)
+const char*
+ReadConfig_readObjidConst( const char* readfrom, oid** objid, size_t* len )
 {
 
-    if (objid == NULL || readfrom == NULL || len == NULL)
+    if ( objid == NULL || readfrom == NULL || len == NULL )
         return NULL;
 
-    if (*objid == NULL) {
+    if ( *objid == NULL ) {
         *len = 0;
-        if ((*objid = (oid *) malloc(TYPES_MAX_OID_LEN * sizeof(oid))) == NULL)
+        if ( ( *objid = ( oid* )malloc( TYPES_MAX_OID_LEN * sizeof( oid ) ) ) == NULL )
             return NULL;
         *len = TYPES_MAX_OID_LEN;
     }
 
-    if (strncmp(readfrom, "NULL", 4) == 0) {
+    if ( strncmp( readfrom, "NULL", 4 ) == 0 ) {
         /*
          * null length oid
          */
@@ -1995,30 +1949,30 @@ ReadConfig_readObjidConst(const char *readfrom, oid ** objid, size_t * len)
         /*
          * qualify the string for read_objid
          */
-        char            buf[IMPL_SPRINT_MAX_LEN];
-        ReadConfig_copyNwordConst(readfrom, buf, sizeof(buf));
+        char buf[ IMPL_SPRINT_MAX_LEN ];
+        ReadConfig_copyNwordConst( readfrom, buf, sizeof( buf ) );
 
-        if (!Mib_readObjid(buf, *objid, len)) {
-            DEBUG_MSGTL(("read_config_read_objid", "Invalid OID"));
+        if ( !Mib_readObjid( buf, *objid, len ) ) {
+            DEBUG_MSGTL( ( "ReadConfig_readObjid", "Invalid OID" ) );
             *len = 0;
             return NULL;
         }
     }
 
-    readfrom = ReadConfig_skipTokenConst(readfrom);
+    readfrom = ReadConfig_skipTokenConst( readfrom );
     return readfrom;
 }
 
 /**
- * read_config_read_data reads data of a given type from a token(s) on a
+ * ReadConfig_readData reads data of a given type from a token(s) on a
  * configuration line.  The supported types are:
  *
- *    - ASN_INTEGER
- *    - ASN_TIMETICKS
- *    - ASN_UNSIGNED
- *    - ASN_OCTET_STR
- *    - ASN_BIT_STR
- *    - ASN_OBJECT_ID
+ *    - ASN01_INTEGER
+ *    - ASN01_TIMETICKS
+ *    - ASN01_UNSIGNED
+ *    - ASN01_OCTET_STR
+ *    - ASN01_BIT_STR
+ *    - ASN01_OBJECT_ID
  *
  * @param type the asn data type to be read in.
  *
@@ -2034,135 +1988,131 @@ ReadConfig_readObjidConst(const char *readfrom, oid ** objid, size_t * len)
  * if an unknown type.
  *
  */
-char  *
-ReadConfig_readData(int type, char *readfrom, void *dataptr,
-                      size_t * len)
+char* ReadConfig_readData( int type, char* readfrom, void* dataptr,
+    size_t* len )
 {
-    int            *intp;
-    char          **charpp;
-    oid           **oidpp;
-    unsigned int   *uintp;
+    int* intp;
+    char** charpp;
+    oid** oidpp;
+    unsigned int* uintp;
 
-    if (dataptr && readfrom)
-        switch (type) {
+    if ( dataptr && readfrom )
+        switch ( type ) {
         case ASN01_INTEGER:
-            intp = (int *) dataptr;
-            *intp = atoi(readfrom);
-            readfrom = ReadConfig_skipToken(readfrom);
+            intp = ( int* )dataptr;
+            *intp = atoi( readfrom );
+            readfrom = ReadConfig_skipToken( readfrom );
             return readfrom;
 
         case ASN01_TIMETICKS:
         case ASN01_UNSIGNED:
-            uintp = (unsigned int *) dataptr;
-            *uintp = strtoul(readfrom, NULL, 0);
-            readfrom = ReadConfig_skipToken(readfrom);
+            uintp = ( unsigned int* )dataptr;
+            *uintp = strtoul( readfrom, NULL, 0 );
+            readfrom = ReadConfig_skipToken( readfrom );
             return readfrom;
 
         case ASN01_IPADDRESS:
-            intp = (int *) dataptr;
-            *intp = inet_addr(readfrom);
-            if ((*intp == -1) &&
-                (strncmp(readfrom, "255.255.255.255", 15) != 0))
+            intp = ( int* )dataptr;
+            *intp = inet_addr( readfrom );
+            if ( ( *intp == -1 ) && ( strncmp( readfrom, "255.255.255.255", 15 ) != 0 ) )
                 return NULL;
-            readfrom = ReadConfig_skipToken(readfrom);
+            readfrom = ReadConfig_skipToken( readfrom );
             return readfrom;
 
         case ASN01_OCTET_STR:
         case ASN01_BIT_STR:
-            charpp = (char **) dataptr;
-            return ReadConfig_readOctetString(readfrom,
-                                                 (u_char **) charpp, len);
+            charpp = ( char** )dataptr;
+            return ReadConfig_readOctetString( readfrom,
+                ( u_char** )charpp, len );
 
         case ASN01_OBJECT_ID:
-            oidpp = (oid **) dataptr;
-            return ReadConfig_readObjid(readfrom, oidpp, len);
+            oidpp = ( oid** )dataptr;
+            return ReadConfig_readObjid( readfrom, oidpp, len );
 
         default:
-            DEBUG_MSGTL(("read_config_read_data", "Fail: Unknown type: %d",
-                        type));
+            DEBUG_MSGTL( ( "ReadConfig_readData", "Fail: Unknown type: %d",
+                type ) );
             return NULL;
         }
     return NULL;
 }
 
 /*
- * read_config_read_memory():
+ * ReadConfig_readMemory():
  *
- * similar to read_config_read_data, but expects a generic memory
+ * similar to ReadConfig_readData, but expects a generic memory
  * pointer rather than a specific type of pointer.  Len is expected to
  * be the amount of available memory.
  */
-char *
-ReadConfig_readMemory(int type, char *readfrom,
-                        char *dataptr, size_t * len)
+char* ReadConfig_readMemory( int type, char* readfrom,
+    char* dataptr, size_t* len )
 {
-    int            *intp;
-    unsigned int   *uintp;
-    char            buf[IMPL_SPRINT_MAX_LEN];
+    int* intp;
+    unsigned int* uintp;
+    char buf[ IMPL_SPRINT_MAX_LEN ];
 
-    if (!dataptr || !readfrom)
+    if ( !dataptr || !readfrom )
         return NULL;
 
-    switch (type) {
+    switch ( type ) {
     case ASN01_INTEGER:
-        if (*len < sizeof(int))
+        if ( *len < sizeof( int ) )
             return NULL;
-        intp = (int *) dataptr;
-        readfrom = ReadConfig_copyNword(readfrom, buf, sizeof(buf));
-        *intp = atoi(buf);
-        *len = sizeof(int);
+        intp = ( int* )dataptr;
+        readfrom = ReadConfig_copyNword( readfrom, buf, sizeof( buf ) );
+        *intp = atoi( buf );
+        *len = sizeof( int );
         return readfrom;
 
     case ASN01_COUNTER:
     case ASN01_TIMETICKS:
     case ASN01_UNSIGNED:
-        if (*len < sizeof(unsigned int))
+        if ( *len < sizeof( unsigned int ) )
             return NULL;
-        uintp = (unsigned int *) dataptr;
-        readfrom = ReadConfig_copyNword(readfrom, buf, sizeof(buf));
-        *uintp = strtoul(buf, NULL, 0);
-        *len = sizeof(unsigned int);
+        uintp = ( unsigned int* )dataptr;
+        readfrom = ReadConfig_copyNword( readfrom, buf, sizeof( buf ) );
+        *uintp = strtoul( buf, NULL, 0 );
+        *len = sizeof( unsigned int );
         return readfrom;
 
     case ASN01_IPADDRESS:
-        if (*len < sizeof(int))
+        if ( *len < sizeof( int ) )
             return NULL;
-        intp = (int *) dataptr;
-        readfrom = ReadConfig_copyNword(readfrom, buf, sizeof(buf));
-        *intp = inet_addr(buf);
-        if ((*intp == -1) && (strcmp(buf, "255.255.255.255") != 0))
+        intp = ( int* )dataptr;
+        readfrom = ReadConfig_copyNword( readfrom, buf, sizeof( buf ) );
+        *intp = inet_addr( buf );
+        if ( ( *intp == -1 ) && ( strcmp( buf, "255.255.255.255" ) != 0 ) )
             return NULL;
-        *len = sizeof(int);
+        *len = sizeof( int );
         return readfrom;
 
     case ASN01_OCTET_STR:
     case ASN01_BIT_STR:
     case ASN01_PRIV_IMPLIED_OCTET_STR:
-        return ReadConfig_readOctetString(readfrom,
-                                             (u_char **) & dataptr, len);
+        return ReadConfig_readOctetString( readfrom,
+            ( u_char** )&dataptr, len );
 
     case ASN01_PRIV_IMPLIED_OBJECT_ID:
     case ASN01_OBJECT_ID:
-        readfrom =
-            ReadConfig_readObjid(readfrom, (oid **) & dataptr, len);
-        *len *= sizeof(oid);
+        readfrom = ReadConfig_readObjid( readfrom, ( oid** )&dataptr, len );
+        *len *= sizeof( oid );
         return readfrom;
 
     case ASN01_COUNTER64:
-        if (*len < sizeof(Int64_U64))
+        if ( *len < sizeof( Int64_U64 ) )
             return NULL;
-        *len = sizeof(Int64_U64);
-        Int64_read64((Int64_U64 *) dataptr, readfrom);
-        readfrom = ReadConfig_skipToken(readfrom);
+        *len = sizeof( Int64_U64 );
+        Int64_read64( ( Int64_U64* )dataptr, readfrom );
+        readfrom = ReadConfig_skipToken( readfrom );
         return readfrom;
     }
 
-    DEBUG_MSGTL(("read_config_read_memory", "Fail: Unknown type: %d", type));
+    DEBUG_MSGTL( ( "ReadConfig_readMemory", "Fail: Unknown type: %d", type ) );
     return NULL;
 }
 
 /**
- * read_config_store_data stores data of a given type to a configuration line
+ * ReadConfig_storeData stores data of a given type to a configuration line
  * into the storeto buffer.
  * Calls read_config_store_data_prefix with the prefix parameter set to a char
  * space.  The supported types are:
@@ -2188,55 +2138,53 @@ ReadConfig_readMemory(int type, char *readfrom,
  *
  * @return character pointer to the end of the line. NULL if an unknown type.
  */
-char *
-ReadConfig_storeData(int type, char *storeto, void *dataptr, size_t * len)
+char* ReadConfig_storeData( int type, char* storeto, void* dataptr, size_t* len )
 {
-    return ReadConfig_storeDataPrefix(' ', type, storeto, dataptr,
-                                                         (len ? *len : 0));
+    return ReadConfig_storeDataPrefix( ' ', type, storeto, dataptr,
+        ( len ? *len : 0 ) );
 }
 
-char *
-ReadConfig_storeDataPrefix(char prefix, int type, char *storeto,
-                              void *dataptr, size_t len)
+char* ReadConfig_storeDataPrefix( char prefix, int type, char* storeto,
+    void* dataptr, size_t len )
 {
-    int            *intp;
-    u_char        **charpp;
-    unsigned int   *uintp;
-    struct in_addr  in;
-    oid           **oidpp;
+    int* intp;
+    u_char** charpp;
+    unsigned int* uintp;
+    struct in_addr in;
+    oid** oidpp;
 
-    if (dataptr && storeto)
-        switch (type) {
+    if ( dataptr && storeto )
+        switch ( type ) {
         case ASN01_INTEGER:
-            intp = (int *) dataptr;
-            sprintf(storeto, "%c%d", prefix, *intp);
-            return (storeto + strlen(storeto));
+            intp = ( int* )dataptr;
+            sprintf( storeto, "%c%d", prefix, *intp );
+            return ( storeto + strlen( storeto ) );
 
         case ASN01_TIMETICKS:
         case ASN01_UNSIGNED:
-            uintp = (unsigned int *) dataptr;
-            sprintf(storeto, "%c%u", prefix, *uintp);
-            return (storeto + strlen(storeto));
+            uintp = ( unsigned int* )dataptr;
+            sprintf( storeto, "%c%u", prefix, *uintp );
+            return ( storeto + strlen( storeto ) );
 
         case ASN01_IPADDRESS:
-            in.s_addr = *(unsigned int *) dataptr;
-            sprintf(storeto, "%c%s", prefix, inet_ntoa(in));
-            return (storeto + strlen(storeto));
+            in.s_addr = *( unsigned int* )dataptr;
+            sprintf( storeto, "%c%s", prefix, inet_ntoa( in ) );
+            return ( storeto + strlen( storeto ) );
 
         case ASN01_OCTET_STR:
         case ASN01_BIT_STR:
             *storeto++ = prefix;
-            charpp = (u_char **) dataptr;
-            return ReadConfig_saveOctetString(storeto, *charpp, len);
+            charpp = ( u_char** )dataptr;
+            return ReadConfig_saveOctetString( storeto, *charpp, len );
 
         case ASN01_OBJECT_ID:
             *storeto++ = prefix;
-            oidpp = (oid **) dataptr;
-            return ReadConfig_saveObjid(storeto, *oidpp, len);
+            oidpp = ( oid** )dataptr;
+            return ReadConfig_saveObjid( storeto, *oidpp, len );
 
         default:
-            DEBUG_MSGTL(("read_config_store_data_prefix",
-                        "Fail: Unknown type: %d", type));
+            DEBUG_MSGTL( ( "read_config_store_data_prefix",
+                "Fail: Unknown type: %d", type ) );
             return NULL;
         }
     return NULL;

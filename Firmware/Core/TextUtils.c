@@ -371,7 +371,7 @@ TextUtils_pmUserFunction(FILE *f, Container_Container *cin,
              * to release it. leave mem, we can re-use it (its a fixed size).
              */
             if (lpi->flags & TEXTUTILS_PMLP_FLAG_STRDUP_LINE)
-                free(li.start); /* no point in SNMP_FREE */
+                free(li.start); /* no point in TOOLS_FREE */
         }
         else {
             if (TEXTUTILS_PMLP_RC_STOP_PROCESSING != rc )

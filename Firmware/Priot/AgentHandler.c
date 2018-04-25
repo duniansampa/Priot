@@ -1,18 +1,18 @@
 #include "AgentHandler.h"
-#include "PriotSettings.h"
-#include "Tools.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Assert.h"
-#include "Priot.h"
-#include "Api.h"
-#include "AgentRegistry.h"
-#include "Enum.h"
-#include "DataList.h"
-#include "ReadConfig.h"
-#include "BulkToNext.h"
-#include "ReadConfig.h"
 #include "AgentReadConfig.h"
+#include "AgentRegistry.h"
+#include "Api.h"
+#include "Assert.h"
+#include "BulkToNext.h"
+#include "DataList.h"
+#include "Debug.h"
+#include "Enum.h"
+#include "Logger.h"
+#include "Priot.h"
+#include "PriotSettings.h"
+#include "ReadConfig.h"
+#include "ReadConfig.h"
+#include "Tools.h"
 
 static MibHandler*
 _AgentHandler_cloneHandler( MibHandler* it );
@@ -97,17 +97,17 @@ _AgentHandler_cloneHandler( MibHandler* it );
  *  @see AgentHandler_registerHandler()
  */
 MibHandler*
-AgentHandler_createHandler( const char*    name,
-                            NodeHandlerFT* handler_access_method )
+AgentHandler_createHandler( const char* name,
+    NodeHandlerFT* handler_access_method )
 {
 
-    MibHandler *ret = TOOLS_MALLOC_TYPEDEF(MibHandler);
-    if (ret) {
+    MibHandler* ret = TOOLS_MALLOC_TYPEDEF( MibHandler );
+    if ( ret ) {
         ret->access_method = handler_access_method;
-        if (NULL != name) {
-            ret->handler_name = strdup(name);
-            if (NULL == ret->handler_name)
-                TOOLS_FREE(ret);
+        if ( NULL != name ) {
+            ret->handler_name = strdup( name );
+            if ( NULL == ret->handler_name )
+                TOOLS_FREE( ret );
         }
     }
     return ret;
@@ -131,7 +131,7 @@ AgentHandler_createHandler( const char*    name,
  *  @param reg_oid is the registration location oid.
  *
  *  @param reg_oid_len is the length of reg_oid; can use the macro,
- *         OID_LENGTH
+ *         ASN01_OID_LENGTH
  *
  *  @param modes is used to configure read/write access.  If modes == 0,
  *	then modes will automatically be set to the default
@@ -158,26 +158,26 @@ AgentHandler_createHandler( const char*    name,
  */
 HandlerRegistration*
 AgentHandler_registrationCreate( const char* name,
-                                        MibHandler* handler,
-                                        const oid* reg_oid,
-                                        size_t      reg_oid_len,
-                                        int         modes )
+    MibHandler* handler,
+    const oid* reg_oid,
+    size_t reg_oid_len,
+    int modes )
 {
-    HandlerRegistration *the_reg;
-    the_reg = TOOLS_MALLOC_TYPEDEF(HandlerRegistration);
-    if (!the_reg)
+    HandlerRegistration* the_reg;
+    the_reg = TOOLS_MALLOC_TYPEDEF( HandlerRegistration );
+    if ( !the_reg )
         return NULL;
 
-    if (modes)
+    if ( modes )
         the_reg->modes = modes;
     else
         the_reg->modes = HANDLER_CAN_DEFAULT;
 
     the_reg->handler = handler;
     the_reg->priority = DEFAULT_MIB_PRIORITY;
-    if (name)
-        the_reg->handlerName = strdup(name);
-    the_reg->rootoid = Api_duplicateObjid(reg_oid, reg_oid_len);
+    if ( name )
+        the_reg->handlerName = strdup( name );
+    the_reg->rootoid = Api_duplicateObjid( reg_oid, reg_oid_len );
     the_reg->rootoid_len = reg_oid_len;
     return the_reg;
 }
@@ -195,7 +195,7 @@ AgentHandler_registrationCreate( const char* name,
  *  @param reg_oid is the registration location oid.
  *
  *  @param reg_oid_len is the length of reg_oid; can use the macro,
- *         OID_LENGTH
+ *         ASN01_OID_LENGTH
  *
  *  @param modes is used to configure read/write access, as in
  *         AgentHandler_registrationCreate()
@@ -207,20 +207,19 @@ AgentHandler_registrationCreate( const char* name,
  *  @see AgentHandler_registrationCreate()
  */
 HandlerRegistration*
-AgentHandler_createHandlerRegistration( const char*    name,
-                                        NodeHandlerFT* handler_access_method,
-                                        const oid*    reg_oid,
-                                        size_t         reg_oid_len,
-                                        int            modes )
+AgentHandler_createHandlerRegistration( const char* name,
+    NodeHandlerFT* handler_access_method,
+    const oid* reg_oid,
+    size_t reg_oid_len,
+    int modes )
 {
-    HandlerRegistration *rv = NULL;
-    MibHandler *handler =
-        AgentHandler_createHandler(name, handler_access_method);
-    if (handler) {
+    HandlerRegistration* rv = NULL;
+    MibHandler* handler = AgentHandler_createHandler( name, handler_access_method );
+    if ( handler ) {
         rv = AgentHandler_registrationCreate(
-            name, handler, reg_oid, reg_oid_len, modes);
-        if (!rv)
-            AgentHandler_handlerFree(handler);
+            name, handler, reg_oid, reg_oid_len, modes );
+        if ( !rv )
+            AgentHandler_handlerFree( handler );
     }
     return rv;
 }
@@ -229,79 +228,80 @@ AgentHandler_createHandlerRegistration( const char*    name,
  *  Checks given registation handler for sanity, then
  *  @link AgentRegistry_registerMib() performs registration @endlink
  *  in the MIB tree, as defined by the HandlerRegistration
- *  pointer. On success, SNMP_CALLBACK_APPLICATION is called.
+ *  pointer. On success, CALLBACK_APPLICATION is called.
  *  The registration struct may be created by call of
  *  AgentHandler_createHandlerRegistration().
  *
  *  @param reginfo Pointer to a HandlerRegistration struct.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  *
  *  @see AgentHandler_createHandlerRegistration()
  *  @see AgentRegistry_registerMib()
  */
-int
-AgentHandler_registerHandler( HandlerRegistration* reginfo )
+int AgentHandler_registerHandler( HandlerRegistration* reginfo )
 {
     MibHandler* handler;
     int flags = 0;
 
-    if (reginfo == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_registerHandler() called illegally\n");
-        Assert_assert(reginfo != NULL);
+    if ( reginfo == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_registerHandler() called illegally\n" );
+        Assert_assert( reginfo != NULL );
         return PRIOT_ERR_GENERR;
     }
 
-    DEBUG_IF("handler::register") {
-        DEBUG_MSGTL(("handler::register", "Registering %s (", reginfo->handlerName));
-        for (handler = reginfo->handler; handler; handler = handler->next) {
-            DEBUG_MSG(("handler::register", "::%s", handler->handler_name));
+    DEBUG_IF( "handler::register" )
+    {
+        DEBUG_MSGTL( ( "handler::register", "Registering %s (", reginfo->handlerName ) );
+        for ( handler = reginfo->handler; handler; handler = handler->next ) {
+            DEBUG_MSG( ( "handler::register", "::%s", handler->handler_name ) );
         }
 
-        DEBUG_MSG(("handler::register", ") at "));
-        if (reginfo->rootoid && reginfo->range_subid) {
-            DEBUG_MSGOIDRANGE(("handler::register", reginfo->rootoid,
-                              reginfo->rootoid_len, reginfo->range_subid,
-                              reginfo->range_ubound));
-        } else if (reginfo->rootoid) {
-            DEBUG_MSGOID(("handler::register", reginfo->rootoid,
-                         reginfo->rootoid_len));
+        DEBUG_MSG( ( "handler::register", ") at " ) );
+        if ( reginfo->rootoid && reginfo->range_subid ) {
+            DEBUG_MSGOIDRANGE( ( "handler::register", reginfo->rootoid,
+                reginfo->rootoid_len, reginfo->range_subid,
+                reginfo->range_ubound ) );
+        } else if ( reginfo->rootoid ) {
+            DEBUG_MSGOID( ( "handler::register", reginfo->rootoid,
+                reginfo->rootoid_len ) );
         } else {
-            DEBUG_MSG(("handler::register", "[null]"));
+            DEBUG_MSG( ( "handler::register", "[null]" ) );
         }
-        DEBUG_MSG(("handler::register", "\n"));
+        DEBUG_MSG( ( "handler::register", "\n" ) );
     }
 
     /*
      * don't let them register for absolutely nothing.  Probably a mistake
      */
-    if (0 == reginfo->modes) {
+    if ( 0 == reginfo->modes ) {
         reginfo->modes = HANDLER_CAN_DEFAULT;
-        Logger_log(LOGGER_PRIORITY_WARNING, "no registration modes specified for %s. "
-                 "Defaulting to 0x%x\n", reginfo->handlerName, reginfo->modes);
+        Logger_log( LOGGER_PRIORITY_WARNING, "no registration modes specified for %s. "
+                                             "Defaulting to 0x%x\n",
+            reginfo->handlerName, reginfo->modes );
     }
 
     /*
      * for handlers that can't GETBULK, force a conversion handler on them
      */
-    if (!(reginfo->modes & HANDLER_CAN_GETBULK)) {
-        AgentHandler_injectHandler(reginfo,
-                               BulkToNext_getBulkToNextHandler());
+    if ( !( reginfo->modes & HANDLER_CAN_GETBULK ) ) {
+        AgentHandler_injectHandler( reginfo,
+            BulkToNext_getBulkToNextHandler() );
     }
 
-    for (handler = reginfo->handler; handler; handler = handler->next) {
-        if (handler->flags & MIB_HANDLER_INSTANCE)
+    for ( handler = reginfo->handler; handler; handler = handler->next ) {
+        if ( handler->flags & MIB_HANDLER_INSTANCE )
             flags = FULLY_QUALIFIED_INSTANCE;
     }
 
-    return AgentRegistry_registerMib2(reginfo->handlerName,
-                                NULL, 0, 0,
-                                reginfo->rootoid, reginfo->rootoid_len,
-                                reginfo->priority,
-                                reginfo->range_subid,
-                                reginfo->range_ubound, NULL,
-                                reginfo->contextName, reginfo->timeout, flags,
-                                reginfo, 1);
+    return AgentRegistry_registerMib2( reginfo->handlerName,
+        NULL, 0, 0,
+        reginfo->rootoid, reginfo->rootoid_len,
+        reginfo->priority,
+        reginfo->range_subid,
+        reginfo->range_ubound, NULL,
+        reginfo->contextName, reginfo->timeout, flags,
+        reginfo, 1 );
 }
 
 /** Unregisters a MIB handler described inside the registration structure.
@@ -311,80 +311,79 @@ AgentHandler_registerHandler( HandlerRegistration* reginfo )
  *
  *  @param reginfo Pointer to a HandlerRegistration struct.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  *
  *  @see AgentHandler_registerHandler()
  *  @see AgentRegistry_unregisterMibContext()
  */
-int
-AgentHandler_unregisterHandler( HandlerRegistration* reginfo )
+int AgentHandler_unregisterHandler( HandlerRegistration* reginfo )
 {
-    return AgentRegistry_unregisterMibContext(reginfo->rootoid, reginfo->rootoid_len,
-                                  reginfo->priority,
-                                  reginfo->range_subid, reginfo->range_ubound,
-                                  reginfo->contextName);
+    return AgentRegistry_unregisterMibContext( reginfo->rootoid, reginfo->rootoid_len,
+        reginfo->priority,
+        reginfo->range_subid, reginfo->range_ubound,
+        reginfo->contextName );
 }
 
 /** Registers a MIB handler inside the registration structure.
  *  Checks given registation handler for sanity, then
  *  @link AgentRegistry_registerMib() performs registration @endlink
  *  in the MIB tree, as defined by the HandlerRegistration
- *  pointer. Never calls SNMP_CALLBACK_APPLICATION.
+ *  pointer. Never calls CALLBACK_APPLICATION.
  *  The registration struct may be created by call of
  *  AgentHandler_createHandlerRegistration().
  *
  *  @param reginfo Pointer to a HandlerRegistration struct.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  *
  *  @see AgentHandler_createHandlerRegistration()
  *  @see AgentRegistry_registerMib()
  */
-int
-AgentHandler_registerHandlerNocallback( HandlerRegistration *reginfo )
+int AgentHandler_registerHandlerNocallback( HandlerRegistration* reginfo )
 {
-    MibHandler *handler;
-    if (reginfo == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_registerHandlerNocallback() called illegally\n");
-        Assert_assert(reginfo != NULL);
+    MibHandler* handler;
+    if ( reginfo == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_registerHandlerNocallback() called illegally\n" );
+        Assert_assert( reginfo != NULL );
         return PRIOT_ERR_GENERR;
     }
-    DEBUG_IF("handler::register") {
-        DEBUG_MSGTL(("handler::register",
-                    "Registering (with no callback) "));
-        for (handler = reginfo->handler; handler; handler = handler->next) {
-            DEBUG_MSG(("handler::register", "::%s", handler->handler_name));
+    DEBUG_IF( "handler::register" )
+    {
+        DEBUG_MSGTL( ( "handler::register",
+            "Registering (with no callback) " ) );
+        for ( handler = reginfo->handler; handler; handler = handler->next ) {
+            DEBUG_MSG( ( "handler::register", "::%s", handler->handler_name ) );
         }
 
-        DEBUG_MSG(("handler::register", " at "));
-        if (reginfo->rootoid && reginfo->range_subid) {
-            DEBUG_MSGOIDRANGE(("handler::register", reginfo->rootoid,
-                              reginfo->rootoid_len, reginfo->range_subid,
-                              reginfo->range_ubound));
-        } else if (reginfo->rootoid) {
-            DEBUG_MSGOID(("handler::register", reginfo->rootoid,
-                         reginfo->rootoid_len));
+        DEBUG_MSG( ( "handler::register", " at " ) );
+        if ( reginfo->rootoid && reginfo->range_subid ) {
+            DEBUG_MSGOIDRANGE( ( "handler::register", reginfo->rootoid,
+                reginfo->rootoid_len, reginfo->range_subid,
+                reginfo->range_ubound ) );
+        } else if ( reginfo->rootoid ) {
+            DEBUG_MSGOID( ( "handler::register", reginfo->rootoid,
+                reginfo->rootoid_len ) );
         } else {
-            DEBUG_MSG(("handler::register", "[null]"));
+            DEBUG_MSG( ( "handler::register", "[null]" ) );
         }
-        DEBUG_MSG(("handler::register", "\n"));
+        DEBUG_MSG( ( "handler::register", "\n" ) );
     }
 
     /*
      * don't let them register for absolutely nothing.  Probably a mistake
      */
-    if (0 == reginfo->modes) {
+    if ( 0 == reginfo->modes ) {
         reginfo->modes = HANDLER_CAN_DEFAULT;
     }
 
     return AgentRegistry_registerMib2( reginfo->handler->handler_name,
-                                      NULL, 0, 0,
-                                      reginfo->rootoid, reginfo->rootoid_len,
-                                      reginfo->priority,
-                                      reginfo->range_subid,
-                                      reginfo->range_ubound, NULL,
-                                      reginfo->contextName, reginfo->timeout, 0,
-                                      reginfo, 0);
+        NULL, 0, 0,
+        reginfo->rootoid, reginfo->rootoid_len,
+        reginfo->priority,
+        reginfo->range_subid,
+        reginfo->range_ubound, NULL,
+        reginfo->contextName, reginfo->timeout, 0,
+        reginfo, 0 );
 }
 
 /** Injects handler into the calling chain of handlers.
@@ -392,48 +391,46 @@ AgentHandler_registerHandlerNocallback( HandlerRegistration *reginfo )
  *  If before_what is NULL, the handler is put at the top of the list,
  *  and hence will be the handler to be called first.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  *
  *  @see AgentHandler_createHandlerRegistration()
  *  @see AgentHandler_injectHandler()
  */
-int
-AgentHandler_injectHandlerBefore( HandlerRegistration *reginfo,
-                                  MibHandler *handler,
-                                  const char *before_what )
+int AgentHandler_injectHandlerBefore( HandlerRegistration* reginfo,
+    MibHandler* handler,
+    const char* before_what )
 {
-    MibHandler *handler2 = handler;
+    MibHandler* handler2 = handler;
 
-    if (handler == NULL || reginfo == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_injectHandler() called illegally\n");
-        Assert_assert(reginfo != NULL);
-        Assert_assert(handler != NULL);
+    if ( handler == NULL || reginfo == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_injectHandler() called illegally\n" );
+        Assert_assert( reginfo != NULL );
+        Assert_assert( handler != NULL );
         return PRIOT_ERR_GENERR;
     }
-    while (handler2->next) {
-        handler2 = handler2->next;  /* Find the end of a handler sub-chain */
+    while ( handler2->next ) {
+        handler2 = handler2->next; /* Find the end of a handler sub-chain */
     }
-    if (reginfo->handler == NULL) {
-        DEBUG_MSGTL(("handler:inject", "injecting %s\n", handler->handler_name));
+    if ( reginfo->handler == NULL ) {
+        DEBUG_MSGTL( ( "handler:inject", "injecting %s\n", handler->handler_name ) );
+    } else {
+        DEBUG_MSGTL( ( "handler:inject", "injecting %s before %s\n",
+            handler->handler_name, reginfo->handler->handler_name ) );
     }
-    else {
-        DEBUG_MSGTL(("handler:inject", "injecting %s before %s\n",
-                    handler->handler_name, reginfo->handler->handler_name));
-    }
-    if (before_what) {
+    if ( before_what ) {
         MibHandler *nexth, *prevh = NULL;
-        if (reginfo->handler == NULL) {
-            Logger_log(LOGGER_PRIORITY_ERR, "no handler to inject before\n");
+        if ( reginfo->handler == NULL ) {
+            Logger_log( LOGGER_PRIORITY_ERR, "no handler to inject before\n" );
             return PRIOT_ERR_GENERR;
         }
-        for(nexth = reginfo->handler; nexth;
-            prevh = nexth, nexth = nexth->next) {
-            if (strcmp(nexth->handler_name, before_what) == 0)
+        for ( nexth = reginfo->handler; nexth;
+              prevh = nexth, nexth = nexth->next ) {
+            if ( strcmp( nexth->handler_name, before_what ) == 0 )
                 break;
         }
-        if (!nexth)
+        if ( !nexth )
             return PRIOT_ERR_GENERR;
-        if (prevh) {
+        if ( prevh ) {
             /* after prevh and before nexth */
             prevh->next = handler;
             handler2->next = nexth;
@@ -444,7 +441,7 @@ AgentHandler_injectHandlerBefore( HandlerRegistration *reginfo,
         /* else we're first, which is what we do next anyway so fall through */
     }
     handler2->next = reginfo->handler;
-    if (reginfo->handler)
+    if ( reginfo->handler )
         reginfo->handler->prev = handler2;
     reginfo->handler = handler;
     return ErrorCode_SUCCESS;
@@ -454,16 +451,15 @@ AgentHandler_injectHandlerBefore( HandlerRegistration *reginfo,
  *  The given MIB handler is put at the top of the list,
  *  and hence will be the handler to be called first.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  *
  *  @see AgentHandler_createHandlerRegistration()
  *  @see AgentHandler_injectHandlerBefore()
  */
-int
-AgentHandler_injectHandler( HandlerRegistration *reginfo,
-                            MibHandler *handler )
+int AgentHandler_injectHandler( HandlerRegistration* reginfo,
+    MibHandler* handler )
 {
-    return AgentHandler_injectHandlerBefore(reginfo, handler, NULL);
+    return AgentHandler_injectHandlerBefore( reginfo, handler, NULL );
 }
 
 /** Calls a MIB handlers chain, starting with specific handler.
@@ -471,33 +467,31 @@ AgentHandler_injectHandler( HandlerRegistration *reginfo,
  *  for sanity, then the handlers are called, one by one,
  *  until next handler is NULL.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  */
-int
-AgentHandler_callHandler( MibHandler*          next_handler,
-                          HandlerRegistration* reginfo,
-                          AgentRequestInfo*    reqinfo,
-                          RequestInfo*         requests )
+int AgentHandler_callHandler( MibHandler* next_handler,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* reqinfo,
+    RequestInfo* requests )
 {
-    NodeHandlerFT *nh;
-    int             ret;
+    NodeHandlerFT* nh;
+    int ret;
 
-    if (next_handler == NULL || reginfo == NULL || reqinfo == NULL ||
-        requests == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_callHandler() called illegally\n");
-        Assert_assert(next_handler != NULL);
-        Assert_assert(reqinfo != NULL);
-        Assert_assert(reginfo != NULL);
-        Assert_assert(requests != NULL);
+    if ( next_handler == NULL || reginfo == NULL || reqinfo == NULL || requests == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_callHandler() called illegally\n" );
+        Assert_assert( next_handler != NULL );
+        Assert_assert( reqinfo != NULL );
+        Assert_assert( reginfo != NULL );
+        Assert_assert( requests != NULL );
         return PRIOT_ERR_GENERR;
     }
 
     do {
         nh = next_handler->access_method;
-        if (!nh) {
-            if (next_handler->next) {
-                Logger_log(LOGGER_PRIORITY_ERR, "no access method specified in handler %s.",
-                         next_handler->handler_name);
+        if ( !nh ) {
+            if ( next_handler->next ) {
+                Logger_log( LOGGER_PRIORITY_ERR, "no access method specified in handler %s.",
+                    next_handler->handler_name );
                 return PRIOT_ERR_GENERR;
             }
             /*
@@ -508,32 +502,32 @@ AgentHandler_callHandler( MibHandler*          next_handler,
             return PRIOT_ERR_NOERROR;
         }
 
-        DEBUG_MSGTL(("handler:calling", "calling handler %s for mode %s\n",
-                    next_handler->handler_name,
-                    Enum_seFindLabelInSlist("agentMode", reqinfo->mode)));
+        DEBUG_MSGTL( ( "handler:calling", "calling handler %s for mode %s\n",
+            next_handler->handler_name,
+            Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
 
         /*
          * XXX: define acceptable return statuses
          */
-        ret = (*nh) (next_handler, reginfo, reqinfo, requests);
+        ret = ( *nh )( next_handler, reginfo, reqinfo, requests );
 
-        DEBUG_MSGTL(("handler:returned", "handler %s returned %d\n",
-                    next_handler->handler_name, ret));
+        DEBUG_MSGTL( ( "handler:returned", "handler %s returned %d\n",
+            next_handler->handler_name, ret ) );
 
-        if (! (next_handler->flags & MIB_HANDLER_AUTO_NEXT))
+        if ( !( next_handler->flags & MIB_HANDLER_AUTO_NEXT ) )
             break;
 
         /*
          * did handler signal that it didn't want auto next this time around?
          */
-        if(next_handler->flags & MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE) {
+        if ( next_handler->flags & MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE ) {
             next_handler->flags &= ~MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE;
             break;
         }
 
         next_handler = next_handler->next;
 
-    } while(next_handler);
+    } while ( next_handler );
 
     return ret;
 }
@@ -541,35 +535,34 @@ AgentHandler_callHandler( MibHandler*          next_handler,
 /** @private
  *  Calls all the MIB Handlers in registration struct for a given mode.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  */
-int
-AgentHandler_callHandlers(  HandlerRegistration* reginfo,
-                            AgentRequestInfo*    reqinfo,
-                            RequestInfo*         requests )
+int AgentHandler_callHandlers( HandlerRegistration* reginfo,
+    AgentRequestInfo* reqinfo,
+    RequestInfo* requests )
 {
-    RequestInfo *request;
-    int             status;
+    RequestInfo* request;
+    int status;
 
-    if (reginfo == NULL || reqinfo == NULL || requests == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_callHandlers() called illegally\n");
-        Assert_assert(reqinfo != NULL);
-        Assert_assert(reginfo != NULL);
-        Assert_assert(requests != NULL);
+    if ( reginfo == NULL || reqinfo == NULL || requests == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_callHandlers() called illegally\n" );
+        Assert_assert( reqinfo != NULL );
+        Assert_assert( reginfo != NULL );
+        Assert_assert( requests != NULL );
         return PRIOT_ERR_GENERR;
     }
 
-    if (reginfo->handler == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "no handler specified.");
+    if ( reginfo->handler == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "no handler specified." );
         return PRIOT_ERR_GENERR;
     }
 
-    switch (reqinfo->mode) {
+    switch ( reqinfo->mode ) {
     case MODE_GETBULK:
     case MODE_GET:
     case MODE_GETNEXT:
-        if (!(reginfo->modes & HANDLER_CAN_GETANDGETNEXT))
-            return PRIOT_ERR_NOERROR;    /* legal */
+        if ( !( reginfo->modes & HANDLER_CAN_GETANDGETNEXT ) )
+            return PRIOT_ERR_NOERROR; /* legal */
         break;
 
     case MODE_SET_RESERVE1:
@@ -578,27 +571,27 @@ AgentHandler_callHandlers(  HandlerRegistration* reginfo,
     case MODE_SET_COMMIT:
     case MODE_SET_FREE:
     case MODE_SET_UNDO:
-        if (!(reginfo->modes & HANDLER_CAN_SET)) {
-            for (; requests; requests = requests->next) {
-                Agent_setRequestError(reqinfo, requests,
-                                          PRIOT_ERR_NOTWRITABLE);
+        if ( !( reginfo->modes & HANDLER_CAN_SET ) ) {
+            for ( ; requests; requests = requests->next ) {
+                Agent_setRequestError( reqinfo, requests,
+                    PRIOT_ERR_NOTWRITABLE );
             }
             return PRIOT_ERR_NOERROR;
         }
         break;
 
     default:
-        Logger_log(LOGGER_PRIORITY_ERR, "unknown mode in AgentHandler_callHandlers! bug!\n");
+        Logger_log( LOGGER_PRIORITY_ERR, "unknown mode in AgentHandler_callHandlers! bug!\n" );
         return PRIOT_ERR_GENERR;
     }
-    DEBUG_MSGTL(("handler:calling", "main handler %s\n",
-                reginfo->handler->handler_name));
+    DEBUG_MSGTL( ( "handler:calling", "main handler %s\n",
+        reginfo->handler->handler_name ) );
 
-    for (request = requests ; request; request = request->next) {
+    for ( request = requests; request; request = request->next ) {
         request->processed = 0;
     }
 
-    status = AgentHandler_callHandler(reginfo->handler, reginfo, reqinfo, requests);
+    status = AgentHandler_callHandler( reginfo->handler, reginfo, reqinfo, requests );
 
     return status;
 }
@@ -608,26 +601,24 @@ AgentHandler_callHandlers(  HandlerRegistration* reginfo,
  *  The given arguments and MIB handler are checked
  *  for sanity, then the next handler is called.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  */
-int
-AgentHandler_callNextHandler( MibHandler*          current,
-                              HandlerRegistration* reginfo,
-                              AgentRequestInfo*    reqinfo,
-                              RequestInfo*         requests )
+int AgentHandler_callNextHandler( MibHandler* current,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* reqinfo,
+    RequestInfo* requests )
 {
 
-    if (current == NULL || reginfo == NULL || reqinfo == NULL ||
-        requests == NULL) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_callNextHandler() called illegally\n");
-        Assert_assert(current != NULL);
-        Assert_assert(reginfo != NULL);
-        Assert_assert(reqinfo != NULL);
-        Assert_assert(requests != NULL);
+    if ( current == NULL || reginfo == NULL || reqinfo == NULL || requests == NULL ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_callNextHandler() called illegally\n" );
+        Assert_assert( current != NULL );
+        Assert_assert( reginfo != NULL );
+        Assert_assert( reqinfo != NULL );
+        Assert_assert( requests != NULL );
         return PRIOT_ERR_GENERR;
     }
 
-    return AgentHandler_callHandler(current->next, reginfo, reqinfo, requests);
+    return AgentHandler_callHandler( current->next, reginfo, reqinfo, requests );
 }
 
 /** @private
@@ -635,27 +626,26 @@ AgentHandler_callNextHandler( MibHandler*          current,
  *  The given arguments and MIB handler are not validated before
  *  the call, only request is checked.
  *
- *  @return Returns ErrorCode_SUCCESS or SNMP_ERR_* error code.
+ *  @return Returns ErrorCode_SUCCESS or PRIOT_ERR_* error code.
  */
 
-int
-AgentHandler_callNextHandlerOneRequest( MibHandler*          current,
-                                        HandlerRegistration* reginfo,
-                                        AgentRequestInfo*    reqinfo,
-                                        RequestInfo*         requests )
+int AgentHandler_callNextHandlerOneRequest( MibHandler* current,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* reqinfo,
+    RequestInfo* requests )
 {
-    RequestInfo *request;
+    RequestInfo* request;
     int ret;
 
-    if (!requests) {
-        Logger_log(LOGGER_PRIORITY_ERR, "AgentHandler_callNextHandlerOneRequest() called illegally\n");
-        Assert_assert(requests != NULL);
+    if ( !requests ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "AgentHandler_callNextHandlerOneRequest() called illegally\n" );
+        Assert_assert( requests != NULL );
         return PRIOT_ERR_GENERR;
     }
 
     request = requests->next;
     requests->next = NULL;
-    ret = AgentHandler_callHandler(current->next, reginfo, reqinfo, requests);
+    ret = AgentHandler_callHandler( current->next, reginfo, reqinfo, requests );
     requests->next = request;
     return ret;
 }
@@ -667,22 +657,20 @@ AgentHandler_callNextHandlerOneRequest( MibHandler*          current,
  *
  *  @param handler is the MIB Handler to be freed
  */
-void
-AgentHandler_handlerFree( MibHandler* handler )
+void AgentHandler_handlerFree( MibHandler* handler )
 {
-    if (handler != NULL) {
-        if (handler->next != NULL) {
+    if ( handler != NULL ) {
+        if ( handler->next != NULL ) {
             /** make sure we aren't pointing to ourselves.  */
-            Assert_assert(handler != handler->next); /* bugs caught: 1 */
-            AgentHandler_handlerFree(handler->next);
+            Assert_assert( handler != handler->next ); /* bugs caught: 1 */
+            AgentHandler_handlerFree( handler->next );
             handler->next = NULL;
         }
-        if ((handler->myvoid != NULL) && (handler->data_free != NULL))
-        {
-            handler->data_free(handler->myvoid);
+        if ( ( handler->myvoid != NULL ) && ( handler->data_free != NULL ) ) {
+            handler->data_free( handler->myvoid );
         }
-        TOOLS_FREE(handler->handler_name);
-        TOOLS_FREE(handler);
+        TOOLS_FREE( handler->handler_name );
+        TOOLS_FREE( handler );
     }
 }
 
@@ -699,13 +687,13 @@ AgentHandler_handlerFree( MibHandler* handler )
 MibHandler*
 AgentHandler_handlerDup( MibHandler* handler )
 {
-    MibHandler *h = NULL;
+    MibHandler* h = NULL;
 
-    if (!handler)
+    if ( !handler )
         goto goto_err;
 
-    h = _AgentHandler_cloneHandler(handler);
-    if (!h)
+    h = _AgentHandler_cloneHandler( handler );
+    if ( !h )
         goto goto_err;
 
     /*
@@ -713,21 +701,21 @@ AgentHandler_handlerDup( MibHandler* handler )
      * memory leaks, and providing a free function without clone function
      * is asking for memory corruption. Hence the log statement below.
      */
-    if (!!handler->data_clone != !!handler->data_free)
-        Logger_log(LOGGER_PRIORITY_ERR, "data_clone / data_free inconsistent (%s)\n",
-                 handler->handler_name);
-    if (handler->myvoid && handler->data_clone) {
-        h->myvoid = handler->data_clone(handler->myvoid);
-        if (!h->myvoid)
+    if ( !!handler->data_clone != !!handler->data_free )
+        Logger_log( LOGGER_PRIORITY_ERR, "data_clone / data_free inconsistent (%s)\n",
+            handler->handler_name );
+    if ( handler->myvoid && handler->data_clone ) {
+        h->myvoid = handler->data_clone( handler->myvoid );
+        if ( !h->myvoid )
             goto goto_err;
     } else
         h->myvoid = handler->myvoid;
     h->data_clone = handler->data_clone;
     h->data_free = handler->data_free;
 
-    if (handler->next != NULL) {
-        h->next = AgentHandler_handlerDup(handler->next);
-        if (!h->next)
+    if ( handler->next != NULL ) {
+        h->next = AgentHandler_handlerDup( handler->next );
+        if ( !h->next )
             goto goto_err;
         h->next->prev = h;
     }
@@ -735,7 +723,7 @@ AgentHandler_handlerDup( MibHandler* handler )
     return h;
 
 goto_err:
-    AgentHandler_handlerFree(h);
+    AgentHandler_handlerFree( h );
     return NULL;
 }
 
@@ -746,16 +734,15 @@ goto_err:
  *
  *  @param reginfo is the handler registration object to be freed
  */
-void
-AgentHandler_handlerRegistrationFree( HandlerRegistration* reginfo )
+void AgentHandler_handlerRegistrationFree( HandlerRegistration* reginfo )
 {
-    if (reginfo != NULL) {
-        AgentHandler_handlerFree(reginfo->handler);
-        TOOLS_FREE(reginfo->handlerName);
-        TOOLS_FREE(reginfo->contextName);
-        TOOLS_FREE(reginfo->rootoid);
+    if ( reginfo != NULL ) {
+        AgentHandler_handlerFree( reginfo->handler );
+        TOOLS_FREE( reginfo->handlerName );
+        TOOLS_FREE( reginfo->contextName );
+        TOOLS_FREE( reginfo->rootoid );
         reginfo->rootoid_len = 0;
-        TOOLS_FREE(reginfo);
+        TOOLS_FREE( reginfo );
     }
 }
 
@@ -770,18 +757,17 @@ AgentHandler_handlerRegistrationFree( HandlerRegistration* reginfo )
  * @see AgentHandler_handlerDup()
  */
 HandlerRegistration*
-AgentHandler_handlerRegistrationDup(HandlerRegistration* reginfo)
+AgentHandler_handlerRegistrationDup( HandlerRegistration* reginfo )
 {
-    HandlerRegistration *r = NULL;
+    HandlerRegistration* r = NULL;
 
-    if (reginfo == NULL) {
+    if ( reginfo == NULL ) {
         return NULL;
     }
 
+    r = ( HandlerRegistration* )calloc( 1, sizeof( HandlerRegistration ) );
 
-    r = (HandlerRegistration *) calloc(1, sizeof(HandlerRegistration));
-
-    if (r != NULL) {
+    if ( r != NULL ) {
         r->modes = reginfo->modes;
         r->priority = reginfo->priority;
         r->range_subid = reginfo->range_subid;
@@ -789,33 +775,33 @@ AgentHandler_handlerRegistrationDup(HandlerRegistration* reginfo)
         r->range_ubound = reginfo->range_ubound;
         r->rootoid_len = reginfo->rootoid_len;
 
-        if (reginfo->handlerName != NULL) {
-            r->handlerName = strdup(reginfo->handlerName);
-            if (r->handlerName == NULL) {
-                AgentHandler_handlerRegistrationFree(r);
+        if ( reginfo->handlerName != NULL ) {
+            r->handlerName = strdup( reginfo->handlerName );
+            if ( r->handlerName == NULL ) {
+                AgentHandler_handlerRegistrationFree( r );
                 return NULL;
             }
         }
 
-        if (reginfo->contextName != NULL) {
-            r->contextName = strdup(reginfo->contextName);
-            if (r->contextName == NULL) {
-                AgentHandler_handlerRegistrationFree(r);
+        if ( reginfo->contextName != NULL ) {
+            r->contextName = strdup( reginfo->contextName );
+            if ( r->contextName == NULL ) {
+                AgentHandler_handlerRegistrationFree( r );
                 return NULL;
             }
         }
 
-        if (reginfo->rootoid != NULL) {
-            r->rootoid = Api_duplicateObjid(reginfo->rootoid, reginfo->rootoid_len);
-            if (r->rootoid == NULL) {
-                AgentHandler_handlerRegistrationFree(r);
+        if ( reginfo->rootoid != NULL ) {
+            r->rootoid = Api_duplicateObjid( reginfo->rootoid, reginfo->rootoid_len );
+            if ( r->rootoid == NULL ) {
+                AgentHandler_handlerRegistrationFree( r );
                 return NULL;
             }
         }
 
-        r->handler = AgentHandler_handlerDup(reginfo->handler);
-        if (r->handler == NULL) {
-            AgentHandler_handlerRegistrationFree(r);
+        r->handler = AgentHandler_handlerDup( reginfo->handler );
+        if ( r->handler == NULL ) {
+            AgentHandler_handlerRegistrationFree( r );
             return NULL;
         }
         return r;
@@ -835,16 +821,16 @@ AgentHandler_handlerRegistrationDup(HandlerRegistration* reginfo)
  * @see AgentHandler_freeDelegatedCache()
  */
 DelegatedCache*
-AgentHandler_createDelegatedCache( MibHandler*          handler,
-                                   HandlerRegistration* reginfo,
-                                   AgentRequestInfo*    reqinfo,
-                                   RequestInfo*         requests,
-                                   void*                localinfo )
+AgentHandler_createDelegatedCache( MibHandler* handler,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* reqinfo,
+    RequestInfo* requests,
+    void* localinfo )
 {
-    DelegatedCache *ret;
+    DelegatedCache* ret;
 
-    ret = TOOLS_MALLOC_TYPEDEF(DelegatedCache);
-    if (ret) {
+    ret = TOOLS_MALLOC_TYPEDEF( DelegatedCache );
+    if ( ret ) {
         ret->transaction_id = reqinfo->asp->pdu->transid;
         ret->handler = handler;
         ret->reginfo = reginfo;
@@ -869,10 +855,10 @@ AgentHandler_createDelegatedCache( MibHandler*          handler,
 DelegatedCache*
 AgentHandler_handlerCheckCache( DelegatedCache* dcache )
 {
-    if (!dcache)
+    if ( !dcache )
         return dcache;
 
-    if (Agent_checkTransactionId(dcache->transaction_id) == ErrorCode_SUCCESS)
+    if ( Agent_checkTransactionId( dcache->transaction_id ) == ErrorCode_SUCCESS )
         return dcache;
 
     return NULL;
@@ -888,18 +874,16 @@ AgentHandler_handlerCheckCache( DelegatedCache* dcache )
  * @see AgentHandler_createDelegatedCache()
  * @see AgentHandler_handlerCheckCache()
  */
-void
-AgentHandler_freeDelegatedCache( DelegatedCache* dcache )
+void AgentHandler_freeDelegatedCache( DelegatedCache* dcache )
 {
     /*
      * right now, no extra data is there that needs to be freed
      */
-    if (dcache)
-        TOOLS_FREE(dcache);
+    if ( dcache )
+        TOOLS_FREE( dcache );
 
     return;
 }
-
 
 /** Sets a list of requests as delegated or not delegated.
  *  Sweeps through given chain of requests and sets 'delegated'
@@ -908,11 +892,10 @@ AgentHandler_freeDelegatedCache( DelegatedCache* dcache )
  *  @param requests Request list.
  *  @param isdelegated New value of the 'delegated' flag.
  */
-void
-AgentHandler_handlerMarkRequestsAsDelegated( RequestInfo* requests,
-                                             int          isdelegated )
+void AgentHandler_handlerMarkRequestsAsDelegated( RequestInfo* requests,
+    int isdelegated )
 {
-    while (requests) {
+    while ( requests ) {
         requests->delegated = isdelegated;
         requests = requests->next;
     }
@@ -929,13 +912,12 @@ AgentHandler_handlerMarkRequestsAsDelegated( RequestInfo* requests,
  * @see AgentHandler_requestRemoveListData()
  * @see AgentHandler_requestGetListData()
  */
-void
-AgentHandler_requestAddListData(    RequestInfo*       request,
-                                    DataList_DataList* node )
+void AgentHandler_requestAddListData( RequestInfo* request,
+    DataList_DataList* node )
 {
-    if (request) {
-        if (request->parent_data)
-            DataList_add(&request->parent_data, node);
+    if ( request ) {
+        if ( request->parent_data )
+            DataList_add( &request->parent_data, node );
         else
             request->parent_data = node;
     }
@@ -952,14 +934,13 @@ AgentHandler_requestAddListData(    RequestInfo*       request,
  * @see AgentHandler_requestAddListData()
  * @see AgentHandler_requestGetListData()
  */
-int
-AgentHandler_requestRemoveListData( RequestInfo*    request,
-                                    const char*     name )
+int AgentHandler_requestRemoveListData( RequestInfo* request,
+    const char* name )
 {
-    if ((NULL == request) || (NULL ==request->parent_data))
+    if ( ( NULL == request ) || ( NULL == request->parent_data ) )
         return 1;
 
-    return DataList_removeNode(&request->parent_data, name);
+    return DataList_removeNode( &request->parent_data, name );
 }
 
 /** Extracts data from a request.
@@ -977,12 +958,11 @@ AgentHandler_requestRemoveListData( RequestInfo*    request,
  * @see AgentHandler_requestAddListData()
  * @see AgentHandler_requestRemoveListData()
  */
-void*
-AgentHandler_requestGetListData( RequestInfo* request,
-                                 const char*  name )
+void* AgentHandler_requestGetListData( RequestInfo* request,
+    const char* name )
 {
-    if (request)
-        return DataList_get(request->parent_data, name);
+    if ( request )
+        return DataList_get( request->parent_data, name );
     return NULL;
 }
 
@@ -995,11 +975,10 @@ AgentHandler_requestGetListData( RequestInfo* request,
  * @see AgentHandler_requestAddListData()
  * @see netsnmp_free_list_data()
  */
-void
-AgentHandler_freeRequestDataSet( RequestInfo* request )
+void AgentHandler_freeRequestDataSet( RequestInfo* request )
 {
-    if (request)
-        DataList_free(request->parent_data);
+    if ( request )
+        DataList_free( request->parent_data );
 }
 
 /** Free the extra data stored in a bunch of requests.
@@ -1010,11 +989,10 @@ AgentHandler_freeRequestDataSet( RequestInfo* request )
  * @see AgentHandler_requestAddListData()
  * @see AgentHandler_freeRequestDataSet()
  */
-void
-AgentHandler_freeRequestDataSets( RequestInfo* request )
+void AgentHandler_freeRequestDataSets( RequestInfo* request )
 {
-    if (request && request->parent_data) {
-        DataList_freeAll(request->parent_data);
+    if ( request && request->parent_data ) {
+        DataList_freeAll( request->parent_data );
         request->parent_data = NULL;
     }
 }
@@ -1032,13 +1010,13 @@ AgentHandler_freeRequestDataSets( RequestInfo* request )
  */
 MibHandler*
 AgentHandler_findHandlerByName( HandlerRegistration* reginfo,
-                                const char*          name )
+    const char* name )
 {
-    MibHandler *it;
-    if (reginfo == NULL || name == NULL )
+    MibHandler* it;
+    if ( reginfo == NULL || name == NULL )
         return NULL;
-    for (it = reginfo->handler; it; it = it->next) {
-        if (strcmp(it->handler_name, name) == 0) {
+    for ( it = reginfo->handler; it; it = it->next ) {
+        if ( strcmp( it->handler_name, name ) == 0 ) {
             return it;
         }
     }
@@ -1061,12 +1039,11 @@ AgentHandler_findHandlerByName( HandlerRegistration* reginfo,
  *
  * @see AgentHandler_findHandlerByName()
  */
-void*
-AgentHandler_findHandlerDataByName( HandlerRegistration* reginfo,
-                                    const char*          name )
+void* AgentHandler_findHandlerDataByName( HandlerRegistration* reginfo,
+    const char* name )
 {
-    MibHandler *it = AgentHandler_findHandlerByName(reginfo, name);
-    if (it)
+    MibHandler* it = AgentHandler_findHandlerByName( reginfo, name );
+    if ( it )
         return it->myvoid;
     return NULL;
 }
@@ -1081,24 +1058,23 @@ AgentHandler_findHandlerDataByName( HandlerRegistration* reginfo,
 static MibHandler*
 _AgentHandler_cloneHandler( MibHandler* it )
 {
-    MibHandler *dup;
+    MibHandler* dup;
 
-    if(NULL == it)
+    if ( NULL == it )
         return NULL;
 
-    dup = AgentHandler_createHandler(it->handler_name, it->access_method);
-    if(NULL != dup)
+    dup = AgentHandler_createHandler( it->handler_name, it->access_method );
+    if ( NULL != dup )
         dup->flags = it->flags;
 
     return dup;
 }
 
-static DataList_DataList *_agentHandler_handlerReg = NULL;
+static DataList_DataList* _agentHandler_handlerReg = NULL;
 
-void
-AgentHandler_handlerFreeCallback( void* handler )
+void AgentHandler_handlerFreeCallback( void* handler )
 {
-    AgentHandler_handlerFree((MibHandler *)handler);
+    AgentHandler_handlerFree( ( MibHandler* )handler );
 }
 
 /** Registers a given handler by name, so that it can be found easily later.
@@ -1111,14 +1087,13 @@ AgentHandler_handlerFreeCallback( void* handler )
  *
  * @see AgentHandler_clearHandlerList()
  */
-void
-AgentHandler_registerHandlerByName( const char* name,
-                                    MibHandler* handler )
+void AgentHandler_registerHandlerByName( const char* name,
+    MibHandler* handler )
 {
-    DataList_add(&_agentHandler_handlerReg,
-                          DataList_create(name, (void *) handler,
-                                                   AgentHandler_handlerFreeCallback));
-    DEBUG_MSGTL(("handler_registry", "registering helper %s\n", name));
+    DataList_add( &_agentHandler_handlerReg,
+        DataList_create( name, ( void* )handler,
+            AgentHandler_handlerFreeCallback ) );
+    DEBUG_MSGTL( ( "handler_registry", "registering helper %s\n", name ) );
 }
 
 /** Clears the entire MIB Handlers registration list.
@@ -1129,11 +1104,10 @@ AgentHandler_registerHandlerByName( const char* name,
  *  @see shutdown_agent()
  *  @see AgentHandler_registerHandlerByName()
  */
-void
-AgentHandler_clearHandlerList( void )
+void AgentHandler_clearHandlerList( void )
 {
-    DEBUG_MSGTL(("agent_handler", "AgentHandler_clearHandlerList() called\n"));
-    DataList_freeAll(_agentHandler_handlerReg);
+    DEBUG_MSGTL( ( "agent_handler", "AgentHandler_clearHandlerList() called\n" ) );
+    DataList_freeAll( _agentHandler_handlerReg );
     _agentHandler_handlerReg = NULL;
 }
 
@@ -1141,44 +1115,41 @@ AgentHandler_clearHandlerList( void )
  *  Injects a handler into a subtree, peers and children when a given
  *  subtrees name matches a passed in name.
  */
-void
-AgentHandler_injectHandlerIntoSubtree( Subtree*    tp,
-                                       const char* name,
-                                       MibHandler* handler,
-                                       const char* before_what )
+void AgentHandler_injectHandlerIntoSubtree( Subtree* tp,
+    const char* name,
+    MibHandler* handler,
+    const char* before_what )
 {
-    Subtree *tptr;
-    MibHandler *mh;
+    Subtree* tptr;
+    MibHandler* mh;
 
-    for (tptr = tp; tptr != NULL; tptr = tptr->next) {
+    for ( tptr = tp; tptr != NULL; tptr = tptr->next ) {
         /*  if (tptr->children) {
               AgentHandler_injectHandlerIntoSubtree(tptr->children,name,handler);
         }   */
-        if (strcmp(tptr->label_a, name) == 0) {
-            DEBUG_MSGTL(("injectHandler", "injecting handler %s into %s\n",
-                        handler->handler_name, tptr->label_a));
-            AgentHandler_injectHandlerBefore(tptr->reginfo, _AgentHandler_cloneHandler(handler),
-                                          before_what);
-        } else if (tptr->reginfo != NULL &&
-           tptr->reginfo->handlerName != NULL &&
-                   strcmp(tptr->reginfo->handlerName, name) == 0) {
-            DEBUG_MSGTL(("injectHandler", "injecting handler into %s/%s\n",
-                        tptr->label_a, tptr->reginfo->handlerName));
-            AgentHandler_injectHandlerBefore(tptr->reginfo, _AgentHandler_cloneHandler(handler),
-                                          before_what);
+        if ( strcmp( tptr->label_a, name ) == 0 ) {
+            DEBUG_MSGTL( ( "injectHandler", "injecting handler %s into %s\n",
+                handler->handler_name, tptr->label_a ) );
+            AgentHandler_injectHandlerBefore( tptr->reginfo, _AgentHandler_cloneHandler( handler ),
+                before_what );
+        } else if ( tptr->reginfo != NULL && tptr->reginfo->handlerName != NULL && strcmp( tptr->reginfo->handlerName, name ) == 0 ) {
+            DEBUG_MSGTL( ( "injectHandler", "injecting handler into %s/%s\n",
+                tptr->label_a, tptr->reginfo->handlerName ) );
+            AgentHandler_injectHandlerBefore( tptr->reginfo, _AgentHandler_cloneHandler( handler ),
+                before_what );
         } else {
-            for (mh = tptr->reginfo->handler; mh != NULL; mh = mh->next) {
-                if (mh->handler_name && strcmp(mh->handler_name, name) == 0) {
-                    DEBUG_MSGTL(("injectHandler", "injecting handler into %s\n",
-                                tptr->label_a));
-                    AgentHandler_injectHandlerBefore(tptr->reginfo,
-                                                  _AgentHandler_cloneHandler(handler),
-                                                  before_what);
+            for ( mh = tptr->reginfo->handler; mh != NULL; mh = mh->next ) {
+                if ( mh->handler_name && strcmp( mh->handler_name, name ) == 0 ) {
+                    DEBUG_MSGTL( ( "injectHandler", "injecting handler into %s\n",
+                        tptr->label_a ) );
+                    AgentHandler_injectHandlerBefore( tptr->reginfo,
+                        _AgentHandler_cloneHandler( handler ),
+                        before_what );
                     break;
                 } else {
-                    DEBUG_MSGTL(("injectHandler",
-                                "not injecting handler into %s\n",
-                                mh->handler_name));
+                    DEBUG_MSGTL( ( "injectHandler",
+                        "not injecting handler into %s\n",
+                        mh->handler_name ) );
                 }
             }
         }
@@ -1190,39 +1161,38 @@ static int _agentHandler_doneit = 0;
  *  Parses the "injectHandler" token line.
  */
 
-void
-AgentHandler_parseInjectHandlerConf( const char* token,
-                                     char*       cptr )
+void AgentHandler_parseInjectHandlerConf( const char* token,
+    char* cptr )
 {
-    char  handler_to_insert[256], reg_name[256];
-    SubtreeContextCache *stc;
-    MibHandler *handler;
+    char handler_to_insert[ 256 ], reg_name[ 256 ];
+    SubtreeContextCache* stc;
+    MibHandler* handler;
 
     /*
      * XXXWWW: ensure instead that handler isn't inserted twice
      */
-    if (_agentHandler_doneit)                 /* we only do this once without restart the agent */
+    if ( _agentHandler_doneit ) /* we only do this once without restart the agent */
         return;
 
-    cptr = ReadConfig_copyNword(cptr, handler_to_insert, sizeof(handler_to_insert));
-    handler = (MibHandler*)DataList_get(_agentHandler_handlerReg, handler_to_insert);
-    if (!handler) {
-    ReadConfig_error("no \"%s\" handler registered.",
-                 handler_to_insert);
-        return;
-    }
-
-    if (!cptr) {
-        ReadConfig_configPerror("no INTONAME specified.  Can't do insertion.");
+    cptr = ReadConfig_copyNword( cptr, handler_to_insert, sizeof( handler_to_insert ) );
+    handler = ( MibHandler* )DataList_get( _agentHandler_handlerReg, handler_to_insert );
+    if ( !handler ) {
+        ReadConfig_error( "no \"%s\" handler registered.",
+            handler_to_insert );
         return;
     }
-    cptr = ReadConfig_copyNword(cptr, reg_name, sizeof(reg_name));
 
-    for (stc = AgentRegistry_getTopContextCache(); stc; stc = stc->next) {
-        DEBUG_MSGTL(("injectHandler", "Checking context tree %s (before=%s)\n",
-                    stc->context_name, (cptr)?cptr:"null"));
-        AgentHandler_injectHandlerIntoSubtree(stc->first_subtree, reg_name,
-                                            handler, cptr);
+    if ( !cptr ) {
+        ReadConfig_configPerror( "no INTONAME specified.  Can't do insertion." );
+        return;
+    }
+    cptr = ReadConfig_copyNword( cptr, reg_name, sizeof( reg_name ) );
+
+    for ( stc = AgentRegistry_getTopContextCache(); stc; stc = stc->next ) {
+        DEBUG_MSGTL( ( "injectHandler", "Checking context tree %s (before=%s)\n",
+            stc->context_name, ( cptr ) ? cptr : "null" ) );
+        AgentHandler_injectHandlerIntoSubtree( stc->first_subtree, reg_name,
+            handler, cptr );
     }
 }
 
@@ -1231,10 +1201,10 @@ AgentHandler_parseInjectHandlerConf( const char* token,
  *  @todo replace this with a method to check the handler chain instead.
  */
 static int
-_AgentHandler_handlerMarkInjectHandlerDone( int   majorID,
-                                           int   minorID,
-                                           void* serverarg,
-                                           void* clientarg )
+_AgentHandler_handlerMarkInjectHandlerDone( int majorID,
+    int minorID,
+    void* serverarg,
+    void* clientarg )
 {
     _agentHandler_doneit = 1;
     return 0;
@@ -1246,72 +1216,71 @@ _AgentHandler_handlerMarkInjectHandlerDone( int   majorID,
  *
  *  @see init_agent_read_config()
  */
-void
-AgentHandler_initHandlerConf( void )
+void AgentHandler_initHandlerConf( void )
 {
-    AgentReadConfig_priotdRegisterConfigHandler("injectHandler",
-                                  AgentHandler_parseInjectHandlerConf,
-                                  NULL, "injectHandler NAME INTONAME [BEFORE_OTHER_NAME]");
+    AgentReadConfig_priotdRegisterConfigHandler( "injectHandler",
+        AgentHandler_parseInjectHandlerConf,
+        NULL, "injectHandler NAME INTONAME [BEFORE_OTHER_NAME]" );
 
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                           CALLBACK_POST_READ_CONFIG,
-                           _AgentHandler_handlerMarkInjectHandlerDone, NULL);
+    Callback_registerCallback( CALLBACK_LIBRARY,
+        CALLBACK_POST_READ_CONFIG,
+        _AgentHandler_handlerMarkInjectHandlerDone, NULL );
 
-    Enum_seAddPairToSlist("agentMode", strdup("GET"), MODE_GET);
-    Enum_seAddPairToSlist("agentMode", strdup("GETNEXT"), MODE_GETNEXT);
-    Enum_seAddPairToSlist("agentMode", strdup("GETBULK"), MODE_GETBULK);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_BEGIN"),
-                         MODE_SET_BEGIN);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_RESERVE1"),
-                         MODE_SET_RESERVE1);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_RESERVE2"),
-                         MODE_SET_RESERVE2);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_ACTION"),
-                         MODE_SET_ACTION);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_COMMIT"),
-                         MODE_SET_COMMIT);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_FREE"), MODE_SET_FREE);
-    Enum_seAddPairToSlist("agentMode", strdup("SET_UNDO"), MODE_SET_UNDO);
+    Enum_seAddPairToSlist( "agentMode", strdup( "GET" ), MODE_GET );
+    Enum_seAddPairToSlist( "agentMode", strdup( "GETNEXT" ), MODE_GETNEXT );
+    Enum_seAddPairToSlist( "agentMode", strdup( "GETBULK" ), MODE_GETBULK );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_BEGIN" ),
+        MODE_SET_BEGIN );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_RESERVE1" ),
+        MODE_SET_RESERVE1 );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_RESERVE2" ),
+        MODE_SET_RESERVE2 );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_ACTION" ),
+        MODE_SET_ACTION );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_COMMIT" ),
+        MODE_SET_COMMIT );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_FREE" ), MODE_SET_FREE );
+    Enum_seAddPairToSlist( "agentMode", strdup( "SET_UNDO" ), MODE_SET_UNDO );
 
-    Enum_seAddPairToSlist("babystepMode", strdup("pre-request"),
-                         MODE_BSTEP_PRE_REQUEST);
-    Enum_seAddPairToSlist("babystepMode", strdup("object_lookup"),
-                         MODE_BSTEP_OBJECT_LOOKUP);
-    Enum_seAddPairToSlist("babystepMode", strdup("check_value"),
-                         MODE_BSTEP_CHECK_VALUE);
-    Enum_seAddPairToSlist("babystepMode", strdup("row_create"),
-                         MODE_BSTEP_ROW_CREATE);
-    Enum_seAddPairToSlist("babystepMode", strdup("undo_setup"),
-                         MODE_BSTEP_UNDO_SETUP);
-    Enum_seAddPairToSlist("babystepMode", strdup("set_value"),
-                         MODE_BSTEP_SET_VALUE);
-    Enum_seAddPairToSlist("babystepMode", strdup("check_consistency"),
-                         MODE_BSTEP_CHECK_CONSISTENCY);
-    Enum_seAddPairToSlist("babystepMode", strdup("undo_set"),
-                         MODE_BSTEP_UNDO_SET);
-    Enum_seAddPairToSlist("babystepMode", strdup("commit"),
-                         MODE_BSTEP_COMMIT);
-    Enum_seAddPairToSlist("babystepMode", strdup("undo_commit"),
-                         MODE_BSTEP_UNDO_COMMIT);
-    Enum_seAddPairToSlist("babystepMode", strdup("irreversible_commit"),
-                         MODE_BSTEP_IRREVERSIBLE_COMMIT);
-    Enum_seAddPairToSlist("babystepMode", strdup("undo_cleanup"),
-                         MODE_BSTEP_UNDO_CLEANUP);
-    Enum_seAddPairToSlist("babystepMode", strdup("post_request"),
-                         MODE_BSTEP_POST_REQUEST);
-    Enum_seAddPairToSlist("babystepMode", strdup("original"), 0xffff);
+    Enum_seAddPairToSlist( "babystepMode", strdup( "pre-request" ),
+        MODE_BSTEP_PRE_REQUEST );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "object_lookup" ),
+        MODE_BSTEP_OBJECT_LOOKUP );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "check_value" ),
+        MODE_BSTEP_CHECK_VALUE );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "row_create" ),
+        MODE_BSTEP_ROW_CREATE );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_setup" ),
+        MODE_BSTEP_UNDO_SETUP );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "set_value" ),
+        MODE_BSTEP_SET_VALUE );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "check_consistency" ),
+        MODE_BSTEP_CHECK_CONSISTENCY );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_set" ),
+        MODE_BSTEP_UNDO_SET );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "commit" ),
+        MODE_BSTEP_COMMIT );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_commit" ),
+        MODE_BSTEP_UNDO_COMMIT );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "irreversible_commit" ),
+        MODE_BSTEP_IRREVERSIBLE_COMMIT );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_cleanup" ),
+        MODE_BSTEP_UNDO_CLEANUP );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "post_request" ),
+        MODE_BSTEP_POST_REQUEST );
+    Enum_seAddPairToSlist( "babystepMode", strdup( "original" ), 0xffff );
     /*
      * xxx-rks: hmmm.. will this work for modes which are or'd together?
      *          I'm betting not...
      */
     Enum_seAddPairToSlist( "handlerCanMode",
-                           strdup("GET/GETNEXT"),
-                           HANDLER_CAN_GETANDGETNEXT );
+        strdup( "GET/GETNEXT" ),
+        HANDLER_CAN_GETANDGETNEXT );
 
-    Enum_seAddPairToSlist("handlerCanMode", strdup("SET"),
-                         HANDLER_CAN_SET);
-    Enum_seAddPairToSlist("handlerCanMode", strdup("GETBULK"),
-                         HANDLER_CAN_GETBULK);
-    Enum_seAddPairToSlist("handlerCanMode", strdup("BABY_STEP"),
-                         HANDLER_CAN_BABY_STEP);
+    Enum_seAddPairToSlist( "handlerCanMode", strdup( "SET" ),
+        HANDLER_CAN_SET );
+    Enum_seAddPairToSlist( "handlerCanMode", strdup( "GETBULK" ),
+        HANDLER_CAN_GETBULK );
+    Enum_seAddPairToSlist( "handlerCanMode", strdup( "BABY_STEP" ),
+        HANDLER_CAN_BABY_STEP );
 }

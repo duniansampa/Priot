@@ -38,7 +38,7 @@ static void _Container_factoryFree(void *dat, void *context)
         free(TOOLS_REMOVE_CONST(void *, data->name)); /* TOOLS_FREE wasted on object about to be freed */
     }
 
-    free(data); /* SNMP_FREE wasted on param */
+    free(data); /* TOOLS_FREE wasted on param */
 }
 
 /*------------------------------------------------------------------

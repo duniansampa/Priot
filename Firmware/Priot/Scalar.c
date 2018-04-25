@@ -32,7 +32,7 @@ Scalar_getScalarHandler(void)
  * and will be processed last in first out, LIFO.
  *
  * @param reginfo a handler registration structure which could get created
- *                using netsnmp_create_handler_registration.  Used to register
+ *                using AgentHandler_createHandlerRegistration.  Used to register
  *                a scalar helper handler.
  *
  * @return MIB_REGISTERED_OK is returned if the registration was a success.
@@ -66,7 +66,7 @@ Scalar_registerScalar(HandlerRegistration *reginfo)
  * prior to injecting the serialize handler and registering reginfo.
  *
  * @param reginfo a handler registration structure which could get created
- *                using netsnmp_create_handler_registration.  Used to register
+ *                using AgentHandler_createHandlerRegistration.  Used to register
  *                a read only scalar helper handler.
  *
  * @return  MIB_REGISTERED_OK is returned if the registration was a success.

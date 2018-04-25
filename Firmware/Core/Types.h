@@ -5,19 +5,10 @@
  *  Definitions of data structures, used within the library API.
 */
 
-#include "Generals.h"
-
 #include "Asn01.h"
+//#include <time.h>
 
-#include <stdio.h>
-#include <time.h>
-#include <sys/types.h>
-
-
-//#include <siglog/library/oid.h>
-
-#define TYPES_OID_MAX_SUBID   0xFFFFFFFFUL
-
+#define TYPES_OID_MAX_SUBID 0xFFFFFFFFUL
 
 /*
  * Note: on POSIX-compliant systems, pid_t is defined in <sys/types.h>.
@@ -34,7 +25,6 @@ typedef int Types_SsizeT;
 
 typedef unsigned long int Types_NfdsT;
 
-
 /*
  *  For the initial release, this will just refer to the
  *  relevant UCD header files.
@@ -46,52 +36,49 @@ typedef unsigned long int Types_NfdsT;
  */
 
 typedef union {
-    long           *integer;
-    u_char         *string;
-    oid            *objid;
-    u_char         *bitstring;
-    Asn01_Counter64 *counter64;
-    float          *floatVal;
-    double         *doubleVal;
+    long* integer;
+    u_char* string;
+    oid* objid;
+    u_char* bitstring;
+    Asn01_Counter64* counter64;
+    float* floatVal;
+    double* doubleVal;
     /*
      * t_union *unionVal;
     */
 } Types_Vardata;
 
+#define TYPES_MAX_OID_LEN 128 /* max subid's in an oid */
 
-
-#define TYPES_MAX_OID_LEN	    128 /* max subid's in an oid */
-
-/** @typedef struct variable_list netsnmp_variable_list
- * Typedefs the variable_list struct into netsnmp_variable_list */
+/** @typedef struct Variable_s_list Types_VariableList
+ * Typedefs the variable_list struct into Types_VariableList */
 /** @struct variable_list
  * The netsnmp variable list binding structure, it's typedef'd to
- * netsnmp_variable_list.
+ * Types_VariableList.
  */
 typedef struct Types_VariableList_s {
-   /** NULL for last variable */
-   struct Types_VariableList_s *nextVariable;
-   /** Object identifier of variable */
-   oid            *name;
-   /** number of subid's in name */
-   size_t          nameLength;
-   /** ASN type of variable */
-   u_char          type;
-   /** value of variable */
-   Types_Vardata val;
-   /** the length of the value to be copied into buf */
-   size_t          valLen;
-   /** buffer to hold the OID */
-   oid             nameLoc[TYPES_MAX_OID_LEN];
-   /** 90 percentile < 40. */
-   u_char          buf[40];
-   /** (Opaque) hook for additional data */
-   void           *data;
-   /** callback to free above */
-   void            (*dataFreeHook)(void *);
-   int             index;
+    /** NULL for last variable */
+    struct Types_VariableList_s* nextVariable;
+    /** Object identifier of variable */
+    oid* name;
+    /** number of subid's in name */
+    size_t nameLength;
+    /** ASN type of variable */
+    u_char type;
+    /** value of variable */
+    Types_Vardata val;
+    /** the length of the value to be copied into buf */
+    size_t valLen;
+    /** buffer to hold the OID */
+    oid nameLoc[ TYPES_MAX_OID_LEN ];
+    /** 90 percentile < 40. */
+    u_char buf[ 40 ];
+    /** (Opaque) hook for additional data */
+    void* data;
+    /** callback to free above */
+    void ( *dataFreeHook )( void* );
+    int index;
 } Types_VariableList;
-
 
 /** @typedef struct snmp_pdu to netsnmp_pdu
  * Typedefs the snmp_pdu struct into netsnmp_pdu */
@@ -100,116 +87,114 @@ typedef struct Types_VariableList_s {
  */
 typedef struct Types_Pdu_s {
 
-#define non_repeaters	errstat
+#define non_repeaters errstat
 #define max_repetitions errindex
 
     /*
      * Protocol-version independent fields
      */
     /** snmp version */
-    long            version;
+    long version;
     /** Type of this PDU */
-    int             command;
+    int command;
     /** Request id - note: not incremented on retries */
-    long            reqid;
+    long reqid;
     /** Message id for V3 messages note: incremented for each retry */
-    long            msgid;
+    long msgid;
     /** Unique ID for incoming transactions */
-    long            transid;
+    long transid;
     /** Session id for AgentX messages */
-    long            sessid;
+    long sessid;
     /** Error status (non_repeaters in GetBulk) */
-    long            errstat;
+    long errstat;
     /** Error index (max_repetitions in GetBulk) */
-    long            errindex;
+    long errindex;
     /** Uptime */
-    u_long          time;
-    u_long          flags;
+    u_long time;
+    u_long flags;
 
-    int             securityModel;
+    int securityModel;
     /** noAuthNoPriv, authNoPriv, authPriv */
-    int             securityLevel;
-    int             msgParseModel;
+    int securityLevel;
+    int msgParseModel;
 
     /**
      * Transport-specific opaque data.  This replaces the IP-centric address
      * field.
      */
 
-    void           *transportData;
-    int             transportDataLength;
+    void* transportData;
+    int transportDataLength;
 
     /**
-     * The actual transport domain.  This SHOULD NOT BE FREE()D.
+     * The actual transport domain.  This SHOULD NOT BE IMPL_FREE()D.
      */
 
-    const oid      *tDomain;
-    size_t          tDomainLen;
+    const oid* tDomain;
+    size_t tDomainLen;
 
-    Types_VariableList *variables;
-
+    Types_VariableList* variables;
 
     /*
      * SNMPv1 & SNMPv2c fields
      */
     /** community for outgoing requests. */
-    u_char         *community;
+    u_char* community;
     /** length of community name. */
-    size_t          communityLen;
+    size_t communityLen;
 
     /*
      * Trap information
      */
     /** System OID */
-    oid            *enterprise;
-    size_t          enterpriseLength;
+    oid* enterprise;
+    size_t enterpriseLength;
     /** trap type */
-    long            trapType;
+    long trapType;
     /** specific type */
-    long            specificType;
+    long specificType;
     /** This is ONLY used for v1 TRAPs  */
-    unsigned char   agentAddr[4];
+    unsigned char agentAddr[ 4 ];
 
     /*
      *  SNMPv3 fields
      */
     /** context snmpEngineID */
-    u_char         *contextEngineID;
+    u_char* contextEngineID;
     /** Length of contextEngineID */
-    size_t          contextEngineIDLen;
+    size_t contextEngineIDLen;
     /** authoritative contextName */
-    char           *contextName;
+    char* contextName;
     /** Length of contextName */
-    size_t          contextNameLen;
+    size_t contextNameLen;
     /** authoritative snmpEngineID for security */
-    u_char         *securityEngineID;
+    u_char* securityEngineID;
     /** Length of securityEngineID */
-    size_t          securityEngineIDLen;
+    size_t securityEngineIDLen;
     /** on behalf of this principal */
-    char           *securityName;
+    char* securityName;
     /** Length of securityName. */
-    size_t          securityNameLen;
+    size_t securityNameLen;
 
     /*
      * AgentX fields
      *      (also uses SNMPv1 community field)
      */
-    int             priority;
-    int             range_subid;
+    int priority;
+    int range_subid;
 
-    void           *securityStateRef;
+    void* securityStateRef;
 } Types_Pdu;
 
-
-/** @typedef struct snmp_session netsnmp_session
+/** @typedef struct snmp_session Types_Session
  * Typedefs the snmp_session struct intonetsnmp_session */
 struct Types_Session_s;
-//typedef struct Types_session_s netsnmp_session;
+//typedef struct Types_session_s Types_Session;
 
-#define USM_AUTH_KU_LEN     32
-#define USM_PRIV_KU_LEN     32
+#define USM_AUTH_KU_LEN 32
+#define USM_PRIV_KU_LEN 32
 
-typedef int  (*Types_CallbackFT) (int, struct Types_Session_s *, int, Types_Pdu *, void *);
+typedef int ( *Types_CallbackFT )( int, struct Types_Session_s*, int, Types_Pdu*, void* );
 
 //typedef int  (*Types_callback) (int, struct Types_session_s *, int, Types_pdu *, void *);
 
@@ -223,120 +208,120 @@ typedef struct Types_Session_s {
      * Protocol-version independent fields
      */
     /** snmp version */
-    long            version;
+    long version;
     /** Number of retries before timeout. */
-    int             retries;
+    int retries;
     /** Number of uS until first timeout, then exponential backoff */
-    long            timeout;
-    u_long          flags;
-    struct Types_Session_s *subsession;
-    struct Types_Session_s *next;
+    long timeout;
+    u_long flags;
+    struct Types_Session_s* subsession;
+    struct Types_Session_s* next;
 
     /** name or address of default peer (may include transport specifier and/or port number) */
-    char           *peername;
+    char* peername;
     /** UDP port number of peer. (NO LONGER USED - USE peername INSTEAD) */
-    u_short         remote_port;
+    u_short remote_port;
     /** My Domain name or dotted IP address, 0 for default */
-    char           *localname;
+    char* localname;
     /** My UDP port number, 0 for default, picked randomly */
-    u_short         local_port;
+    u_short local_port;
     /**
      * Authentication function or NULL if null authentication is used
      */
-    u_char         *(*authenticator) (u_char *, size_t *, u_char *, size_t);
+    u_char* ( *authenticator )( u_char*, size_t*, u_char*, size_t );
     /** Function to interpret incoming data */
     Types_CallbackFT callback;
     /**
      * Pointer to data that the callback function may consider important
      */
-    void           *callback_magic;
+    void* callback_magic;
     /** copy of system errno */
-    int             s_errno;
+    int s_errno;
     /** copy of library errno */
-    int             s_snmp_errno;
+    int s_snmp_errno;
     /** Session id - AgentX only */
-    long            sessid;
+    long sessid;
 
     /*
      * SNMPv1 & SNMPv2c fields
      */
     /** community for outgoing requests. */
-    u_char         *community;
+    u_char* community;
     /** Length of community name. */
-    size_t          communityLen;
+    size_t communityLen;
     /**  Largest message to try to receive.  */
-    size_t          rcvMsgMaxSize;
+    size_t rcvMsgMaxSize;
     /**  Largest message to try to send.  */
-    size_t          sndMsgMaxSize;
+    size_t sndMsgMaxSize;
 
     /*
      * SNMPv3 fields
      */
     /** are we the authoritative engine? */
-    u_char          isAuthoritative;
+    u_char isAuthoritative;
     /** authoritative snmpEngineID */
-    u_char         *contextEngineID;
+    u_char* contextEngineID;
     /** Length of contextEngineID */
-    size_t          contextEngineIDLen;
+    size_t contextEngineIDLen;
     /** initial engineBoots for remote engine */
-    u_int           engineBoots;
+    u_int engineBoots;
     /** initial engineTime for remote engine */
-    u_int           engineTime;
+    u_int engineTime;
     /** authoritative contextName */
-    char           *contextName;
+    char* contextName;
     /** Length of contextName */
-    size_t          contextNameLen;
+    size_t contextNameLen;
     /** authoritative snmpEngineID */
-    u_char         *securityEngineID;
+    u_char* securityEngineID;
     /** Length of contextEngineID */
-    size_t          securityEngineIDLen;
+    size_t securityEngineIDLen;
     /** on behalf of this principal */
-    char           *securityName;
+    char* securityName;
     /** Length of securityName. */
-    size_t          securityNameLen;
+    size_t securityNameLen;
 
     /** auth protocol oid */
-    oid            *securityAuthProto;
+    oid* securityAuthProto;
     /** Length of auth protocol oid */
-    size_t          securityAuthProtoLen;
+    size_t securityAuthProtoLen;
     /** Ku for auth protocol XXX */
-    u_char          securityAuthKey[USM_AUTH_KU_LEN];
+    u_char securityAuthKey[ USM_AUTH_KU_LEN ];
     /** Length of Ku for auth protocol */
-    size_t          securityAuthKeyLen;
+    size_t securityAuthKeyLen;
     /** Kul for auth protocol */
-    u_char          *securityAuthLocalKey;
+    u_char* securityAuthLocalKey;
     /** Length of Kul for auth protocol XXX */
-    size_t          securityAuthLocalKeyLen;
+    size_t securityAuthLocalKeyLen;
 
     /** priv protocol oid */
-    oid            *securityPrivProto;
+    oid* securityPrivProto;
     /** Length of priv protocol oid */
-    size_t          securityPrivProtoLen;
+    size_t securityPrivProtoLen;
     /** Ku for privacy protocol XXX */
-    u_char          securityPrivKey[USM_PRIV_KU_LEN];
+    u_char securityPrivKey[ USM_PRIV_KU_LEN ];
     /** Length of Ku for priv protocol */
-    size_t          securityPrivKeyLen;
+    size_t securityPrivKeyLen;
     /** Kul for priv protocol */
-    u_char          *securityPrivLocalKey;
+    u_char* securityPrivLocalKey;
     /** Length of Kul for priv protocol XXX */
-    size_t          securityPrivLocalKeyLen;
+    size_t securityPrivLocalKeyLen;
 
     /** snmp security model, v1, v2c, usm */
-    int             securityModel;
+    int securityModel;
     /** noAuthNoPriv, authNoPriv, authPriv */
-    int             securityLevel;
+    int securityLevel;
     /** target param name */
-    char           *paramName;
+    char* paramName;
 
     /**
      * security module specific
      */
-    void           *securityInfo;
+    void* securityInfo;
 
     /**
      * transport specific configuration
      */
-   struct Container_Container_s *transportConfiguration;
+    struct Container_Container_s* transportConfiguration;
 
     /**
      * use as you want data
@@ -344,43 +329,42 @@ typedef struct Types_Session_s {
      *     used by 'SNMP_FLAGS_RESP_CALLBACK' handling in the agent
      * XXX: or should we add a new field into this structure?
      */
-    void           *myvoid;
+    void* myvoid;
 } Types_Session;
 
-
 typedef struct Types_Index_s {
-    size_t          len;
-    oid            *oids;
+    size_t len;
+    oid* oids;
 } Types_Index;
 
 typedef struct Types_VoidArray_s {
-    size_t          size;
-    void          **array;
+    size_t size;
+    void** array;
 } Types_VoidArray;
 
 /*
  * references to various types
  */
 typedef struct Types_RefVoid_s {
-    void           *val;
+    void* val;
 } Types_RefVoid;
 
 typedef union {
-    uint            ul;
-    uint            ui;
-    ushort            us;
-    uchar             uc;
-    long            sl;
-    int            si;
-    short            ss;
-    char             sc;
-    char            *cp;
-    void           *vp;
+    uint ul;
+    uint ui;
+    ushort us;
+    uchar uc;
+    long sl;
+    int si;
+    short ss;
+    char sc;
+    char* cp;
+    void* vp;
 } Types_CValue;
 
 typedef struct Types_RefSizeT_s {
-   size_t     val;
-} *Types_RefSizeT;
+    size_t val;
+} * Types_RefSizeT;
 
 /*
  * Structure for holding a set of file descriptors, similar to fd_set.
@@ -401,10 +385,18 @@ typedef struct Types_RefSizeT_s {
  *              to dynamically allocated memory.
  * lfs_set:     file descriptor / socket set data if lfs_setsize <= FD_SETSIZE.
  */
+
+/**
+ * >>> IMPORTANT <<<
+ * _GNU_SOURCE defined in Config.h. It's defined by the user.
+ * _XOPEN_SOURCE define in feature.h and depend on _GNU_SOURCE
+ * __USE_XOPEN defined in feature.h and depend on _XOPEN_SOURCE
+ * fd_set defined in sys/select.h and depend on __USE_XOPEN
+ */
 typedef struct Types_LargeFdSet_s {
-    unsigned        lfs_setsize;
-    fd_set         *lfs_setptr;
-    fd_set          lfs_set;
+    unsigned lfs_setsize;
+    fd_set* lfs_setptr;
+    fd_set lfs_set;
 } Types_LargeFdSet;
 
 #endif // TYPES_H

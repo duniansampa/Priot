@@ -27,7 +27,7 @@ enum DsAgentBoolean_e{
     DsAgentBoolean_DISABLE_PERL                  ,       /* 1 to never enable perl */
     DsAgentBoolean_NO_CONNECTION_WARNINGS        ,       /* 1 = !see !connect msgs */
     DsAgentBoolean_LEAVE_PIDFILE                 ,       /* 1 = leave PID file on exit */
-    DsAgentBoolean_NO_CACHING                    ,       /* 1 = disable netsnmp_cache */
+    DsAgentBoolean_NO_CACHING                    ,       /* 1 = disable Cache */
     DsAgentBoolean_STRICT_DISMAN                 ,       /* 1 = "correct" object ordering */
     DsAgentBoolean_DONT_RETAIN_NOTIFICATIONS     ,       /* 1 = disable trap logging */
     DsAgentBoolean_DONT_LOG_TCPWRAPPERS_CONNECTS = 12,   /* 1 = disable logging */

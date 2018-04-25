@@ -1,31 +1,30 @@
 #include "Scapi.h"
-#include "Debug.h"
-#include "Tools.h"
-#include "Logger.h"
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/des.h>
-#include <openssl/aes.h>
 #include "Api.h"
+#include "Debug.h"
+#include "Logger.h"
+#include "Tools.h"
 #include "Usm.h"
+#include <openssl/aes.h>
+#include <openssl/des.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
 
-#define SCAPI_QUITFUN(e, l)				                \
-        if (e != ErrorCode_SUCCESS) {			        \
-                rval = ErrorCode_SC_GENERAL_FAILURE;	\
-                goto l ;				                \
-        }
-
+#define SCAPI_QUITFUN( e, l )                \
+    if ( e != ErrorCode_SUCCESS ) {          \
+        rval = ErrorCode_SC_GENERAL_FAILURE; \
+        goto l;                              \
+    }
 
 /*
  * All functions devolve to the following block if we can't do cryptography
  */
-#define	SCAPI_NOT_CONFIGURED                                              \
-{                                                                         \
-    Logger_log(LOGGER_PRIORITY_ERR, "Encryption support not enabled.\n"); \
-    DEBUG_MSGTL(("scapi", "SCAPI not configured"));                       \
-    return SNMPERR_SC_NOT_CONFIGURED;			                          \
-}
+#define SCAPI_NOT_CONFIGURED                                                    \
+    {                                                                           \
+        Logger_log( LOGGER_PRIORITY_ERR, "Encryption support not enabled.\n" ); \
+        DEBUG_MSGTL( ( "scapi", "SCAPI not configured" ) );                     \
+        return ErrorCode_SC_NOT_CONFIGURED;                                     \
+    }
 
 /*
  * Scapi_getProperLength(oid *hashtype, u_int hashtype_len):
@@ -35,33 +34,31 @@
  *
  * Returns either the length or ErrorCode_GENERR for an unknown hashing type.
  */
-int Scapi_getProperLength(const oid * hashtype, u_int hashtype_len)
+int Scapi_getProperLength( const oid* hashtype, u_int hashtype_len )
 {
     DEBUG_TRACE;
     /*
      * Determine transform type hash length.
      */
-    if (TOOLS_ISTRANSFORM(hashtype, hMACMD5Auth)) {
-        return TOOLS_BYTESIZE(SCAPI_TRANS_AUTHLEN_HMACMD5);
-    } else
-        if (TOOLS_ISTRANSFORM(hashtype, hMACSHA1Auth)) {
-        return TOOLS_BYTESIZE(SCAPI_TRANS_AUTHLEN_HMACSHA1);
+    if ( TOOLS_ISTRANSFORM( hashtype, hMACMD5Auth ) ) {
+        return TOOLS_BYTESIZE( SCAPI_TRANS_AUTHLEN_HMACMD5 );
+    } else if ( TOOLS_ISTRANSFORM( hashtype, hMACSHA1Auth ) ) {
+        return TOOLS_BYTESIZE( SCAPI_TRANS_AUTHLEN_HMACSHA1 );
     }
     return ErrorCode_GENERR;
 }
 
-int Scapi_getProperPrivLength(const oid * privtype, u_int privtype_len)
+int Scapi_getProperPrivLength( const oid* privtype, u_int privtype_len )
 {
     int properlength = 0;
-    if (TOOLS_ISTRANSFORM(privtype, dESPriv)) {
-        properlength = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_1DES);
+    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
+        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES );
     }
-    if (TOOLS_ISTRANSFORM(privtype, aESPriv)) {
-        properlength = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_AES);
+    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES );
     }
     return properlength;
 }
-
 
 /*******************************************************************-o-******
  * sc_init
@@ -69,12 +66,12 @@ int Scapi_getProperPrivLength(const oid * privtype, u_int privtype_len)
  * Returns:
  *	ErrorCode_SUCCESS			Success.
  */
-int Scapi_init(void)
+int Scapi_init( void )
 {
     int rval = ErrorCode_SUCCESS;
 
     return rval;
-}                               /* end sc_init() */
+} /* end sc_init() */
 
 /*******************************************************************-o-******
  * sc_random
@@ -86,19 +83,17 @@ int Scapi_init(void)
  * Returns:
  *	ErrorCode_SUCCESS			Success.
  */
-int Scapi_random(u_char * buf, size_t * buflen)
+int Scapi_random( u_char* buf, size_t* buflen )
 {
-    int             rval = ErrorCode_SUCCESS;
-
+    int rval = ErrorCode_SUCCESS;
 
     DEBUG_TRACE;
 
-    RAND_bytes(buf, *buflen);   /* will never fail */
+    RAND_bytes( buf, *buflen ); /* will never fail */
 
     return rval;
 
-}                               /* end sc_random() */
-
+} /* end sc_random() */
 
 /*******************************************************************-o-******
  * Scapi_generateKeyedHash
@@ -127,60 +122,57 @@ int Scapi_random(u_char * buf, size_t * buflen)
  *
  * ASSUMED that the number of hash bits is a multiple of 8.
  */
-int Scapi_generateKeyedHash(const oid * authtype, size_t authtypelen,
-                       const u_char * key, u_int keylen,
-                       const u_char * message, u_int msglen,
-                       u_char * MAC, size_t * maclen)
+int Scapi_generateKeyedHash( const oid* authtype, size_t authtypelen,
+    const u_char* key, u_int keylen,
+    const u_char* message, u_int msglen,
+    u_char* MAC, size_t* maclen )
 {
-    int             rval = ErrorCode_SUCCESS;
-    int             iproperlength;
-    size_t          properlength;
+    int rval = ErrorCode_SUCCESS;
+    int iproperlength;
+    size_t properlength;
 
-    u_char          buf[TOOLS_MAXBUF_SMALL];
-    unsigned int    buf_len = sizeof(buf);
+    u_char buf[ TOOLS_MAXBUF_SMALL ];
+    unsigned int buf_len = sizeof( buf );
 
     DEBUG_TRACE;
-
 
     /*
      * Sanity check.
      */
-    if (!authtype || !key || !message || !MAC || !maclen
-        || (keylen <= 0) || (msglen <= 0) || (*maclen <= 0)
-        || (authtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_generateKeyedHashQuit);
+    if ( !authtype || !key || !message || !MAC || !maclen
+        || ( keylen <= 0 ) || ( msglen <= 0 ) || ( *maclen <= 0 )
+        || ( authtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_generateKeyedHashQuit );
     }
 
-    iproperlength = Scapi_getProperLength(authtype, authtypelen);
-    if (iproperlength == ErrorCode_GENERR)
+    iproperlength = Scapi_getProperLength( authtype, authtypelen );
+    if ( iproperlength == ErrorCode_GENERR )
         return ErrorCode_GENERR;
-    properlength = (size_t)iproperlength;
-    if (keylen < properlength) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_generateKeyedHashQuit);
+    properlength = ( size_t )iproperlength;
+    if ( keylen < properlength ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_generateKeyedHashQuit );
     }
     /*
      * Determine transform type.
      */
-    if (TOOLS_ISTRANSFORM(authtype, hMACMD5Auth))
-        HMAC(EVP_md5(), key, keylen, message, msglen, buf, &buf_len);
-    else
-        if (TOOLS_ISTRANSFORM(authtype, hMACSHA1Auth))
-        HMAC(EVP_sha1(), key, keylen, message, msglen, buf, &buf_len);
+    if ( TOOLS_ISTRANSFORM( authtype, hMACMD5Auth ) )
+        HMAC( EVP_md5(), key, keylen, message, msglen, buf, &buf_len );
+    else if ( TOOLS_ISTRANSFORM( authtype, hMACSHA1Auth ) )
+        HMAC( EVP_sha1(), key, keylen, message, msglen, buf, &buf_len );
     else {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_generateKeyedHashQuit);
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_generateKeyedHashQuit );
     }
-    if (buf_len != properlength) {
-        SCAPI_QUITFUN(rval, goto_generateKeyedHashQuit);
+    if ( buf_len != properlength ) {
+        SCAPI_QUITFUN( rval, goto_generateKeyedHashQuit );
     }
-    if (*maclen > buf_len)
+    if ( *maclen > buf_len )
         *maclen = buf_len;
-    memcpy(MAC, buf, *maclen);
+    memcpy( MAC, buf, *maclen );
 
 goto_generateKeyedHashQuit:
-    memset(buf, 0, TOOLS_MAXBUF_SMALL);
+    memset( buf, 0, TOOLS_MAXBUF_SMALL );
     return rval;
-}                               /* end Scapi_generateKeyedHash() */
-
+} /* end Scapi_generateKeyedHash() */
 
 /*
  * sc_hash(): a generic wrapper around whatever hashing package we are using.
@@ -199,58 +191,53 @@ goto_generateKeyedHashQuit:
  * Returns:
  * ErrorCode_SUCCESS              Success.
  * SNMP_SC_GENERAL_FAILURE      Any error.
- * SNMPERR_SC_NOT_CONFIGURED    Hash type not supported.
+ * ErrorCode_SC_NOT_CONFIGURED    Hash type not supported.
  */
-int Scapi_hash(const oid * hashtype, size_t hashtypelen, const u_char * buf,
-        size_t buf_len, u_char * MAC, size_t * MAC_len)
+int Scapi_hash( const oid* hashtype, size_t hashtypelen, const u_char* buf,
+    size_t buf_len, u_char* MAC, size_t* MAC_len )
 {
-    int            rval = ErrorCode_SUCCESS;
-    unsigned int   tmp_len;
-    int            ret;
-    const EVP_MD   *hashfn;
-    EVP_MD_CTX     *cptr;
-
+    int rval = ErrorCode_SUCCESS;
+    unsigned int tmp_len;
+    int ret;
+    const EVP_MD* hashfn;
+    EVP_MD_CTX* cptr;
 
     DEBUG_TRACE;
 
-    if (hashtype == NULL || buf == NULL || buf_len <= 0 ||
-        MAC == NULL || MAC_len == NULL )
-        return (ErrorCode_GENERR);
-    ret = Scapi_getProperLength(hashtype, hashtypelen);
-    if (( ret < 0 ) || (*MAC_len < (size_t)ret ))
-        return (ErrorCode_GENERR);
+    if ( hashtype == NULL || buf == NULL || buf_len <= 0 || MAC == NULL || MAC_len == NULL )
+        return ( ErrorCode_GENERR );
+    ret = Scapi_getProperLength( hashtype, hashtypelen );
+    if ( ( ret < 0 ) || ( *MAC_len < ( size_t )ret ) )
+        return ( ErrorCode_GENERR );
 
     /*
      * Determine transform type.
      */
-    if (TOOLS_ISTRANSFORM(hashtype, hMACMD5Auth)) {
-        hashfn = (const EVP_MD *) EVP_md5();
-    } else
-        if (TOOLS_ISTRANSFORM(hashtype, hMACSHA1Auth)) {
-        hashfn = (const EVP_MD *) EVP_sha1();
+    if ( TOOLS_ISTRANSFORM( hashtype, hMACMD5Auth ) ) {
+        hashfn = ( const EVP_MD* )EVP_md5();
+    } else if ( TOOLS_ISTRANSFORM( hashtype, hMACSHA1Auth ) ) {
+        hashfn = ( const EVP_MD* )EVP_sha1();
     } else {
-        return (ErrorCode_GENERR);
+        return ( ErrorCode_GENERR );
     }
 
-/** initialize the pointer */
+    /** initialize the pointer */
     cptr = EVP_MD_CTX_create();
 
-    if (!EVP_DigestInit(cptr, hashfn)) {
+    if ( !EVP_DigestInit( cptr, hashfn ) ) {
         /* requested hash function is not available */
         return ErrorCode_SC_NOT_CONFIGURED;
     }
 
-/** pass the data */
-    EVP_DigestUpdate(cptr, buf, buf_len);
+    /** pass the data */
+    EVP_DigestUpdate( cptr, buf, buf_len );
 
-/** do the final pass */
-    EVP_DigestFinal(cptr, MAC, &tmp_len);
+    /** do the final pass */
+    EVP_DigestFinal( cptr, MAC, &tmp_len );
     *MAC_len = tmp_len;
-    EVP_MD_CTX_destroy(cptr);
+    EVP_MD_CTX_destroy( cptr );
 
-
-    return (rval);
-
+    return ( rval );
 }
 
 /*******************************************************************-o-******
@@ -276,31 +263,29 @@ int Scapi_hash(const oid * hashtype, size_t hashtypelen, const u_char * buf,
  * bytes are compared.  The length of MAC cannot be greater than the
  * length of the hash transform output.
  */
-int Scapi_checkKeyedHash(const oid * authtype, size_t authtypelen,
-                    const u_char * key, u_int keylen,
-                    const u_char * message, u_int msglen,
-                    const u_char * MAC, u_int maclen)
+int Scapi_checkKeyedHash( const oid* authtype, size_t authtypelen,
+    const u_char* key, u_int keylen,
+    const u_char* message, u_int msglen,
+    const u_char* MAC, u_int maclen )
 {
-    int             rval = ErrorCode_SUCCESS;
-    size_t          buf_len = TOOLS_MAXBUF_SMALL;
+    int rval = ErrorCode_SUCCESS;
+    size_t buf_len = TOOLS_MAXBUF_SMALL;
 
-    u_char          buf[TOOLS_MAXBUF_SMALL];
+    u_char buf[ TOOLS_MAXBUF_SMALL ];
 
     DEBUG_TRACE;
-
 
     /*
      * Sanity check.
      */
-    if (!authtype || !key || !message || !MAC
-        || (keylen <= 0) || (msglen <= 0) || (maclen <= 0)
-        || (authtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_checkKeyedHashQuit);
+    if ( !authtype || !key || !message || !MAC
+        || ( keylen <= 0 ) || ( msglen <= 0 ) || ( maclen <= 0 )
+        || ( authtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_checkKeyedHashQuit );
     }
 
-
-    if (maclen != USM_MD5_AND_SHA_AUTH_LEN) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_checkKeyedHashQuit);
+    if ( maclen != USM_MD5_AND_SHA_AUTH_LEN ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_checkKeyedHashQuit );
     }
 
     /*
@@ -308,25 +293,24 @@ int Scapi_checkKeyedHash(const oid * authtype, size_t authtypelen,
      * the result with the given MAC which may shorter than
      * the full hash length.
      */
-    rval = Scapi_generateKeyedHash(authtype, authtypelen,
-                                  key, keylen,
-                                  message, msglen, buf, &buf_len);
-    SCAPI_QUITFUN(rval, goto_checkKeyedHashQuit);
+    rval = Scapi_generateKeyedHash( authtype, authtypelen,
+        key, keylen,
+        message, msglen, buf, &buf_len );
+    SCAPI_QUITFUN( rval, goto_checkKeyedHashQuit );
 
-    if (maclen > msglen) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_checkKeyedHashQuit);
+    if ( maclen > msglen ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_checkKeyedHashQuit );
 
-    } else if (memcmp(buf, MAC, maclen) != 0) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_checkKeyedHashQuit);
+    } else if ( memcmp( buf, MAC, maclen ) != 0 ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_checkKeyedHashQuit );
     }
 
-
 goto_checkKeyedHashQuit:
-    memset(buf, 0, TOOLS_MAXBUF_SMALL);
+    memset( buf, 0, TOOLS_MAXBUF_SMALL );
 
     return rval;
 
-}                               /* end sc_check_keyed_hash() */
+} /* end sc_check_keyed_hash() */
 
 /*******************************************************************-o-******
  * sc_encrypt
@@ -344,8 +328,8 @@ goto_checkKeyedHashQuit:
  *
  * Returns:
  *	ErrorCode_SUCCESS			Success.
- *	SNMPERR_SC_NOT_CONFIGURED	Encryption is not supported.
- *	SNMPERR_SC_GENERAL_FAILURE	Any other error
+ *	ErrorCode_SC_NOT_CONFIGURED	Encryption is not supported.
+ *	ErrorCode_SC_GENERAL_FAILURE	Any other error
  *
  *
  * Encrypt plaintext into ciphertext using key and iv.
@@ -353,24 +337,23 @@ goto_checkKeyedHashQuit:
  * ctlen contains actual number of crypted bytes in ciphertext upon
  * successful return.
  */
-int
-Scapi_encrypt(const oid * privtype, size_t privtypelen,
-           u_char * key, u_int keylen,
-           u_char * iv, u_int ivlen,
-           const u_char * plaintext, u_int ptlen,
-           u_char * ciphertext, size_t * ctlen)
+int Scapi_encrypt( const oid* privtype, size_t privtypelen,
+    u_char* key, u_int keylen,
+    u_char* iv, u_int ivlen,
+    const u_char* plaintext, u_int ptlen,
+    u_char* ciphertext, size_t* ctlen )
 {
-    int             rval = ErrorCode_SUCCESS;
-    u_int           properlength = 0, properlength_iv = 0;
-    u_char          pad_block[128];      /* bigger than anything I need */
-    u_char          my_iv[128];  /* ditto */
-    int             pad, plast, pad_size = 0;
-    int             have_trans;
+    int rval = ErrorCode_SUCCESS;
+    u_int properlength = 0, properlength_iv = 0;
+    u_char pad_block[ 128 ]; /* bigger than anything I need */
+    u_char my_iv[ 128 ]; /* ditto */
+    int pad, plast, pad_size = 0;
+    int have_trans;
 
     DES_key_schedule key_sched_store;
-    DES_key_schedule *key_sch = &key_sched_store;
+    DES_key_schedule* key_sch = &key_sched_store;
 
-    DES_cblock       key_struct;
+    DES_cblock key_struct;
 
     AES_KEY aes_key;
     int new_ivlen = 0;
@@ -381,102 +364,100 @@ Scapi_encrypt(const oid * privtype, size_t privtypelen,
      * Sanity check.
      */
 
-    if (!privtype || !key || !iv || !plaintext || !ciphertext || !ctlen
-        || (keylen <= 0) || (ivlen <= 0) || (ptlen <= 0) || (*ctlen <= 0)
-        || (privtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scEncryptQuit);
-    } else if (ptlen > *ctlen) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scEncryptQuit);
+    if ( !privtype || !key || !iv || !plaintext || !ciphertext || !ctlen
+        || ( keylen <= 0 ) || ( ivlen <= 0 ) || ( ptlen <= 0 ) || ( *ctlen <= 0 )
+        || ( privtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit );
+    } else if ( ptlen > *ctlen ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit );
     }
 
     /*
      * Determine privacy transform.
      */
     have_trans = 0;
-    if (TOOLS_ISTRANSFORM(privtype, dESPriv)) {
-        properlength = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_1DES);
-        properlength_iv = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_1DES_IV);
+    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
+        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES );
+        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES_IV );
         pad_size = properlength;
         have_trans = 1;
     }
-    if (TOOLS_ISTRANSFORM(privtype, aESPriv)) {
-        properlength = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_AES);
-        properlength_iv = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_AES_IV);
+    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES );
+        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES_IV );
         have_trans = 1;
     }
-    if (!have_trans) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scEncryptQuit);
+    if ( !have_trans ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit );
     }
 
-    if ((keylen < properlength) || (ivlen < properlength_iv)) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scEncryptQuit);
+    if ( ( keylen < properlength ) || ( ivlen < properlength_iv ) ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit );
     }
 
-    memset(my_iv, 0, sizeof(my_iv));
+    memset( my_iv, 0, sizeof( my_iv ) );
 
-    if (TOOLS_ISTRANSFORM(privtype, dESPriv)) {
+    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
 
         /*
          * now calculate the padding needed
          */
-        pad = pad_size - (ptlen % pad_size);
-        plast = (int) ptlen - (pad_size - pad);
-        if (pad == pad_size)
+        pad = pad_size - ( ptlen % pad_size );
+        plast = ( int )ptlen - ( pad_size - pad );
+        if ( pad == pad_size )
             pad = 0;
-        if (ptlen + pad > *ctlen) {
-            SCAPI_QUITFUN(ErrorCode_GENERR, goto_scEncryptQuit);    /* not enough space */
+        if ( ptlen + pad > *ctlen ) {
+            SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit ); /* not enough space */
         }
-        if (pad > 0) {              /* copy data into pad block if needed */
-            memcpy(pad_block, plaintext + plast, pad_size - pad);
-            memset(&pad_block[pad_size - pad], pad, pad);   /* filling in padblock */
+        if ( pad > 0 ) { /* copy data into pad block if needed */
+            memcpy( pad_block, plaintext + plast, pad_size - pad );
+            memset( &pad_block[ pad_size - pad ], pad, pad ); /* filling in padblock */
         }
 
-        memcpy(key_struct, key, sizeof(key_struct));
-        (void) DES_key_sched(&key_struct, key_sch);
+        memcpy( key_struct, key, sizeof( key_struct ) );
+        ( void )DES_key_sched( &key_struct, key_sch );
 
-        memcpy(my_iv, iv, ivlen);
+        memcpy( my_iv, iv, ivlen );
         /*
          * encrypt the data
          */
-        DES_ncbc_encrypt(plaintext, ciphertext, plast, key_sch,
-                         (DES_cblock *) my_iv, DES_ENCRYPT);
-        if (pad > 0) {
+        DES_ncbc_encrypt( plaintext, ciphertext, plast, key_sch,
+            ( DES_cblock* )my_iv, DES_ENCRYPT );
+        if ( pad > 0 ) {
             /*
              * then encrypt the pad block
              */
-            DES_ncbc_encrypt(pad_block, ciphertext + plast, pad_size,
-                             key_sch, (DES_cblock *) my_iv, DES_ENCRYPT);
+            DES_ncbc_encrypt( pad_block, ciphertext + plast, pad_size,
+                key_sch, ( DES_cblock* )my_iv, DES_ENCRYPT );
             *ctlen = plast + pad_size;
         } else {
             *ctlen = plast;
         }
     }
-    if (TOOLS_ISTRANSFORM(privtype, aESPriv)) {
-        (void) AES_set_encrypt_key(key, properlength*8, &aes_key);
+    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+        ( void )AES_set_encrypt_key( key, properlength * 8, &aes_key );
 
-        memcpy(my_iv, iv, ivlen);
+        memcpy( my_iv, iv, ivlen );
         /*
          * encrypt the data
          */
-        AES_cfb128_encrypt(plaintext, ciphertext, ptlen,
-                           &aes_key, my_iv, &new_ivlen, AES_ENCRYPT);
+        AES_cfb128_encrypt( plaintext, ciphertext, ptlen,
+            &aes_key, my_iv, &new_ivlen, AES_ENCRYPT );
         *ctlen = ptlen;
     }
-  goto_scEncryptQuit:
+goto_scEncryptQuit:
     /*
      * clear memory just in case
      */
-    memset(my_iv, 0, sizeof(my_iv));
-    memset(pad_block, 0, sizeof(pad_block));
-    memset(key_struct, 0, sizeof(key_struct));
+    memset( my_iv, 0, sizeof( my_iv ) );
+    memset( pad_block, 0, sizeof( pad_block ) );
+    memset( key_struct, 0, sizeof( key_struct ) );
 
-    memset(&key_sched_store, 0, sizeof(key_sched_store));
-    memset(&aes_key,0,sizeof(aes_key));
+    memset( &key_sched_store, 0, sizeof( key_sched_store ) );
+    memset( &aes_key, 0, sizeof( aes_key ) );
     return rval;
 
-}                               /* end sc_encrypt() */
-
-
+} /* end sc_encrypt() */
 
 /*******************************************************************-o-******
  * sc_decrypt
@@ -494,8 +475,8 @@ Scapi_encrypt(const oid * privtype, size_t privtypelen,
  *
  * Returns:
  *	ErrorCode_SUCCESS			Success.
- *	SNMPERR_SC_NOT_CONFIGURED	Encryption is not supported.
- *      SNMPERR_SC_GENERAL_FAILURE      Any other error
+ *	ErrorCode_SC_NOT_CONFIGURED	Encryption is not supported.
+ *      ErrorCode_SC_GENERAL_FAILURE      Any other error
  *
  *
  * Decrypt ciphertext into plaintext using key and iv.
@@ -503,84 +484,83 @@ Scapi_encrypt(const oid * privtype, size_t privtypelen,
  * ptlen contains actual number of plaintext bytes in plaintext upon
  * successful return.
  */
-int Scapi_decrypt(const oid * privtype, size_t privtypelen,
-           u_char * key, u_int keylen,
-           u_char * iv, u_int ivlen,
-           u_char * ciphertext, u_int ctlen,
-           u_char * plaintext, size_t * ptlen)
+int Scapi_decrypt( const oid* privtype, size_t privtypelen,
+    u_char* key, u_int keylen,
+    u_char* iv, u_int ivlen,
+    u_char* ciphertext, u_int ctlen,
+    u_char* plaintext, size_t* ptlen )
 {
 
-    int             rval = ErrorCode_SUCCESS;
-    u_char          my_iv[128];
+    int rval = ErrorCode_SUCCESS;
+    u_char my_iv[ 128 ];
 
     DES_key_schedule key_sched_store;
-    DES_key_schedule *key_sch = &key_sched_store;
-    DES_cblock      key_struct;
-    u_int           properlength = 0, properlength_iv = 0;
-    int             have_transform;
+    DES_key_schedule* key_sch = &key_sched_store;
+    DES_cblock key_struct;
+    u_int properlength = 0, properlength_iv = 0;
+    int have_transform;
     int new_ivlen = 0;
     AES_KEY aes_key;
 
     DEBUG_TRACE;
 
-    if (!privtype || !key || !iv || !plaintext || !ciphertext || !ptlen
-        || (ctlen <= 0) || (*ptlen <= 0) || (*ptlen < ctlen)
-        || (privtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scDecryptQuit);
+    if ( !privtype || !key || !iv || !plaintext || !ciphertext || !ptlen
+        || ( ctlen <= 0 ) || ( *ptlen <= 0 ) || ( *ptlen < ctlen )
+        || ( privtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scDecryptQuit );
     }
 
     /*
      * Determine privacy transform.
      */
     have_transform = 0;
-    if (TOOLS_ISTRANSFORM(privtype, dESPriv)) {
-        properlength = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_1DES);
-        properlength_iv = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_1DES_IV);
+    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
+        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES );
+        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES_IV );
         have_transform = 1;
     }
-    if (TOOLS_ISTRANSFORM(privtype, aESPriv)) {
-        properlength = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_AES);
-        properlength_iv = TOOLS_BYTESIZE(SCAPI_TRANS_PRIVLEN_AES_IV);
+    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES );
+        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES_IV );
         have_transform = 1;
     }
-    if (!have_transform) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scDecryptQuit);
+    if ( !have_transform ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scDecryptQuit );
     }
 
-    if ((keylen < properlength) || (ivlen < properlength_iv)) {
-        SCAPI_QUITFUN(ErrorCode_GENERR, goto_scDecryptQuit);
+    if ( ( keylen < properlength ) || ( ivlen < properlength_iv ) ) {
+        SCAPI_QUITFUN( ErrorCode_GENERR, goto_scDecryptQuit );
     }
 
-    memset(my_iv, 0, sizeof(my_iv));
-    if (TOOLS_ISTRANSFORM(privtype, dESPriv)) {
-        memcpy(key_struct, key, sizeof(key_struct));
-        (void) DES_key_sched(&key_struct, key_sch);
+    memset( my_iv, 0, sizeof( my_iv ) );
+    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
+        memcpy( key_struct, key, sizeof( key_struct ) );
+        ( void )DES_key_sched( &key_struct, key_sch );
 
-        memcpy(my_iv, iv, ivlen);
-        DES_cbc_encrypt(ciphertext, plaintext, ctlen, key_sch,
-                        (DES_cblock *) my_iv, DES_DECRYPT);
+        memcpy( my_iv, iv, ivlen );
+        DES_cbc_encrypt( ciphertext, plaintext, ctlen, key_sch,
+            ( DES_cblock* )my_iv, DES_DECRYPT );
         *ptlen = ctlen;
     }
-    if (TOOLS_ISTRANSFORM(privtype, aESPriv)) {
-        (void) AES_set_encrypt_key(key, properlength*8, &aes_key);
+    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+        ( void )AES_set_encrypt_key( key, properlength * 8, &aes_key );
 
-        memcpy(my_iv, iv, ivlen);
+        memcpy( my_iv, iv, ivlen );
         /*
          * encrypt the data
          */
-        AES_cfb128_encrypt(ciphertext, plaintext, ctlen,
-                           &aes_key, my_iv, &new_ivlen, AES_DECRYPT);
+        AES_cfb128_encrypt( ciphertext, plaintext, ctlen,
+            &aes_key, my_iv, &new_ivlen, AES_DECRYPT );
         *ptlen = ctlen;
     }
 
-    /*
+/*
      * exit cond
      */
-  goto_scDecryptQuit:
+goto_scDecryptQuit:
 
-    memset(&key_sched_store, 0, sizeof(key_sched_store));
-    memset(key_struct, 0, sizeof(key_struct));
-    memset(my_iv, 0, sizeof(my_iv));
+    memset( &key_sched_store, 0, sizeof( key_sched_store ) );
+    memset( key_struct, 0, sizeof( key_struct ) );
+    memset( my_iv, 0, sizeof( my_iv ) );
     return rval;
-}				/* USE OPEN_SSL */
-
+} /* USE OPEN_SSL */

@@ -20,7 +20,7 @@ TableDataset_initTableDataset( void );
 #define TABLE_DATA_SET_NAME "priotTableDataSet"
 
 /*
- * return SNMP_ERR_NOERROR or some SNMP specific protocol error id
+ * return PRIOT_ERR_NOERROR or some SNMP specific protocol error id
  */
 typedef int
 (ValueChangeOkFT) ( char   * old_value,

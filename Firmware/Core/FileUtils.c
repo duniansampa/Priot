@@ -117,7 +117,7 @@ int FileUtils_release(FileUtils_File * filei)
         rc = close(filei->fd);
 
     if (NULL != filei->name)
-        free(filei->name); /* no point in SNMP_FREE */
+        free(filei->name); /* no point in TOOLS_FREE */
 
     if (NULL != filei->extras)
         DataList_freeAll(filei->extras);

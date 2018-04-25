@@ -449,7 +449,7 @@ Instance_registerNumFileInstance(const char *name,
         (NULL == (nfi->file_name = strdup(file_name)))) {
         Logger_log(LOGGER_PRIORITY_ERR, "could not not allocate memory\n");
         if (NULL != nfi)
-            free(nfi); /* SNMP_FREE overkill on local var */
+            free(nfi); /* TOOLS_FREE overkill on local var */
         return MIB_REGISTRATION_FAILED;
     }
 
@@ -695,7 +695,7 @@ Instance_helperHandler(MibHandler *handler,
                                           requests);
             reqinfo->mode = MODE_GETNEXT;
             /*
-             * if the instance doesn't have data, set type to ASN_NULL
+             * if the instance doesn't have data, set type to ASN01_NULL
              * to move to the next sub-tree. Ignore delegated requests; they
              * might have data later on.
              */

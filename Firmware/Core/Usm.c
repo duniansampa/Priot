@@ -3936,7 +3936,7 @@ Usm_readUser(const char *line)
 }
 
 /*
- * snmpd.conf parsing routines
+ * priotd.conf parsing routines
  */
 void
 Usm_parseConfigUsmUser(const char *token, char *line)

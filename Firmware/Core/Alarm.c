@@ -1,20 +1,19 @@
 #include "Alarm.h"
 
-#include "Tools.h"
-#include "Debug.h"
-#include "DefaultStore.h"
 #include "Assert.h"
 #include "Callback.h"
+#include "Debug.h"
+#include "DefaultStore.h"
+#include "Tools.h"
 
 #include <sys/time.h>
 
-
-static struct Alarm_s * _alarm_thealarms = NULL;
+static struct Alarm_s* _alarm_thealarms = NULL;
 static int _alarm_startAlarms = 0;
 static unsigned int _alarm_regnum = 1;
 
-int Alarm_initAlarmPostConfig(int majorid, int minorid, void *serverarg,
-                       void *clientarg)
+int Alarm_initAlarmPostConfig(int majorid, int minorid, void* serverarg,
+    void* clientarg)
 {
     _alarm_startAlarms = 1;
     Alarm_setAnAlarm();
@@ -24,35 +23,34 @@ int Alarm_initAlarmPostConfig(int majorid, int minorid, void *serverarg,
 void Alarm_initAlarm(void)
 {
     _alarm_startAlarms = 0;
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                           CALLBACK_POST_READ_CONFIG,
-                           Alarm_initAlarmPostConfig, NULL);
+    Callback_registerCallback(CALLBACK_LIBRARY, CALLBACK_POST_READ_CONFIG,
+        Alarm_initAlarmPostConfig, NULL);
 }
 
-void Alarm_saUpdateEntry(struct Alarm_s *a)
+void Alarm_saUpdateEntry(struct Alarm_s* a)
 {
     if (!timerisset(&a->t_lastM)) {
         /*
-         * First call of Alarm_saUpdateEntry() for alarm a: set t_lastM and t_nextM.
-         */
+* First call of Alarm_saUpdateEntry() for alarm a: set t_lastM and t_nextM.
+*/
         Tools_getMonotonicClock(&a->t_lastM);
         TOOLS_TIMERADD(&a->t_lastM, &a->t, &a->t_nextM);
     } else if (!timerisset(&a->t_nextM)) {
         /*
-         * We've been called but not reset for the next call.
-         */
+* We've been called but not reset for the next call.
+*/
         if (a->flags & ALARM_SA_REPEAT) {
             if (timerisset(&a->t)) {
                 TOOLS_TIMERADD(&a->t_lastM, &a->t, &a->t_nextM);
             } else {
-                DEBUG_MSGTL(("priotAlarm",
-                            "update_entry: illegal interval specified\n"));
+                DEBUG_MSGTL(
+                    ("priotAlarm", "update_entry: illegal interval specified\n"));
                 Alarm_unregister(a->clientreg);
             }
         } else {
             /*
-             * Single time call, remove it.
-             */
+* Single time call, remove it.
+*/
             Alarm_unregister(a->clientreg);
         }
     }
@@ -83,11 +81,10 @@ void Alarm_unregister(unsigned int clientreg)
 
     if (sa_ptr != NULL) {
         *prevNext = sa_ptr->next;
-        DEBUG_MSGTL(("priotAlarm", "unregistered alarm %d\n",
-            sa_ptr->clientreg));
+        DEBUG_MSGTL(("priotAlarm", "unregistered alarm %d\n", sa_ptr->clientreg));
         /*
-         * Note: do not free the clientarg, it's the client's responsibility
-         */
+* Note: do not free the clientarg, it's the client's responsibility
+*/
         free(sa_ptr);
     } else {
         DEBUG_MSGTL(("priotAlarm", "no alarm %d to unregister\n", clientreg));
@@ -105,31 +102,30 @@ void Alarm_unregister(unsigned int clientreg)
  */
 void Alarm_unregisterAll(void)
 {
-  struct Alarm_s *sa_ptr, *sa_tmp;
+    struct Alarm_s *sa_ptr, *sa_tmp;
 
-  for (sa_ptr = _alarm_thealarms; sa_ptr != NULL; sa_ptr = sa_tmp) {
-    sa_tmp = sa_ptr->next;
-    free(sa_ptr);
-  }
-  DEBUG_MSGTL(("priotAlarm", "ALL alarms unregistered\n"));
-  _alarm_thealarms = NULL;
+    for (sa_ptr = _alarm_thealarms; sa_ptr != NULL; sa_ptr = sa_tmp) {
+        sa_tmp = sa_ptr->next;
+        free(sa_ptr);
+    }
+    DEBUG_MSGTL(("priotAlarm", "ALL alarms unregistered\n"));
+    _alarm_thealarms = NULL;
 }
 
-struct Alarm_s * Alarm_saFindNext(void)
+struct Alarm_s* Alarm_saFindNext(void)
 {
     struct Alarm_s *a, *lowest = NULL;
 
     for (a = _alarm_thealarms; a != NULL; a = a->next)
-        if (!(a->flags & ALARM_SA_FIRED)
-            && (lowest == NULL || timercmp(&a->t_nextM, &lowest->t_nextM, <)))
+        if (!(a->flags & ALARM_SA_FIRED) && (lowest == NULL || timercmp(&a->t_nextM, &lowest->t_nextM, <)))
             lowest = a;
 
     return lowest;
 }
 
-struct Alarm_s * Alarm_saFindSpecific(unsigned int clientreg)
+struct Alarm_s* Alarm_saFindSpecific(unsigned int clientreg)
 {
-    struct Alarm_s *sa_ptr;
+    struct Alarm_s* sa_ptr;
     for (sa_ptr = _alarm_thealarms; sa_ptr != NULL; sa_ptr = sa_ptr->next) {
         if (sa_ptr->clientreg == clientreg) {
             return sa_ptr;
@@ -140,14 +136,14 @@ struct Alarm_s * Alarm_saFindSpecific(unsigned int clientreg)
 
 void Alarm_runAlarms(void)
 {
-    struct Alarm_s *a;
-    unsigned int    clientreg;
-    struct timeval  t_now;
+    struct Alarm_s* a;
+    unsigned int clientreg;
+    struct timeval t_now;
 
     /*
-     * Loop through everything we have repeatedly looking for the next thing to
-     * call until all events are finally in the future again.
-     */
+*Loop through everything we have repeatedly looking for the next thing to
+*call until all events are finally in the future again.
+*/
 
     while ((a = Alarm_saFindNext()) != NULL) {
         Tools_getMonotonicClock(&t_now);
@@ -158,7 +154,7 @@ void Alarm_runAlarms(void)
         clientreg = a->clientreg;
         a->flags |= ALARM_SA_FIRED;
         DEBUG_MSGTL(("priotAlarm", "run alarm %d\n", clientreg));
-        (*(a->thecallback)) (clientreg, a->clientarg);
+        (*(a->thecallback))(clientreg, a->clientarg);
         DEBUG_MSGTL(("priotAlarm", "alarm %d completed\n", clientreg));
 
         a = Alarm_saFindSpecific(clientreg);
@@ -168,21 +164,16 @@ void Alarm_runAlarms(void)
             a->flags &= ~ALARM_SA_FIRED;
             Alarm_saUpdateEntry(a);
         } else {
-            DEBUG_MSGTL(("priotAlarm", "alarm %d deleted itself\n",
-                        clientreg));
+            DEBUG_MSGTL(("priotAlarm", "alarm %d deleted itself\n", clientreg));
         }
     }
 }
-
-
 
 void Alarm_handler(int a)
 {
     Alarm_runAlarms();
     Alarm_setAnAlarm();
 }
-
-
 
 /**
  * Look up the time at which the next alarm will fire.
@@ -194,9 +185,10 @@ void Alarm_handler(int a)
  *   identifying the first alarm that will fire if one or more alarms are
  *   scheduled.
  */
-int Alarm_getNextAlarmTime(struct timeval *alarm_tm, const struct timeval *now)
+int Alarm_getNextAlarmTime(struct timeval* alarm_tm,
+    const struct timeval* now)
 {
-    struct Alarm_s *sa_ptr;
+    struct Alarm_s* sa_ptr;
 
     sa_ptr = Alarm_saFindNext();
 
@@ -222,7 +214,7 @@ int Alarm_getNextAlarmTime(struct timeval *alarm_tm, const struct timeval *now)
  *   identifying the first alarm that will fire if one or more alarms are
  *   scheduled.
  */
-int Alarm_getNextAlarmDelayTime(struct timeval *delta)
+int Alarm_getNextAlarmDelayTime(struct timeval* delta)
 {
     struct timeval t_now, alarm_tm;
     int res;
@@ -234,20 +226,18 @@ int Alarm_getNextAlarmDelayTime(struct timeval *delta)
     return res;
 }
 
-
 void Alarm_setAnAlarm(void)
 {
-    struct timeval  delta;
-    int    nextalarm = Alarm_getNextAlarmDelayTime(&delta);
+    struct timeval delta;
+  int nextalarm = Alarm_getNextAlarmDelayTime(&delta);
 
     /*
-     * We don't use signals if they asked us nicely not to.  It's expected
-     * they'll check the next alarm time and do their own calling of
-     * Alarm_runAlarms().
-     */
+    *We don't use signals if they asked us nicely not to.  It's expected
+    *they'll check the next alarm time and do their own calling of
+    *Alarm_runAlarms().
+    */
 
-    if (nextalarm && !DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                    DsBool_ALARM_DONT_USE_SIG)) {
+    if (nextalarm && !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_ALARM_DONT_USE_SIG)) {
         struct itimerval it;
 
         it.it_value = delta;
@@ -256,14 +246,12 @@ void Alarm_setAnAlarm(void)
         signal(SIGALRM, Alarm_handler);
         setitimer(ITIMER_REAL, &it, NULL);
         DEBUG_MSGTL(("priotAlarm", "schedule alarm %d in %ld.%03ld seconds\n",
-                    nextalarm, (long) delta.tv_sec, (long)(delta.tv_usec / 1000)));
-
+            nextalarm, (long)delta.tv_sec, (long)(delta.tv_usec / 1000)));
 
     } else {
         DEBUG_MSGTL(("priotAlarm", "no alarms found to schedule\n"));
     }
 }
-
 
 /**
  * This function registers function callbacks to occur at a specific time
@@ -274,7 +262,8 @@ void Alarm_setAnAlarm(void)
  *
  * @param flags is an unsigned integer that specifies how frequent the callback
  *	function is called in seconds.  Should be ALARM_SA_REPEAT or 0.  If
- *	flags  is  set with ALARM_SA_REPEAT, then the registered callback function
+ *	flags  is  set with ALARM_SA_REPEAT, then the registered callback
+ *function
  *	will be called every ALARM_SA_REPEAT seconds.  If flags is 0 then the
  *	function will only be called once and then removed from the
  *	registered alarm list.
@@ -297,9 +286,9 @@ void Alarm_setAnAlarm(void)
  * @see Alarm_unregisterAll
  */
 unsigned int Alarm_register(unsigned int when, unsigned int flags,
-                    Alarm_CallbackFT * thecallback, void *clientarg)
+    Alarm_CallbackFT* thecallback, void* clientarg)
 {
-    struct timeval  t;
+    struct timeval t;
 
     if (0 == when) {
         t.tv_sec = 0;
@@ -311,7 +300,6 @@ unsigned int Alarm_register(unsigned int when, unsigned int flags,
 
     return Alarm_registerHr(t, flags, thecallback, clientarg);
 }
-
 
 /**
  * This function offers finer granularity as to when the callback
@@ -327,7 +315,8 @@ unsigned int Alarm_register(unsigned int when, unsigned int flags,
  *
  * @param flags is an unsigned integer that specifies how frequent the callback
  *	function is called in seconds.  Should be ALARM_SA_REPEAT or NULL.  If
- *	flags  is  set with ALARM_SA_REPEAT, then the registered callback function
+ *	flags  is  set with ALARM_SA_REPEAT, then the registered callback
+ *function
  *	will be called every ALARM_SA_REPEAT seconds.  If flags is NULL then the
  *	function will only be called once and then removed from the
  *	registered alarm list.
@@ -350,11 +339,12 @@ unsigned int Alarm_register(unsigned int when, unsigned int flags,
  * @see Alarm_unregisterAll
  */
 unsigned int Alarm_registerHr(struct timeval t, unsigned int flags,
-                       Alarm_CallbackFT * cb, void *cd)
+    Alarm_CallbackFT* cb, void* cd)
 {
-    struct Alarm_s **s = NULL;
+    struct Alarm_s** s = NULL;
 
-    for (s = &(_alarm_thealarms); *s != NULL; s = &((*s)->next));
+    for (s = &(_alarm_thealarms); *s != NULL; s = &((*s)->next))
+        ;
 
     *s = TOOLS_MALLOC_STRUCT(Alarm_s);
     if (*s == NULL) {
@@ -371,9 +361,9 @@ unsigned int Alarm_registerHr(struct timeval t, unsigned int flags,
     Alarm_saUpdateEntry(*s);
 
     DEBUG_MSGTL(("priotAlarm",
-                "registered alarm %d, t = %ld.%03ld, flags=0x%02x\n",
-                (*s)->clientreg, (long) (*s)->t.tv_sec, (long)((*s)->t.tv_usec / 1000),
-                (*s)->flags));
+        "registered alarm %d, t = %ld.%03ld, flags=0x%02x\n",
+        (*s)->clientreg, (long)(*s)->t.tv_sec,
+        (long)((*s)->t.tv_usec / 1000), (*s)->flags));
 
     if (_alarm_startAlarms) {
         Alarm_setAnAlarm();
@@ -396,8 +386,8 @@ unsigned int Alarm_registerHr(struct timeval t, unsigned int flags,
  */
 int Alarm_reset(unsigned int clientreg)
 {
-    struct Alarm_s *a;
-    struct timeval  t_now;
+    struct Alarm_s* a;
+    struct timeval t_now;
     if ((a = Alarm_saFindSpecific(clientreg)) != NULL) {
         Tools_getMonotonicClock(&t_now);
         a->t_lastM.tv_sec = t_now.tv_sec;
@@ -407,8 +397,7 @@ int Alarm_reset(unsigned int clientreg)
         TOOLS_TIMERADD(&t_now, &a->t, &a->t_nextM);
         return 0;
     }
-    DEBUG_MSGTL(("priotAlarmReset", "alarm %d not found\n",
-                clientreg));
+    DEBUG_MSGTL(("priotAlarmReset", "alarm %d not found\n", clientreg));
     return -1;
 }
 /**  @} */

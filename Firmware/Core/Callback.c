@@ -126,15 +126,15 @@ Callback_initCallbacks()
  *
  * @param major is the SNMP callback major type used
  * 		- CALLBACK_LIBRARY
- *              - SNMP_CALLBACK_APPLICATION
+ *              - CALLBACK_APPLICATION
  *
  * @param minor is the SNMP callback minor type used
- *		- SNMP_CALLBACK_POST_READ_CONFIG
- *		- SNMP_CALLBACK_STORE_DATA
- *		- SNMP_CALLBACK_SHUTDOWN
- *		- SNMP_CALLBACK_POST_PREMIB_READ_CONFIG
- *		- SNMP_CALLBACK_LOGGING
- *		- SNMP_CALLBACK_SESSION_INIT
+ *		- CALLBACK_POST_READ_CONFIG
+ *		- CALLBACK_STORE_DATA
+ *		- CALLBACK_SHUTDOWN
+ *		- CALLBACK_POST_PREMIB_READ_CONFIG
+ *		- CALLBACK_LOGGING
+ *		- CALLBACK_SESSION_INIT
  *
  * @param new_callback is the callback function that is registered.
  *
@@ -151,7 +151,7 @@ Callback_initCallbacks()
  *	- \#define MAX_CALLBACK_SUBIDS 16
  *
  * @see snmp_call_callbacks
- * @see snmp_unregister_callback
+ * @see Callback_unregisterCallback
  */
 int
 Callback_registerCallback(int major, int minor, Callback_CallbackFT * new_callback,
@@ -173,7 +173,7 @@ Callback_registerCallback(int major, int minor, Callback_CallbackFT * new_callba
  *   with the numerically lowest priority will be invoked first. Handlers with
  *   identical priority are invoked in the order they have been registered.
  *
- * @see snmp_register_callback
+ * @see Callback_registerCallback
  */
 int
 Callback_registerCallback2(int major, int minor, Callback_CallbackFT * new_callback,
@@ -232,8 +232,8 @@ Callback_registerCallback2(int major, int minor, Callback_CallbackFT * new_callb
  * @return Returns ErrorCode_GENERR if major is >= MAX_CALLBACK_IDS or
  * minor is >= MAX_CALLBACK_SUBIDS, otherwise ErrorCode_SUCCESS is returned.
  *
- * @see snmp_register_callback
- * @see snmp_unregister_callback
+ * @see Callback_registerCallback
+ * @see Callback_unregisterCallback
  */
 int
 Callback_callCallbacks(int major, int minor, void *caller_arg)
@@ -343,7 +343,7 @@ Callback_available(int major, int minor)
  * @return
  *        Returns the number of callbacks that were unregistered.
  *
- * @see snmp_register_callback
+ * @see Callback_registerCallback
  * @see snmp_call_callbacks
  */
 

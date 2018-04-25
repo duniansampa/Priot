@@ -1002,7 +1002,7 @@ void Logger_logString(int priority, const char *str)
  * @return Returns 0 on success, -1 when the code could not format the log-
  *         string, -2 when dynamic memory could not be allocated if the length
  *         of the log buffer is greater then 1024 bytes.  For each of these
- *         errors a LOG_ERR messgae is written to the logfile.
+ *         errors a LOGGER_PRIORITY_ERR messgae is written to the logfile.
  *
  * @see priot_log
  */

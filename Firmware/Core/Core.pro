@@ -8,8 +8,9 @@ LIBS    += -lcrypto
 VERSION  = 1.0.0    # major.minor.patch
 QMAKE_CFLAGS += -Werror=implicit-function-declaration
 DEFINES += PRIOT_CORELIB_LIBRARY
-INCLUDEPATH += "$$PWD"
-INCLUDEPATH +=  $$PWD/../Plugin/
+
+INCLUDEPATH += $$PWD/../Plugin/
+DEPENDPATH += $$PWD/../Plugin/
 
 #DESTDIR = $$PWD/../../bin/lib
 
@@ -32,7 +33,6 @@ SOURCES += \
     Transports/UDPIPv4BaseDomain.c \
     Transports/UnixDomain.c \
     System/String.c \
-    Alarm.c \
     Api.c \
     Asn01.c \
     Callback.c \
@@ -79,9 +79,13 @@ SOURCES += \
     Version.c \
     Transports/CallbackDomain.c \
     System/Convert.c \
-    FdEventManager.c
+    FdEventManager.c \
+    Alarm.c \
+    CheckVarbind.c
 
 HEADERS += \
+    Config.h \
+    Generals.h \
     System/String.h \
     BigLong.h \
     System/Numerics/Byte.h \
@@ -92,7 +96,6 @@ HEADERS += \
     System/Numerics/Short.h \
     DataType.h \
     DefaultStore.h \
-    Generals.h \
     Transports/IPv4BaseDomain.h \
     Transport.h \
     System.h \
@@ -154,5 +157,5 @@ HEADERS += \
     System/Numerics/Integer \
     Transports/CallbackDomain.h \
     System/Convert.h \
-    Config.h \
-    FdEventManager.h
+    FdEventManager.h \
+    CheckVarbind.h

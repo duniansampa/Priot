@@ -269,7 +269,7 @@ void DataList_registerSave(DataList_DataList **dataList,
 /** intended to be registerd as a callback operation.
  * It should be registered using:
  *
- * snmp_register_callback(SNMP_CALLBACK_LIBRARY, SNMP_CALLBACK_STORE_DATA, netsnmp_save_all_data_callback, INFO_POINTER);
+ * Callback_registerCallback(CALLBACK_LIBRARY, CALLBACK_STORE_DATA, netsnmp_save_all_data_callback, INFO_POINTER);
  *
  * where INFO_POINTER is a pointer to a DataList_SaveInfo object containing apporpriate registration information
  */

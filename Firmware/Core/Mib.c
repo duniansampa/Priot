@@ -1,86 +1,79 @@
 #include "Mib.h"
-#include "DefaultStore.h"
-#include "Tools.h"
+#include "Api.h"
 #include "Asn01.h"
-#include "Int64.h"
+#include "Assert.h"
+#include "Client.h"
 #include "Debug.h"
-#include "Parse.h"
-#include "System.h"
-#include "Priot.h"
+#include "DefaultStore.h"
+#include "Impl.h"
+#include "Int64.h"
 #include "Logger.h"
 #include "Parse.h"
+#include "Parse.h"
+#include "Priot.h"
 #include "ReadConfig.h"
 #include "Strlcat.h"
 #include "Strlcpy.h"
-#include "Api.h"
-#include "Assert.h"
-#include "Client.h"
-#include "Impl.h"
+#include "System.h"
+#include "Tools.h"
 
-
-
-#define MIB_NAMLEN(dirent) strlen((dirent)->d_name)
-
-
-
-
+#define MIB_NAMLEN( dirent ) strlen( ( dirent )->d_name )
 
 /** @defgroup mib_utilities mib parsing and datatype manipulation routines.
  *  @ingroup library
  *
  */
 
+static char* _Mib_uptimeString( u_long, char*, size_t );
 
-static char * _Mib_uptimeString(u_long, char *, size_t);
+static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t objidlen,
+    struct Parse_Tree_s* subtree,
+    u_char** buf, size_t* buf_len,
+    size_t* out_len,
+    int allow_realloc,
+    int* buf_overflow,
+    struct Parse_IndexList_s* in_dices,
+    size_t* end_of_known );
 
-static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t objidlen,
-                                        struct Parse_Tree_s *subtree,
-                                        u_char ** buf, size_t * buf_len,
-                                        size_t * out_len,
-                                        int allow_realloc,
-                                        int *buf_overflow,
-                                        struct Parse_IndexList_s *in_dices,
-                                        size_t * end_of_known);
+static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    struct Parse_Tree_s* tp, int width );
 
-static int  _Mib_printTreeNode(u_char ** buf, size_t * buf_len,
-                                size_t * out_len, int allow_realloc,
-                                struct Parse_Tree_s *tp, int width);
+static void _Mib_handleMibDirsConf( const char* token, char* line );
+static void _Mib_handleMibsConf( const char* token, char* line );
+static void _Mib_handleMibFileConf( const char* token, char* line );
 
-static void _Mib_handleMibDirsConf(const char *token, char *line);
-static void _Mib_handleMibsConf(const char *token, char *line);
-static void _Mib_handleMibFileConf(const char *token, char *line);
-
-static void _Mib_oidFinishPrinting( const oid * objid, size_t objidlen,
-                                     u_char ** buf, size_t * buf_len,
-                                     size_t * out_len,
-                                     int allow_realloc, int *buf_overflow);
+static void _Mib_oidFinishPrinting( const oid* objid, size_t objidlen,
+    u_char** buf, size_t* buf_len,
+    size_t* out_len,
+    int allow_realloc, int* buf_overflow );
 
 /*
  * helper functions for get_module_node
  */
-static int  _Mib_nodeToOid(struct Parse_Tree_s *, oid *, size_t *);
+static int _Mib_nodeToOid( struct Parse_Tree_s*, oid*, size_t* );
 
-static int  _Mib_addStringsToOid(struct Parse_Tree_s *, char *,
-                                oid *, size_t *, size_t);
+static int _Mib_addStringsToOid( struct Parse_Tree_s*, char*,
+    oid*, size_t*, size_t );
 
-static struct Parse_Tree_s * _mib_treeTop;
+static struct Parse_Tree_s* _mib_treeTop;
 
-struct Parse_Tree_s * mib_mib;  /* Backwards compatibility */
+struct Parse_Tree_s* mib_mib; /* Backwards compatibility */
 
-extern struct Parse_Tree_s *parse_treeHead;
+extern struct Parse_Tree_s* parse_treeHead;
 
-oid   mib_rFC1213_MIB[] = { 1, 3, 6, 1, 2, 1 };
+oid mib_rFC1213_MIB[] = { 1, 3, 6, 1, 2, 1 };
 static char _mib_standardPrefix[] = ".1.3.6.1.2.1";
 
 /*
  * Set default here as some uses of read_objid require valid pointer.
  */
-static char *_mib_prefix = &_mib_standardPrefix[0];
+static char* _mib_prefix = &_mib_standardPrefix[ 0 ];
 
 typedef struct Mib_PrefixList_s {
-    const char     *str;
-    int             len;
-} *Mib_PrefixListPTR, Mib_PrefixList;
+    const char* str;
+    int len;
+} * Mib_PrefixListPTR, Mib_PrefixList;
 
 /*
  * Here are the prefix strings.
@@ -88,22 +81,22 @@ typedef struct Mib_PrefixList_s {
  * Any of these MAY start with period; all will NOT end with period.
  * Period is added where needed.  See use of Prefix in this module.
  */
-Mib_PrefixList  mib_prefixes[] = {
-    {&_mib_standardPrefix[0]},      /* placeholder for Prefix data */
-    {".iso.org.dod.internet.mgmt.mib-2"},
-    {".iso.org.dod.internet.experimental"},
-    {".iso.org.dod.internet.private"},
-    {".iso.org.dod.internet.snmpParties"},
-    {".iso.org.dod.internet.snmpSecrets"},
-    {NULL, 0}                   /* end of list */
+Mib_PrefixList mib_prefixes[] = {
+    { &_mib_standardPrefix[ 0 ] }, /* placeholder for Prefix data */
+    { ".iso.org.dod.internet.mgmt.mib-2" },
+    { ".iso.org.dod.internet.experimental" },
+    { ".iso.org.dod.internet.private" },
+    { ".iso.org.dod.internet.snmpParties" },
+    { ".iso.org.dod.internet.snmpSecrets" },
+    { NULL, 0 } /* end of list */
 };
 
 enum Mib_InetAddressType {
-    IPV4   = 1,
-    IPV6   = 2,
-    IPV4Z  = 3,
-    IPV6Z  = 4,
-    DNS    = 16
+    IPV4 = 1,
+    IPV6 = 2,
+    IPV4Z = 3,
+    IPV6Z = 4,
+    DNS = 16
 };
 
 /**
@@ -116,44 +109,42 @@ enum Mib_InetAddressType {
  *
  * @return The buffer.
  */
-static char * _Mib_uptimeString(u_long timeticks, char *buf, size_t buflen)
+static char* _Mib_uptimeString( u_long timeticks, char* buf, size_t buflen )
 {
     int centisecs, seconds, minutes, hours, days;
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS)) {
-        snprintf(buf, buflen, "%lu", timeticks);
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS ) ) {
+        snprintf( buf, buflen, "%lu", timeticks );
         return buf;
     }
 
-
     centisecs = timeticks % 100;
     timeticks /= 100;
-    days = timeticks / (60 * 60 * 24);
-    timeticks %= (60 * 60 * 24);
+    days = timeticks / ( 60 * 60 * 24 );
+    timeticks %= ( 60 * 60 * 24 );
 
-    hours = timeticks / (60 * 60);
-    timeticks %= (60 * 60);
+    hours = timeticks / ( 60 * 60 );
+    timeticks %= ( 60 * 60 );
 
     minutes = timeticks / 60;
     seconds = timeticks % 60;
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT))
-        snprintf(buf, buflen, "%d:%d:%02d:%02d.%02d", days, hours, minutes, seconds, centisecs);
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) )
+        snprintf( buf, buflen, "%d:%d:%02d:%02d.%02d", days, hours, minutes, seconds, centisecs );
     else {
-        if (days == 0) {
-            snprintf(buf, buflen, "%d:%02d:%02d.%02d",
-                    hours, minutes, seconds, centisecs);
-        } else if (days == 1) {
-            snprintf(buf, buflen, "%d day, %d:%02d:%02d.%02d",
-                    days, hours, minutes, seconds, centisecs);
+        if ( days == 0 ) {
+            snprintf( buf, buflen, "%d:%02d:%02d.%02d",
+                hours, minutes, seconds, centisecs );
+        } else if ( days == 1 ) {
+            snprintf( buf, buflen, "%d day, %d:%02d:%02d.%02d",
+                days, hours, minutes, seconds, centisecs );
         } else {
-            snprintf(buf, buflen, "%d days, %d:%02d:%02d.%02d",
-                    days, hours, minutes, seconds, centisecs);
+            snprintf( buf, buflen, "%d days, %d:%02d:%02d.%02d",
+                days, hours, minutes, seconds, centisecs );
         }
     }
     return buf;
 }
-
 
 /**
  * @internal
@@ -163,15 +154,14 @@ static char * _Mib_uptimeString(u_long timeticks, char *buf, size_t buflen)
  * @param buf Buffer to print the character to.
  * @param ch  Character to print.
  */
-static void _Mib_sprintChar(char *buf, const u_char ch)
+static void _Mib_sprintChar( char* buf, const u_char ch )
 {
-    if (isprint(ch) || isspace(ch)) {
-        sprintf(buf, "%c", (int) ch);
+    if ( isprint( ch ) || isspace( ch ) ) {
+        sprintf( buf, "%c", ( int )ch );
     } else {
-        sprintf(buf, ".");
+        sprintf( buf, "." );
     }
 }
-
 
 /**
  * Prints a hexadecimal string into a buffer.
@@ -192,18 +182,18 @@ static void _Mib_sprintChar(char *buf, const u_char ch)
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintHexStringLine(u_char ** buf, size_t * buf_len, size_t * out_len,
-                       int allow_realloc, const u_char * cp, size_t line_len)
+int Mib_sprintHexStringLine( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc, const u_char* cp, size_t line_len )
 {
-    const u_char   *tp;
-    const u_char   *cp2 = cp;
-    size_t          lenleft = line_len;
+    const u_char* tp;
+    const u_char* cp2 = cp;
+    size_t lenleft = line_len;
 
     /*
      * Make sure there's enough room for the hex output....
      */
-    while ((*out_len + line_len*3+1) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    while ( ( *out_len + line_len * 3 + 1 ) >= *buf_len ) {
+        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
             return 0;
         }
     }
@@ -211,58 +201,57 @@ int Mib_sprintHexStringLine(u_char ** buf, size_t * buf_len, size_t * out_len,
     /*
      * .... and display the hex values themselves....
      */
-    for (; lenleft >= 8; lenleft-=8) {
-        sprintf((char *) (*buf + *out_len),
-                "%02X %02X %02X %02X %02X %02X %02X %02X ", cp[0], cp[1],
-                cp[2], cp[3], cp[4], cp[5], cp[6], cp[7]);
-        *out_len += strlen((char *) (*buf + *out_len));
-        cp       += 8;
+    for ( ; lenleft >= 8; lenleft -= 8 ) {
+        sprintf( ( char* )( *buf + *out_len ),
+            "%02X %02X %02X %02X %02X %02X %02X %02X ", cp[ 0 ], cp[ 1 ],
+            cp[ 2 ], cp[ 3 ], cp[ 4 ], cp[ 5 ], cp[ 6 ], cp[ 7 ] );
+        *out_len += strlen( ( char* )( *buf + *out_len ) );
+        cp += 8;
     }
-    for (; lenleft > 0; lenleft--) {
-        sprintf((char *) (*buf + *out_len), "%02X ", *cp++);
-        *out_len += strlen((char *) (*buf + *out_len));
+    for ( ; lenleft > 0; lenleft-- ) {
+        sprintf( ( char* )( *buf + *out_len ), "%02X ", *cp++ );
+        *out_len += strlen( ( char* )( *buf + *out_len ) );
     }
 
     /*
      * .... plus (optionally) do the same for the ASCII equivalent.
      */
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT)) {
-        while ((*out_len + line_len+5) >= *buf_len) {
-            if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT ) ) {
+        while ( ( *out_len + line_len + 5 ) >= *buf_len ) {
+            if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                 return 0;
             }
         }
-        sprintf((char *) (*buf + *out_len), "  [");
-        *out_len += strlen((char *) (*buf + *out_len));
-        for (tp = cp2; tp < cp; tp++) {
-            _Mib_sprintChar((char *) (*buf + *out_len), *tp);
-            (*out_len)++;
+        sprintf( ( char* )( *buf + *out_len ), "  [" );
+        *out_len += strlen( ( char* )( *buf + *out_len ) );
+        for ( tp = cp2; tp < cp; tp++ ) {
+            _Mib_sprintChar( ( char* )( *buf + *out_len ), *tp );
+            ( *out_len )++;
         }
-        sprintf((char *) (*buf + *out_len), "]");
-        *out_len += strlen((char *) (*buf + *out_len));
+        sprintf( ( char* )( *buf + *out_len ), "]" );
+        *out_len += strlen( ( char* )( *buf + *out_len ) );
     }
     return 1;
 }
 
-
-int Mib_sprintReallocHexString(u_char ** buf, size_t * buf_len, size_t * out_len,
-                             int allow_realloc, const u_char * cp, size_t len)
+int Mib_sprintReallocHexString( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc, const u_char* cp, size_t len )
 {
-    int line_len = DefaultStore_getInt(DsStorage_LIBRARY_ID,
-                                       DsInt_HEX_OUTPUT_LENGTH);
-    if (!line_len)
-        line_len=len;
+    int line_len = DefaultStore_getInt( DsStorage_LIBRARY_ID,
+        DsInt_HEX_OUTPUT_LENGTH );
+    if ( !line_len )
+        line_len = len;
 
-    for (; (int)len > line_len; len -= line_len) {
-        if(!Mib_sprintHexStringLine(buf, buf_len, out_len, allow_realloc, cp, line_len))
+    for ( ; ( int )len > line_len; len -= line_len ) {
+        if ( !Mib_sprintHexStringLine( buf, buf_len, out_len, allow_realloc, cp, line_len ) )
             return 0;
-        *(*buf + (*out_len)++) = '\n';
-        *(*buf + *out_len) = 0;
+        *( *buf + ( *out_len )++ ) = '\n';
+        *( *buf + *out_len ) = 0;
         cp += line_len;
     }
-    if(!Mib_sprintHexStringLine(buf, buf_len, out_len, allow_realloc, cp, len))
+    if ( !Mib_sprintHexStringLine( buf, buf_len, out_len, allow_realloc, cp, len ) )
         return 0;
-    *(*buf + *out_len) = 0;
+    *( *buf + *out_len ) = 0;
     return 1;
 }
 
@@ -285,43 +274,38 @@ int Mib_sprintReallocHexString(u_char ** buf, size_t * buf_len, size_t * out_len
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocAsciiString(u_char ** buf, size_t * buf_len,
-                           size_t * out_len, int allow_realloc,
-                           const u_char * cp, size_t len)
+int Mib_sprintReallocAsciiString( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const u_char* cp, size_t len )
 {
-    int             i;
+    int i;
 
-    for (i = 0; i < (int) len; i++) {
-        if (isprint(*cp) || isspace(*cp)) {
-            if (*cp == '\\' || *cp == '"') {
-                if ((*out_len >= *buf_len) &&
-                    !(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    for ( i = 0; i < ( int )len; i++ ) {
+        if ( isprint( *cp ) || isspace( *cp ) ) {
+            if ( *cp == '\\' || *cp == '"' ) {
+                if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                     return 0;
                 }
-                *(*buf + (*out_len)++) = '\\';
+                *( *buf + ( *out_len )++ ) = '\\';
             }
-            if ((*out_len >= *buf_len) &&
-                !(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                 return 0;
             }
-            *(*buf + (*out_len)++) = *cp++;
+            *( *buf + ( *out_len )++ ) = *cp++;
         } else {
-            if ((*out_len >= *buf_len) &&
-                !(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                 return 0;
             }
-            *(*buf + (*out_len)++) = '.';
+            *( *buf + ( *out_len )++ ) = '.';
             cp++;
         }
     }
-    if ((*out_len >= *buf_len) &&
-        !(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
         return 0;
     }
-    *(*buf + *out_len) = '\0';
+    *( *buf + *out_len ) = '\0';
     return 1;
 }
-
 
 /**
  * Prints an octet string into a buffer.
@@ -345,85 +329,84 @@ int Mib_sprintReallocAsciiString(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
-                            size_t * out_len, int allow_realloc,
-                            const Types_VariableList * var,
-                            const struct Parse_EnumList_s *enums, const char *hint,
-                            const char *units)
+int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums, const char* hint,
+    const char* units )
 {
-    size_t          saved_out_len = *out_len;
-    const char     *saved_hint = hint;
-    int             hex = 0, x = 0;
-    u_char         *cp;
-    int             output_format, cnt;
+    size_t saved_out_len = *out_len;
+    const char* saved_hint = hint;
+    int hex = 0, x = 0;
+    u_char* cp;
+    int output_format, cnt;
 
-    if (var->type != ASN01_OCTET_STR) {
-        if (!DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            const char      str[] = "Wrong Type (should be OCTET STRING): ";
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_OCTET_STR ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            const char str[] = "Wrong Type (should be OCTET STRING): ";
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-
-    if (hint) {
-        int             repeat, width = 1;
-        long            value;
-        char            code = 'd', separ = 0, term = 0, ch, intbuf[32];
+    if ( hint ) {
+        int repeat, width = 1;
+        long value;
+        char code = 'd', separ = 0, term = 0, ch, intbuf[ 32 ];
 #define HEX2DIGIT_NEED_INIT 3
-        char            hex2digit = HEX2DIGIT_NEED_INIT;
-        u_char         *ecp;
+        char hex2digit = HEX2DIGIT_NEED_INIT;
+        u_char* ecp;
 
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "STRING: ")) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "STRING: " ) ) {
                 return 0;
             }
         }
         cp = var->val.string;
         ecp = cp + var->valLen;
 
-        while (cp < ecp) {
+        while ( cp < ecp ) {
             repeat = 1;
-            if (*hint) {
-                if (*hint == '*') {
+            if ( *hint ) {
+                if ( *hint == '*' ) {
                     repeat = *cp++;
                     hint++;
                 }
                 width = 0;
-                while ('0' <= *hint && *hint <= '9')
-                    width = (width * 10) + (*hint++ - '0');
+                while ( '0' <= *hint && *hint <= '9' )
+                    width = ( width * 10 ) + ( *hint++ - '0' );
                 code = *hint++;
-                if ((ch = *hint) && ch != '*' && (ch < '0' || ch > '9')
-                    && (width != 0
-                        || (ch != 'x' && ch != 'd' && ch != 'o')))
+                if ( ( ch = *hint ) && ch != '*' && ( ch < '0' || ch > '9' )
+                    && ( width != 0
+                           || ( ch != 'x' && ch != 'd' && ch != 'o' ) ) )
                     separ = *hint++;
                 else
                     separ = 0;
-                if ((ch = *hint) && ch != '*' && (ch < '0' || ch > '9')
-                    && (width != 0
-                        || (ch != 'x' && ch != 'd' && ch != 'o')))
+                if ( ( ch = *hint ) && ch != '*' && ( ch < '0' || ch > '9' )
+                    && ( width != 0
+                           || ( ch != 'x' && ch != 'd' && ch != 'o' ) ) )
                     term = *hint++;
                 else
                     term = 0;
-                if (width == 0)  /* Handle malformed hint strings */
+                if ( width == 0 ) /* Handle malformed hint strings */
                     width = 1;
             }
 
-            while (repeat && cp < ecp) {
+            while ( repeat && cp < ecp ) {
                 value = 0;
-                if (code != 'a' && code != 't') {
-                    for (x = 0; x < width; x++) {
+                if ( code != 'a' && code != 't' ) {
+                    for ( x = 0; x < width; x++ ) {
                         value = value * 256 + *cp++;
                     }
                 }
-                switch (code) {
+                switch ( code ) {
                 case 'x':
-                    if (HEX2DIGIT_NEED_INIT == hex2digit)
-                        hex2digit = DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
-                                                           DsBool_LIB_2DIGIT_HEX_OUTPUT);
+                    if ( HEX2DIGIT_NEED_INIT == hex2digit )
+                        hex2digit = DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+                            DsBool_LIB_2DIGIT_HEX_OUTPUT );
                     /*
                      * if value is < 16, it will be a single hex digit. If the
                      * width is 1 (we are outputting a byte at a time), pat it
@@ -435,105 +418,99 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
                      * e.g. for the data 0xAA01BB, would anyone really ever
                      * want the string "AA1BB"??
                      */
-                    if (((value < 16) && (1 == width)) &&
-                        (hex2digit || ((0 == separ) && (0 == *hint)))) {
-                        sprintf(intbuf, "0%lx", value);
+                    if ( ( ( value < 16 ) && ( 1 == width ) ) && ( hex2digit || ( ( 0 == separ ) && ( 0 == *hint ) ) ) ) {
+                        sprintf( intbuf, "0%lx", value );
                     } else {
-                        sprintf(intbuf, "%lx", value);
+                        sprintf( intbuf, "%lx", value );
                     }
-                    if (!Tools_cstrcat
-                        (buf, buf_len, out_len, allow_realloc, intbuf)) {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
                         return 0;
                     }
                     break;
                 case 'd':
-                    sprintf(intbuf, "%ld", value);
-                    if (!Tools_cstrcat
-                        (buf, buf_len, out_len, allow_realloc, intbuf)) {
+                    sprintf( intbuf, "%ld", value );
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
                         return 0;
                     }
                     break;
                 case 'o':
-                    sprintf(intbuf, "%lo", value);
-                    if (!Tools_cstrcat
-                        (buf, buf_len, out_len, allow_realloc, intbuf)) {
+                    sprintf( intbuf, "%lo", value );
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
                         return 0;
                     }
                     break;
                 case 't': /* new in rfc 3411 */
                 case 'a':
-                    cnt = TOOLS_MIN(width, ecp - cp);
-                    if (!Mib_sprintReallocAsciiString(buf, buf_len, out_len,
-                                                    allow_realloc, cp, cnt))
+                    cnt = TOOLS_MIN( width, ecp - cp );
+                    if ( !Mib_sprintReallocAsciiString( buf, buf_len, out_len,
+                             allow_realloc, cp, cnt ) )
                         return 0;
                     cp += cnt;
                     break;
                 default:
                     *out_len = saved_out_len;
-                    if (Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                                     "(Bad hint ignored: ")
-                        && Tools_cstrcat(buf, buf_len, out_len,
-                                       allow_realloc, saved_hint)
-                        && Tools_cstrcat(buf, buf_len, out_len,
-                                       allow_realloc, ") ")) {
-                        return Mib_sprintReallocOctetString(buf, buf_len,
-                                                           out_len,
-                                                           allow_realloc,
-                                                           var, enums,
-                                                           NULL, NULL);
+                    if ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                             "(Bad hint ignored: " )
+                        && Tools_cstrcat( buf, buf_len, out_len,
+                               allow_realloc, saved_hint )
+                        && Tools_cstrcat( buf, buf_len, out_len,
+                               allow_realloc, ") " ) ) {
+                        return Mib_sprintReallocOctetString( buf, buf_len,
+                            out_len,
+                            allow_realloc,
+                            var, enums,
+                            NULL, NULL );
                     } else {
                         return 0;
                     }
                 }
 
-                if (cp < ecp && separ) {
-                    while ((*out_len + 1) >= *buf_len) {
-                        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+                if ( cp < ecp && separ ) {
+                    while ( ( *out_len + 1 ) >= *buf_len ) {
+                        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                             return 0;
                         }
                     }
-                    *(*buf + *out_len) = separ;
-                    (*out_len)++;
-                    *(*buf + *out_len) = '\0';
+                    *( *buf + *out_len ) = separ;
+                    ( *out_len )++;
+                    *( *buf + *out_len ) = '\0';
                 }
                 repeat--;
             }
 
-            if (term && cp < ecp) {
-                while ((*out_len + 1) >= *buf_len) {
-                    if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if ( term && cp < ecp ) {
+                while ( ( *out_len + 1 ) >= *buf_len ) {
+                    if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                         return 0;
                     }
                 }
-                *(*buf + *out_len) = term;
-                (*out_len)++;
-                *(*buf + *out_len) = '\0';
+                *( *buf + *out_len ) = term;
+                ( *out_len )++;
+                *( *buf + *out_len ) = '\0';
             }
         }
 
-        if (units) {
-            return (Tools_cstrcat
-                    (buf, buf_len, out_len, allow_realloc, " ")
-                    && Tools_cstrcat(buf, buf_len, out_len, allow_realloc, units));
+        if ( units ) {
+            return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
+                && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
         }
-        if ((*out_len >= *buf_len) &&
-            !(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
             return 0;
         }
-        *(*buf + *out_len) = '\0';
+        *( *buf + *out_len ) = '\0';
 
         return 1;
     }
 
-    output_format = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT);
-    if (0 == output_format) {
+    output_format = DefaultStore_getInt( DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT );
+    if ( 0 == output_format ) {
         output_format = MIB_STRING_OUTPUT_GUESS;
     }
-    switch (output_format) {
+    switch ( output_format ) {
     case MIB_STRING_OUTPUT_GUESS:
         hex = 0;
-        for (cp = var->val.string, x = 0; x < (int) var->valLen; x++, cp++) {
-            if (!isprint(*cp) && !isspace(*cp)) {
+        for ( cp = var->val.string, x = 0; x < ( int )var->valLen; x++, cp++ ) {
+            if ( !isprint( *cp ) && !isspace( *cp ) ) {
                 hex = 1;
             }
         }
@@ -548,60 +525,56 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
         break;
     }
 
-    if (var->valLen == 0) {
-        return Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"\"");
+    if ( var->valLen == 0 ) {
+        return Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\"" );
     }
 
-    if (hex) {
-        if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"")) {
+    if ( hex ) {
+        if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
                 return 0;
             }
         } else {
-            if (!Tools_cstrcat
-                (buf, buf_len, out_len, allow_realloc, "Hex-STRING: ")) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Hex-STRING: " ) ) {
                 return 0;
             }
         }
 
-        if (!Mib_sprintReallocHexString(buf, buf_len, out_len, allow_realloc,
-                                      var->val.string, var->valLen)) {
+        if ( !Mib_sprintReallocHexString( buf, buf_len, out_len, allow_realloc,
+                 var->val.string, var->valLen ) ) {
             return 0;
         }
 
-        if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"")) {
+        if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
                 return 0;
             }
         }
     } else {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "STRING: ")) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "STRING: " ) ) {
                 return 0;
             }
         }
-        if (!Tools_cstrcat
-            (buf, buf_len, out_len, allow_realloc, "\"")) {
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
             return 0;
         }
-        if (!Mib_sprintReallocAsciiString
-            (buf, buf_len, out_len, allow_realloc, var->val.string,
-             var->valLen)) {
+        if ( !Mib_sprintReallocAsciiString( buf, buf_len, out_len, allow_realloc, var->val.string,
+                 var->valLen ) ) {
             return 0;
         }
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"")) {
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
             return 0;
         }
     }
 
-    if (units) {
-        return (Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " ")
-                && Tools_cstrcat(buf, buf_len, out_len, allow_realloc, units));
+    if ( units ) {
+        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
+            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints a float into a buffer.
@@ -625,49 +598,46 @@ int Mib_sprintReallocOctetString(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocFloat(u_char ** buf, size_t * buf_len,
-                     size_t * out_len, int allow_realloc,
-                     const Types_VariableList * var,
-                     const struct Parse_EnumList_s *enums,
-                     const char *hint, const char *units)
+int Mib_sprintReallocFloat( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    if (var->type != ASN01_OPAQUE_FLOAT) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Float): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_OPAQUE_FLOAT ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Float): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        if (!Tools_cstrcat
-            (buf, buf_len, out_len, allow_realloc, "Opaque: Float: ")) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Opaque: Float: " ) ) {
             return 0;
         }
     }
-
 
     /*
      * How much space needed for max. length float?  128 is overkill.
      */
 
-    while ((*out_len + 128 + 1) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    while ( ( *out_len + 128 + 1 ) >= *buf_len ) {
+        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
             return 0;
         }
     }
 
-    sprintf((char *) (*buf + *out_len), "%f", *var->val.floatVal);
-    *out_len += strlen((char *) (*buf + *out_len));
+    sprintf( ( char* )( *buf + *out_len ), "%f", *var->val.floatVal );
+    *out_len += strlen( ( char* )( *buf + *out_len ) );
 
-    if (units) {
-        return (Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " ")
-                && Tools_cstrcat(buf, buf_len, out_len, allow_realloc, units));
+    if ( units ) {
+        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
+            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints a double into a buffer.
@@ -691,26 +661,25 @@ int Mib_sprintReallocFloat(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocDouble(u_char ** buf, size_t * buf_len,
-                      size_t * out_len, int allow_realloc,
-                      const Types_VariableList * var,
-                      const struct Parse_EnumList_s *enums,
-                      const char *hint, const char *units)
+int Mib_sprintReallocDouble( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    if (var->type != ASN01_OPAQUE_DOUBLE) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Double): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_OPAQUE_DOUBLE ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Double): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        if (!Tools_cstrcat
-            (buf, buf_len, out_len, allow_realloc, "Opaque: Float: ")) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Opaque: Float: " ) ) {
             return 0;
         }
     }
@@ -719,19 +688,18 @@ int Mib_sprintReallocDouble(u_char ** buf, size_t * buf_len,
      * How much space needed for max. length double?  128 is overkill.
      */
 
-    while ((*out_len + 128 + 1) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    while ( ( *out_len + 128 + 1 ) >= *buf_len ) {
+        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
             return 0;
         }
     }
 
-    sprintf((char *) (*buf + *out_len), "%f", *var->val.doubleVal);
-    *out_len += strlen((char *) (*buf + *out_len));
+    sprintf( ( char* )( *buf + *out_len ), "%f", *var->val.doubleVal );
+    *out_len += strlen( ( char* )( *buf + *out_len ) );
 
-    if (units) {
-        return (Tools_cstrcat
-                (buf, buf_len, out_len, allow_realloc, " ")
-                && Tools_cstrcat(buf, buf_len, out_len, allow_realloc, units));
+    if ( units ) {
+        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
+            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
@@ -758,74 +726,68 @@ int Mib_sprintReallocDouble(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocCounter64(u_char ** buf, size_t * buf_len, size_t * out_len,
-                         int allow_realloc,
-                         const Types_VariableList * var,
-                         const struct Parse_EnumList_s *enums,
-                         const char *hint, const char *units)
+int Mib_sprintReallocCounter64( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    char            a64buf[INT64_I64CHARSZ + 1];
+    char a64buf[ INT64_I64CHARSZ + 1 ];
 
-    if (var->type != ASN01_COUNTER64
+    if ( var->type != ASN01_COUNTER64
         && var->type != ASN01_OPAQUE_COUNTER64
-        && var->type != ASN01_OPAQUE_I64 && var->type != ASN01_OPAQUE_U64
-        ) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Counter64): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+        && var->type != ASN01_OPAQUE_I64 && var->type != ASN01_OPAQUE_U64 ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Counter64): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        if (var->type != ASN01_COUNTER64) {
-            if (!Tools_cstrcat
-                (buf, buf_len, out_len, allow_realloc, "Opaque: ")) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        if ( var->type != ASN01_COUNTER64 ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Opaque: " ) ) {
                 return 0;
             }
         }
-        switch (var->type) {
+        switch ( var->type ) {
         case ASN01_OPAQUE_U64:
-            if (!Tools_cstrcat
-                (buf, buf_len, out_len, allow_realloc, "UInt64: ")) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "UInt64: " ) ) {
                 return 0;
             }
             break;
         case ASN01_OPAQUE_I64:
-            if (!Tools_cstrcat
-                (buf, buf_len, out_len, allow_realloc, "Int64: ")) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Int64: " ) ) {
                 return 0;
             }
             break;
         case ASN01_COUNTER64:
         case ASN01_OPAQUE_COUNTER64:
-            if (!Tools_cstrcat
-                (buf, buf_len, out_len, allow_realloc, "Counter64: ")) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Counter64: " ) ) {
                 return 0;
             }
         }
     }
-    if (var->type == ASN01_OPAQUE_I64) {
-        Int64_printI64(a64buf, var->val.counter64);
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, a64buf)) {
+    if ( var->type == ASN01_OPAQUE_I64 ) {
+        Int64_printI64( a64buf, var->val.counter64 );
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
             return 0;
         }
     } else {
-        Int64_printU64(a64buf, var->val.counter64);
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, a64buf)) {
+        Int64_printU64( a64buf, var->val.counter64 );
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
             return 0;
         }
     }
-    if (units) {
-        return (Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " ")
-                && Tools_cstrcat(buf, buf_len, out_len, allow_realloc, units));
+    if ( units ) {
+        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
+            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints an object identifier into a buffer.
@@ -847,64 +809,61 @@ int Mib_sprintReallocCounter64(u_char ** buf, size_t * buf_len, size_t * out_len
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocOpaque(u_char ** buf, size_t * buf_len,
-                      size_t * out_len, int allow_realloc,
-                      const Types_VariableList * var,
-                      const struct Parse_EnumList_s *enums,
-                      const char *hint, const char *units)
+int Mib_sprintReallocOpaque( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    if (var->type != ASN01_OPAQUE
+    if ( var->type != ASN01_OPAQUE
         && var->type != ASN01_OPAQUE_COUNTER64
         && var->type != ASN01_OPAQUE_U64
         && var->type != ASN01_OPAQUE_I64
-        && var->type != ASN01_OPAQUE_FLOAT && var->type != ASN01_OPAQUE_DOUBLE
-        ) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Opaque): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+        && var->type != ASN01_OPAQUE_FLOAT && var->type != ASN01_OPAQUE_DOUBLE ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Opaque): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL );
     }
-    switch (var->type) {
+    switch ( var->type ) {
     case ASN01_OPAQUE_COUNTER64:
     case ASN01_OPAQUE_U64:
     case ASN01_OPAQUE_I64:
-        return Mib_sprintReallocCounter64(buf, buf_len, out_len, allow_realloc, var, enums, hint, units);
+        return Mib_sprintReallocCounter64( buf, buf_len, out_len, allow_realloc, var, enums, hint, units );
         break;
 
     case ASN01_OPAQUE_FLOAT:
-        return Mib_sprintReallocFloat(buf, buf_len, out_len, allow_realloc,
-                                    var, enums, hint, units);
+        return Mib_sprintReallocFloat( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
         break;
 
     case ASN01_OPAQUE_DOUBLE:
-        return Mib_sprintReallocDouble(buf, buf_len, out_len, allow_realloc,
-                                     var, enums, hint, units);
+        return Mib_sprintReallocDouble( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
         break;
 
     case ASN01_OPAQUE:
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-            u_char          str[] = "OPAQUE: ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+            u_char str[] = "OPAQUE: ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
                 return 0;
             }
         }
-        if (!Mib_sprintReallocHexString(buf, buf_len, out_len, allow_realloc,
-                                      var->val.string, var->valLen)) {
+        if ( !Mib_sprintReallocHexString( buf, buf_len, out_len, allow_realloc,
+                 var->val.string, var->valLen ) ) {
             return 0;
         }
     }
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints an object identifier into a buffer.
@@ -926,51 +885,49 @@ int Mib_sprintReallocOpaque(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocObjectIdentifier(u_char ** buf, size_t * buf_len,
-                                 size_t * out_len, int allow_realloc,
-                                 const Types_VariableList * var,
-                                 const struct Parse_EnumList_s *enums,
-                                 const char *hint, const char *units)
+int Mib_sprintReallocObjectIdentifier( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
     int buf_overflow = 0;
 
-    if (var->type != ASN01_OBJECT_ID) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be OBJECT IDENTIFIER): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_OBJECT_ID ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be OBJECT IDENTIFIER): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "OID: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "OID: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
 
-    Mib_sprintReallocObjidTree(buf, buf_len, out_len, allow_realloc,
-                                      &buf_overflow,
-                                      (oid *) (var->val.objid),
-                                      var->valLen / sizeof(oid));
+    Mib_sprintReallocObjidTree( buf, buf_len, out_len, allow_realloc,
+        &buf_overflow,
+        ( oid* )( var->val.objid ),
+        var->valLen / sizeof( oid ) );
 
-    if (buf_overflow) {
+    if ( buf_overflow ) {
         return 0;
     }
 
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints a timetick variable into a buffer.
@@ -992,57 +949,52 @@ int Mib_sprintReallocObjectIdentifier(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocTimeTicks(u_char ** buf, size_t * buf_len, size_t * out_len,
-                         int allow_realloc,
-                         const Types_VariableList * var,
-                         const struct Parse_EnumList_s *enums,
-                         const char *hint, const char *units)
+int Mib_sprintReallocTimeTicks( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    char timebuf[40];
+    char timebuf[ 40 ];
 
-    if (var->type != ASN01_TIMETICKS) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Timeticks): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_TIMETICKS ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Timeticks): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS)) {
-        char            str[32];
-        sprintf(str, "%lu", *(u_long *) var->val.integer);
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc, (const u_char *) str)) {
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS ) ) {
+        char str[ 32 ];
+        sprintf( str, "%lu", *( u_long* )var->val.integer );
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
         return 1;
     }
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        char            str[32];
-        sprintf(str, "Timeticks: (%lu) ", *(u_long *) var->val.integer);
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc, (const u_char *) str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        char str[ 32 ];
+        sprintf( str, "Timeticks: (%lu) ", *( u_long* )var->val.integer );
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
     }
-    _Mib_uptimeString(*(u_long *) (var->val.integer), timebuf, sizeof(timebuf));
-    if (!Tools_strcat (buf, buf_len, out_len, allow_realloc, (const u_char *) timebuf)) {
+    _Mib_uptimeString( *( u_long* )( var->val.integer ), timebuf, sizeof( timebuf ) );
+    if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )timebuf ) ) {
         return 0;
     }
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
-
 
 /**
  * Prints an integer according to the hint into a buffer.
@@ -1064,22 +1016,22 @@ int Mib_sprintReallocTimeTicks(u_char ** buf, size_t * buf_len, size_t * out_len
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocHintedInteger(u_char ** buf, size_t * buf_len,
-                              size_t * out_len, int allow_realloc,
-                              long val, const char decimaltype,
-                              const char *hint, const char *units)
+int Mib_sprintReallocHintedInteger( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    long val, const char decimaltype,
+    const char* hint, const char* units )
 {
-    char            fmt[10] = "%l@", tmp[256];
-    int             shift = 0, len, negative = 0;
+    char fmt[ 10 ] = "%l@", tmp[ 256 ];
+    int shift = 0, len, negative = 0;
 
-    if (hint[0] == 'd') {
+    if ( hint[ 0 ] == 'd' ) {
         /*
          * We might *actually* want a 'u' here.
          */
-        if (hint[1] == '-')
-            shift = atoi(hint + 2);
-        fmt[2] = decimaltype;
-        if (val < 0) {
+        if ( hint[ 1 ] == '-' )
+            shift = atoi( hint + 2 );
+        fmt[ 2 ] = decimaltype;
+        if ( val < 0 ) {
             negative = 1;
             val = -val;
         }
@@ -1087,54 +1039,52 @@ int Mib_sprintReallocHintedInteger(u_char ** buf, size_t * buf_len,
         /*
          * DISPLAY-HINT character is 'b', 'o', or 'x'.
          */
-        fmt[2] = hint[0];
+        fmt[ 2 ] = hint[ 0 ];
     }
 
-    if (hint[0] == 'b') {
-    unsigned long int bit = 0x80000000LU;
-    char *bp = tmp;
-    while (bit) {
-        *bp++ = val & bit ? '1' : '0';
-        bit >>= 1;
-    }
-    *bp = 0;
-    }
-    else
-    sprintf(tmp, fmt, val);
+    if ( hint[ 0 ] == 'b' ) {
+        unsigned long int bit = 0x80000000LU;
+        char* bp = tmp;
+        while ( bit ) {
+            *bp++ = val & bit ? '1' : '0';
+            bit >>= 1;
+        }
+        *bp = 0;
+    } else
+        sprintf( tmp, fmt, val );
 
-    if (shift != 0) {
-        len = strlen(tmp);
-        if (shift <= len) {
-            tmp[len + 1] = 0;
-            while (shift--) {
-                tmp[len] = tmp[len - 1];
+    if ( shift != 0 ) {
+        len = strlen( tmp );
+        if ( shift <= len ) {
+            tmp[ len + 1 ] = 0;
+            while ( shift-- ) {
+                tmp[ len ] = tmp[ len - 1 ];
                 len--;
             }
-            tmp[len] = '.';
+            tmp[ len ] = '.';
         } else {
-            tmp[shift + 1] = 0;
-            while (shift) {
-                if (len-- > 0) {
-                    tmp[shift] = tmp[len];
+            tmp[ shift + 1 ] = 0;
+            while ( shift ) {
+                if ( len-- > 0 ) {
+                    tmp[ shift ] = tmp[ len ];
                 } else {
-                    tmp[shift] = '0';
+                    tmp[ shift ] = '0';
                 }
                 shift--;
             }
-            tmp[0] = '.';
+            tmp[ 0 ] = '.';
         }
     }
-    if (negative) {
-        len = strlen(tmp)+1;
-        while (len) {
-            tmp[len] = tmp[len-1];
+    if ( negative ) {
+        len = strlen( tmp ) + 1;
+        while ( len ) {
+            tmp[ len ] = tmp[ len - 1 ];
             len--;
         }
-        tmp[0] = '-';
+        tmp[ 0 ] = '-';
     }
-    return Tools_strcat(buf, buf_len, out_len, allow_realloc, (u_char *)tmp);
+    return Tools_strcat( buf, buf_len, out_len, allow_realloc, ( u_char* )tmp );
 }
-
 
 /**
  * Prints an integer into a buffer.
@@ -1156,86 +1106,80 @@ int Mib_sprintReallocHintedInteger(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocInteger(u_char ** buf, size_t * buf_len, size_t * out_len,
-                       int allow_realloc,
-                       const Types_VariableList * var,
-                       const struct Parse_EnumList_s *enums,
-                       const char *hint, const char *units)
+int Mib_sprintReallocInteger( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    char           *enum_string = NULL;
+    char* enum_string = NULL;
 
-    if (var->type != ASN01_INTEGER) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be INTEGER): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_INTEGER ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be INTEGER): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    for (; enums; enums = enums->next) {
-        if (enums->value == *var->val.integer) {
+    for ( ; enums; enums = enums->next ) {
+        if ( enums->value == *var->val.integer ) {
             enum_string = enums->label;
             break;
         }
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                         (const u_char *) "INTEGER: ")) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                 ( const u_char* )"INTEGER: " ) ) {
             return 0;
         }
     }
 
-    if (enum_string == NULL || DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM)) {
-        if (hint) {
-            if (!(Mib_sprintReallocHintedInteger(buf, buf_len, out_len,
-                                                allow_realloc,
-                                                *var->val.integer, 'd',
-                                                hint, units))) {
+    if ( enum_string == NULL || DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM ) ) {
+        if ( hint ) {
+            if ( !( Mib_sprintReallocHintedInteger( buf, buf_len, out_len,
+                     allow_realloc,
+                     *var->val.integer, 'd',
+                     hint, units ) ) ) {
                 return 0;
             }
         } else {
-            char            str[32];
-            sprintf(str, "%ld", *var->val.integer);
-            if (!Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) str)) {
+            char str[ 32 ];
+            sprintf( str, "%ld", *var->val.integer );
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )str ) ) {
                 return 0;
             }
         }
-    } else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc,
-             (const u_char *) enum_string)) {
+    } else if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                 ( const u_char* )enum_string ) ) {
             return 0;
         }
     } else {
-        char            str[32];
-        sprintf(str, "(%ld)", *var->val.integer);
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc,
-             (const u_char *) enum_string)) {
+        char str[ 32 ];
+        sprintf( str, "(%ld)", *var->val.integer );
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                 ( const u_char* )enum_string ) ) {
             return 0;
         }
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc, (const u_char *) str)) {
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
     }
 
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints an unsigned integer into a buffer.
@@ -1257,80 +1201,73 @@ int Mib_sprintReallocInteger(u_char ** buf, size_t * buf_len, size_t * out_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocUinteger(u_char ** buf, size_t * buf_len, size_t * out_len,
-                        int allow_realloc,
-                        const Types_VariableList * var,
-                        const struct Parse_EnumList_s *enums,
-                        const char *hint, const char *units)
+int Mib_sprintReallocUinteger( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    char           *enum_string = NULL;
+    char* enum_string = NULL;
 
-    if (var->type != ASN01_UINTEGER) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be UInteger32): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_UINTEGER ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be UInteger32): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    for (; enums; enums = enums->next) {
-        if (enums->value == *var->val.integer) {
+    for ( ; enums; enums = enums->next ) {
+        if ( enums->value == *var->val.integer ) {
             enum_string = enums->label;
             break;
         }
     }
 
-    if (enum_string == NULL ||
-        DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM)) {
-        if (hint) {
-            if (!(Mib_sprintReallocHintedInteger(buf, buf_len, out_len,
-                                                allow_realloc,
-                                                *var->val.integer, 'u',
-                                                hint, units))) {
+    if ( enum_string == NULL || DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM ) ) {
+        if ( hint ) {
+            if ( !( Mib_sprintReallocHintedInteger( buf, buf_len, out_len,
+                     allow_realloc,
+                     *var->val.integer, 'u',
+                     hint, units ) ) ) {
                 return 0;
             }
         } else {
-            char            str[32];
-            sprintf(str, "%lu", *var->val.integer);
-            if (!Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) str)) {
+            char str[ 32 ];
+            sprintf( str, "%lu", *var->val.integer );
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )str ) ) {
                 return 0;
             }
         }
-    } else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc,
-             (const u_char *) enum_string)) {
+    } else if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                 ( const u_char* )enum_string ) ) {
             return 0;
         }
     } else {
-        char            str[32];
-        sprintf(str, "(%lu)", *var->val.integer);
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc,
-             (const u_char *) enum_string)) {
+        char str[ 32 ];
+        sprintf( str, "(%lu)", *var->val.integer );
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                 ( const u_char* )enum_string ) ) {
             return 0;
         }
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc, (const u_char *) str)) {
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
     }
 
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints a gauge value into a buffer.
@@ -1352,55 +1289,52 @@ int Mib_sprintReallocUinteger(u_char ** buf, size_t * buf_len, size_t * out_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocGauge(u_char ** buf, size_t * buf_len, size_t * out_len,
-                     int allow_realloc,
-                     const Types_VariableList * var,
-                     const struct Parse_EnumList_s *enums,
-                     const char *hint, const char *units)
+int Mib_sprintReallocGauge( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    char            tmp[32];
+    char tmp[ 32 ];
 
-    if (var->type != ASN01_GAUGE) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Gauge32 or Unsigned32): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_GAUGE ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Gauge32 or Unsigned32): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "Gauge32: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "Gauge32: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
-    if (hint) {
-        if (!Mib_sprintReallocHintedInteger(buf, buf_len, out_len,
-                                           allow_realloc,
-                                           *var->val.integer, 'u', hint,
-                                           units)) {
+    if ( hint ) {
+        if ( !Mib_sprintReallocHintedInteger( buf, buf_len, out_len,
+                 allow_realloc,
+                 *var->val.integer, 'u', hint,
+                 units ) ) {
             return 0;
         }
     } else {
-        sprintf(tmp, "%u", (unsigned int)(*var->val.integer & 0xffffffff));
-        if (!Tools_strcat
-            (buf, buf_len, out_len, allow_realloc, (const u_char *) tmp)) {
+        sprintf( tmp, "%u", ( unsigned int )( *var->val.integer & 0xffffffff ) );
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )tmp ) ) {
             return 0;
         }
     }
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints a counter value into a buffer.
@@ -1422,46 +1356,43 @@ int Mib_sprintReallocGauge(u_char ** buf, size_t * buf_len, size_t * out_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocCounter(u_char ** buf, size_t * buf_len, size_t * out_len,
-                       int allow_realloc,
-                       const Types_VariableList * var,
-                       const struct Parse_EnumList_s *enums,
-                       const char *hint, const char *units)
+int Mib_sprintReallocCounter( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    char            tmp[32];
+    char tmp[ 32 ];
 
-    if (var->type != ASN01_COUNTER) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be Counter32): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_COUNTER ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be Counter32): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "Counter32: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "Counter32: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
-    sprintf(tmp, "%u", (unsigned int)(*var->val.integer & 0xffffffff));
-    if (!Tools_strcat
-        (buf, buf_len, out_len, allow_realloc, (const u_char *) tmp)) {
+    sprintf( tmp, "%u", ( unsigned int )( *var->val.integer & 0xffffffff ) );
+    if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )tmp ) ) {
         return 0;
     }
-    if (units) {
-        return (Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " ")
-                && Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                               (const u_char *) units));
+    if ( units ) {
+        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" " )
+            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )units ) );
     }
     return 1;
 }
-
 
 /**
  * Prints a network address into a buffer.
@@ -1483,49 +1414,48 @@ int Mib_sprintReallocCounter(u_char ** buf, size_t * buf_len, size_t * out_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocNetworkAddress(u_char ** buf, size_t * buf_len,
-                              size_t * out_len, int allow_realloc,
-                              const Types_VariableList * var,
-                              const struct Parse_EnumList_s *enums, const char *hint,
-                              const char *units)
+int Mib_sprintReallocNetworkAddress( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums, const char* hint,
+    const char* units )
 {
-    size_t          i;
+    size_t i;
 
-    if (var->type != ASN01_IPADDRESS) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be NetworkAddress): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_IPADDRESS ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be NetworkAddress): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "Network Address: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "Network Address: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
 
-    while ((*out_len + (var->valLen * 3) + 2) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    while ( ( *out_len + ( var->valLen * 3 ) + 2 ) >= *buf_len ) {
+        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
             return 0;
         }
     }
 
-    for (i = 0; i < var->valLen; i++) {
-        sprintf((char *) (*buf + *out_len), "%02X", var->val.string[i]);
+    for ( i = 0; i < var->valLen; i++ ) {
+        sprintf( ( char* )( *buf + *out_len ), "%02X", var->val.string[ i ] );
         *out_len += 2;
-        if (i < var->valLen - 1) {
-            *(*buf + *out_len) = ':';
-            (*out_len)++;
+        if ( i < var->valLen - 1 ) {
+            *( *buf + *out_len ) = ':';
+            ( *out_len )++;
         }
     }
     return 1;
 }
-
 
 /**
  * Prints an ip-address into a buffer.
@@ -1547,43 +1477,42 @@ int Mib_sprintReallocNetworkAddress(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocIpAddress(u_char ** buf, size_t * buf_len, size_t * out_len,
-                         int allow_realloc,
-                         const Types_VariableList * var,
-                         const struct Parse_EnumList_s *enums,
-                         const char *hint, const char *units)
+int Mib_sprintReallocIpAddress( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    u_char         *ip = var->val.string;
+    u_char* ip = var->val.string;
 
-    if (var->type != ASN01_IPADDRESS) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be IpAddress): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_IPADDRESS ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be IpAddress): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "IpAddress: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "IpAddress: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
-    while ((*out_len + 17) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+    while ( ( *out_len + 17 ) >= *buf_len ) {
+        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
             return 0;
         }
     }
-    if (ip)
-        sprintf((char *) (*buf + *out_len), "%d.%d.%d.%d",
-                                            ip[0], ip[1], ip[2], ip[3]);
-    *out_len += strlen((char *) (*buf + *out_len));
+    if ( ip )
+        sprintf( ( char* )( *buf + *out_len ), "%d.%d.%d.%d",
+            ip[ 0 ], ip[ 1 ], ip[ 2 ], ip[ 3 ] );
+    *out_len += strlen( ( char* )( *buf + *out_len ) );
     return 1;
 }
-
 
 /**
  * Prints a null value into a buffer.
@@ -1605,28 +1534,27 @@ int Mib_sprintReallocIpAddress(u_char ** buf, size_t * buf_len, size_t * out_len
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocNull(u_char ** buf, size_t * buf_len, size_t * out_len,
-                    int allow_realloc,
-                    const Types_VariableList * var,
-                    const struct Parse_EnumList_s *enums,
-                    const char *hint, const char *units)
+int Mib_sprintReallocNull( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    u_char          str[] = "NULL";
+    u_char str[] = "NULL";
 
-    if (var->type != ASN01_NULL) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be NULL): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_NULL ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be NULL): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    return Tools_strcat(buf, buf_len, out_len, allow_realloc, str);
+    return Tools_strcat( buf, buf_len, out_len, allow_realloc, str );
 }
-
 
 /**
  * Prints a bit string into a buffer.
@@ -1648,80 +1576,76 @@ int Mib_sprintReallocNull(u_char ** buf, size_t * buf_len, size_t * out_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocBitString(u_char ** buf, size_t * buf_len, size_t * out_len,
-                         int allow_realloc,
-                         const Types_VariableList * var,
-                         const struct Parse_EnumList_s *enums,
-                         const char *hint, const char *units)
+int Mib_sprintReallocBitString( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    int             len, bit;
-    u_char         *cp;
-    char           *enum_string;
+    int len, bit;
+    u_char* cp;
+    char* enum_string;
 
-    if (var->type != ASN01_BIT_STR && var->type != ASN01_OCTET_STR) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be BITS): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_BIT_STR && var->type != ASN01_OCTET_STR ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be BITS): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "\"";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "\"";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     } else {
-        u_char          str[] = "BITS: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+        u_char str[] = "BITS: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
-    if (!Mib_sprintReallocHexString(buf, buf_len, out_len, allow_realloc,
-                                  var->val.bitstring, var->valLen)) {
+    if ( !Mib_sprintReallocHexString( buf, buf_len, out_len, allow_realloc,
+             var->val.bitstring, var->valLen ) ) {
         return 0;
     }
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "\"";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "\"";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     } else {
         cp = var->val.bitstring;
-        for (len = 0; len < (int) var->valLen; len++) {
-            for (bit = 0; bit < 8; bit++) {
-                if (*cp & (0x80 >> bit)) {
+        for ( len = 0; len < ( int )var->valLen; len++ ) {
+            for ( bit = 0; bit < 8; bit++ ) {
+                if ( *cp & ( 0x80 >> bit ) ) {
                     enum_string = NULL;
-                    for (; enums; enums = enums->next) {
-                        if (enums->value == (len * 8) + bit) {
+                    for ( ; enums; enums = enums->next ) {
+                        if ( enums->value == ( len * 8 ) + bit ) {
                             enum_string = enums->label;
                             break;
                         }
                     }
-                    if (enum_string == NULL ||
-                        DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM)) {
-                        char            str[32];
-                        sprintf(str, "%d ", (len * 8) + bit);
-                        if (!Tools_strcat
-                            (buf, buf_len, out_len, allow_realloc,
-                             (const u_char *) str)) {
+                    if ( enum_string == NULL || DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM ) ) {
+                        char str[ 32 ];
+                        sprintf( str, "%d ", ( len * 8 ) + bit );
+                        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                                 ( const u_char* )str ) ) {
                             return 0;
                         }
                     } else {
-                        char            str[32];
-                        sprintf(str, "(%d) ", (len * 8) + bit);
-                        if (!Tools_strcat
-                            (buf, buf_len, out_len, allow_realloc,
-                             (const u_char *) enum_string)) {
+                        char str[ 32 ];
+                        sprintf( str, "(%d) ", ( len * 8 ) + bit );
+                        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                                 ( const u_char* )enum_string ) ) {
                             return 0;
                         }
-                        if (!Tools_strcat
-                            (buf, buf_len, out_len, allow_realloc,
-                             (const u_char *) str)) {
+                        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                                 ( const u_char* )str ) ) {
                             return 0;
                         }
                     }
@@ -1733,34 +1657,33 @@ int Mib_sprintReallocBitString(u_char ** buf, size_t * buf_len, size_t * out_len
     return 1;
 }
 
-int Mib_sprintReallocNsapAddress(u_char ** buf, size_t * buf_len,
-                           size_t * out_len, int allow_realloc,
-                           const Types_VariableList * var,
-                           const struct Parse_EnumList_s *enums, const char *hint,
-                           const char *units)
+int Mib_sprintReallocNsapAddress( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums, const char* hint,
+    const char* units )
 {
-    if (var->type != ASN01_NSAP) {
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            u_char          str[] = "Wrong Type (should be NsapAddress): ";
-            if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( var->type != ASN01_NSAP ) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            u_char str[] = "Wrong Type (should be NsapAddress): ";
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, var, NULL, NULL,
-                                          NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, var, NULL, NULL,
+            NULL );
     }
 
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-        u_char          str[] = "NsapAddress: ";
-        if (!Tools_strcat(buf, buf_len, out_len, allow_realloc, str)) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+        u_char str[] = "NsapAddress: ";
+        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
 
-    return Mib_sprintReallocHexString(buf, buf_len, out_len, allow_realloc,
-                                    var->val.string, var->valLen);
+    return Mib_sprintReallocHexString( buf, buf_len, out_len, allow_realloc,
+        var->val.string, var->valLen );
 }
-
 
 /**
  * Fallback routine for a bad type, prints "Variable has bad type" into a buffer.
@@ -1782,18 +1705,16 @@ int Mib_sprintReallocNsapAddress(u_char ** buf, size_t * buf_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocBadType(u_char ** buf, size_t * buf_len, size_t * out_len,
-                       int allow_realloc,
-                       const Types_VariableList * var,
-                       const struct Parse_EnumList_s *enums,
-                       const char *hint, const char *units)
+int Mib_sprintReallocBadType( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    u_char          str[] = "Variable has bad type";
+    u_char str[] = "Variable has bad type";
 
-    return Tools_strcat(buf, buf_len, out_len, allow_realloc, str);
+    return Tools_strcat( buf, buf_len, out_len, allow_realloc, str );
 }
-
-
 
 /**
  * Universal print routine, prints a variable into a buffer according to the variable
@@ -1816,244 +1737,239 @@ int Mib_sprintReallocBadType(u_char ** buf, size_t * buf_len, size_t * out_len,
  * @return 1 on success, or 0 on failure (out of memory, or buffer to
  *         small when not allowed to realloc.)
  */
-int Mib_sprintReallocByType(u_char ** buf, size_t * buf_len, size_t * out_len,
-                       int allow_realloc,
-                       const Types_VariableList * var,
-                       const struct Parse_EnumList_s *enums,
-                       const char *hint, const char *units)
+int Mib_sprintReallocByType( u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    DEBUG_MSGTL(("output", "sprintByType, type %d\n", var->type));
+    DEBUG_MSGTL( ( "output", "sprintByType, type %d\n", var->type ) );
 
-    switch (var->type) {
+    switch ( var->type ) {
     case ASN01_INTEGER:
-        return Mib_sprintReallocInteger(buf, buf_len, out_len, allow_realloc,
-                                      var, enums, hint, units);
+        return Mib_sprintReallocInteger( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     case ASN01_OCTET_STR:
-        return Mib_sprintReallocOctetString(buf, buf_len, out_len,
-                                           allow_realloc, var, enums, hint,
-                                           units);
+        return Mib_sprintReallocOctetString( buf, buf_len, out_len,
+            allow_realloc, var, enums, hint,
+            units );
     case ASN01_BIT_STR:
-        return Mib_sprintReallocBitString(buf, buf_len, out_len,
-                                        allow_realloc, var, enums, hint,
-                                        units);
+        return Mib_sprintReallocBitString( buf, buf_len, out_len,
+            allow_realloc, var, enums, hint,
+            units );
     case ASN01_OPAQUE:
-        return Mib_sprintReallocOpaque(buf, buf_len, out_len, allow_realloc,
-                                     var, enums, hint, units);
+        return Mib_sprintReallocOpaque( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     case ASN01_OBJECT_ID:
-        return Mib_sprintReallocObjectIdentifier(buf, buf_len, out_len,
-                                                allow_realloc, var, enums,
-                                                hint, units);
+        return Mib_sprintReallocObjectIdentifier( buf, buf_len, out_len,
+            allow_realloc, var, enums,
+            hint, units );
     case ASN01_TIMETICKS:
-        return Mib_sprintReallocTimeTicks(buf, buf_len, out_len,
-                                        allow_realloc, var, enums, hint,
-                                        units);
+        return Mib_sprintReallocTimeTicks( buf, buf_len, out_len,
+            allow_realloc, var, enums, hint,
+            units );
     case ASN01_GAUGE:
-        return Mib_sprintReallocGauge(buf, buf_len, out_len, allow_realloc,
-                                    var, enums, hint, units);
+        return Mib_sprintReallocGauge( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     case ASN01_COUNTER:
-        return Mib_sprintReallocCounter(buf, buf_len, out_len, allow_realloc,
-                                      var, enums, hint, units);
+        return Mib_sprintReallocCounter( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     case ASN01_IPADDRESS:
-        return Mib_sprintReallocIpAddress(buf, buf_len, out_len,
-                                        allow_realloc, var, enums, hint,
-                                        units);
+        return Mib_sprintReallocIpAddress( buf, buf_len, out_len,
+            allow_realloc, var, enums, hint,
+            units );
     case ASN01_NULL:
-        return Mib_sprintReallocNull(buf, buf_len, out_len, allow_realloc,
-                                   var, enums, hint, units);
+        return Mib_sprintReallocNull( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     case ASN01_UINTEGER:
-        return Mib_sprintReallocUinteger(buf, buf_len, out_len,
-                                       allow_realloc, var, enums, hint,
-                                       units);
+        return Mib_sprintReallocUinteger( buf, buf_len, out_len,
+            allow_realloc, var, enums, hint,
+            units );
     case ASN01_COUNTER64:
     case ASN01_OPAQUE_U64:
     case ASN01_OPAQUE_I64:
     case ASN01_OPAQUE_COUNTER64:
-        return Mib_sprintReallocCounter64(buf, buf_len, out_len,
-                                        allow_realloc, var, enums, hint,
-                                        units);
+        return Mib_sprintReallocCounter64( buf, buf_len, out_len,
+            allow_realloc, var, enums, hint,
+            units );
     case ASN01_OPAQUE_FLOAT:
-        return Mib_sprintReallocFloat(buf, buf_len, out_len, allow_realloc,
-                                    var, enums, hint, units);
+        return Mib_sprintReallocFloat( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     case ASN01_OPAQUE_DOUBLE:
-        return Mib_sprintReallocDouble(buf, buf_len, out_len, allow_realloc,
-                                     var, enums, hint, units);
+        return Mib_sprintReallocDouble( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     default:
-        DEBUG_MSGTL(("sprintByType", "bad type: %d\n", var->type));
-        return Mib_sprintReallocBadType(buf, buf_len, out_len, allow_realloc,
-                                      var, enums, hint, units);
+        DEBUG_MSGTL( ( "sprintByType", "bad type: %d\n", var->type ) );
+        return Mib_sprintReallocBadType( buf, buf_len, out_len, allow_realloc,
+            var, enums, hint, units );
     }
 }
-
 
 /**
  * Retrieves the tree head.
  *
  * @return the tree head.
  */
-struct Parse_Tree_s * Mib_getTreeHead(void)
+struct Parse_Tree_s* Mib_getTreeHead( void )
 {
-    return (parse_treeHead);
+    return ( parse_treeHead );
 }
 
-static char    *_mib_confmibdir = NULL;
-static char    *_mib_confmibs = NULL;
+static char* _mib_confmibdir = NULL;
+static char* _mib_confmibs = NULL;
 
-static void _Mib_handleMibDirsConf(const char *token, char *line)
+static void _Mib_handleMibDirsConf( const char* token, char* line )
 {
-    char           *ctmp;
+    char* ctmp;
 
-    if (_mib_confmibdir) {
-        if ((*line == '+') || (*line == '-')) {
-            ctmp = (char *) malloc(strlen(_mib_confmibdir) + strlen(line) + 2);
-            if (!ctmp) {
-                DEBUG_MSGTL(("readConfig:initmib",
-                            "mibdir conf malloc failed"));
+    if ( _mib_confmibdir ) {
+        if ( ( *line == '+' ) || ( *line == '-' ) ) {
+            ctmp = ( char* )malloc( strlen( _mib_confmibdir ) + strlen( line ) + 2 );
+            if ( !ctmp ) {
+                DEBUG_MSGTL( ( "readConfig:initmib",
+                    "mibdir conf malloc failed" ) );
                 return;
             }
-            if(*line++ == '+')
-                sprintf(ctmp, "%s%c%s", _mib_confmibdir, ENV_SEPARATOR_CHAR, line);
+            if ( *line++ == '+' )
+                sprintf( ctmp, "%s%c%s", _mib_confmibdir, ENV_SEPARATOR_CHAR, line );
             else
-                sprintf(ctmp, "%s%c%s", line, ENV_SEPARATOR_CHAR, _mib_confmibdir);
+                sprintf( ctmp, "%s%c%s", line, ENV_SEPARATOR_CHAR, _mib_confmibdir );
         } else {
-            ctmp = strdup(line);
-            if (!ctmp) {
-                DEBUG_MSGTL(("readConfig:initmib", "mibs conf malloc failed"));
+            ctmp = strdup( line );
+            if ( !ctmp ) {
+                DEBUG_MSGTL( ( "readConfig:initmib", "mibs conf malloc failed" ) );
                 return;
             }
         }
-        TOOLS_FREE(_mib_confmibdir);
+        TOOLS_FREE( _mib_confmibdir );
     } else {
-        ctmp = strdup(line);
-        if (!ctmp) {
-            DEBUG_MSGTL(("readConfig:initmib", "mibs conf malloc failed"));
+        ctmp = strdup( line );
+        if ( !ctmp ) {
+            DEBUG_MSGTL( ( "readConfig:initmib", "mibs conf malloc failed" ) );
             return;
         }
     }
     _mib_confmibdir = ctmp;
-    DEBUG_MSGTL(("readConfig:initmib", "using mibdirs: %s\n", _mib_confmibdir));
+    DEBUG_MSGTL( ( "readConfig:initmib", "using mibdirs: %s\n", _mib_confmibdir ) );
 }
 
-static void _Mib_handleMibsConf(const char *token, char *line)
+static void _Mib_handleMibsConf( const char* token, char* line )
 {
-    char           *ctmp;
+    char* ctmp;
 
-    if (_mib_confmibs) {
-        if ((*line == '+') || (*line == '-')) {
-            ctmp = (char *) malloc(strlen(_mib_confmibs) + strlen(line) + 2);
-            if (!ctmp) {
-                DEBUG_MSGTL(("readConfig:initmib", "mibs conf malloc failed"));
+    if ( _mib_confmibs ) {
+        if ( ( *line == '+' ) || ( *line == '-' ) ) {
+            ctmp = ( char* )malloc( strlen( _mib_confmibs ) + strlen( line ) + 2 );
+            if ( !ctmp ) {
+                DEBUG_MSGTL( ( "readConfig:initmib", "mibs conf malloc failed" ) );
                 return;
             }
-            if(*line++ == '+')
-                sprintf(ctmp, "%s%c%s", _mib_confmibs, ENV_SEPARATOR_CHAR, line);
+            if ( *line++ == '+' )
+                sprintf( ctmp, "%s%c%s", _mib_confmibs, ENV_SEPARATOR_CHAR, line );
             else
-                sprintf(ctmp, "%s%c%s", line, ENV_SEPARATOR_CHAR, _mib_confmibdir);
+                sprintf( ctmp, "%s%c%s", line, ENV_SEPARATOR_CHAR, _mib_confmibdir );
         } else {
-            ctmp = strdup(line);
-            if (!ctmp) {
-                DEBUG_MSGTL(("readConfig:initmib", "mibs conf malloc failed"));
+            ctmp = strdup( line );
+            if ( !ctmp ) {
+                DEBUG_MSGTL( ( "readConfig:initmib", "mibs conf malloc failed" ) );
                 return;
             }
         }
-       TOOLS_FREE(_mib_confmibs);
+        TOOLS_FREE( _mib_confmibs );
     } else {
-        ctmp = strdup(line);
-        if (!ctmp) {
-            DEBUG_MSGTL(("readConfig:initmib", "mibs conf malloc failed"));
+        ctmp = strdup( line );
+        if ( !ctmp ) {
+            DEBUG_MSGTL( ( "readConfig:initmib", "mibs conf malloc failed" ) );
             return;
         }
     }
     _mib_confmibs = ctmp;
-    DEBUG_MSGTL(("readConfig:initmib", "using mibs: %s\n", _mib_confmibs));
+    DEBUG_MSGTL( ( "readConfig:initmib", "using mibs: %s\n", _mib_confmibs ) );
 }
 
-
-static void _Mib_handleMibFileConf(const char *token, char *line)
+static void _Mib_handleMibFileConf( const char* token, char* line )
 {
-    DEBUG_MSGTL(("readConfig:initmib", "reading mibfile: %s\n", line));
-    Parse_readMib(line);
+    DEBUG_MSGTL( ( "readConfig:initmib", "reading mibfile: %s\n", line ) );
+    Parse_readMib( line );
 }
 
-static void _Mib_handlePrintNumeric(const char *token, char *line)
+static void _Mib_handlePrintNumeric( const char* token, char* line )
 {
-    const char *value;
-    char       *st;
+    const char* value;
+    char* st;
 
-    value = strtok_r(line, " \t\n", &st);
-    if (value && (
-        (strcasecmp(value, "yes")  == 0) ||
-        (strcasecmp(value, "true") == 0) ||
-        (*value == '1') )) {
+    value = strtok_r( line, " \t\n", &st );
+    if ( value && ( ( strcasecmp( value, "yes" ) == 0 ) || ( strcasecmp( value, "true" ) == 0 ) || ( *value == '1' ) ) ) {
 
-        DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT, MIB_OID_OUTPUT_NUMERIC);
+        DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT, MIB_OID_OUTPUT_NUMERIC );
     }
 }
 
-char * Mib_outToggleOptions(char *options)
+char* Mib_outToggleOptions( char* options )
 {
-    while (*options) {
-        switch (*options++) {
+    while ( *options ) {
+        switch ( *options++ ) {
         case '0':
-           DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_LIB_2DIGIT_HEX_OUTPUT);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_LIB_2DIGIT_HEX_OUTPUT );
             break;
         case 'a':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT,
-                                                      MIB_STRING_OUTPUT_ASCII);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT,
+                MIB_STRING_OUTPUT_ASCII );
             break;
         case 'b':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS );
             break;
         case 'e':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM );
             break;
         case 'E':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES );
             break;
         case 'f':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
-                                                      MIB_OID_OUTPUT_FULL);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
+                MIB_OID_OUTPUT_FULL );
             break;
         case 'n':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
-                                                      MIB_OID_OUTPUT_NUMERIC);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
+                MIB_OID_OUTPUT_NUMERIC );
             break;
         case 'q':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT );
             break;
         case 'Q':
-            DefaultStore_setBoolean(DsStorage_LIBRARY_ID,  DsBool_QUICKE_PRINT, 1);
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT);
+            DefaultStore_setBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT, 1 );
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT );
             break;
         case 's':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
-                                                      MIB_OID_OUTPUT_SUFFIX);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
+                MIB_OID_OUTPUT_SUFFIX );
             break;
         case 'S':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
-                                                      MIB_OID_OUTPUT_MODULE);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
+                MIB_OID_OUTPUT_MODULE );
             break;
         case 't':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS );
             break;
         case 'T':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT );
             break;
         case 'u':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
-                                                      MIB_OID_OUTPUT_UCD);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT,
+                MIB_OID_OUTPUT_UCD );
             break;
         case 'U':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS );
             break;
         case 'v':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE );
             break;
         case 'x':
-            DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT,
-                                                      MIB_STRING_OUTPUT_HEX);
+            DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_STRING_OUTPUT_FORMAT,
+                MIB_STRING_OUTPUT_HEX );
             break;
         case 'X':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX );
             break;
         default:
             return options - 1;
@@ -2062,73 +1978,73 @@ char * Mib_outToggleOptions(char *options)
     return NULL;
 }
 
-void Mib_outToggleOptionsUsage(const char *lead, FILE * outf)
+void Mib_outToggleOptionsUsage( const char* lead, FILE* outf )
 {
-    fprintf(outf, "%s0:  print leading 0 for single-digit hex characters\n", lead);
-    fprintf(outf, "%sa:  print all strings in ascii format\n", lead);
-    fprintf(outf, "%sb:  do not break OID indexes down\n", lead);
-    fprintf(outf, "%se:  print enums numerically\n", lead);
-    fprintf(outf, "%sE:  escape quotes in string indices\n", lead);
-    fprintf(outf, "%sf:  print full OIDs on output\n", lead);
-    fprintf(outf, "%sn:  print OIDs numerically\n", lead);
-    fprintf(outf, "%sq:  quick print for easier parsing\n", lead);
-    fprintf(outf, "%sQ:  quick print with equal-signs\n", lead);    /* @@JDW */
-    fprintf(outf, "%ss:  print only last symbolic element of OID\n", lead);
-    fprintf(outf, "%sS:  print MIB module-id plus last element\n", lead);
-    fprintf(outf, "%st:  print timeticks unparsed as numeric integers\n",
-            lead);
-    fprintf(outf,
-            "%sT:  print human-readable text along with hex strings\n",
-            lead);
-    fprintf(outf, "%su:  print OIDs using UCD-style prefix suppression\n",
-            lead);
-    fprintf(outf, "%sU:  don't print units\n", lead);
-    fprintf(outf, "%sv:  print values only (not OID = value)\n", lead);
-    fprintf(outf, "%sx:  print all strings in hex format\n", lead);
-    fprintf(outf, "%sX:  extended index format\n", lead);
+    fprintf( outf, "%s0:  print leading 0 for single-digit hex characters\n", lead );
+    fprintf( outf, "%sa:  print all strings in ascii format\n", lead );
+    fprintf( outf, "%sb:  do not break OID indexes down\n", lead );
+    fprintf( outf, "%se:  print enums numerically\n", lead );
+    fprintf( outf, "%sE:  escape quotes in string indices\n", lead );
+    fprintf( outf, "%sf:  print full OIDs on output\n", lead );
+    fprintf( outf, "%sn:  print OIDs numerically\n", lead );
+    fprintf( outf, "%sq:  quick print for easier parsing\n", lead );
+    fprintf( outf, "%sQ:  quick print with equal-signs\n", lead ); /* @@JDW */
+    fprintf( outf, "%ss:  print only last symbolic element of OID\n", lead );
+    fprintf( outf, "%sS:  print MIB module-id plus last element\n", lead );
+    fprintf( outf, "%st:  print timeticks unparsed as numeric integers\n",
+        lead );
+    fprintf( outf,
+        "%sT:  print human-readable text along with hex strings\n",
+        lead );
+    fprintf( outf, "%su:  print OIDs using UCD-style prefix suppression\n",
+        lead );
+    fprintf( outf, "%sU:  don't print units\n", lead );
+    fprintf( outf, "%sv:  print values only (not OID = value)\n", lead );
+    fprintf( outf, "%sx:  print all strings in hex format\n", lead );
+    fprintf( outf, "%sX:  extended index format\n", lead );
 }
 
-char * Mib_inOptions(char *optarg, int argc, char *const *argv)
+char* Mib_inOptions( char* optarg, int argc, char* const* argv )
 {
-    char *cp;
+    char* cp;
 
-    for (cp = optarg; *cp; cp++) {
-        switch (*cp) {
+    for ( cp = optarg; *cp; cp++ ) {
+        switch ( *cp ) {
         case 'b':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_REGEX_ACCESS);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_REGEX_ACCESS );
             break;
         case 'R':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_RANDOM_ACCESS);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_RANDOM_ACCESS );
             break;
         case 'r':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE );
             break;
         case 'h':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT );
             break;
         case 'u':
-            DefaultStore_toggleBoolean(DsStorage_LIBRARY_ID, DsBool_READ_UCD_STYLE_OID);
+            DefaultStore_toggleBoolean( DsStorage_LIBRARY_ID, DsBool_READ_UCD_STYLE_OID );
             break;
         case 's':
             /* What if argc/argv are null ? */
-            if (!*(++cp))
-                cp = argv[optind++];
-            DefaultStore_setString(DsStorage_LIBRARY_ID,
-                                  DsStr_OIDSUFFIX, cp);
+            if ( !*( ++cp ) )
+                cp = argv[ optind++ ];
+            DefaultStore_setString( DsStorage_LIBRARY_ID,
+                DsStr_OIDSUFFIX, cp );
             return NULL;
 
         case 'S':
             /* What if argc/argv are null ? */
-            if (!*(++cp))
-                cp = argv[optind++];
-            DefaultStore_setString(DsStorage_LIBRARY_ID,
-                                  DsStr_OIDPREFIX, cp);
+            if ( !*( ++cp ) )
+                cp = argv[ optind++ ];
+            DefaultStore_setString( DsStorage_LIBRARY_ID,
+                DsStr_OIDPREFIX, cp );
             return NULL;
 
         default:
-           /*
+            /*
             *  Here?  Or in snmp_parse_args?
-            snmp_log(LOG_ERR, "Unknown input option passed to -I: %c.\n", *cp);
+            Logger_log(LOGGER_PRIORITY_ERR, "Unknown input option passed to -I: %c.\n", *cp);
             */
             return cp;
         }
@@ -2136,11 +2052,10 @@ char * Mib_inOptions(char *optarg, int argc, char *const *argv)
     return NULL;
 }
 
-char  * Mib_inToggleOptions(char *options)
+char* Mib_inToggleOptions( char* options )
 {
     return Mib_inOptions( options, 0, NULL );
 }
-
 
 /**
  * Prints out a help usage for the in* toggle options.
@@ -2149,55 +2064,55 @@ char  * Mib_inToggleOptions(char *options)
  * @param outf      The file descriptor to write to.
  *
  */
-void Mib_inToggleOptionsUsage(const char *lead, FILE * outf)
+void Mib_inToggleOptionsUsage( const char* lead, FILE* outf )
 {
-    fprintf(outf, "%sb:  do best/regex matching to find a MIB node\n", lead);
-    fprintf(outf, "%sh:  don't apply DISPLAY-HINTs\n", lead);
-    fprintf(outf, "%sr:  do not check values for range/type legality\n", lead);
-    fprintf(outf, "%sR:  do random access to OID labels\n", lead);
-    fprintf(outf, "%su:  top-level OIDs must have '.' prefix (UCD-style)\n", lead);
-    fprintf(outf, "%ss SUFFIX:  Append all textual OIDs with SUFFIX before parsing\n",lead);
-    fprintf(outf, "%sS PREFIX:  Prepend all textual OIDs with PREFIX before parsing\n",lead);
+    fprintf( outf, "%sb:  do best/regex matching to find a MIB node\n", lead );
+    fprintf( outf, "%sh:  don't apply DISPLAY-HINTs\n", lead );
+    fprintf( outf, "%sr:  do not check values for range/type legality\n", lead );
+    fprintf( outf, "%sR:  do random access to OID labels\n", lead );
+    fprintf( outf, "%su:  top-level OIDs must have '.' prefix (UCD-style)\n", lead );
+    fprintf( outf, "%ss SUFFIX:  Append all textual OIDs with SUFFIX before parsing\n", lead );
+    fprintf( outf, "%sS PREFIX:  Prepend all textual OIDs with PREFIX before parsing\n", lead );
 }
 
 /***
  *
  */
-void Mib_registerMibHandlers(void)
+void Mib_registerMibHandlers( void )
 {
-    ReadConfig_registerPrenetMibHandler("priot", "mibdirs",
-                                    _Mib_handleMibDirsConf, NULL,
-                                    "[mib-dirs|+mib-dirs|-mib-dirs]");
-    ReadConfig_registerPrenetMibHandler("priot", "mibs",
-                                    _Mib_handleMibsConf, NULL,
-                                    "[mib-tokens|+mib-tokens]");
-    ReadConfig_registerConfigHandler("priot", "mibfile",
-                            _Mib_handleMibFileConf, NULL, "mibfile-to-read");
+    ReadConfig_registerPrenetMibHandler( "priot", "mibdirs",
+        _Mib_handleMibDirsConf, NULL,
+        "[mib-dirs|+mib-dirs|-mib-dirs]" );
+    ReadConfig_registerPrenetMibHandler( "priot", "mibs",
+        _Mib_handleMibsConf, NULL,
+        "[mib-tokens|+mib-tokens]" );
+    ReadConfig_registerConfigHandler( "priot", "mibfile",
+        _Mib_handleMibFileConf, NULL, "mibfile-to-read" );
     /*
-     * register the snmp.conf configuration handlers for default
+     * register the priot.conf configuration handlers for default
      * parsing behaviour
      */
 
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "showMibErrors", DsStorage_LIBRARY_ID, DsBool_MIB_ERRORS);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "commentToEOL",  DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM);  /* Describes actual behaviour */
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "strictCommentTerm", DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM); /* Backward compatibility */
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "mibAllowUnderline", DsStorage_LIBRARY_ID, DsBool_MIB_PARSE_LABEL);
-    DefaultStore_registerPremib(ASN01_INTEGER, "priot", "mibWarningLevel", DsStorage_LIBRARY_ID, DsInt_MIB_WARNINGS);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "mibReplaceWithLatest", DsStorage_LIBRARY_ID, DsBool_MIB_REPLACE);
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "showMibErrors", DsStorage_LIBRARY_ID, DsBool_MIB_ERRORS );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "commentToEOL", DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM ); /* Describes actual behaviour */
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "strictCommentTerm", DsStorage_LIBRARY_ID, DsBool_MIB_COMMENT_TERM ); /* Backward compatibility */
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "mibAllowUnderline", DsStorage_LIBRARY_ID, DsBool_MIB_PARSE_LABEL );
+    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "mibWarningLevel", DsStorage_LIBRARY_ID, DsInt_MIB_WARNINGS );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "mibReplaceWithLatest", DsStorage_LIBRARY_ID, DsBool_MIB_REPLACE );
 
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "printNumericEnums", DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM);
-    ReadConfig_registerPrenetMibHandler("priot", "printNumericOids", _Mib_handlePrintNumeric, NULL, "(1|yes|true|0|no|false)");
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "escapeQuotes", DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "dontBreakdownOids", DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "quickPrinting", DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "numericTimeticks", DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS);
-    DefaultStore_registerPremib(ASN01_INTEGER, "priot", "oidOutputFormat", DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
-    DefaultStore_registerPremib(ASN01_INTEGER, "priot", "suffixPrinting", DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "extendedIndex", DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "printHexText", DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "printValueOnly", DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE);
-    DefaultStore_registerPremib(ASN01_BOOLEAN, "priot", "dontPrintUnits", DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS);
-    DefaultStore_registerPremib(ASN01_INTEGER, "priot", "hexOutputLength", DsStorage_LIBRARY_ID, DsInt_HEX_OUTPUT_LENGTH);
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "printNumericEnums", DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM );
+    ReadConfig_registerPrenetMibHandler( "priot", "printNumericOids", _Mib_handlePrintNumeric, NULL, "(1|yes|true|0|no|false)" );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "escapeQuotes", DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "dontBreakdownOids", DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "quickPrinting", DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "numericTimeticks", DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS );
+    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "oidOutputFormat", DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "suffixPrinting", DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "extendedIndex", DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "printHexText", DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "printValueOnly", DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE );
+    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "dontPrintUnits", DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS );
+    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "hexOutputLength", DsStorage_LIBRARY_ID, DsInt_HEX_OUTPUT_LENGTH );
 }
 
 /*
@@ -2210,42 +2125,42 @@ void Mib_registerMibHandlers(void)
  *              loaded.
  * returns  : -
  */
-void Mib_setMibDirectory(const char *dir)
+void Mib_setMibDirectory( const char* dir )
 {
-    const char *newdir;
+    const char* newdir;
     char *olddir, *tmpdir = NULL;
 
     DEBUG_TRACE;
-    if (NULL == dir) {
+    if ( NULL == dir ) {
         return;
     }
 
-    olddir = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS);
-    if (olddir) {
-        if ((*dir == '+') || (*dir == '-')) {
+    olddir = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_MIBDIRS );
+    if ( olddir ) {
+        if ( ( *dir == '+' ) || ( *dir == '-' ) ) {
             /** New dir starts with '+', thus we add it. */
-            tmpdir = (char *)malloc(strlen(dir) + strlen(olddir) + 2);
-            if (!tmpdir) {
-                DEBUG_MSGTL(("readConfig:initmib", "set mibdir malloc failed"));
+            tmpdir = ( char* )malloc( strlen( dir ) + strlen( olddir ) + 2 );
+            if ( !tmpdir ) {
+                DEBUG_MSGTL( ( "readConfig:initmib", "set mibdir malloc failed" ) );
                 return;
             }
-            if (*dir++ == '+')
-                sprintf(tmpdir, "%s%c%s", olddir, ENV_SEPARATOR_CHAR, dir);
+            if ( *dir++ == '+' )
+                sprintf( tmpdir, "%s%c%s", olddir, ENV_SEPARATOR_CHAR, dir );
             else
-                sprintf(tmpdir, "%s%c%s", dir, ENV_SEPARATOR_CHAR, olddir);
+                sprintf( tmpdir, "%s%c%s", dir, ENV_SEPARATOR_CHAR, olddir );
             newdir = tmpdir;
         } else {
             newdir = dir;
         }
     } else {
         /** If dir starts with '+' skip '+' it. */
-        newdir = ((*dir == '+') ? ++dir : dir);
+        newdir = ( ( *dir == '+' ) ? ++dir : dir );
     }
-    DefaultStore_setString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS, newdir);
+    DefaultStore_setString( DsStorage_LIBRARY_ID, DsStr_MIBDIRS, newdir );
 
     /** set_string calls strdup, so if we allocated memory, free it */
-    if (tmpdir == newdir) {
-        TOOLS_FREE(tmpdir);
+    if ( tmpdir == newdir ) {
+        TOOLS_FREE( tmpdir );
     }
 }
 
@@ -2262,45 +2177,43 @@ void Mib_setMibDirectory(const char *dir)
  *            will be searched/loaded.
  */
 
-char * Mib_getMibDirectory(void)
+char* Mib_getMibDirectory( void )
 {
-    char *dir;
+    char* dir;
 
     DEBUG_TRACE;
-    dir = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS);
-    if (dir == NULL) {
-        DEBUG_MSGTL(("getMibDirectory", "no mib directories set\n"));
+    dir = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_MIBDIRS );
+    if ( dir == NULL ) {
+        DEBUG_MSGTL( ( "getMibDirectory", "no mib directories set\n" ) );
 
         /** Check if the environment variable is set */
-        dir = Tools_getenv("MIBDIRS");
-        if (dir == NULL) {
-            DEBUG_MSGTL(("getMibDirectory", "no mib directories set by environment\n"));
+        dir = Tools_getenv( "MIBDIRS" );
+        if ( dir == NULL ) {
+            DEBUG_MSGTL( ( "getMibDirectory", "no mib directories set by environment\n" ) );
             /** Not set use hard coded path */
-            if (_mib_confmibdir == NULL) {
-                DEBUG_MSGTL(("getMibDirectory", "no mib directories set by config\n"));
-                Mib_setMibDirectory(DEFAULT_MIBDIRS);
+            if ( _mib_confmibdir == NULL ) {
+                DEBUG_MSGTL( ( "getMibDirectory", "no mib directories set by config\n" ) );
+                Mib_setMibDirectory( DEFAULT_MIBDIRS );
+            } else if ( ( *_mib_confmibdir == '+' ) || ( *_mib_confmibdir == '-' ) ) {
+                DEBUG_MSGTL( ( "getMibDirectory", "mib directories set by config (but added)\n" ) );
+                Mib_setMibDirectory( DEFAULT_MIBDIRS );
+                Mib_setMibDirectory( _mib_confmibdir );
+            } else {
+                DEBUG_MSGTL( ( "getMibDirectory", "mib directories set by config\n" ) );
+                Mib_setMibDirectory( _mib_confmibdir );
             }
-            else if ((*_mib_confmibdir == '+') || (*_mib_confmibdir == '-')) {
-                DEBUG_MSGTL(("getMibDirectory", "mib directories set by config (but added)\n"));
-                Mib_setMibDirectory(DEFAULT_MIBDIRS);
-                Mib_setMibDirectory(_mib_confmibdir);
-            }
-            else {
-                DEBUG_MSGTL(("getMibDirectory", "mib directories set by config\n"));
-                Mib_setMibDirectory(_mib_confmibdir);
-            }
-        } else if ((*dir == '+') || (*dir == '-')) {
-            DEBUG_MSGTL(("getMibDirectory", "mib directories set by environment (but added)\n"));
-            Mib_setMibDirectory(DEFAULT_MIBDIRS);
-            Mib_setMibDirectory(dir);
+        } else if ( ( *dir == '+' ) || ( *dir == '-' ) ) {
+            DEBUG_MSGTL( ( "getMibDirectory", "mib directories set by environment (but added)\n" ) );
+            Mib_setMibDirectory( DEFAULT_MIBDIRS );
+            Mib_setMibDirectory( dir );
         } else {
-            DEBUG_MSGTL(("getMibDirectory", "mib directories set by environment\n"));
-            Mib_setMibDirectory(dir);
+            DEBUG_MSGTL( ( "getMibDirectory", "mib directories set by environment\n" ) );
+            Mib_setMibDirectory( dir );
         }
-        dir = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_MIBDIRS);
+        dir = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_MIBDIRS );
     }
-    DEBUG_MSGTL(("getMibDirectory", "mib directories set '%s'\n", dir));
-    return(dir);
+    DEBUG_MSGTL( ( "getMibDirectory", "mib directories set '%s'\n", dir ) );
+    return ( dir );
 }
 
 /*
@@ -2308,45 +2221,42 @@ char * Mib_getMibDirectory(void)
  * arguments: -
  * returns  : -
  */
-void Mib_fixupMibDirectory(void)
+void Mib_fixupMibDirectory( void )
 {
-    char *homepath = Tools_getenv("HOME");
-    char *mibpath = Mib_getMibDirectory();
-    char *oldmibpath = NULL;
-    char *ptr_home;
-    char *new_mibpath;
+    char* homepath = Tools_getenv( "HOME" );
+    char* mibpath = Mib_getMibDirectory();
+    char* oldmibpath = NULL;
+    char* ptr_home;
+    char* new_mibpath;
 
     DEBUG_TRACE;
-    if (homepath && mibpath) {
-        DEBUG_MSGTL(("fixupMibDirectory", "mib directories '%s'\n", mibpath));
-        while ((ptr_home = strstr(mibpath, "$HOME"))) {
-            new_mibpath = (char *)malloc(strlen(mibpath) - strlen("$HOME") +
-                     strlen(homepath)+1);
-            if (new_mibpath) {
+    if ( homepath && mibpath ) {
+        DEBUG_MSGTL( ( "fixupMibDirectory", "mib directories '%s'\n", mibpath ) );
+        while ( ( ptr_home = strstr( mibpath, "$HOME" ) ) ) {
+            new_mibpath = ( char* )malloc( strlen( mibpath ) - strlen( "$HOME" ) + strlen( homepath ) + 1 );
+            if ( new_mibpath ) {
                 *ptr_home = 0; /* null out the spot where we stop copying */
-                sprintf(new_mibpath, "%s%s%s", mibpath, homepath,
-            ptr_home + strlen("$HOME"));
+                sprintf( new_mibpath, "%s%s%s", mibpath, homepath,
+                    ptr_home + strlen( "$HOME" ) );
                 /** swap in the new value and repeat */
                 mibpath = new_mibpath;
-        if (oldmibpath != NULL) {
-            TOOLS_FREE(oldmibpath);
-        }
-        oldmibpath = new_mibpath;
+                if ( oldmibpath != NULL ) {
+                    TOOLS_FREE( oldmibpath );
+                }
+                oldmibpath = new_mibpath;
             } else {
                 break;
             }
         }
 
-        Mib_setMibDirectory(mibpath);
+        Mib_setMibDirectory( mibpath );
 
-    /*  The above copies the mibpath for us, so...  */
+        /*  The above copies the mibpath for us, so...  */
 
-    if (oldmibpath != NULL) {
-        TOOLS_FREE(oldmibpath);
+        if ( oldmibpath != NULL ) {
+            TOOLS_FREE( oldmibpath );
+        }
     }
-
-    }
-
 }
 
 /**
@@ -2354,14 +2264,14 @@ void Mib_fixupMibDirectory(void)
  *
  * Reads in all settings from the environment.
  */
-void Mib_initMib(void)
+void Mib_initMib( void )
 {
-    const char     *prefix;
-    char           *env_var, *entry;
-    Mib_PrefixListPTR   pp = &mib_prefixes[0];
-    char           *st = NULL;
+    const char* prefix;
+    char *env_var, *entry;
+    Mib_PrefixListPTR pp = &mib_prefixes[ 0 ];
+    char* st = NULL;
 
-    if (mib_mib)
+    if ( mib_mib )
         return;
     Parse_initMibInternals();
 
@@ -2369,29 +2279,29 @@ void Mib_initMib(void)
      * Initialise the MIB directory/ies
      */
     Mib_fixupMibDirectory();
-    env_var = strdup(Mib_getMibDirectory());
+    env_var = strdup( Mib_getMibDirectory() );
     Mib_mibIndexLoad();
 
-    DEBUG_MSGTL(("initMib",
-                "Seen MIBDIRS: Looking in '%s' for mib dirs ...\n",
-                env_var));
+    DEBUG_MSGTL( ( "initMib",
+        "Seen MIBDIRS: Looking in '%s' for mib dirs ...\n",
+        env_var ) );
 
-    entry = strtok_r(env_var, ENV_SEPARATOR, &st);
-    while (entry) {
-        Parse_addMibdir(entry);
-        entry = strtok_r(NULL, ENV_SEPARATOR, &st);
+    entry = strtok_r( env_var, ENV_SEPARATOR, &st );
+    while ( entry ) {
+        Parse_addMibdir( entry );
+        entry = strtok_r( NULL, ENV_SEPARATOR, &st );
     }
-    TOOLS_FREE(env_var);
+    TOOLS_FREE( env_var );
 
-    env_var = Tools_getenv("MIBFILES");
-    if (env_var != NULL) {
-        if (*env_var == '+')
-            entry = strtok_r(env_var+1, ENV_SEPARATOR, &st);
+    env_var = Tools_getenv( "MIBFILES" );
+    if ( env_var != NULL ) {
+        if ( *env_var == '+' )
+            entry = strtok_r( env_var + 1, ENV_SEPARATOR, &st );
         else
-            entry = strtok_r(env_var, ENV_SEPARATOR, &st);
-        while (entry) {
-            Parse_addMibfile(entry, NULL, NULL);
-            entry = strtok_r(NULL, ENV_SEPARATOR, &st);
+            entry = strtok_r( env_var, ENV_SEPARATOR, &st );
+        while ( entry ) {
+            Parse_addMibfile( entry, NULL, NULL );
+            entry = strtok_r( NULL, ENV_SEPARATOR, &st );
         }
     }
 
@@ -2401,201 +2311,198 @@ void Mib_initMib(void)
      * Read in any modules or mibs requested
      */
 
-    env_var = Tools_getenv("MIBS");
-    if (env_var == NULL) {
-        if (_mib_confmibs != NULL)
-            env_var = strdup(_mib_confmibs);
+    env_var = Tools_getenv( "MIBS" );
+    if ( env_var == NULL ) {
+        if ( _mib_confmibs != NULL )
+            env_var = strdup( _mib_confmibs );
         else
-            env_var = strdup(PRIOT_DEFAULT_MIBS);
+            env_var = strdup( PRIOT_DEFAULT_MIBS );
     } else {
-        env_var = strdup(env_var);
+        env_var = strdup( env_var );
     }
-    if (env_var && ((*env_var == '+') || (*env_var == '-'))) {
-        entry =
-            (char *) malloc(strlen(PRIOT_DEFAULT_MIBS) + strlen(env_var) + 2);
-        if (!entry) {
-            DEBUG_MSGTL(("initMib", "env mibs malloc failed"));
-            TOOLS_FREE(env_var);
+    if ( env_var && ( ( *env_var == '+' ) || ( *env_var == '-' ) ) ) {
+        entry = ( char* )malloc( strlen( PRIOT_DEFAULT_MIBS ) + strlen( env_var ) + 2 );
+        if ( !entry ) {
+            DEBUG_MSGTL( ( "initMib", "env mibs malloc failed" ) );
+            TOOLS_FREE( env_var );
             return;
         } else {
-            if (*env_var == '+')
-                sprintf(entry, "%s%c%s", PRIOT_DEFAULT_MIBS, ENV_SEPARATOR_CHAR,
-                        env_var+1);
+            if ( *env_var == '+' )
+                sprintf( entry, "%s%c%s", PRIOT_DEFAULT_MIBS, ENV_SEPARATOR_CHAR,
+                    env_var + 1 );
             else
-                sprintf(entry, "%s%c%s", env_var+1, ENV_SEPARATOR_CHAR,
-                        PRIOT_DEFAULT_MIBS );
+                sprintf( entry, "%s%c%s", env_var + 1, ENV_SEPARATOR_CHAR,
+                    PRIOT_DEFAULT_MIBS );
         }
-        TOOLS_FREE(env_var);
+        TOOLS_FREE( env_var );
         env_var = entry;
     }
 
-    DEBUG_MSGTL(("initMib",
-                "Seen MIBS: Looking in '%s' for mib files ...\n",
-                env_var));
-    entry = strtok_r(env_var, ENV_SEPARATOR, &st);
-    while (entry) {
-        if (strcasecmp(entry, DEBUG_ALWAYS_TOKEN) == 0) {
+    DEBUG_MSGTL( ( "initMib",
+        "Seen MIBS: Looking in '%s' for mib files ...\n",
+        env_var ) );
+    entry = strtok_r( env_var, ENV_SEPARATOR, &st );
+    while ( entry ) {
+        if ( strcasecmp( entry, DEBUG_ALWAYS_TOKEN ) == 0 ) {
             Parse_readAllMibs();
-        } else if (strstr(entry, "/") != NULL) {
-            Parse_readMib(entry);
+        } else if ( strstr( entry, "/" ) != NULL ) {
+            Parse_readMib( entry );
         } else {
-            Parse_readModule(entry);
+            Parse_readModule( entry );
         }
-        entry = strtok_r(NULL, ENV_SEPARATOR, &st);
+        entry = strtok_r( NULL, ENV_SEPARATOR, &st );
     }
     Parse_adoptOrphans();
-    TOOLS_FREE(env_var);
+    TOOLS_FREE( env_var );
 
-    env_var = Tools_getenv("MIBFILES");
-    if (env_var != NULL) {
-        if ((*env_var == '+') || (*env_var == '-')) {
-            env_var = strdup(env_var + 1);
+    env_var = Tools_getenv( "MIBFILES" );
+    if ( env_var != NULL ) {
+        if ( ( *env_var == '+' ) || ( *env_var == '-' ) ) {
+            env_var = strdup( env_var + 1 );
         } else {
-            env_var = strdup(env_var);
+            env_var = strdup( env_var );
         }
     } else {
     }
 
-    if (env_var != NULL) {
-        DEBUG_MSGTL(("initMib",
-                    "Seen MIBFILES: Looking in '%s' for mib files ...\n",
-                    env_var));
-        entry = strtok_r(env_var, ENV_SEPARATOR, &st);
-        while (entry) {
-            Parse_readMib(entry);
-            entry = strtok_r(NULL, ENV_SEPARATOR, &st);
+    if ( env_var != NULL ) {
+        DEBUG_MSGTL( ( "initMib",
+            "Seen MIBFILES: Looking in '%s' for mib files ...\n",
+            env_var ) );
+        entry = strtok_r( env_var, ENV_SEPARATOR, &st );
+        while ( entry ) {
+            Parse_readMib( entry );
+            entry = strtok_r( NULL, ENV_SEPARATOR, &st );
         }
-        TOOLS_FREE(env_var);
+        TOOLS_FREE( env_var );
     }
 
-    prefix = Tools_getenv("PREFIX");
+    prefix = Tools_getenv( "PREFIX" );
 
-    if (!prefix)
+    if ( !prefix )
         prefix = _mib_standardPrefix;
 
-    _mib_prefix = (char *) malloc(strlen(prefix) + 2);
-    if (!_mib_prefix)
-        DEBUG_MSGTL(("initMib", "Prefix malloc failed"));
+    _mib_prefix = ( char* )malloc( strlen( prefix ) + 2 );
+    if ( !_mib_prefix )
+        DEBUG_MSGTL( ( "initMib", "Prefix malloc failed" ) );
     else
-        strcpy(_mib_prefix, prefix);
+        strcpy( _mib_prefix, prefix );
 
-    DEBUG_MSGTL(("initMib",
-                "Seen PREFIX: Looking in '%s' for prefix ...\n", _mib_prefix));
+    DEBUG_MSGTL( ( "initMib",
+        "Seen PREFIX: Looking in '%s' for prefix ...\n", _mib_prefix ) );
 
     /*
      * remove trailing dot
      */
-    if (_mib_prefix) {
-        env_var = &_mib_prefix[strlen(_mib_prefix) - 1];
-        if (*env_var == '.')
+    if ( _mib_prefix ) {
+        env_var = &_mib_prefix[ strlen( _mib_prefix ) - 1 ];
+        if ( *env_var == '.' )
             *env_var = '\0';
     }
 
-    pp->str = _mib_prefix;           /* fixup first mib_prefix entry */
+    pp->str = _mib_prefix; /* fixup first mib_prefix entry */
     /*
      * now that the list of prefixes is built, save each string length.
      */
-    while (pp->str) {
-        pp->len = strlen(pp->str);
+    while ( pp->str ) {
+        pp->len = strlen( pp->str );
         pp++;
     }
 
-    mib_mib = parse_treeHead;            /* Backwards compatibility */
-    _mib_treeTop = (struct Parse_Tree_s *) calloc(1, sizeof(struct Parse_Tree_s));
+    mib_mib = parse_treeHead; /* Backwards compatibility */
+    _mib_treeTop = ( struct Parse_Tree_s* )calloc( 1, sizeof( struct Parse_Tree_s ) );
     /*
      * XX error check ?
      */
-    if (_mib_treeTop) {
-        _mib_treeTop->label = strdup("(top)");
+    if ( _mib_treeTop ) {
+        _mib_treeTop->label = strdup( "(top)" );
         _mib_treeTop->child_list = parse_treeHead;
     }
 }
 
-
 /*
  * Handle MIB indexes centrally
  */
-static int _mib_mibIndex     = 0;   /* Last index in use */
-static int _mib_mibIndexMax  = 0;   /* Size of index array */
-char     **mib_mibIndexes   = NULL;
+static int _mib_mibIndex = 0; /* Last index in use */
+static int _mib_mibIndexMax = 0; /* Size of index array */
+char** mib_mibIndexes = NULL;
 
-int Mib_mibIndexAdd( const char *dirname, int i );
+int Mib_mibIndexAdd( const char* dirname, int i );
 
 void Mib_mibIndexLoad( void )
 {
-    DIR *dir;
-    struct dirent *file;
-    FILE *fp;
-    char tmpbuf[ 300];
-    char tmpbuf2[300];
-    int  i;
-    char *cp;
+    DIR* dir;
+    struct dirent* file;
+    FILE* fp;
+    char tmpbuf[ 300 ];
+    char tmpbuf2[ 300 ];
+    int i;
+    char* cp;
 
     /*
      * Open the MIB index directory, or create it (empty)
      */
-    snprintf( tmpbuf, sizeof(tmpbuf), "%s/mib_indexes",
-              ReadConfig_getPersistentDirectory());
-    tmpbuf[sizeof(tmpbuf)-1] = 0;
+    snprintf( tmpbuf, sizeof( tmpbuf ), "%s/mib_indexes",
+        ReadConfig_getPersistentDirectory() );
+    tmpbuf[ sizeof( tmpbuf ) - 1 ] = 0;
     dir = opendir( tmpbuf );
     if ( dir == NULL ) {
-        DEBUG_MSGTL(("mibindex", "load: (new)\n"));
-        System_mkdirhier( tmpbuf, AGENT_DIRECTORY_MODE, 0);
+        DEBUG_MSGTL( ( "mibindex", "load: (new)\n" ) );
+        System_mkdirhier( tmpbuf, AGENT_DIRECTORY_MODE, 0 );
         return;
     }
 
     /*
      * Create a list of which directory each file refers to
      */
-    while ((file = readdir( dir ))) {
-        if ( !isdigit((unsigned char)(file->d_name[0])))
+    while ( ( file = readdir( dir ) ) ) {
+        if ( !isdigit( ( unsigned char )( file->d_name[ 0 ] ) ) )
             continue;
         i = atoi( file->d_name );
 
-        snprintf( tmpbuf, sizeof(tmpbuf), "%s/mib_indexes/%d",
-              ReadConfig_getPersistentDirectory(), i );
-        tmpbuf[sizeof(tmpbuf)-1] = 0;
+        snprintf( tmpbuf, sizeof( tmpbuf ), "%s/mib_indexes/%d",
+            ReadConfig_getPersistentDirectory(), i );
+        tmpbuf[ sizeof( tmpbuf ) - 1 ] = 0;
         fp = fopen( tmpbuf, "r" );
-        if (!fp)
+        if ( !fp )
             continue;
-        cp = fgets( tmpbuf2, sizeof(tmpbuf2), fp );
+        cp = fgets( tmpbuf2, sizeof( tmpbuf2 ), fp );
         if ( !cp ) {
-            DEBUG_MSGTL(("mibindex", "Empty MIB index (%d)\n", i));
-            fclose(fp);
+            DEBUG_MSGTL( ( "mibindex", "Empty MIB index (%d)\n", i ) );
+            fclose( fp );
             continue;
         }
-        tmpbuf2[strlen(tmpbuf2)-1] = 0;
-        DEBUG_MSGTL(("mibindex", "load: (%d) %s\n", i, tmpbuf2));
-        (void)Mib_mibIndexAdd( tmpbuf2+4, i );  /* Skip 'DIR ' */
+        tmpbuf2[ strlen( tmpbuf2 ) - 1 ] = 0;
+        DEBUG_MSGTL( ( "mibindex", "load: (%d) %s\n", i, tmpbuf2 ) );
+        ( void )Mib_mibIndexAdd( tmpbuf2 + 4, i ); /* Skip 'DIR ' */
         fclose( fp );
     }
     closedir( dir );
 }
 
-char * Mib_mibIndexLookup( const char *dirname )
+char* Mib_mibIndexLookup( const char* dirname )
 {
     int i;
-    static char tmpbuf[300];
+    static char tmpbuf[ 300 ];
 
-    for (i=0; i<_mib_mibIndex; i++) {
-        if ( mib_mibIndexes[i] &&
-             strcmp( mib_mibIndexes[i], dirname ) == 0) {
-             snprintf(tmpbuf, sizeof(tmpbuf), "%s/mib_indexes/%d",
-                      ReadConfig_getPersistentDirectory(), i);
-             tmpbuf[sizeof(tmpbuf)-1] = 0;
-             DEBUG_MSGTL(("mibindex", "lookup: %s (%d) %s\n", dirname, i, tmpbuf ));
-             return tmpbuf;
+    for ( i = 0; i < _mib_mibIndex; i++ ) {
+        if ( mib_mibIndexes[ i ] && strcmp( mib_mibIndexes[ i ], dirname ) == 0 ) {
+            snprintf( tmpbuf, sizeof( tmpbuf ), "%s/mib_indexes/%d",
+                ReadConfig_getPersistentDirectory(), i );
+            tmpbuf[ sizeof( tmpbuf ) - 1 ] = 0;
+            DEBUG_MSGTL( ( "mibindex", "lookup: %s (%d) %s\n", dirname, i, tmpbuf ) );
+            return tmpbuf;
         }
     }
-    DEBUG_MSGTL(("mibindex", "lookup: (none)\n"));
+    DEBUG_MSGTL( ( "mibindex", "lookup: (none)\n" ) );
     return NULL;
 }
 
-int Mib_mibIndexAdd( const char *dirname, int i )
+int Mib_mibIndexAdd( const char* dirname, int i )
 {
     const int old_mibindex_max = _mib_mibIndexMax;
 
-    DEBUG_MSGTL(("mibindex", "add: %s (%d)\n", dirname, i ));
+    DEBUG_MSGTL( ( "mibindex", "add: %s (%d)\n", dirname, i ) );
     if ( i == -1 )
         i = _mib_mibIndex++;
     if ( i >= _mib_mibIndexMax ) {
@@ -2604,72 +2511,71 @@ int Mib_mibIndexAdd( const char *dirname, int i )
          *   then expand (or create) it
          */
         _mib_mibIndexMax = i + 10;
-        mib_mibIndexes = (char **)realloc(mib_mibIndexes,
-                              _mib_mibIndexMax * sizeof(mib_mibIndexes[0]));
-        Assert_assert(mib_mibIndexes);
-        memset(mib_mibIndexes + old_mibindex_max, 0,
-               (_mib_mibIndexMax - old_mibindex_max) * sizeof(mib_mibIndexes[0]));
+        mib_mibIndexes = ( char** )realloc( mib_mibIndexes,
+            _mib_mibIndexMax * sizeof( mib_mibIndexes[ 0 ] ) );
+        Assert_assert( mib_mibIndexes );
+        memset( mib_mibIndexes + old_mibindex_max, 0,
+            ( _mib_mibIndexMax - old_mibindex_max ) * sizeof( mib_mibIndexes[ 0 ] ) );
     }
 
     mib_mibIndexes[ i ] = strdup( dirname );
     if ( i >= _mib_mibIndex )
-        _mib_mibIndex = i+1;
+        _mib_mibIndex = i + 1;
 
-    DEBUG_MSGTL(("mibindex", "add: %d/%d/%d\n", i, _mib_mibIndex, _mib_mibIndexMax ));
+    DEBUG_MSGTL( ( "mibindex", "add: %d/%d/%d\n", i, _mib_mibIndex, _mib_mibIndexMax ) );
     return i;
 }
 
-FILE * Mib_mibIndexNew( const char *dirname )
+FILE* Mib_mibIndexNew( const char* dirname )
 {
-    FILE *fp;
-    char  tmpbuf[300];
-    char *cp;
-    int   i;
+    FILE* fp;
+    char tmpbuf[ 300 ];
+    char* cp;
+    int i;
 
     cp = Mib_mibIndexLookup( dirname );
-    if (!cp) {
-        i  = Mib_mibIndexAdd( dirname, -1 );
-        snprintf( tmpbuf, sizeof(tmpbuf), "%s/mib_indexes/%d",
-                  ReadConfig_getPersistentDirectory(), i );
-        tmpbuf[sizeof(tmpbuf)-1] = 0;
+    if ( !cp ) {
+        i = Mib_mibIndexAdd( dirname, -1 );
+        snprintf( tmpbuf, sizeof( tmpbuf ), "%s/mib_indexes/%d",
+            ReadConfig_getPersistentDirectory(), i );
+        tmpbuf[ sizeof( tmpbuf ) - 1 ] = 0;
         cp = tmpbuf;
     }
-    DEBUG_MSGTL(("mibindex", "new: %s (%s)\n", dirname, cp ));
+    DEBUG_MSGTL( ( "mibindex", "new: %s (%s)\n", dirname, cp ) );
     fp = fopen( cp, "w" );
-    if (fp)
+    if ( fp )
         fprintf( fp, "DIR %s\n", dirname );
     return fp;
 }
 
-
 /**
  * Unloads all mibs.
  */
-void Mib_shutdownMib(void)
+void Mib_shutdownMib( void )
 {
     Parse_unloadAllMibs();
-    if (_mib_treeTop) {
-        if (_mib_treeTop->label)
-            TOOLS_FREE(_mib_treeTop->label);
-        TOOLS_FREE(_mib_treeTop);
+    if ( _mib_treeTop ) {
+        if ( _mib_treeTop->label )
+            TOOLS_FREE( _mib_treeTop->label );
+        TOOLS_FREE( _mib_treeTop );
     }
     parse_treeHead = NULL;
     mib_mib = NULL;
-    if (mib_mibIndexes) {
+    if ( mib_mibIndexes ) {
         int i;
-        for (i = 0; i < _mib_mibIndex; ++i)
-            TOOLS_FREE(mib_mibIndexes[i]);
-        free(mib_mibIndexes);
+        for ( i = 0; i < _mib_mibIndex; ++i )
+            TOOLS_FREE( mib_mibIndexes[ i ] );
+        free( mib_mibIndexes );
         _mib_mibIndex = 0;
         _mib_mibIndexMax = 0;
         mib_mibIndexes = NULL;
     }
-    if (_mib_prefix != NULL && _mib_prefix != &_mib_standardPrefix[0])
-        TOOLS_FREE(_mib_prefix);
-    if (_mib_prefix)
+    if ( _mib_prefix != NULL && _mib_prefix != &_mib_standardPrefix[ 0 ] )
+        TOOLS_FREE( _mib_prefix );
+    if ( _mib_prefix )
         _mib_prefix = NULL;
-    TOOLS_FREE(_mib_confmibs);
-    TOOLS_FREE(_mib_confmibdir);
+    TOOLS_FREE( _mib_confmibs );
+    TOOLS_FREE( _mib_confmibdir );
 }
 
 /**
@@ -2677,18 +2583,17 @@ void Mib_shutdownMib(void)
  *
  * @param fp   The file descriptor to print to.
  */
-void Mib_printMib(FILE * fp)
+void Mib_printMib( FILE* fp )
 {
-    Parse_printSubtree(fp, parse_treeHead, 0);
+    Parse_printSubtree( fp, parse_treeHead, 0 );
 }
 
-void Mib_printAsciiDump(FILE * fp)
+void Mib_printAsciiDump( FILE* fp )
 {
-    fprintf(fp, "dump DEFINITIONS .= BEGIN\n");
-    Parse_printAsciiDumpTree(fp, parse_treeHead, 0);
-    fprintf(fp, "END\n");
+    fprintf( fp, "dump DEFINITIONS .= BEGIN\n" );
+    Parse_printAsciiDumpTree( fp, parse_treeHead, 0 );
+    fprintf( fp, "END\n" );
 }
-
 
 /**
  * Set's the printing function printomat in a subtree according
@@ -2696,10 +2601,10 @@ void Mib_printAsciiDump(FILE * fp)
  *
  * @param subtree    The subtree to set.
  */
-void Mib_setFunction(struct Parse_Tree_s *subtree)
+void Mib_setFunction( struct Parse_Tree_s* subtree )
 {
     subtree->printer = NULL;
-    switch (subtree->type) {
+    switch ( subtree->type ) {
     case PARSE_TYPE_OBJID:
         subtree->printomat = Mib_sprintReallocObjectIdentifier;
         break;
@@ -2770,64 +2675,62 @@ void Mib_setFunction(struct Parse_Tree_s *subtree)
  * snmp_errno is NOT set if PRIOTAPI_SET_PRIOT_ERROR evaluates to nothing.
  * This can make multi-threaded use a tiny bit more robust.
  */
-int Mib_readObjid(const char *input, oid * output, size_t * out_len)
-{                               /* number of subid's in "output" */
+int Mib_readObjid( const char* input, oid* output, size_t* out_len )
+{ /* number of subid's in "output" */
 
-    struct Parse_Tree_s    *root = _mib_treeTop;
-    char            buf[IMPL_SPRINT_MAX_LEN];
-    int             ret, max_out_len;
-    char           *name, ch;
-    const char     *cp;
+    struct Parse_Tree_s* root = _mib_treeTop;
+    char buf[ IMPL_SPRINT_MAX_LEN ];
+    int ret, max_out_len;
+    char *name, ch;
+    const char* cp;
 
     cp = input;
-    while ((ch = *cp)) {
-        if (('0' <= ch && ch <= '9')
-            || ('a' <= ch && ch <= 'z')
-            || ('A' <= ch && ch <= 'Z')
-            || ch == '-')
+    while ( ( ch = *cp ) ) {
+        if ( ( '0' <= ch && ch <= '9' )
+            || ( 'a' <= ch && ch <= 'z' )
+            || ( 'A' <= ch && ch <= 'Z' )
+            || ch == '-' )
             cp++;
         else
             break;
     }
-    if (ch == ':')
-        return Mib_getNode(input, output, out_len);
-    if (*input == '.')
+    if ( ch == ':' )
+        return Mib_getNode( input, output, out_len );
+    if ( *input == '.' )
         input++;
-    else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_READ_UCD_STYLE_OID)) {
+    else if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_READ_UCD_STYLE_OID ) ) {
         /*
          * get past leading '.', append '.' to Prefix.
          */
-        if (*_mib_prefix == '.')
-            Strlcpy_strlcpy(buf, _mib_prefix + 1, sizeof(buf));
+        if ( *_mib_prefix == '.' )
+            Strlcpy_strlcpy( buf, _mib_prefix + 1, sizeof( buf ) );
         else
-            Strlcpy_strlcpy(buf, _mib_prefix, sizeof(buf));
-        Strlcat_strlcat(buf, ".", sizeof(buf));
-        Strlcat_strlcat(buf, input, sizeof(buf));
+            Strlcpy_strlcpy( buf, _mib_prefix, sizeof( buf ) );
+        Strlcat_strlcat( buf, ".", sizeof( buf ) );
+        Strlcat_strlcat( buf, input, sizeof( buf ) );
         input = buf;
     }
 
-    if ((root == NULL) && (parse_treeHead != NULL)) {
+    if ( ( root == NULL ) && ( parse_treeHead != NULL ) ) {
         root = parse_treeHead;
-    }
-    else if (root == NULL) {
-        API_SET_PRIOT_ERROR(ErrorCode_NOMIB);
+    } else if ( root == NULL ) {
+        API_SET_PRIOT_ERROR( ErrorCode_NOMIB );
         *out_len = 0;
         return 0;
     }
-    name = strdup(input);
+    name = strdup( input );
     max_out_len = *out_len;
     *out_len = 0;
-    if ((ret =
-         _Mib_addStringsToOid(root, name, output, out_len,
-                             max_out_len)) <= 0)
-    {
-        if (ret == 0)
+    if ( ( ret = _Mib_addStringsToOid( root, name, output, out_len,
+               max_out_len ) )
+        <= 0 ) {
+        if ( ret == 0 )
             ret = ErrorCode_UNKNOWN_OBJID;
-        API_SET_PRIOT_ERROR(ret);
-        TOOLS_FREE(name);
+        API_SET_PRIOT_ERROR( ret );
+        TOOLS_FREE( name );
         return 0;
     }
-    TOOLS_FREE(name);
+    TOOLS_FREE( name );
 
     return 1;
 }
@@ -2835,41 +2738,41 @@ int Mib_readObjid(const char *input, oid * output, size_t * out_len)
 /**
  *
  */
-void Mib_sprintReallocObjid(u_char ** buf, size_t * buf_len,
-                             size_t * out_len, int allow_realloc,
-                             int *buf_overflow,
-                             const oid * objid, size_t objidlen)
+void Mib_sprintReallocObjid( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    int* buf_overflow,
+    const oid* objid, size_t objidlen )
 {
-    u_char         *tbuf = NULL, *cp = NULL;
-    size_t          tbuf_len = 256, tout_len = 0;
-    int             tbuf_overflow = 0;
-    int             output_format;
+    u_char *tbuf = NULL, *cp = NULL;
+    size_t tbuf_len = 256, tout_len = 0;
+    int tbuf_overflow = 0;
+    int output_format;
 
-    if ((tbuf = (u_char *) calloc(tbuf_len, 1)) == NULL) {
+    if ( ( tbuf = ( u_char* )calloc( tbuf_len, 1 ) ) == NULL ) {
         tbuf_overflow = 1;
     } else {
         *tbuf = '.';
         tout_len = 1;
     }
 
-    _Mib_oidFinishPrinting(objid, objidlen,
-                         &tbuf, &tbuf_len, &tout_len,
-                         allow_realloc, &tbuf_overflow);
+    _Mib_oidFinishPrinting( objid, objidlen,
+        &tbuf, &tbuf_len, &tout_len,
+        allow_realloc, &tbuf_overflow );
 
-    if (tbuf_overflow) {
-        if (!*buf_overflow) {
-            Tools_strcat(buf, buf_len, out_len, allow_realloc, tbuf);
+    if ( tbuf_overflow ) {
+        if ( !*buf_overflow ) {
+            Tools_strcat( buf, buf_len, out_len, allow_realloc, tbuf );
             *buf_overflow = 1;
         }
-        TOOLS_FREE(tbuf);
+        TOOLS_FREE( tbuf );
         return;
     }
 
-    output_format = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
-    if (0 == output_format) {
+    output_format = DefaultStore_getInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    if ( 0 == output_format ) {
         output_format = MIB_OID_OUTPUT_NUMERIC;
     }
-    switch (output_format) {
+    switch ( output_format ) {
     case MIB_OID_OUTPUT_FULL:
     case MIB_OID_OUTPUT_NUMERIC:
     case MIB_OID_OUTPUT_SUFFIX:
@@ -2882,54 +2785,53 @@ void Mib_sprintReallocObjid(u_char ** buf, size_t * buf_len,
         cp = NULL;
     }
 
-    if (!*buf_overflow &&
-        !Tools_strcat(buf, buf_len, out_len, allow_realloc, cp)) {
+    if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, cp ) ) {
         *buf_overflow = 1;
     }
-    TOOLS_FREE(tbuf);
+    TOOLS_FREE( tbuf );
 }
 
 /**
  *
  */
-struct Parse_Tree_s    * Mib_sprintReallocObjidTree(u_char ** buf, size_t * buf_len,
-                                  size_t * out_len, int allow_realloc,
-                                  int *buf_overflow,
-                                  const oid * objid, size_t objidlen)
+struct Parse_Tree_s* Mib_sprintReallocObjidTree( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    int* buf_overflow,
+    const oid* objid, size_t objidlen )
 {
-    u_char         *tbuf = NULL, *cp = NULL;
-    size_t          tbuf_len = 512, tout_len = 0;
-    struct Parse_Tree_s    *subtree = parse_treeHead;
-    size_t          midpoint_offset = 0;
-    int             tbuf_overflow = 0;
-    int             output_format;
+    u_char *tbuf = NULL, *cp = NULL;
+    size_t tbuf_len = 512, tout_len = 0;
+    struct Parse_Tree_s* subtree = parse_treeHead;
+    size_t midpoint_offset = 0;
+    int tbuf_overflow = 0;
+    int output_format;
 
-    if ((tbuf = (u_char *) calloc(tbuf_len, 1)) == NULL) {
+    if ( ( tbuf = ( u_char* )calloc( tbuf_len, 1 ) ) == NULL ) {
         tbuf_overflow = 1;
     } else {
         *tbuf = '.';
         tout_len = 1;
     }
 
-    subtree = _Mib_getReallocSymbol(objid, objidlen, subtree,
-                                  &tbuf, &tbuf_len, &tout_len,
-                                  allow_realloc, &tbuf_overflow, NULL,
-                                  &midpoint_offset);
+    subtree = _Mib_getReallocSymbol( objid, objidlen, subtree,
+        &tbuf, &tbuf_len, &tout_len,
+        allow_realloc, &tbuf_overflow, NULL,
+        &midpoint_offset );
 
-    if (tbuf_overflow) {
-        if (!*buf_overflow) {
-            Tools_strcat(buf, buf_len, out_len, allow_realloc, tbuf);
+    if ( tbuf_overflow ) {
+        if ( !*buf_overflow ) {
+            Tools_strcat( buf, buf_len, out_len, allow_realloc, tbuf );
             *buf_overflow = 1;
         }
-        TOOLS_FREE(tbuf);
+        TOOLS_FREE( tbuf );
         return subtree;
     }
 
-    output_format = DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
-    if (0 == output_format) {
+    output_format = DefaultStore_getInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    if ( 0 == output_format ) {
         output_format = MIB_OID_OUTPUT_MODULE;
     }
-    switch (output_format) {
+    switch ( output_format ) {
     case MIB_OID_OUTPUT_FULL:
     case MIB_OID_OUTPUT_NUMERIC:
         cp = tbuf;
@@ -2937,21 +2839,22 @@ struct Parse_Tree_s    * Mib_sprintReallocObjidTree(u_char ** buf, size_t * buf_
 
     case MIB_OID_OUTPUT_SUFFIX:
     case MIB_OID_OUTPUT_MODULE:
-        for (cp = tbuf; *cp; cp++);
+        for ( cp = tbuf; *cp; cp++ )
+            ;
 
-        if (midpoint_offset != 0) {
-            cp = tbuf + midpoint_offset - 2;    /*  beyond the '.'  */
+        if ( midpoint_offset != 0 ) {
+            cp = tbuf + midpoint_offset - 2; /*  beyond the '.'  */
         } else {
-            while (cp >= tbuf) {
-                if (isalpha(*cp)) {
+            while ( cp >= tbuf ) {
+                if ( isalpha( *cp ) ) {
                     break;
                 }
                 cp--;
             }
         }
 
-        while (cp >= tbuf) {
-            if (*cp == '.') {
+        while ( cp >= tbuf ) {
+            if ( *cp == '.' ) {
                 break;
             }
             cp--;
@@ -2959,43 +2862,40 @@ struct Parse_Tree_s    * Mib_sprintReallocObjidTree(u_char ** buf, size_t * buf_
 
         cp++;
 
-        if ((MIB_OID_OUTPUT_MODULE == output_format)
-            && cp > tbuf) {
-            char            modbuf[256] = { 0 }, *mod =
-                Parse_moduleName(subtree->modid, modbuf);
+        if ( ( MIB_OID_OUTPUT_MODULE == output_format )
+            && cp > tbuf ) {
+            char modbuf[ 256 ] = { 0 }, *mod = Parse_moduleName( subtree->modid, modbuf );
 
             /*
              * Don't add the module ID if it's just numeric (i.e. we couldn't look
              * it up properly.
              */
 
-            if (!*buf_overflow && modbuf[0] != '#') {
-                if (!Tools_strcat
-                    (buf, buf_len, out_len, allow_realloc,
-                     (const u_char *) mod)
-                    || !Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                                    (const u_char *) ".")) {
+            if ( !*buf_overflow && modbuf[ 0 ] != '#' ) {
+                if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                         ( const u_char* )mod )
+                    || !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                           ( const u_char* )"." ) ) {
                     *buf_overflow = 1;
                 }
             }
         }
         break;
 
-    case MIB_OID_OUTPUT_UCD:
-    {
-        Mib_PrefixListPTR   pp = &mib_prefixes[0];
-        size_t          ilen, tlen;
-        const char     *testcp;
+    case MIB_OID_OUTPUT_UCD: {
+        Mib_PrefixListPTR pp = &mib_prefixes[ 0 ];
+        size_t ilen, tlen;
+        const char* testcp;
 
         cp = tbuf;
-        tlen = strlen((char *) tbuf);
+        tlen = strlen( ( char* )tbuf );
 
-        while (pp->str) {
+        while ( pp->str ) {
             ilen = pp->len;
             testcp = pp->str;
 
-            if ((tlen > ilen) && memcmp(tbuf, testcp, ilen) == 0) {
-                cp += (ilen + 1);
+            if ( ( tlen > ilen ) && memcmp( tbuf, testcp, ilen ) == 0 ) {
+                cp += ( ilen + 1 );
                 break;
             }
             pp++;
@@ -3008,33 +2908,32 @@ struct Parse_Tree_s    * Mib_sprintReallocObjidTree(u_char ** buf, size_t * buf_
         cp = NULL;
     }
 
-    if (!*buf_overflow &&
-        !Tools_strcat(buf, buf_len, out_len, allow_realloc, cp)) {
+    if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, cp ) ) {
         *buf_overflow = 1;
     }
-    TOOLS_FREE(tbuf);
+    TOOLS_FREE( tbuf );
     return subtree;
 }
 
-int Mib_sprintReallocObjid2(u_char ** buf, size_t * buf_len,
-                     size_t * out_len, int allow_realloc,
-                     const oid * objid, size_t objidlen)
+int Mib_sprintReallocObjid2( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const oid* objid, size_t objidlen )
 {
-    int             buf_overflow = 0;
+    int buf_overflow = 0;
 
-    Mib_sprintReallocObjidTree(buf, buf_len, out_len, allow_realloc,
-                                      &buf_overflow, objid, objidlen);
+    Mib_sprintReallocObjidTree( buf, buf_len, out_len, allow_realloc,
+        &buf_overflow, objid, objidlen );
     return !buf_overflow;
 }
 
-int Mib_snprintObjid(char *buf, size_t buf_len,
-              const oid * objid, size_t objidlen)
+int Mib_snprintObjid( char* buf, size_t buf_len,
+    const oid* objid, size_t objidlen )
 {
-    size_t          out_len = 0;
+    size_t out_len = 0;
 
-    if (Mib_sprintReallocObjid2((u_char **) & buf, &buf_len, &out_len, 0,
-                             objid, objidlen)) {
-        return (int) out_len;
+    if ( Mib_sprintReallocObjid2( ( u_char** )&buf, &buf_len, &out_len, 0,
+             objid, objidlen ) ) {
+        return ( int )out_len;
     } else {
         return -1;
     }
@@ -3046,11 +2945,10 @@ int Mib_snprintObjid(char *buf, size_t buf_len,
  * @param objid      The oid to print
  * @param objidlen   The length of oidid.
  */
-void Mib_printObjid(const oid * objid, size_t objidlen)
-{                               /* number of subidentifiers */
-    Mib_fprintObjid(stdout, objid, objidlen);
+void Mib_printObjid( const oid* objid, size_t objidlen )
+{ /* number of subidentifiers */
+    Mib_fprintObjid( stdout, objid, objidlen );
 }
-
 
 /**
  * Prints an oid to a file descriptor.
@@ -3059,122 +2957,116 @@ void Mib_printObjid(const oid * objid, size_t objidlen)
  * @param objid      The oid to print
  * @param objidlen   The length of oidid.
  */
-void Mib_fprintObjid(FILE * f, const oid * objid, size_t objidlen)
-{                               /* number of subidentifiers */
-    u_char         *buf = NULL;
-    size_t          buf_len = 256, out_len = 0;
-    int             buf_overflow = 0;
+void Mib_fprintObjid( FILE* f, const oid* objid, size_t objidlen )
+{ /* number of subidentifiers */
+    u_char* buf = NULL;
+    size_t buf_len = 256, out_len = 0;
+    int buf_overflow = 0;
 
-    if ((buf = (u_char *) calloc(buf_len, 1)) == NULL) {
-        fprintf(f, "[TRUNCATED]\n");
+    if ( ( buf = ( u_char* )calloc( buf_len, 1 ) ) == NULL ) {
+        fprintf( f, "[TRUNCATED]\n" );
         return;
     } else {
-        Mib_sprintReallocObjidTree(&buf, &buf_len, &out_len, 1,
-                                          &buf_overflow, objid, objidlen);
-        if (buf_overflow) {
-            fprintf(f, "%s [TRUNCATED]\n", buf);
+        Mib_sprintReallocObjidTree( &buf, &buf_len, &out_len, 1,
+            &buf_overflow, objid, objidlen );
+        if ( buf_overflow ) {
+            fprintf( f, "%s [TRUNCATED]\n", buf );
         } else {
-            fprintf(f, "%s\n", buf);
+            fprintf( f, "%s\n", buf );
         }
     }
 
-    TOOLS_FREE(buf);
+    TOOLS_FREE( buf );
 }
 
-int Mib_sprintReallocVariable(u_char ** buf, size_t * buf_len,
-                        size_t * out_len, int allow_realloc,
-                        const oid * objid, size_t objidlen,
-                        const Types_VariableList * variable)
+int Mib_sprintReallocVariable( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const oid* objid, size_t objidlen,
+    const Types_VariableList* variable )
 {
-    int             buf_overflow = 0;
+    int buf_overflow = 0;
 
-    struct Parse_Tree_s    *subtree = parse_treeHead;
+    struct Parse_Tree_s* subtree = parse_treeHead;
 
-    subtree = Mib_sprintReallocObjidTree(buf, buf_len, out_len,
-                                          allow_realloc, &buf_overflow,
-                                          objid, objidlen);
+    subtree = Mib_sprintReallocObjidTree( buf, buf_len, out_len,
+        allow_realloc, &buf_overflow,
+        objid, objidlen );
 
-    if (buf_overflow) {
+    if ( buf_overflow ) {
         return 0;
     }
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE)) {
-        if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT)) {
-            if (!Tools_strcat
-                (buf, buf_len, out_len, allow_realloc,
-                 (const u_char *) " = ")) {
+    if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE ) ) {
+        if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
+            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                     ( const u_char* )" = " ) ) {
                 return 0;
             }
         } else {
-            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT)) {
-                if (!Tools_strcat
-                    (buf, buf_len, out_len, allow_realloc,
-                     (const u_char *) " ")) {
+            if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
+                if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                         ( const u_char* )" " ) ) {
                     return 0;
                 }
             } else {
-                if (!Tools_strcat
-                    (buf, buf_len, out_len, allow_realloc,
-                     (const u_char *) " = ")) {
+                if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                         ( const u_char* )" = " ) ) {
                     return 0;
                 }
-            }                   /* end if-else NETSNMP_DS_LIB_QUICK_PRINT */
-        }                       /* end if-else NETSNMP_DS_LIB_QUICKE_PRINT */
+            } /* end if-else NETSNMP_DS_LIB_QUICK_PRINT */
+        } /* end if-else NETSNMP_DS_LIB_QUICKE_PRINT */
     } else {
         *out_len = 0;
     }
 
-    if (variable->type == PRIOT_NOSUCHOBJECT) {
-        return Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                           (const u_char *)
-                           "No Such Object available on this agent at this OID");
-    } else if (variable->type == PRIOT_NOSUCHINSTANCE) {
-        return Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                           (const u_char *)
-                           "No Such Instance currently exists at this OID");
-    } else if (variable->type == PRIOT_ENDOFMIBVIEW) {
-        return Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                           (const u_char *)
-                           "No more variables left in this MIB View (It is past the end of the MIB tree)");
-    } else if (subtree) {
-        const char *units = NULL;
-        const char *hint = NULL;
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS)) {
+    if ( variable->type == PRIOT_NOSUCHOBJECT ) {
+        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            ( const u_char* )"No Such Object available on this agent at this OID" );
+    } else if ( variable->type == PRIOT_NOSUCHINSTANCE ) {
+        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            ( const u_char* )"No Such Instance currently exists at this OID" );
+    } else if ( variable->type == PRIOT_ENDOFMIBVIEW ) {
+        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            ( const u_char* )"No more variables left in this MIB View (It is past the end of the MIB tree)" );
+    } else if ( subtree ) {
+        const char* units = NULL;
+        const char* hint = NULL;
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS ) ) {
             units = subtree->units;
         }
 
-        if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT)) {
+        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT ) ) {
             hint = subtree->hint;
         }
 
-        if (subtree->printomat) {
-            return (*subtree->printomat) (buf, buf_len, out_len,
-                                          allow_realloc, variable,
-                                          subtree->enums, hint,
-                                          units);
+        if ( subtree->printomat ) {
+            return ( *subtree->printomat )( buf, buf_len, out_len,
+                allow_realloc, variable,
+                subtree->enums, hint,
+                units );
         } else {
-            return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                          allow_realloc, variable,
-                                          subtree->enums, hint,
-                                          units);
+            return Mib_sprintReallocByType( buf, buf_len, out_len,
+                allow_realloc, variable,
+                subtree->enums, hint,
+                units );
         }
     } else {
         /*
          * Handle rare case where tree is empty.
          */
-        return Mib_sprintReallocByType(buf, buf_len, out_len, allow_realloc,
-                                      variable, NULL, NULL, NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len, allow_realloc,
+            variable, NULL, NULL, NULL );
     }
 }
 
-int Mib_snprintVariable(char *buf, size_t buf_len,
-                 const oid * objid, size_t objidlen,
-                 const Types_VariableList * variable)
+int Mib_snprintVariable( char* buf, size_t buf_len,
+    const oid* objid, size_t objidlen,
+    const Types_VariableList* variable )
 {
-    size_t          out_len = 0;
+    size_t out_len = 0;
 
-    if (Mib_sprintReallocVariable((u_char **) & buf, &buf_len, &out_len, 0,
-                                objid, objidlen, variable)) {
-        return (int) out_len;
+    if ( Mib_sprintReallocVariable( ( u_char** )&buf, &buf_len, &out_len, 0,
+             objid, objidlen, variable ) ) {
+        return ( int )out_len;
     } else {
         return -1;
     }
@@ -3187,12 +3079,11 @@ int Mib_snprintVariable(char *buf, size_t buf_len,
  * @param objidlen  The length of teh object id.
  * @param variable  The variable to print.
  */
-void Mib_printVariable(const oid * objid,
-               size_t objidlen, const Types_VariableList * variable)
+void Mib_printVariable( const oid* objid,
+    size_t objidlen, const Types_VariableList* variable )
 {
-    Mib_fprintVariable(stdout, objid, objidlen, variable);
+    Mib_fprintVariable( stdout, objid, objidlen, variable );
 }
-
 
 /**
  * Prints a variable to a file descriptor.
@@ -3202,114 +3093,110 @@ void Mib_printVariable(const oid * objid,
  * @param objidlen  The length of teh object id.
  * @param variable  The variable to print.
  */
-void Mib_fprintVariable(FILE * f,
-                const oid * objid,
-                size_t objidlen, const Types_VariableList * variable)
+void Mib_fprintVariable( FILE* f,
+    const oid* objid,
+    size_t objidlen, const Types_VariableList* variable )
 {
-    u_char         *buf = NULL;
-    size_t          buf_len = 256, out_len = 0;
+    u_char* buf = NULL;
+    size_t buf_len = 256, out_len = 0;
 
-    if ((buf = (u_char *) calloc(buf_len, 1)) == NULL) {
-        fprintf(f, "[TRUNCATED]\n");
+    if ( ( buf = ( u_char* )calloc( buf_len, 1 ) ) == NULL ) {
+        fprintf( f, "[TRUNCATED]\n" );
         return;
     } else {
-        if (Mib_sprintReallocVariable(&buf, &buf_len, &out_len, 1,
-                                    objid, objidlen, variable)) {
-            fprintf(f, "%s\n", buf);
+        if ( Mib_sprintReallocVariable( &buf, &buf_len, &out_len, 1,
+                 objid, objidlen, variable ) ) {
+            fprintf( f, "%s\n", buf );
         } else {
-            fprintf(f, "%s [TRUNCATED]\n", buf);
+            fprintf( f, "%s [TRUNCATED]\n", buf );
         }
     }
 
-    TOOLS_FREE(buf);
+    TOOLS_FREE( buf );
 }
 
-int Mib_sprintReallocValue(u_char ** buf, size_t * buf_len,
-                     size_t * out_len, int allow_realloc,
-                     const oid * objid, size_t objidlen,
-                     const Types_VariableList * variable)
+int Mib_sprintReallocValue( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    const oid* objid, size_t objidlen,
+    const Types_VariableList* variable )
 {
-    if (variable->type == PRIOT_NOSUCHOBJECT) {
-        return Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                           (const u_char *)
-                           "No Such Object available on this agent at this OID");
-    } else if (variable->type == PRIOT_NOSUCHINSTANCE) {
-        return Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                           (const u_char *)
-                           "No Such Instance currently exists at this OID");
-    } else if (variable->type == PRIOT_ENDOFMIBVIEW) {
-        return Tools_strcat(buf, buf_len, out_len, allow_realloc,
-                           (const u_char *)
-                           "No more variables left in this MIB View (It is past the end of the MIB tree)");
+    if ( variable->type == PRIOT_NOSUCHOBJECT ) {
+        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            ( const u_char* )"No Such Object available on this agent at this OID" );
+    } else if ( variable->type == PRIOT_NOSUCHINSTANCE ) {
+        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            ( const u_char* )"No Such Instance currently exists at this OID" );
+    } else if ( variable->type == PRIOT_ENDOFMIBVIEW ) {
+        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            ( const u_char* )"No more variables left in this MIB View (It is past the end of the MIB tree)" );
     } else {
-        const char *units = NULL;
-        struct Parse_Tree_s *subtree = parse_treeHead;
-    subtree = Mib_getTree(objid, objidlen, subtree);
-        if (subtree && !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS)) {
+        const char* units = NULL;
+        struct Parse_Tree_s* subtree = parse_treeHead;
+        subtree = Mib_getTree( objid, objidlen, subtree );
+        if ( subtree && !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_PRINT_UNITS ) ) {
             units = subtree->units;
         }
-        if (subtree) {
-        if(subtree->printomat) {
-        return (*subtree->printomat) (buf, buf_len, out_len,
-                          allow_realloc, variable,
-                          subtree->enums, subtree->hint,
-                          units);
-        } else {
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                          allow_realloc, variable,
-                          subtree->enums, subtree->hint,
-                          units);
+        if ( subtree ) {
+            if ( subtree->printomat ) {
+                return ( *subtree->printomat )( buf, buf_len, out_len,
+                    allow_realloc, variable,
+                    subtree->enums, subtree->hint,
+                    units );
+            } else {
+                return Mib_sprintReallocByType( buf, buf_len, out_len,
+                    allow_realloc, variable,
+                    subtree->enums, subtree->hint,
+                    units );
+            }
         }
-    }
-        return Mib_sprintReallocByType(buf, buf_len, out_len,
-                                      allow_realloc, variable,
-                                      NULL, NULL, NULL);
+        return Mib_sprintReallocByType( buf, buf_len, out_len,
+            allow_realloc, variable,
+            NULL, NULL, NULL );
     }
 }
 
 /* used in the perl module */
-int Mib_snprintValue(char *buf, size_t buf_len,
-              const oid * objid, size_t objidlen,
-              const Types_VariableList * variable)
+int Mib_snprintValue( char* buf, size_t buf_len,
+    const oid* objid, size_t objidlen,
+    const Types_VariableList* variable )
 {
-    size_t          out_len = 0;
+    size_t out_len = 0;
 
-    if (Mib_sprintReallocValue((u_char **) & buf, &buf_len, &out_len, 0,
-                             objid, objidlen, variable)) {
-        return (int) out_len;
+    if ( Mib_sprintReallocValue( ( u_char** )&buf, &buf_len, &out_len, 0,
+             objid, objidlen, variable ) ) {
+        return ( int )out_len;
     } else {
         return -1;
     }
 }
 
-void Mib_printValue(const oid * objid,
-            size_t objidlen, const Types_VariableList * variable)
+void Mib_printValue( const oid* objid,
+    size_t objidlen, const Types_VariableList* variable )
 {
-    Mib_fprintValue(stdout, objid, objidlen, variable);
+    Mib_fprintValue( stdout, objid, objidlen, variable );
 }
 
-void Mib_fprintValue(FILE * f,
-             const oid * objid,
-             size_t objidlen, const Types_VariableList * variable)
+void Mib_fprintValue( FILE* f,
+    const oid* objid,
+    size_t objidlen, const Types_VariableList* variable )
 {
-    u_char         *buf = NULL;
-    size_t          buf_len = 256, out_len = 0;
+    u_char* buf = NULL;
+    size_t buf_len = 256, out_len = 0;
 
-    if ((buf = (u_char *) calloc(buf_len, 1)) == NULL) {
-        fprintf(f, "[TRUNCATED]\n");
+    if ( ( buf = ( u_char* )calloc( buf_len, 1 ) ) == NULL ) {
+        fprintf( f, "[TRUNCATED]\n" );
         return;
     } else {
-        if (Mib_sprintReallocValue(&buf, &buf_len, &out_len, 1,
-                                 objid, objidlen, variable)) {
-            fprintf(f, "%s\n", buf);
+        if ( Mib_sprintReallocValue( &buf, &buf_len, &out_len, 1,
+                 objid, objidlen, variable ) ) {
+            fprintf( f, "%s\n", buf );
         } else {
-            fprintf(f, "%s [TRUNCATED]\n", buf);
+            fprintf( f, "%s [TRUNCATED]\n", buf );
         }
     }
 
-    TOOLS_FREE(buf);
+    TOOLS_FREE( buf );
 }
-
 
 /**
  * Takes the value in VAR and turns it into an OID segment in var->name.
@@ -3318,158 +3205,158 @@ void Mib_fprintValue(FILE * f,
  *
  * @return ErrorCode_SUCCESS or ErrorCode_GENERR
  */
-int Mib_buildOidSegment(Types_VariableList * var)
+int Mib_buildOidSegment( Types_VariableList* var )
 {
-    int             i;
-    uint32_t        ipaddr;
+    int i;
+    uint32_t ipaddr;
 
-    if (var->name && var->name != var->nameLoc)
-        TOOLS_FREE(var->name);
-    switch (var->type) {
+    if ( var->name && var->name != var->nameLoc )
+        TOOLS_FREE( var->name );
+    switch ( var->type ) {
     case ASN01_INTEGER:
     case ASN01_COUNTER:
     case ASN01_GAUGE:
     case ASN01_TIMETICKS:
         var->nameLength = 1;
         var->name = var->nameLoc;
-        var->name[0] = *(var->val.integer);
+        var->name[ 0 ] = *( var->val.integer );
         break;
 
     case ASN01_IPADDRESS:
         var->nameLength = 4;
         var->name = var->nameLoc;
-        memcpy(&ipaddr, var->val.string, sizeof(ipaddr));
-        var->name[0] = (ipaddr >> 24) & 0xff;
-        var->name[1] = (ipaddr >> 16) & 0xff;
-        var->name[2] = (ipaddr >>  8) & 0xff;
-        var->name[3] = (ipaddr >>  0) & 0xff;
+        memcpy( &ipaddr, var->val.string, sizeof( ipaddr ) );
+        var->name[ 0 ] = ( ipaddr >> 24 ) & 0xff;
+        var->name[ 1 ] = ( ipaddr >> 16 ) & 0xff;
+        var->name[ 2 ] = ( ipaddr >> 8 ) & 0xff;
+        var->name[ 3 ] = ( ipaddr >> 0 ) & 0xff;
         break;
 
     case ASN01_PRIV_IMPLIED_OBJECT_ID:
-        var->nameLength = var->valLen / sizeof(oid);
-        if (var->nameLength > (sizeof(var->nameLoc) / sizeof(oid)))
-            var->name = (oid *) malloc(sizeof(oid) * (var->nameLength));
+        var->nameLength = var->valLen / sizeof( oid );
+        if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
+            var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
         else
             var->name = var->nameLoc;
-        if (var->name == NULL)
+        if ( var->name == NULL )
             return ErrorCode_GENERR;
 
-        for (i = 0; i < (int) var->nameLength; i++)
-            var->name[i] = var->val.objid[i];
+        for ( i = 0; i < ( int )var->nameLength; i++ )
+            var->name[ i ] = var->val.objid[ i ];
         break;
 
     case ASN01_OBJECT_ID:
-        var->nameLength = var->valLen / sizeof(oid) + 1;
-        if (var->nameLength > (sizeof(var->nameLoc) / sizeof(oid)))
-            var->name = (oid *) malloc(sizeof(oid) * (var->nameLength));
+        var->nameLength = var->valLen / sizeof( oid ) + 1;
+        if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
+            var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
         else
             var->name = var->nameLoc;
-        if (var->name == NULL)
+        if ( var->name == NULL )
             return ErrorCode_GENERR;
 
-        var->name[0] = var->nameLength - 1;
-        for (i = 0; i < (int) var->nameLength - 1; i++)
-            var->name[i + 1] = var->val.objid[i];
+        var->name[ 0 ] = var->nameLength - 1;
+        for ( i = 0; i < ( int )var->nameLength - 1; i++ )
+            var->name[ i + 1 ] = var->val.objid[ i ];
         break;
 
     case ASN01_PRIV_IMPLIED_OCTET_STR:
         var->nameLength = var->valLen;
-        if (var->nameLength > (sizeof(var->nameLoc) / sizeof(oid)))
-            var->name = (oid *) malloc(sizeof(oid) * (var->nameLength));
+        if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
+            var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
         else
             var->name = var->nameLoc;
-        if (var->name == NULL)
+        if ( var->name == NULL )
             return ErrorCode_GENERR;
 
-        for (i = 0; i < (int) var->valLen; i++)
-            var->name[i] = (oid) var->val.string[i];
+        for ( i = 0; i < ( int )var->valLen; i++ )
+            var->name[ i ] = ( oid )var->val.string[ i ];
         break;
 
     case ASN01_OPAQUE:
     case ASN01_OCTET_STR:
         var->nameLength = var->valLen + 1;
-        if (var->nameLength > (sizeof(var->nameLoc) / sizeof(oid)))
-            var->name = (oid *) malloc(sizeof(oid) * (var->nameLength));
+        if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
+            var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
         else
             var->name = var->nameLoc;
-        if (var->name == NULL)
+        if ( var->name == NULL )
             return ErrorCode_GENERR;
 
-        var->name[0] = (oid) var->valLen;
-        for (i = 0; i < (int) var->valLen; i++)
-            var->name[i + 1] = (oid) var->val.string[i];
+        var->name[ 0 ] = ( oid )var->valLen;
+        for ( i = 0; i < ( int )var->valLen; i++ )
+            var->name[ i + 1 ] = ( oid )var->val.string[ i ];
         break;
 
     default:
-        DEBUG_MSGTL(("buildOidSegment",
-                    "invalid asn type: %d\n", var->type));
+        DEBUG_MSGTL( ( "buildOidSegment",
+            "invalid asn type: %d\n", var->type ) );
         return ErrorCode_GENERR;
     }
 
-    if (var->nameLength >TYPES_MAX_OID_LEN) {
-        DEBUG_MSGTL(("buildOidSegment",
-                    "Something terribly wrong, namelen = %lu\n",
-                    (unsigned long)var->nameLength));
+    if ( var->nameLength > TYPES_MAX_OID_LEN ) {
+        DEBUG_MSGTL( ( "buildOidSegment",
+            "Something terribly wrong, namelen = %lu\n",
+            ( unsigned long )var->nameLength ) );
         return ErrorCode_GENERR;
     }
 
     return ErrorCode_SUCCESS;
 }
 
-
-int Mib_buildOidNoalloc(oid * in, size_t in_len, size_t * out_len,
-                  oid * prefix, size_t prefix_len,
-                  Types_VariableList * indexes)
+int Mib_buildOidNoalloc( oid* in, size_t in_len, size_t* out_len,
+    oid* prefix, size_t prefix_len,
+    Types_VariableList* indexes )
 {
-    Types_VariableList *var;
+    Types_VariableList* var;
 
-    if (prefix) {
-        if (in_len < prefix_len)
+    if ( prefix ) {
+        if ( in_len < prefix_len )
             return ErrorCode_GENERR;
-        memcpy(in, prefix, prefix_len * sizeof(oid));
+        memcpy( in, prefix, prefix_len * sizeof( oid ) );
         *out_len = prefix_len;
     } else {
         *out_len = 0;
     }
 
-    for (var = indexes; var != NULL; var = var->nextVariable) {
-        if (Mib_buildOidSegment(var) != ErrorCode_SUCCESS)
+    for ( var = indexes; var != NULL; var = var->nextVariable ) {
+        if ( Mib_buildOidSegment( var ) != ErrorCode_SUCCESS )
             return ErrorCode_GENERR;
-        if (var->nameLength + *out_len <= in_len) {
-            memcpy(&(in[*out_len]), var->name,
-                   sizeof(oid) * var->nameLength);
+        if ( var->nameLength + *out_len <= in_len ) {
+            memcpy( &( in[ *out_len ] ), var->name,
+                sizeof( oid ) * var->nameLength );
             *out_len += var->nameLength;
         } else {
             return ErrorCode_GENERR;
         }
     }
 
-    DEBUG_MSGTL(("Mib_buildOidNoalloc", "generated: "));
-    DEBUG_MSGOID(("Mib_buildOidNoalloc", in, *out_len));
-    DEBUG_MSG(("Mib_buildOidNoalloc", "\n"));
+    DEBUG_MSGTL( ( "Mib_buildOidNoalloc", "generated: " ) );
+    DEBUG_MSGOID( ( "Mib_buildOidNoalloc", in, *out_len ) );
+    DEBUG_MSG( ( "Mib_buildOidNoalloc", "\n" ) );
     return ErrorCode_SUCCESS;
 }
 
-int Mib_buildOid(oid ** out, size_t * out_len,
-          oid * prefix, size_t prefix_len, Types_VariableList * indexes)
+int Mib_buildOid( oid** out, size_t* out_len,
+    oid* prefix, size_t prefix_len, Types_VariableList* indexes )
 {
-    oid             tmpout[TYPES_MAX_OID_LEN];
+    oid tmpout[ TYPES_MAX_OID_LEN ];
 
     /*
      * xxx-rks: inefficent. try only building segments to find index len:
-     *   for (var = indexes; var != NULL; var = var->next_variable) {
+     *   for (var = indexes; var != NULL; var = var->nextVariable) {
      *      if (build_oid_segment(var) != ErrorCode_SUCCESS)
      *         return ErrorCode_GENERR;
      *      *out_len += var->name_length;
      *
      * then see if it fits in existing buffer, or realloc buffer.
      */
-    if (Mib_buildOidNoalloc(tmpout, sizeof(tmpout), out_len,
-                          prefix, prefix_len, indexes) != ErrorCode_SUCCESS)
+    if ( Mib_buildOidNoalloc( tmpout, sizeof( tmpout ), out_len,
+             prefix, prefix_len, indexes )
+        != ErrorCode_SUCCESS )
         return ErrorCode_GENERR;
 
     /** xxx-rks: should free previous value? */
-    Client_cloneMem((void **) out, (void *) tmpout, *out_len * sizeof(oid));
+    Client_cloneMem( ( void** )out, ( void* )tmpout, *out_len * sizeof( oid ) );
 
     return ErrorCode_SUCCESS;
 }
@@ -3483,154 +3370,154 @@ int Mib_buildOid(oid ** out, size_t * out_len,
  * ErrorCode_SUCCESS on success
  */
 
-int Mib_parseOidIndexes(oid * oidIndex, size_t oidLen,
-                  Types_VariableList * data)
+int Mib_parseOidIndexes( oid* oidIndex, size_t oidLen,
+    Types_VariableList* data )
 {
-    Types_VariableList *var = data;
+    Types_VariableList* var = data;
 
-    while (var && oidLen > 0) {
+    while ( var && oidLen > 0 ) {
 
-        if (Mib_parseOneOidIndex(&oidIndex, &oidLen, var, 0) !=
-            ErrorCode_SUCCESS)
+        if ( Mib_parseOneOidIndex( &oidIndex, &oidLen, var, 0 ) != ErrorCode_SUCCESS )
             break;
 
         var = var->nextVariable;
     }
 
-    if (var != NULL || oidLen != 0)
+    if ( var != NULL || oidLen != 0 )
         return ErrorCode_GENERR;
     return ErrorCode_SUCCESS;
 }
 
-
-int Mib_parseOneOidIndex(oid ** oidStart, size_t * oidLen,
-                    Types_VariableList * data, int complete)
+int Mib_parseOneOidIndex( oid** oidStart, size_t* oidLen,
+    Types_VariableList* data, int complete )
 {
-    Types_VariableList *var = data;
-    oid             tmpout[TYPES_MAX_OID_LEN];
-    unsigned int    i;
-    unsigned int    uitmp = 0;
+    Types_VariableList* var = data;
+    oid tmpout[ TYPES_MAX_OID_LEN ];
+    unsigned int i;
+    unsigned int uitmp = 0;
 
-    oid            *oidIndex = *oidStart;
+    oid* oidIndex = *oidStart;
 
-    if (var == NULL || ((*oidLen == 0) && (complete == 0)))
+    if ( var == NULL || ( ( *oidLen == 0 ) && ( complete == 0 ) ) )
         return ErrorCode_GENERR;
     else {
-        switch (var->type) {
+        switch ( var->type ) {
         case ASN01_INTEGER:
         case ASN01_COUNTER:
         case ASN01_GAUGE:
         case ASN01_TIMETICKS:
-            if (*oidLen) {
-                Client_setVarValue(var, (u_char *) oidIndex++,
-                                   sizeof(oid));
-                --(*oidLen);
+            if ( *oidLen ) {
+                Client_setVarValue( var, ( u_char* )oidIndex++,
+                    sizeof( oid ) );
+                --( *oidLen );
             } else {
-                Client_setVarValue(var, (u_char *) oidLen, sizeof(long));
+                Client_setVarValue( var, ( u_char* )oidLen, sizeof( long ) );
             }
-            DEBUG_MSGTL(("parseOidIndexes",
-                        "Parsed int(%d): %ld\n", var->type,
-                        *var->val.integer));
+            DEBUG_MSGTL( ( "parseOidIndexes",
+                "Parsed int(%d): %ld\n", var->type,
+                *var->val.integer ) );
             break;
 
         case ASN01_IPADDRESS:
-            if ((4 > *oidLen) && (complete == 0))
+            if ( ( 4 > *oidLen ) && ( complete == 0 ) )
                 return ErrorCode_GENERR;
 
-            for (i = 0; i < 4 && i < *oidLen; ++i) {
-                if (oidIndex[i] > 255) {
-                    DEBUG_MSGTL(("parseOidIndexes",
-                                "illegal oid in index: %" "l" "d\n",
-                                oidIndex[0]));
-                        return ErrorCode_GENERR;  /* sub-identifier too large */
-                    }
-                    uitmp = uitmp + (oidIndex[i] << (8*(3-i)));
+            for ( i = 0; i < 4 && i < *oidLen; ++i ) {
+                if ( oidIndex[ i ] > 255 ) {
+                    DEBUG_MSGTL( ( "parseOidIndexes",
+                        "illegal oid in index: %"
+                        "l"
+                        "d\n",
+                        oidIndex[ 0 ] ) );
+                    return ErrorCode_GENERR; /* sub-identifier too large */
                 }
-            if (4 > (int) (*oidLen)) {
+                uitmp = uitmp + ( oidIndex[ i ] << ( 8 * ( 3 - i ) ) );
+            }
+            if ( 4 > ( int )( *oidLen ) ) {
                 oidIndex += *oidLen;
-                (*oidLen) = 0;
+                ( *oidLen ) = 0;
             } else {
                 oidIndex += 4;
-                (*oidLen) -= 4;
+                ( *oidLen ) -= 4;
             }
-            uitmp = htonl(uitmp); /* put it in proper order for byte copies */
-            uitmp = Client_setVarValue(var, (u_char *) &uitmp, 4);
-            DEBUG_MSGTL(("parseOidIndexes",
-                        "Parsed ipaddr(%d): %d.%d.%d.%d\n", var->type,
-                        var->val.string[0], var->val.string[1],
-                        var->val.string[2], var->val.string[3]));
+            uitmp = htonl( uitmp ); /* put it in proper order for byte copies */
+            uitmp = Client_setVarValue( var, ( u_char* )&uitmp, 4 );
+            DEBUG_MSGTL( ( "parseOidIndexes",
+                "Parsed ipaddr(%d): %d.%d.%d.%d\n", var->type,
+                var->val.string[ 0 ], var->val.string[ 1 ],
+                var->val.string[ 2 ], var->val.string[ 3 ] ) );
             break;
 
         case ASN01_OBJECT_ID:
         case ASN01_PRIV_IMPLIED_OBJECT_ID:
-            if (var->type == ASN01_PRIV_IMPLIED_OBJECT_ID) {
+            if ( var->type == ASN01_PRIV_IMPLIED_OBJECT_ID ) {
                 /*
                  * might not be implied, might be fixed len. check if
                  * caller set up val len, and use it if they did.
                  */
-                if (0 == var->valLen)
+                if ( 0 == var->valLen )
                     uitmp = *oidLen;
                 else {
-                    DEBUG_MSGTL(("parseOidIndexe:fix", "fixed len oid\n"));
+                    DEBUG_MSGTL( ( "parseOidIndexe:fix", "fixed len oid\n" ) );
                     uitmp = var->valLen;
                 }
             } else {
-                if (*oidLen) {
+                if ( *oidLen ) {
                     uitmp = *oidIndex++;
-                    --(*oidLen);
+                    --( *oidLen );
                 } else {
                     uitmp = 0;
                 }
-                if ((uitmp > *oidLen) && (complete == 0))
+                if ( ( uitmp > *oidLen ) && ( complete == 0 ) )
                     return ErrorCode_GENERR;
             }
 
-            if (uitmp > TYPES_MAX_OID_LEN)
-                return ErrorCode_GENERR;  /* too big and illegal */
+            if ( uitmp > TYPES_MAX_OID_LEN )
+                return ErrorCode_GENERR; /* too big and illegal */
 
-            if (uitmp > *oidLen) {
-                memcpy(tmpout, oidIndex, sizeof(oid) * (*oidLen));
-                memset(&tmpout[*oidLen], 0x00,
-                       sizeof(oid) * (uitmp - *oidLen));
-                Client_setVarValue(var, (u_char *) tmpout,
-                                   sizeof(oid) * uitmp);
+            if ( uitmp > *oidLen ) {
+                memcpy( tmpout, oidIndex, sizeof( oid ) * ( *oidLen ) );
+                memset( &tmpout[ *oidLen ], 0x00,
+                    sizeof( oid ) * ( uitmp - *oidLen ) );
+                Client_setVarValue( var, ( u_char* )tmpout,
+                    sizeof( oid ) * uitmp );
                 oidIndex += *oidLen;
-                (*oidLen) = 0;
+                ( *oidLen ) = 0;
             } else {
-                Client_setVarValue(var, (u_char *) oidIndex,
-                                   sizeof(oid) * uitmp);
+                Client_setVarValue( var, ( u_char* )oidIndex,
+                    sizeof( oid ) * uitmp );
                 oidIndex += uitmp;
-                (*oidLen) -= uitmp;
+                ( *oidLen ) -= uitmp;
             }
 
-            DEBUG_MSGTL(("parseOidIndexes", "Parsed oid: "));
-            DEBUG_MSGOID(("parseOidIndexes",
-                         var->val.objid, var->valLen / sizeof(oid)));
-            DEBUG_MSG(("parseOidIndexes", "\n"));
+            DEBUG_MSGTL( ( "parseOidIndexes", "Parsed oid: " ) );
+            DEBUG_MSGOID( ( "parseOidIndexes",
+                var->val.objid, var->valLen / sizeof( oid ) ) );
+            DEBUG_MSG( ( "parseOidIndexes", "\n" ) );
             break;
 
         case ASN01_OPAQUE:
         case ASN01_OCTET_STR:
         case ASN01_PRIV_IMPLIED_OCTET_STR:
-            if (var->type == ASN01_PRIV_IMPLIED_OCTET_STR) {
+            if ( var->type == ASN01_PRIV_IMPLIED_OCTET_STR ) {
                 /*
                  * might not be implied, might be fixed len. check if
                  * caller set up val len, and use it if they did.
                  */
-                if (0 == var->valLen)
+                if ( 0 == var->valLen )
                     uitmp = *oidLen;
                 else {
-                    DEBUG_MSGTL(("parseOidIndexe:fix", "fixed len str\n"));
+                    DEBUG_MSGTL( ( "parseOidIndexe:fix", "fixed len str\n" ) );
                     uitmp = var->valLen;
                 }
             } else {
-                if (*oidLen) {
+                if ( *oidLen ) {
                     uitmp = *oidIndex++;
-                    --(*oidLen);
+                    --( *oidLen );
                 } else {
                     uitmp = 0;
                 }
-                if ((uitmp > *oidLen) && (complete == 0))
+                if ( ( uitmp > *oidLen ) && ( complete == 0 ) )
                     return ErrorCode_GENERR;
             }
 
@@ -3640,45 +3527,45 @@ int Mib_parseOneOidIndex(oid ** oidStart, size_t * oidLen,
              * PriotClient_setVarValue()
              */
 
-            if (uitmp == 0)
-                break;          /* zero length strings shouldn't malloc */
+            if ( uitmp == 0 )
+                break; /* zero length strings shouldn't malloc */
 
-            if (uitmp > TYPES_MAX_OID_LEN)
-                return ErrorCode_GENERR;  /* too big and illegal */
+            if ( uitmp > TYPES_MAX_OID_LEN )
+                return ErrorCode_GENERR; /* too big and illegal */
 
             /*
              * malloc by size+1 to allow a null to be appended.
              */
             var->valLen = uitmp;
-            var->val.string = (u_char *) calloc(1, uitmp + 1);
-            if (var->val.string == NULL)
+            var->val.string = ( u_char* )calloc( 1, uitmp + 1 );
+            if ( var->val.string == NULL )
                 return ErrorCode_GENERR;
 
-            if ((size_t)uitmp > (*oidLen)) {
-                for (i = 0; i < *oidLen; ++i)
-                    var->val.string[i] = (u_char) * oidIndex++;
-                for (i = *oidLen; i < uitmp; ++i)
-                    var->val.string[i] = '\0';
-                (*oidLen) = 0;
+            if ( ( size_t )uitmp > ( *oidLen ) ) {
+                for ( i = 0; i < *oidLen; ++i )
+                    var->val.string[ i ] = ( u_char )*oidIndex++;
+                for ( i = *oidLen; i < uitmp; ++i )
+                    var->val.string[ i ] = '\0';
+                ( *oidLen ) = 0;
             } else {
-                for (i = 0; i < uitmp; ++i)
-                    var->val.string[i] = (u_char) * oidIndex++;
-                (*oidLen) -= uitmp;
+                for ( i = 0; i < uitmp; ++i )
+                    var->val.string[ i ] = ( u_char )*oidIndex++;
+                ( *oidLen ) -= uitmp;
             }
-            var->val.string[uitmp] = '\0';
+            var->val.string[ uitmp ] = '\0';
 
-            DEBUG_MSGTL(("parseOidIndexes",
-                        "Parsed str(%d): %s\n", var->type,
-                        var->val.string));
+            DEBUG_MSGTL( ( "parseOidIndexes",
+                "Parsed str(%d): %s\n", var->type,
+                var->val.string ) );
             break;
 
         default:
-            DEBUG_MSGTL(("parseOidIndexes",
-                        "invalid asn type: %d\n", var->type));
+            DEBUG_MSGTL( ( "parseOidIndexes",
+                "invalid asn type: %d\n", var->type ) );
             return ErrorCode_GENERR;
         }
     }
-    (*oidStart) = oidIndex;
+    ( *oidStart ) = oidIndex;
     return ErrorCode_SUCCESS;
 }
 
@@ -3689,50 +3576,57 @@ int Mib_parseOneOidIndex(oid ** oidStart, size_t * oidLen,
  *   return 2 for not handled
  */
 
-int Mib_dumpReallocOidToInetAddress(const int addr_type, const oid * objid, size_t objidlen,
-                                u_char ** buf, size_t * buf_len,
-                                size_t * out_len, int allow_realloc,
-                                char quotechar)
+int Mib_dumpReallocOidToInetAddress( const int addr_type, const oid* objid, size_t objidlen,
+    u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    char quotechar )
 {
-    int             i, len;
-    char            intbuf[64], *p;
-    char *const     end = intbuf + sizeof(intbuf);
-    unsigned char  *zc;
-    unsigned long   zone;
+    int i, len;
+    char intbuf[ 64 ], *p;
+    char* const end = intbuf + sizeof( intbuf );
+    unsigned char* zc;
+    unsigned long zone;
 
-    if (!buf)
+    if ( !buf )
         return 1;
 
-    for (i = 0; i < objidlen; i++)
-        if (objid[i] < 0 || objid[i] > 255)
+    for ( i = 0; i < objidlen; i++ )
+        if ( objid[ i ] < 0 || objid[ i ] > 255 )
             return 2;
 
     p = intbuf;
     *p++ = quotechar;
 
-    switch (addr_type) {
+    switch ( addr_type ) {
     case IPV4:
     case IPV4Z:
-        if ((addr_type == IPV4  && objidlen != 4) ||
-            (addr_type == IPV4Z && objidlen != 8))
+        if ( ( addr_type == IPV4 && objidlen != 4 ) || ( addr_type == IPV4Z && objidlen != 8 ) )
             return 2;
 
-        len = snprintf(p, end - p, "%" "l" "u.%" "l" "u."
-                      "%" "l" "u.%" "l" "u",
-                      objid[0], objid[1], objid[2], objid[3]);
+        len = snprintf( p, end - p, "%"
+                                    "l"
+                                    "u.%"
+                                    "l"
+                                    "u."
+                                    "%"
+                                    "l"
+                                    "u.%"
+                                    "l"
+                                    "u",
+            objid[ 0 ], objid[ 1 ], objid[ 2 ], objid[ 3 ] );
         p += len;
-        if (p >= end)
+        if ( p >= end )
             return 2;
-        if (addr_type == IPV4Z) {
-            zc = (unsigned char*)&zone;
-            zc[0] = objid[4];
-            zc[1] = objid[5];
-            zc[2] = objid[6];
-            zc[3] = objid[7];
-            zone = ntohl(zone);
-            len = snprintf(p, end - p, "%%%lu", zone);
+        if ( addr_type == IPV4Z ) {
+            zc = ( unsigned char* )&zone;
+            zc[ 0 ] = objid[ 4 ];
+            zc[ 1 ] = objid[ 5 ];
+            zc[ 2 ] = objid[ 6 ];
+            zc[ 3 ] = objid[ 7 ];
+            zone = ntohl( zone );
+            len = snprintf( p, end - p, "%%%lu", zone );
             p += len;
-            if (p >= end)
+            if ( p >= end )
                 return 2;
         }
 
@@ -3740,29 +3634,31 @@ int Mib_dumpReallocOidToInetAddress(const int addr_type, const oid * objid, size
 
     case IPV6:
     case IPV6Z:
-        if ((addr_type == IPV6 && objidlen != 16) ||
-            (addr_type == IPV6Z && objidlen != 20))
+        if ( ( addr_type == IPV6 && objidlen != 16 ) || ( addr_type == IPV6Z && objidlen != 20 ) )
             return 2;
 
         len = 0;
-        for (i = 0; i < 16; i ++) {
-            len = snprintf(p, end - p, "%s%02" "l" "x", i ? ":" : "",
-                           objid[i]);
+        for ( i = 0; i < 16; i++ ) {
+            len = snprintf( p, end - p, "%s%02"
+                                        "l"
+                                        "x",
+                i ? ":" : "",
+                objid[ i ] );
             p += len;
-            if (p >= end)
+            if ( p >= end )
                 return 2;
         }
 
-        if (addr_type == IPV6Z) {
-            zc = (unsigned char*)&zone;
-            zc[0] = objid[16];
-            zc[1] = objid[17];
-            zc[2] = objid[18];
-            zc[3] = objid[19];
-            zone = ntohl(zone);
-            len = snprintf(p, end - p, "%%%lu", zone);
+        if ( addr_type == IPV6Z ) {
+            zc = ( unsigned char* )&zone;
+            zc[ 0 ] = objid[ 16 ];
+            zc[ 1 ] = objid[ 17 ];
+            zc[ 2 ] = objid[ 18 ];
+            zc[ 3 ] = objid[ 19 ];
+            zone = ntohl( zone );
+            len = snprintf( p, end - p, "%%%lu", zone );
             p += len;
-            if (p >= end)
+            if ( p >= end )
                 return 2;
         }
 
@@ -3775,176 +3671,164 @@ int Mib_dumpReallocOidToInetAddress(const int addr_type, const oid * objid, size
     }
 
     *p++ = quotechar;
-    if (p >= end)
+    if ( p >= end )
         return 2;
 
     *p++ = '\0';
-    if (p >= end)
+    if ( p >= end )
         return 2;
 
-    return Tools_cstrcat(buf, buf_len, out_len, allow_realloc, intbuf);
+    return Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf );
 }
 
-int Mib_dumpReallocOidToString(const oid * objid, size_t objidlen,
-                           u_char ** buf, size_t * buf_len,
-                           size_t * out_len, int allow_realloc,
-                           char quotechar)
+int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
+    u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    char quotechar )
 {
-    if (buf) {
-        int             i, alen;
+    if ( buf ) {
+        int i, alen;
 
-        for (i = 0, alen = 0; i < (int) objidlen; i++) {
-            oid             tst = objid[i];
-            if ((tst > 254) || (!isprint(tst))) {
-                tst = (oid) '.';
+        for ( i = 0, alen = 0; i < ( int )objidlen; i++ ) {
+            oid tst = objid[ i ];
+            if ( ( tst > 254 ) || ( !isprint( tst ) ) ) {
+                tst = ( oid )'.';
             }
 
-            if (alen == 0) {
-                if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
-                    while ((*out_len + 2) >= *buf_len) {
-                        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if ( alen == 0 ) {
+                if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
+                    while ( ( *out_len + 2 ) >= *buf_len ) {
+                        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                             return 0;
                         }
                     }
-                    *(*buf + *out_len) = '\\';
-                    (*out_len)++;
+                    *( *buf + *out_len ) = '\\';
+                    ( *out_len )++;
                 }
-                while ((*out_len + 2) >= *buf_len) {
-                    if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+                while ( ( *out_len + 2 ) >= *buf_len ) {
+                    if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                         return 0;
                     }
                 }
-                *(*buf + *out_len) = quotechar;
-                (*out_len)++;
+                *( *buf + *out_len ) = quotechar;
+                ( *out_len )++;
             }
 
-            while ((*out_len + 2) >= *buf_len) {
-                if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            while ( ( *out_len + 2 ) >= *buf_len ) {
+                if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                     return 0;
                 }
             }
-            *(*buf + *out_len) = (char) tst;
-            (*out_len)++;
+            *( *buf + *out_len ) = ( char )tst;
+            ( *out_len )++;
             alen++;
         }
 
-        if (alen) {
-            if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
-                while ((*out_len + 2) >= *buf_len) {
-                    if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if ( alen ) {
+            if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
+                while ( ( *out_len + 2 ) >= *buf_len ) {
+                    if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                         return 0;
                     }
                 }
-                *(*buf + *out_len) = '\\';
-                (*out_len)++;
+                *( *buf + *out_len ) = '\\';
+                ( *out_len )++;
             }
-            while ((*out_len + 2) >= *buf_len) {
-                if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            while ( ( *out_len + 2 ) >= *buf_len ) {
+                if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
                     return 0;
                 }
             }
-            *(*buf + *out_len) = quotechar;
-            (*out_len)++;
+            *( *buf + *out_len ) = quotechar;
+            ( *out_len )++;
         }
 
-        *(*buf + *out_len) = '\0';
+        *( *buf + *out_len ) = '\0';
     }
 
     return 1;
 }
 
-static void _Mib_oidFinishPrinting(const oid * objid, size_t objidlen,
-                     u_char ** buf, size_t * buf_len, size_t * out_len,
-                     int allow_realloc, int *buf_overflow) {
-    char            intbuf[64];
-    if (*buf != NULL && *(*buf + *out_len - 1) != '.') {
-        if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                           allow_realloc,
-                                           (const u_char *) ".")) {
+static void _Mib_oidFinishPrinting( const oid* objid, size_t objidlen,
+    u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc, int* buf_overflow )
+{
+    char intbuf[ 64 ];
+    if ( *buf != NULL && *( *buf + *out_len - 1 ) != '.' ) {
+        if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
             *buf_overflow = 1;
         }
     }
 
-    while (objidlen-- > 0) {    /* output rest of name, uninterpreted */
-        sprintf(intbuf, "%" "l" "u.", *objid++);
-        if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                           allow_realloc,
-                                           (const u_char *) intbuf)) {
+    while ( objidlen-- > 0 ) { /* output rest of name, uninterpreted */
+        sprintf( intbuf, "%"
+                         "l"
+                         "u.",
+            *objid++ );
+        if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
             *buf_overflow = 1;
         }
     }
 
-    if (*buf != NULL) {
-        *(*buf + *out_len - 1) = '\0';  /* remove trailing dot */
+    if ( *buf != NULL ) {
+        *( *buf + *out_len - 1 ) = '\0'; /* remove trailing dot */
         *out_len = *out_len - 1;
     }
 }
 
-static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t objidlen,
-                    struct Parse_Tree_s *subtree,
-                    u_char ** buf, size_t * buf_len, size_t * out_len,
-                    int allow_realloc, int *buf_overflow,
-                    struct Parse_IndexList_s *in_dices, size_t * end_of_known)
+static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t objidlen,
+    struct Parse_Tree_s* subtree,
+    u_char** buf, size_t* buf_len, size_t* out_len,
+    int allow_realloc, int* buf_overflow,
+    struct Parse_IndexList_s* in_dices, size_t* end_of_known )
 {
-    struct Parse_Tree_s    *return_tree = NULL;
-    int             extended_index =
-        DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX);
-    int             output_format =
-        DefaultStore_getInt(DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT);
-    char            intbuf[64];
+    struct Parse_Tree_s* return_tree = NULL;
+    int extended_index = DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_EXTENDED_INDEX );
+    int output_format = DefaultStore_getInt( DsStorage_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    char intbuf[ 64 ];
 
-    if (!objid || !buf) {
+    if ( !objid || !buf ) {
         return NULL;
     }
 
-    for (; subtree; subtree = subtree->next_peer) {
-        if (*objid == subtree->subid) {
-        while (subtree->next_peer && subtree->next_peer->subid == *objid)
-        subtree = subtree->next_peer;
-            if (subtree->indexes) {
+    for ( ; subtree; subtree = subtree->next_peer ) {
+        if ( *objid == subtree->subid ) {
+            while ( subtree->next_peer && subtree->next_peer->subid == *objid )
+                subtree = subtree->next_peer;
+            if ( subtree->indexes ) {
                 in_dices = subtree->indexes;
-            } else if (subtree->augments) {
-                struct Parse_Tree_s    *tp2 =
-                    Parse_findTreeNode(subtree->augments, -1);
-                if (tp2) {
+            } else if ( subtree->augments ) {
+                struct Parse_Tree_s* tp2 = Parse_findTreeNode( subtree->augments, -1 );
+                if ( tp2 ) {
                     in_dices = tp2->indexes;
                 }
             }
 
-            if (!strncmp(subtree->label, PARSE_ANON, PARSE_ANON_LEN) ||
-                (MIB_OID_OUTPUT_NUMERIC == output_format)) {
-                sprintf(intbuf, "%lu", subtree->subid);
-                if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                                   allow_realloc,
-                                                   (const u_char *)
-                                                   intbuf)) {
+            if ( !strncmp( subtree->label, PARSE_ANON, PARSE_ANON_LEN ) || ( MIB_OID_OUTPUT_NUMERIC == output_format ) ) {
+                sprintf( intbuf, "%lu", subtree->subid );
+                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                     *buf_overflow = 1;
                 }
             } else {
-                if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                                   allow_realloc,
-                                                   (const u_char *)
-                                                   subtree->label)) {
+                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )subtree->label ) ) {
                     *buf_overflow = 1;
                 }
             }
 
-            if (objidlen > 1) {
-                if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                                   allow_realloc,
-                                                   (const u_char *) ".")) {
+            if ( objidlen > 1 ) {
+                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
                     *buf_overflow = 1;
                 }
 
-                return_tree = _Mib_getReallocSymbol(objid + 1, objidlen - 1,
-                                                  subtree->child_list,
-                                                  buf, buf_len, out_len,
-                                                  allow_realloc,
-                                                  buf_overflow, in_dices,
-                                                  end_of_known);
+                return_tree = _Mib_getReallocSymbol( objid + 1, objidlen - 1,
+                    subtree->child_list,
+                    buf, buf_len, out_len,
+                    allow_realloc,
+                    buf_overflow, in_dices,
+                    end_of_known );
             }
 
-            if (return_tree != NULL) {
+            if ( return_tree != NULL ) {
                 return return_tree;
             } else {
                 return subtree;
@@ -3952,8 +3836,7 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
         }
     }
 
-
-    if (end_of_known) {
+    if ( end_of_known ) {
         *end_of_known = *out_len;
     }
 
@@ -3961,168 +3844,154 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
      * Subtree not found.
      */
 
-    while (in_dices && (objidlen > 0) &&
-           (MIB_OID_OUTPUT_NUMERIC != output_format) &&
-           !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS)) {
-        size_t          numids;
-        struct Parse_Tree_s    *tp;
+    while ( in_dices && ( objidlen > 0 ) && ( MIB_OID_OUTPUT_NUMERIC != output_format ) && !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS ) ) {
+        size_t numids;
+        struct Parse_Tree_s* tp;
 
-        tp = Parse_findTreeNode(in_dices->ilabel, -1);
+        tp = Parse_findTreeNode( in_dices->ilabel, -1 );
 
-        if (!tp) {
+        if ( !tp ) {
             /*
              * Can't find an index in the mib tree.  Bail.
              */
             goto goto_finishIt;
         }
 
-        if (extended_index) {
-            if (*buf != NULL && *(*buf + *out_len - 1) == '.') {
-                (*out_len)--;
+        if ( extended_index ) {
+            if ( *buf != NULL && *( *buf + *out_len - 1 ) == '.' ) {
+                ( *out_len )--;
             }
-            if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                               allow_realloc,
-                                               (const u_char *) "[")) {
+            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"[" ) ) {
                 *buf_overflow = 1;
             }
         }
 
-        switch (tp->type) {
+        switch ( tp->type ) {
         case PARSE_TYPE_OCTETSTR:
-            if (extended_index && tp->hint) {
+            if ( extended_index && tp->hint ) {
                 Types_VariableList var;
-                u_char          buffer[1024];
-                int             i;
+                u_char buffer[ 1024 ];
+                int i;
 
-                memset(&var, 0, sizeof var);
-                if (in_dices->isimplied) {
+                memset( &var, 0, sizeof var );
+                if ( in_dices->isimplied ) {
                     numids = objidlen;
-                    if (numids > objidlen)
+                    if ( numids > objidlen )
                         goto goto_finishIt;
-                } else if (tp->ranges && !tp->ranges->next
-                           && tp->ranges->low == tp->ranges->high) {
+                } else if ( tp->ranges && !tp->ranges->next
+                    && tp->ranges->low == tp->ranges->high ) {
                     numids = tp->ranges->low;
-                    if (numids > objidlen)
+                    if ( numids > objidlen )
                         goto goto_finishIt;
                 } else {
                     numids = *objid;
-                    if (numids >= objidlen)
+                    if ( numids >= objidlen )
                         goto goto_finishIt;
                     objid++;
                     objidlen--;
                 }
-                if (numids > objidlen)
+                if ( numids > objidlen )
                     goto goto_finishIt;
-                for (i = 0; i < (int) numids; i++)
-                    buffer[i] = (u_char) objid[i];
+                for ( i = 0; i < ( int )numids; i++ )
+                    buffer[ i ] = ( u_char )objid[ i ];
                 var.type = ASN01_OCTET_STR;
                 var.val.string = buffer;
                 var.valLen = numids;
-                if (!*buf_overflow) {
-                    if (!Mib_sprintReallocOctetString(buf, buf_len, out_len,
-                                                     allow_realloc, &var,
-                                                     NULL, tp->hint,
-                                                     NULL)) {
+                if ( !*buf_overflow ) {
+                    if ( !Mib_sprintReallocOctetString( buf, buf_len, out_len,
+                             allow_realloc, &var,
+                             NULL, tp->hint,
+                             NULL ) ) {
                         *buf_overflow = 1;
                     }
                 }
-            } else if (in_dices->isimplied) {
+            } else if ( in_dices->isimplied ) {
                 numids = objidlen;
-                if (numids > objidlen)
+                if ( numids > objidlen )
                     goto goto_finishIt;
 
-                if (!*buf_overflow) {
-                    if (!Mib_dumpReallocOidToString
-                        (objid, numids, buf, buf_len, out_len,
-                         allow_realloc, '\'')) {
+                if ( !*buf_overflow ) {
+                    if ( !Mib_dumpReallocOidToString( objid, numids, buf, buf_len, out_len,
+                             allow_realloc, '\'' ) ) {
                         *buf_overflow = 1;
                     }
                 }
-            } else if (tp->ranges && !tp->ranges->next
-                       && tp->ranges->low == tp->ranges->high) {
+            } else if ( tp->ranges && !tp->ranges->next
+                && tp->ranges->low == tp->ranges->high ) {
                 /*
                  * a fixed-length octet string
                  */
                 numids = tp->ranges->low;
-                if (numids > objidlen)
+                if ( numids > objidlen )
                     goto goto_finishIt;
 
-                if (!*buf_overflow) {
-                    if (! Mib_dumpReallocOidToString
-                        (objid, numids, buf, buf_len, out_len,
-                         allow_realloc, '\'')) {
+                if ( !*buf_overflow ) {
+                    if ( !Mib_dumpReallocOidToString( objid, numids, buf, buf_len, out_len,
+                             allow_realloc, '\'' ) ) {
                         *buf_overflow = 1;
                     }
                 }
             } else {
-                numids = (size_t) * objid + 1;
-                if (numids > objidlen)
+                numids = ( size_t )*objid + 1;
+                if ( numids > objidlen )
                     goto goto_finishIt;
-                if (numids == 1) {
-                    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
-                        if (!*buf_overflow
-                            && !Tools_strcat(buf, buf_len, out_len,
-                                            allow_realloc,
-                                            (const u_char *) "\\")) {
+                if ( numids == 1 ) {
+                    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
+                        if ( !*buf_overflow
+                            && !Tools_strcat( buf, buf_len, out_len,
+                                   allow_realloc,
+                                   ( const u_char* )"\\" ) ) {
                             *buf_overflow = 1;
                         }
                     }
-                    if (!*buf_overflow
-                        && !Tools_strcat(buf, buf_len, out_len,
-                                        allow_realloc,
-                                        (const u_char *) "\"")) {
+                    if ( !*buf_overflow
+                        && !Tools_strcat( buf, buf_len, out_len,
+                               allow_realloc,
+                               ( const u_char* )"\"" ) ) {
                         *buf_overflow = 1;
                     }
-                    if (DefaultStore_getBoolean (DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES)) {
-                        if (!*buf_overflow
-                            && !Tools_strcat(buf, buf_len, out_len,
-                                            allow_realloc,
-                                            (const u_char *) "\\")) {
+                    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
+                        if ( !*buf_overflow
+                            && !Tools_strcat( buf, buf_len, out_len,
+                                   allow_realloc,
+                                   ( const u_char* )"\\" ) ) {
                             *buf_overflow = 1;
                         }
                     }
-                    if (!*buf_overflow
-                        && !Tools_strcat(buf, buf_len, out_len,
-                                        allow_realloc,
-                                        (const u_char *) "\"")) {
+                    if ( !*buf_overflow
+                        && !Tools_strcat( buf, buf_len, out_len,
+                               allow_realloc,
+                               ( const u_char* )"\"" ) ) {
                         *buf_overflow = 1;
                     }
                 } else {
-                    if (!*buf_overflow) {
-                        struct Parse_Tree_s * next_peer;
+                    if ( !*buf_overflow ) {
+                        struct Parse_Tree_s* next_peer;
                         int normal_handling = 1;
 
-                        if (tp->next_peer) {
+                        if ( tp->next_peer ) {
                             next_peer = tp->next_peer;
                         }
 
                         /* Try handling the InetAddress in the OID, in case of failure,
                          * use the normal_handling.
                          */
-                        if (tp->next_peer &&
-                            tp->tc_index != -1 &&
-                            next_peer->tc_index != -1 &&
-                            strcmp(Parse_getTcDescriptor(tp->tc_index), "InetAddress") == 0 &&
-                            strcmp(Parse_getTcDescriptor(next_peer->tc_index),
-                                    "InetAddressType") == 0 ) {
+                        if ( tp->next_peer && tp->tc_index != -1 && next_peer->tc_index != -1 && strcmp( Parse_getTcDescriptor( tp->tc_index ), "InetAddress" ) == 0 && strcmp( Parse_getTcDescriptor( next_peer->tc_index ), "InetAddressType" ) == 0 ) {
 
                             int ret;
-                            int addr_type = *(objid - 1);
+                            int addr_type = *( objid - 1 );
 
-                            ret = Mib_dumpReallocOidToInetAddress(addr_type,
-                                        objid + 1, numids - 1, buf, buf_len, out_len,
-                                        allow_realloc, '"');
-                            if (ret != 2) {
+                            ret = Mib_dumpReallocOidToInetAddress( addr_type,
+                                objid + 1, numids - 1, buf, buf_len, out_len,
+                                allow_realloc, '"' );
+                            if ( ret != 2 ) {
                                 normal_handling = 0;
-                                if (ret == 0) {
+                                if ( ret == 0 ) {
                                     *buf_overflow = 1;
                                 }
-
                             }
                         }
-                        if (normal_handling && !Mib_dumpReallocOidToString
-                            (objid + 1, numids - 1, buf, buf_len, out_len,
-                             allow_realloc, '"')) {
+                        if ( normal_handling && !Mib_dumpReallocOidToString( objid + 1, numids - 1, buf, buf_len, out_len, allow_realloc, '"' ) ) {
                             *buf_overflow = 1;
                         }
                     }
@@ -4137,33 +4006,36 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
         case PARSE_TYPE_UNSIGNED32:
         case PARSE_TYPE_GAUGE:
         case PARSE_TYPE_INTEGER:
-            if (tp->enums) {
-                struct Parse_EnumList_s *ep = tp->enums;
-                while (ep && ep->value != (int) (*objid)) {
+            if ( tp->enums ) {
+                struct Parse_EnumList_s* ep = tp->enums;
+                while ( ep && ep->value != ( int )( *objid ) ) {
                     ep = ep->next;
                 }
-                if (ep) {
-                    if (!*buf_overflow
-                        && !Tools_strcat(buf, buf_len, out_len,
-                                        allow_realloc,
-                                        (const u_char *) ep->label)) {
+                if ( ep ) {
+                    if ( !*buf_overflow
+                        && !Tools_strcat( buf, buf_len, out_len,
+                               allow_realloc,
+                               ( const u_char* )ep->label ) ) {
                         *buf_overflow = 1;
                     }
                 } else {
-                    sprintf(intbuf, "%" "l" "u", *objid);
-                    if (!*buf_overflow
-                        && !Tools_strcat(buf, buf_len, out_len,
-                                        allow_realloc,
-                                        (const u_char *) intbuf)) {
+                    sprintf( intbuf, "%"
+                                     "l"
+                                     "u",
+                        *objid );
+                    if ( !*buf_overflow
+                        && !Tools_strcat( buf, buf_len, out_len,
+                               allow_realloc,
+                               ( const u_char* )intbuf ) ) {
                         *buf_overflow = 1;
                     }
                 }
             } else {
-                sprintf(intbuf, "%" "l" "u", *objid);
-                if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                                   allow_realloc,
-                                                   (const u_char *)
-                                                   intbuf)) {
+                sprintf( intbuf, "%"
+                                 "l"
+                                 "u",
+                    *objid );
+                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                     *buf_overflow = 1;
                 }
             }
@@ -4173,15 +4045,15 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
 
         case PARSE_TYPE_TIMETICKS:
             /* In an index, this is probably a timefilter */
-            if (extended_index) {
+            if ( extended_index ) {
                 _Mib_uptimeString( *objid, intbuf, sizeof( intbuf ) );
             } else {
-                sprintf(intbuf, "%" "l" "u", *objid);
+                sprintf( intbuf, "%"
+                                 "l"
+                                 "u",
+                    *objid );
             }
-            if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                               allow_realloc,
-                                               (const u_char *)
-                                               intbuf)) {
+            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                 *buf_overflow = 1;
             }
             objid++;
@@ -4189,89 +4061,101 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
             break;
 
         case PARSE_TYPE_OBJID:
-            if (in_dices->isimplied) {
+            if ( in_dices->isimplied ) {
                 numids = objidlen;
             } else {
-                numids = (size_t) * objid + 1;
+                numids = ( size_t )*objid + 1;
             }
-            if (numids > objidlen)
+            if ( numids > objidlen )
                 goto goto_finishIt;
-            if (extended_index) {
-                if (in_dices->isimplied) {
-                    if (!*buf_overflow
-                        && !Mib_sprintReallocObjidTree(buf, buf_len,
-                                                              out_len,
-                                                              allow_realloc,
-                                                              buf_overflow,
-                                                              objid,
-                                                              numids)) {
+            if ( extended_index ) {
+                if ( in_dices->isimplied ) {
+                    if ( !*buf_overflow
+                        && !Mib_sprintReallocObjidTree( buf, buf_len,
+                               out_len,
+                               allow_realloc,
+                               buf_overflow,
+                               objid,
+                               numids ) ) {
                         *buf_overflow = 1;
                     }
                 } else {
-                    if (!*buf_overflow
-                        && !Mib_sprintReallocObjidTree(buf, buf_len,
-                                                              out_len,
-                                                              allow_realloc,
-                                                              buf_overflow,
-                                                              objid + 1,
-                                                              numids -
-                                                              1)) {
+                    if ( !*buf_overflow
+                        && !Mib_sprintReallocObjidTree( buf, buf_len,
+                               out_len,
+                               allow_realloc,
+                               buf_overflow,
+                               objid + 1,
+                               numids - 1 ) ) {
                         *buf_overflow = 1;
                     }
                 }
             } else {
-                _Mib_getReallocSymbol(objid, numids, NULL, buf, buf_len,
-                                    out_len, allow_realloc, buf_overflow,
-                                    NULL, NULL);
+                _Mib_getReallocSymbol( objid, numids, NULL, buf, buf_len,
+                    out_len, allow_realloc, buf_overflow,
+                    NULL, NULL );
             }
-            objid += (numids);
-            objidlen -= (numids);
+            objid += ( numids );
+            objidlen -= ( numids );
             break;
 
         case PARSE_TYPE_IPADDR:
-            if (objidlen < 4)
+            if ( objidlen < 4 )
                 goto goto_finishIt;
-            sprintf(intbuf, "%" "l" "u.%" "l" "u."
-                    "%" "l" "u.%" "l" "u",
-                    objid[0], objid[1], objid[2], objid[3]);
+            sprintf( intbuf, "%"
+                             "l"
+                             "u.%"
+                             "l"
+                             "u."
+                             "%"
+                             "l"
+                             "u.%"
+                             "l"
+                             "u",
+                objid[ 0 ], objid[ 1 ], objid[ 2 ], objid[ 3 ] );
             objid += 4;
             objidlen -= 4;
-            if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                               allow_realloc,
-                                               (const u_char *) intbuf)) {
+            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                 *buf_overflow = 1;
             }
             break;
 
-        case PARSE_TYPE_NETADDR:{
-                oid             ntype = *objid++;
+        case PARSE_TYPE_NETADDR: {
+            oid ntype = *objid++;
 
-                objidlen--;
-                sprintf(intbuf, "%" "l" "u.", ntype);
-                if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                                   allow_realloc,
-                                                   (const u_char *)
-                                                   intbuf)) {
+            objidlen--;
+            sprintf( intbuf, "%"
+                             "l"
+                             "u.",
+                ntype );
+            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+                *buf_overflow = 1;
+            }
+
+            if ( ntype == 1 && objidlen >= 4 ) {
+                sprintf( intbuf, "%"
+                                 "l"
+                                 "u.%"
+                                 "l"
+                                 "u."
+                                 "%"
+                                 "l"
+                                 "u.%"
+                                 "l"
+                                 "u",
+                    objid[ 0 ], objid[ 1 ], objid[ 2 ], objid[ 3 ] );
+                if ( !*buf_overflow
+                    && !Tools_strcat( buf, buf_len, out_len,
+                           allow_realloc,
+                           ( const u_char* )intbuf ) ) {
                     *buf_overflow = 1;
                 }
-
-                if (ntype == 1 && objidlen >= 4) {
-                    sprintf(intbuf, "%" "l" "u.%" "l" "u."
-                            "%" "l" "u.%" "l" "u",
-                            objid[0], objid[1], objid[2], objid[3]);
-                    if (!*buf_overflow
-                        && !Tools_strcat(buf, buf_len, out_len,
-                                        allow_realloc,
-                                        (const u_char *) intbuf)) {
-                        *buf_overflow = 1;
-                    }
-                    objid += 4;
-                    objidlen -= 4;
-                } else {
-                    goto goto_finishIt;
-                }
+                objid += 4;
+                objidlen -= 4;
+            } else {
+                goto goto_finishIt;
             }
-            break;
+        } break;
 
         case PARSE_TYPE_NSAPADDRESS:
         default:
@@ -4279,16 +4163,12 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
             break;
         }
 
-        if (extended_index) {
-            if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                               allow_realloc,
-                                               (const u_char *) "]")) {
+        if ( extended_index ) {
+            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"]" ) ) {
                 *buf_overflow = 1;
             }
         } else {
-            if (!*buf_overflow && !Tools_strcat(buf, buf_len, out_len,
-                                               allow_realloc,
-                                               (const u_char *) ".")) {
+            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
                 *buf_overflow = 1;
             }
         }
@@ -4296,30 +4176,29 @@ static struct Parse_Tree_s * _Mib_getReallocSymbol(const oid * objid, size_t obj
     }
 
 goto_finishIt:
-    _Mib_oidFinishPrinting(objid, objidlen,
-                         buf, buf_len, out_len,
-                         allow_realloc, buf_overflow);
+    _Mib_oidFinishPrinting( objid, objidlen,
+        buf, buf_len, out_len,
+        allow_realloc, buf_overflow );
     return NULL;
 }
 
-struct Parse_Tree_s * Mib_getTree(const oid * objid, size_t objidlen, struct Parse_Tree_s *subtree)
+struct Parse_Tree_s* Mib_getTree( const oid* objid, size_t objidlen, struct Parse_Tree_s* subtree )
 {
-    struct Parse_Tree_s    *return_tree = NULL;
+    struct Parse_Tree_s* return_tree = NULL;
 
-    for (; subtree; subtree = subtree->next_peer) {
-        if (*objid == subtree->subid)
+    for ( ; subtree; subtree = subtree->next_peer ) {
+        if ( *objid == subtree->subid )
             goto goto_found;
     }
 
     return NULL;
 
 goto_found:
-    while (subtree->next_peer && subtree->next_peer->subid == *objid)
-    subtree = subtree->next_peer;
-    if (objidlen > 1)
-        return_tree =
-            Mib_getTree(objid + 1, objidlen - 1, subtree->child_list);
-    if (return_tree != NULL)
+    while ( subtree->next_peer && subtree->next_peer->subid == *objid )
+        subtree = subtree->next_peer;
+    if ( objidlen > 1 )
+        return_tree = Mib_getTree( objid + 1, objidlen - 1, subtree->child_list );
+    if ( return_tree != NULL )
         return return_tree;
     else
         return subtree;
@@ -4330,11 +4209,10 @@ goto_found:
  *
  * @see fprint_description
  */
-void Mib_printDescription(oid * objid, size_t objidlen, int width) /* number of subidentifiers */
+void Mib_printDescription( oid* objid, size_t objidlen, int width ) /* number of subidentifiers */
 {
-    Mib_fprintDescription(stdout, objid, objidlen, width);
+    Mib_fprintDescription( stdout, objid, objidlen, width );
 }
-
 
 /**
  * Prints on oid description into a file descriptor.
@@ -4344,56 +4222,56 @@ void Mib_printDescription(oid * objid, size_t objidlen, int width) /* number of 
  * @param objidlen  The object id length.
  * @param width     Number of subidentifiers.
  */
-void Mib_fprintDescription(FILE * f, oid * objid, size_t objidlen, int width)
+void Mib_fprintDescription( FILE* f, oid* objid, size_t objidlen, int width )
 {
-    u_char         *buf = NULL;
-    size_t          buf_len = 256, out_len = 0;
+    u_char* buf = NULL;
+    size_t buf_len = 256, out_len = 0;
 
-    if ((buf = (u_char *) calloc(buf_len, 1)) == NULL) {
-        fprintf(f, "[TRUNCATED]\n");
+    if ( ( buf = ( u_char* )calloc( buf_len, 1 ) ) == NULL ) {
+        fprintf( f, "[TRUNCATED]\n" );
         return;
     } else {
-        if (!Mib_sprintReallocDescription(&buf, &buf_len, &out_len, 1,
-                                   objid, objidlen, width)) {
-            fprintf(f, "%s [TRUNCATED]\n", buf);
+        if ( !Mib_sprintReallocDescription( &buf, &buf_len, &out_len, 1,
+                 objid, objidlen, width ) ) {
+            fprintf( f, "%s [TRUNCATED]\n", buf );
         } else {
-            fprintf(f, "%s\n", buf);
+            fprintf( f, "%s\n", buf );
         }
     }
 
-    TOOLS_FREE(buf);
+    TOOLS_FREE( buf );
 }
 
-int Mib_snprintDescription(char *buf, size_t buf_len,
-                    oid * objid, size_t objidlen, int width)
+int Mib_snprintDescription( char* buf, size_t buf_len,
+    oid* objid, size_t objidlen, int width )
 {
-    size_t          out_len = 0;
+    size_t out_len = 0;
 
-    if (Mib_sprintReallocDescription((u_char **) & buf, &buf_len, &out_len, 0,
-                                    objid, objidlen, width)) {
-        return (int) out_len;
+    if ( Mib_sprintReallocDescription( ( u_char** )&buf, &buf_len, &out_len, 0,
+             objid, objidlen, width ) ) {
+        return ( int )out_len;
     } else {
         return -1;
     }
 }
 
-int Mib_sprintReallocDescription(u_char ** buf, size_t * buf_len,
-                     size_t * out_len, int allow_realloc,
-                     oid * objid, size_t objidlen, int width)
+int Mib_sprintReallocDescription( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    oid* objid, size_t objidlen, int width )
 {
-    struct Parse_Tree_s    *tp = Mib_getTree(objid, objidlen, parse_treeHead);
-    struct Parse_Tree_s    *subtree = parse_treeHead;
-    int             pos, len;
-    char            tmpbuf[128];
-    const char     *cp;
+    struct Parse_Tree_s* tp = Mib_getTree( objid, objidlen, parse_treeHead );
+    struct Parse_Tree_s* subtree = parse_treeHead;
+    int pos, len;
+    char tmpbuf[ 128 ];
+    const char* cp;
 
-    if (NULL == tp)
+    if ( NULL == tp )
         return 0;
 
-    if (tp->type <= PARSE_TYPE_SIMPLE_LAST)
+    if ( tp->type <= PARSE_TYPE_SIMPLE_LAST )
         cp = " OBJECT-TYPE";
     else
-        switch (tp->type) {
+        switch ( tp->type ) {
         case PARSE_TYPE_TRAPTYPE:
             cp = " TRAP-TYPE";
             break;
@@ -4416,38 +4294,36 @@ int Mib_sprintReallocDescription(u_char ** buf, size_t * buf_len,
             cp = " MODULE-COMPLIANCE";
             break;
         default:
-            sprintf(tmpbuf, " type_%d", tp->type);
+            sprintf( tmpbuf, " type_%d", tp->type );
             cp = tmpbuf;
         }
 
-    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tp->label) ||
-        !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, cp) ||
-        !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n")) {
+    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->label ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) ) {
         return 0;
     }
-    if (!_Mib_printTreeNode(buf, buf_len, out_len, allow_realloc, tp, width))
+    if ( !_Mib_printTreeNode( buf, buf_len, out_len, allow_realloc, tp, width ) )
         return 0;
-    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, ".= {"))
+    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ".= {" ) )
         return 0;
     pos = 5;
-    while (objidlen > 1) {
-        for (; subtree; subtree = subtree->next_peer) {
-            if (*objid == subtree->subid) {
-                while (subtree->next_peer && subtree->next_peer->subid == *objid)
+    while ( objidlen > 1 ) {
+        for ( ; subtree; subtree = subtree->next_peer ) {
+            if ( *objid == subtree->subid ) {
+                while ( subtree->next_peer && subtree->next_peer->subid == *objid )
                     subtree = subtree->next_peer;
-                if (strncmp(subtree->label, PARSE_ANON, PARSE_ANON_LEN)) {
-                    snprintf(tmpbuf, sizeof(tmpbuf), " %s(%lu)", subtree->label, subtree->subid);
-                    tmpbuf[ sizeof(tmpbuf)-1 ] = 0;
+                if ( strncmp( subtree->label, PARSE_ANON, PARSE_ANON_LEN ) ) {
+                    snprintf( tmpbuf, sizeof( tmpbuf ), " %s(%lu)", subtree->label, subtree->subid );
+                    tmpbuf[ sizeof( tmpbuf ) - 1 ] = 0;
                 } else
-                    sprintf(tmpbuf, " %lu", subtree->subid);
-                len = strlen(tmpbuf);
-                if (pos + len + 2 > width) {
-                    if (!Tools_cstrcat(buf, buf_len, out_len,
-                                     allow_realloc, "\n     "))
+                    sprintf( tmpbuf, " %lu", subtree->subid );
+                len = strlen( tmpbuf );
+                if ( pos + len + 2 > width ) {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len,
+                             allow_realloc, "\n     " ) )
                         return 0;
                     pos = 5;
                 }
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tmpbuf))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
                     return 0;
                 pos += len;
                 objid++;
@@ -4455,83 +4331,87 @@ int Mib_sprintReallocDescription(u_char ** buf, size_t * buf_len,
                 break;
             }
         }
-        if (subtree)
+        if ( subtree )
             subtree = subtree->child_list;
         else
             break;
     }
-    while (objidlen > 1) {
-        sprintf(tmpbuf, " %" "l" "u", *objid);
-        len = strlen(tmpbuf);
-        if (pos + len + 2 > width) {
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n     "))
+    while ( objidlen > 1 ) {
+        sprintf( tmpbuf, " %"
+                         "l"
+                         "u",
+            *objid );
+        len = strlen( tmpbuf );
+        if ( pos + len + 2 > width ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n     " ) )
                 return 0;
             pos = 5;
         }
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tmpbuf))
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
             return 0;
         pos += len;
         objid++;
         objidlen--;
     }
-    sprintf(tmpbuf, " %" "l" "u }", *objid);
-    len = strlen(tmpbuf);
-    if (pos + len + 2 > width) {
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n     "))
+    sprintf( tmpbuf, " %"
+                     "l"
+                     "u }",
+        *objid );
+    len = strlen( tmpbuf );
+    if ( pos + len + 2 > width ) {
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n     " ) )
             return 0;
         pos = 5;
     }
-    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tmpbuf))
+    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
         return 0;
     return 1;
 }
 
-static int _Mib_printTreeNode(u_char ** buf, size_t * buf_len,
-                     size_t * out_len, int allow_realloc,
-                     struct Parse_Tree_s *tp, int width)
+static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
+    size_t* out_len, int allow_realloc,
+    struct Parse_Tree_s* tp, int width )
 {
-    const char     *cp;
-    char            str[PARSE_MAXTOKEN];
-    int             i, prevmod, pos, len;
+    const char* cp;
+    char str[ PARSE_MAXTOKEN ];
+    int i, prevmod, pos, len;
 
-    if (tp) {
-        Parse_moduleName(tp->modid, str);
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "  -- FROM\t") ||
-            !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+    if ( tp ) {
+        Parse_moduleName( tp->modid, str );
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "  -- FROM\t" ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
             return 0;
-        pos = 16+strlen(str);
-        for (i = 1, prevmod = tp->modid; i < tp->number_modules; i++) {
-            if (prevmod != tp->module_list[i]) {
-                Parse_moduleName(tp->module_list[i], str);
-                len = strlen(str);
-                if (pos + len + 2 > width) {
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                                     ",\n  --\t\t"))
+        pos = 16 + strlen( str );
+        for ( i = 1, prevmod = tp->modid; i < tp->number_modules; i++ ) {
+            if ( prevmod != tp->module_list[ i ] ) {
+                Parse_moduleName( tp->module_list[ i ], str );
+                len = strlen( str );
+                if ( pos + len + 2 > width ) {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                             ",\n  --\t\t" ) )
                         return 0;
                     pos = 16;
-                }
-                else {
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, ", "))
+                } else {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
                         return 0;
                     pos += 2;
                 }
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len;
             }
-            prevmod = tp->module_list[i];
+            prevmod = tp->module_list[ i ];
         }
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n"))
+        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
             return 0;
-        if (tp->tc_index != -1) {
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                              "  -- TEXTUAL CONVENTION ") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                              Parse_getTcDescriptor(tp->tc_index)) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n"))
+        if ( tp->tc_index != -1 ) {
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  -- TEXTUAL CONVENTION " )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                       Parse_getTcDescriptor( tp->tc_index ) )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
         }
-        switch (tp->type) {
+        switch ( tp->type ) {
         case PARSE_TYPE_OBJID:
             cp = "OBJECT IDENTIFIER";
             break;
@@ -4585,95 +4465,92 @@ static int _Mib_printTreeNode(u_char ** buf, size_t * buf_len,
             break;
         }
 
-        if (cp)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  SYNTAX\t") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, cp))
+        if ( cp )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  SYNTAX\t" )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) )
                 return 0;
-        if (tp->ranges) {
-            struct Parse_RangeList_s *rp = tp->ranges;
-            int             first = 1;
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " ("))
+        if ( tp->ranges ) {
+            struct Parse_RangeList_s* rp = tp->ranges;
+            int first = 1;
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " (" ) )
                 return 0;
-            while (rp) {
-                switch (tp->type) {
+            while ( rp ) {
+                switch ( tp->type ) {
                 case PARSE_TYPE_INTEGER:
                 case PARSE_TYPE_INTEGER32:
-                    if (rp->low == rp->high)
-                        sprintf(str, "%s%d", (first ? "" : " | "), rp->low );
+                    if ( rp->low == rp->high )
+                        sprintf( str, "%s%d", ( first ? "" : " | " ), rp->low );
                     else
-                        sprintf(str, "%s%d..%d", (first ? "" : " | "),
-                                rp->low, rp->high);
+                        sprintf( str, "%s%d..%d", ( first ? "" : " | " ),
+                            rp->low, rp->high );
                     break;
                 case PARSE_TYPE_UNSIGNED32:
                 case PARSE_TYPE_OCTETSTR:
                 case PARSE_TYPE_GAUGE:
                 case PARSE_TYPE_UINTEGER:
-                    if (rp->low == rp->high)
-                        sprintf(str, "%s%u", (first ? "" : " | "),
-                                (unsigned)rp->low );
+                    if ( rp->low == rp->high )
+                        sprintf( str, "%s%u", ( first ? "" : " | " ),
+                            ( unsigned )rp->low );
                     else
-                        sprintf(str, "%s%u..%u", (first ? "" : " | "),
-                                (unsigned)rp->low, (unsigned)rp->high);
+                        sprintf( str, "%s%u..%u", ( first ? "" : " | " ),
+                            ( unsigned )rp->low, ( unsigned )rp->high );
                     break;
                 default:
                     /* No other range types allowed */
                     break;
                 }
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
-                if (first)
+                if ( first )
                     first = 0;
                 rp = rp->next;
             }
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, ") "))
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ") " ) )
                 return 0;
         }
-        if (tp->enums) {
-            struct Parse_EnumList_s *ep = tp->enums;
-            int             first = 1;
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " {"))
+        if ( tp->enums ) {
+            struct Parse_EnumList_s* ep = tp->enums;
+            int first = 1;
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " {" ) )
                 return 0;
-            pos = 16 + strlen(cp) + 2;
-            while (ep) {
-                if (first)
+            pos = 16 + strlen( cp ) + 2;
+            while ( ep ) {
+                if ( first )
                     first = 0;
-                else
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, ", "))
-                        return 0;
-                snprintf(str, sizeof(str), "%s(%d)", ep->label, ep->value);
-                str[ sizeof(str)-1 ] = 0;
-                len = strlen(str);
-                if (pos + len + 2 > width) {
-                    if (!Tools_cstrcat(buf, buf_len, out_len,
-                                     allow_realloc, "\n\t\t  "))
+                else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                    return 0;
+                snprintf( str, sizeof( str ), "%s(%d)", ep->label, ep->value );
+                str[ sizeof( str ) - 1 ] = 0;
+                len = strlen( str );
+                if ( pos + len + 2 > width ) {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len,
+                             allow_realloc, "\n\t\t  " ) )
                         return 0;
                     pos = 18;
                 }
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len + 2;
                 ep = ep->next;
             }
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "} "))
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "} " ) )
                 return 0;
         }
-        if (cp)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n"))
+        if ( cp )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
-        if (tp->hint)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  DISPLAY-HINT\t\"") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tp->hint) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"\n"))
+        if ( tp->hint )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  DISPLAY-HINT\t\"" )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->hint ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
                 return 0;
-        if (tp->units)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  UNITS\t\t\"") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tp->units) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"\n"))
+        if ( tp->units )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  UNITS\t\t\"" )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->units ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
                 return 0;
-        switch (tp->access) {
+        switch ( tp->access ) {
         case PARSE_MIB_ACCESS_READONLY:
             cp = "read-only";
             break;
@@ -4696,16 +4573,15 @@ static int _Mib_printTreeNode(u_char ** buf, size_t * buf_len,
             cp = NULL;
             break;
         default:
-            sprintf(str, "access_%d", tp->access);
+            sprintf( str, "access_%d", tp->access );
             cp = str;
         }
-        if (cp)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  MAX-ACCESS\t") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, cp) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n"))
+        if ( cp )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  MAX-ACCESS\t" )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
-        switch (tp->status) {
+        switch ( tp->status ) {
         case PARSE_MIB_STATUS_MANDATORY:
             cp = "mandatory";
             break;
@@ -4725,158 +4601,150 @@ static int _Mib_printTreeNode(u_char ** buf, size_t * buf_len,
             cp = NULL;
             break;
         default:
-            sprintf(str, "status_%d", tp->status);
+            sprintf( str, "status_%d", tp->status );
             cp = str;
         }
 
-        if (cp)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  STATUS\t") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, cp) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n"))
+        if ( cp )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  STATUS\t" )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
-        if (tp->augments)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  AUGMENTS\t{ ") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tp->augments) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " }\n"))
+        if ( tp->augments )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  AUGMENTS\t{ " )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->augments ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
-        if (tp->indexes) {
-            struct Parse_IndexList_s *ip = tp->indexes;
-            int             first = 1;
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                             "  INDEX\t\t{ "))
+        if ( tp->indexes ) {
+            struct Parse_IndexList_s* ip = tp->indexes;
+            int first = 1;
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  INDEX\t\t{ " ) )
                 return 0;
             pos = 16 + 2;
-            while (ip) {
-                if (first)
+            while ( ip ) {
+                if ( first )
                     first = 0;
-                else
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, ", "))
-                        return 0;
-                snprintf(str, sizeof(str), "%s%s",
-                        ip->isimplied ? "IMPLIED " : "",
-                        ip->ilabel);
-                str[ sizeof(str)-1 ] = 0;
-                len = strlen(str);
-                if (pos + len + 2 > width) {
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\n\t\t  "))
+                else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                    return 0;
+                snprintf( str, sizeof( str ), "%s%s",
+                    ip->isimplied ? "IMPLIED " : "",
+                    ip->ilabel );
+                str[ sizeof( str ) - 1 ] = 0;
+                len = strlen( str );
+                if ( pos + len + 2 > width ) {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n\t\t  " ) )
                         return 0;
                     pos = 16 + 2;
                 }
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len + 2;
                 ip = ip->next;
             }
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " }\n"))
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
         }
-        if (tp->varbinds) {
-            struct Parse_VarbindList_s *vp = tp->varbinds;
-            int             first = 1;
+        if ( tp->varbinds ) {
+            struct Parse_VarbindList_s* vp = tp->varbinds;
+            int first = 1;
 
-            if (tp->type == PARSE_TYPE_TRAPTYPE) {
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                    "  VARIABLES\t{ "))
+            if ( tp->type == PARSE_TYPE_TRAPTYPE ) {
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                         "  VARIABLES\t{ " ) )
                     return 0;
             } else {
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                    "  OBJECTS\t{ "))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                         "  OBJECTS\t{ " ) )
                     return 0;
             }
             pos = 16 + 2;
-            while (vp) {
-                if (first)
+            while ( vp ) {
+                if ( first )
                     first = 0;
-                else
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, ", "))
-                        return 0;
-                Strlcpy_strlcpy(str, vp->vblabel, sizeof(str));
-                len = strlen(str);
-                if (pos + len + 2 > width) {
-                    if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                                    "\n\t\t  "))
+                else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                    return 0;
+                Strlcpy_strlcpy( str, vp->vblabel, sizeof( str ) );
+                len = strlen( str );
+                if ( pos + len + 2 > width ) {
+                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                             "\n\t\t  " ) )
                         return 0;
                     pos = 16 + 2;
                 }
-                if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, str))
+                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len + 2;
                 vp = vp->next;
             }
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " }\n"))
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
         }
-        if (tp->description)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                              "  DESCRIPTION\t\"") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tp->description) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "\"\n"))
+        if ( tp->description )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  DESCRIPTION\t\"" )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->description ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
                 return 0;
-        if (tp->defaultValue)
-            if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc,
-                              "  DEFVAL\t{ ") ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, tp->defaultValue) ||
-                !Tools_cstrcat(buf, buf_len, out_len, allow_realloc, " }\n"))
+        if ( tp->defaultValue )
+            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                     "  DEFVAL\t{ " )
+                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->defaultValue ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
-    } else
-        if (!Tools_cstrcat(buf, buf_len, out_len, allow_realloc, "No description\n"))
-            return 0;
+    } else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "No description\n" ) )
+        return 0;
     return 1;
 }
 
-int Mib_getModuleNode(const char *fname,
-                const char *module, oid * objid, size_t * objidlen)
+int Mib_getModuleNode( const char* fname,
+    const char* module, oid* objid, size_t* objidlen )
 {
-    int             modid, rc = 0;
-    struct Parse_Tree_s    *tp;
-    char           *name, *cp;
+    int modid, rc = 0;
+    struct Parse_Tree_s* tp;
+    char *name, *cp;
 
-    if (!strcmp(module, "ANY"))
+    if ( !strcmp( module, "ANY" ) )
         modid = -1;
     else {
-        Parse_readModule(module);
-        modid = Parse_whichModule(module);
-        if (modid == -1)
+        Parse_readModule( module );
+        modid = Parse_whichModule( module );
+        if ( modid == -1 )
             return 0;
     }
 
     /*
      * Isolate the first component of the name ...
      */
-    name = strdup(fname);
-    cp = strchr(name, '.');
-    if (cp != NULL) {
+    name = strdup( fname );
+    cp = strchr( name, '.' );
+    if ( cp != NULL ) {
         *cp = '\0';
         cp++;
     }
     /*
      * ... and locate it in the tree.
      */
-    tp = Parse_findTreeNode(name, modid);
-    if (tp) {
-        size_t          maxlen = *objidlen;
+    tp = Parse_findTreeNode( name, modid );
+    if ( tp ) {
+        size_t maxlen = *objidlen;
 
         /*
          * Set the first element of the object ID
          */
-        if (_Mib_nodeToOid(tp, objid, objidlen)) {
+        if ( _Mib_nodeToOid( tp, objid, objidlen ) ) {
             rc = 1;
 
             /*
              * If the name requested was more than one element,
              * tag on the rest of the components
              */
-            if (cp != NULL)
-                rc = _Mib_addStringsToOid(tp, cp, objid, objidlen, maxlen);
+            if ( cp != NULL )
+                rc = _Mib_addStringsToOid( tp, cp, objid, objidlen, maxlen );
         }
     }
 
-    TOOLS_FREE(name);
-    return (rc);
+    TOOLS_FREE( name );
+    return ( rc );
 }
-
 
 /**
  * @internal
@@ -4895,140 +4763,141 @@ int Mib_getModuleNode(const char *fname,
  * and the buffer contents are indeterminate.
  * The buffer length can be used to create a larger buffer.
  */
-static int _Mib_nodeToOid(struct Parse_Tree_s *tp, oid * objid, size_t * objidlen)
+static int _Mib_nodeToOid( struct Parse_Tree_s* tp, oid* objid, size_t* objidlen )
 {
-    int             numids, lenids;
-    oid            *op;
+    int numids, lenids;
+    oid* op;
 
-    if (!tp || !objid || !objidlen)
+    if ( !tp || !objid || !objidlen )
         return 0;
 
-    lenids = (int) *objidlen;
-    op = objid + lenids;        /* points after the last element */
+    lenids = ( int )*objidlen;
+    op = objid + lenids; /* points after the last element */
 
-    for (numids = 0; tp; tp = tp->parent, numids++) {
-        if (numids >= lenids)
+    for ( numids = 0; tp; tp = tp->parent, numids++ ) {
+        if ( numids >= lenids )
             continue;
         --op;
         *op = tp->subid;
     }
 
-    *objidlen = (size_t) numids;
-    if (numids > lenids) {
+    *objidlen = ( size_t )numids;
+    if ( numids > lenids ) {
         return 0;
     }
 
-    if (numids < lenids)
-        memmove(objid, op, numids * sizeof(oid));
+    if ( numids < lenids )
+        memmove( objid, op, numids * sizeof( oid ) );
 
-    return (numids);
+    return ( numids );
 }
 
 /*
  * Replace \x with x stop at eos_marker
  * return NULL if eos_marker not found
  */
-static char *_Mib_applyEscapes(char *src, char eos_marker)
+static char* _Mib_applyEscapes( char* src, char eos_marker )
 {
-    char *dst;
+    char* dst;
     int backslash = 0;
 
     dst = src;
-    while (*src) {
-    if (backslash) {
-        backslash = 0;
-        *dst++ = *src;
-    } else {
-        if (eos_marker == *src) break;
-        if ('\\' == *src) {
-        backslash = 1;
+    while ( *src ) {
+        if ( backslash ) {
+            backslash = 0;
+            *dst++ = *src;
         } else {
-        *dst++ = *src;
+            if ( eos_marker == *src )
+                break;
+            if ( '\\' == *src ) {
+                backslash = 1;
+            } else {
+                *dst++ = *src;
+            }
         }
+        src++;
     }
-    src++;
-    }
-    if (!*src) {
-    /* never found eos_marker */
-    return NULL;
+    if ( !*src ) {
+        /* never found eos_marker */
+        return NULL;
     } else {
-    *dst = 0;
-    return src;
+        *dst = 0;
+        return src;
     }
 }
 
-static int _Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
-                    oid * objid, size_t * objidlen, size_t maxlen)
+static int _Mib_addStringsToOid( struct Parse_Tree_s* tp, char* cp,
+    oid* objid, size_t* objidlen, size_t maxlen )
 {
-    oid             subid;
-    int             len_index = 1000000;
-    struct Parse_Tree_s    *tp2 = NULL;
-    struct Parse_IndexList_s *in_dices = NULL;
-    char           *fcp, *ecp, *cp2 = NULL;
-    char            doingquote;
-    int             len = -1, pos = -1;
-    int             check = !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE);
-    int             do_hint = !DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT);
+    oid subid;
+    int len_index = 1000000;
+    struct Parse_Tree_s* tp2 = NULL;
+    struct Parse_IndexList_s* in_dices = NULL;
+    char *fcp, *ecp, *cp2 = NULL;
+    char doingquote;
+    int len = -1, pos = -1;
+    int check = !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE );
+    int do_hint = !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT );
 
-    while (cp && tp && tp->child_list) {
+    while ( cp && tp && tp->child_list ) {
         fcp = cp;
         tp2 = tp->child_list;
         /*
          * Isolate the next entry
          */
-        cp2 = strchr(cp, '.');
-        if (cp2)
+        cp2 = strchr( cp, '.' );
+        if ( cp2 )
             *cp2++ = '\0';
 
         /*
          * Search for the appropriate child
          */
-        if (isdigit((unsigned char)(*cp))) {
-            subid = strtoul(cp, &ecp, 0);
-            if (*ecp)
+        if ( isdigit( ( unsigned char )( *cp ) ) ) {
+            subid = strtoul( cp, &ecp, 0 );
+            if ( *ecp )
                 goto goto_badId;
-            while (tp2 && tp2->subid != subid)
+            while ( tp2 && tp2->subid != subid )
                 tp2 = tp2->next_peer;
         } else {
-            while (tp2 && strcmp(tp2->label, fcp))
+            while ( tp2 && strcmp( tp2->label, fcp ) )
                 tp2 = tp2->next_peer;
-            if (!tp2)
+            if ( !tp2 )
                 goto goto_badId;
             subid = tp2->subid;
         }
-        if (*objidlen >= maxlen)
+        if ( *objidlen >= maxlen )
             goto goto_badId;
-    while (tp2 && tp2->next_peer && tp2->next_peer->subid == subid)
-        tp2 = tp2->next_peer;
-        objid[*objidlen] = subid;
-        (*objidlen)++;
+        while ( tp2 && tp2->next_peer && tp2->next_peer->subid == subid )
+            tp2 = tp2->next_peer;
+        objid[ *objidlen ] = subid;
+        ( *objidlen )++;
 
         cp = cp2;
-        if (!tp2)
+        if ( !tp2 )
             break;
         tp = tp2;
     }
 
-    if (tp && !tp->child_list) {
-        if ((tp2 = tp->parent)) {
-            if (tp2->indexes)
+    if ( tp && !tp->child_list ) {
+        if ( ( tp2 = tp->parent ) ) {
+            if ( tp2->indexes )
                 in_dices = tp2->indexes;
-            else if (tp2->augments) {
-                tp2 = Parse_findTreeNode(tp2->augments, -1);
-                if (tp2)
+            else if ( tp2->augments ) {
+                tp2 = Parse_findTreeNode( tp2->augments, -1 );
+                if ( tp2 )
                     in_dices = tp2->indexes;
             }
         }
         tp = NULL;
     }
 
-    while (cp && in_dices) {
+    while ( cp && in_dices ) {
         fcp = cp;
 
-        tp = Parse_findTreeNode(in_dices->ilabel, -1);
-        if (!tp)
+        tp = Parse_findTreeNode( in_dices->ilabel, -1 );
+        if ( !tp )
             break;
-        switch (tp->type) {
+        switch ( tp->type ) {
         case PARSE_TYPE_INTEGER:
         case PARSE_TYPE_INTEGER32:
         case PARSE_TYPE_UINTEGER:
@@ -5037,181 +4906,180 @@ static int _Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
             /*
              * Isolate the next entry
              */
-            cp2 = strchr(cp, '.');
-            if (cp2)
+            cp2 = strchr( cp, '.' );
+            if ( cp2 )
                 *cp2++ = '\0';
-            if (isdigit((unsigned char)(*cp))) {
-                subid = strtoul(cp, &ecp, 0);
-                if (*ecp)
+            if ( isdigit( ( unsigned char )( *cp ) ) ) {
+                subid = strtoul( cp, &ecp, 0 );
+                if ( *ecp )
                     goto goto_badId;
             } else {
-                if (tp->enums) {
-                    struct Parse_EnumList_s *ep = tp->enums;
-                    while (ep && strcmp(ep->label, cp))
+                if ( tp->enums ) {
+                    struct Parse_EnumList_s* ep = tp->enums;
+                    while ( ep && strcmp( ep->label, cp ) )
                         ep = ep->next;
-                    if (!ep)
+                    if ( !ep )
                         goto goto_badId;
                     subid = ep->value;
                 } else
                     goto goto_badId;
             }
-            if (check && tp->ranges) {
-                struct Parse_RangeList_s *rp = tp->ranges;
-                int             ok = 0;
-                if (tp->type == PARSE_TYPE_INTEGER ||
-                    tp->type == PARSE_TYPE_INTEGER32) {
-                  while (!ok && rp) {
-                    if ((rp->low <= (int) subid)
-                        && ((int) subid <= rp->high))
-                        ok = 1;
-                    else
-                        rp = rp->next;
-                  }
+            if ( check && tp->ranges ) {
+                struct Parse_RangeList_s* rp = tp->ranges;
+                int ok = 0;
+                if ( tp->type == PARSE_TYPE_INTEGER || tp->type == PARSE_TYPE_INTEGER32 ) {
+                    while ( !ok && rp ) {
+                        if ( ( rp->low <= ( int )subid )
+                            && ( ( int )subid <= rp->high ) )
+                            ok = 1;
+                        else
+                            rp = rp->next;
+                    }
                 } else { /* check unsigned range */
-                  while (!ok && rp) {
-                    if (((unsigned int)rp->low <= subid)
-                        && (subid <= (unsigned int)rp->high))
-                        ok = 1;
-                    else
-                        rp = rp->next;
-                  }
+                    while ( !ok && rp ) {
+                        if ( ( ( unsigned int )rp->low <= subid )
+                            && ( subid <= ( unsigned int )rp->high ) )
+                            ok = 1;
+                        else
+                            rp = rp->next;
+                    }
                 }
-                if (!ok)
+                if ( !ok )
                     goto goto_badId;
             }
-            if (*objidlen >= maxlen)
+            if ( *objidlen >= maxlen )
                 goto goto_badId;
-            objid[*objidlen] = subid;
-            (*objidlen)++;
+            objid[ *objidlen ] = subid;
+            ( *objidlen )++;
             break;
         case PARSE_TYPE_IPADDR:
-            if (*objidlen + 4 > maxlen)
+            if ( *objidlen + 4 > maxlen )
                 goto goto_badId;
-            for (subid = 0; cp && subid < 4; subid++) {
+            for ( subid = 0; cp && subid < 4; subid++ ) {
                 fcp = cp;
-                cp2 = strchr(cp, '.');
-                if (cp2)
+                cp2 = strchr( cp, '.' );
+                if ( cp2 )
                     *cp2++ = 0;
-                objid[*objidlen] = strtoul(cp, &ecp, 0);
-                if (*ecp)
+                objid[ *objidlen ] = strtoul( cp, &ecp, 0 );
+                if ( *ecp )
                     goto goto_badId;
-                if (check && objid[*objidlen] > 255)
+                if ( check && objid[ *objidlen ] > 255 )
                     goto goto_badId;
-                (*objidlen)++;
+                ( *objidlen )++;
                 cp = cp2;
             }
             break;
         case PARSE_TYPE_OCTETSTR:
-            if (tp->ranges && !tp->ranges->next
-                && tp->ranges->low == tp->ranges->high)
+            if ( tp->ranges && !tp->ranges->next
+                && tp->ranges->low == tp->ranges->high )
                 len = tp->ranges->low;
             else
                 len = -1;
             pos = 0;
-            if (*cp == '"' || *cp == '\'') {
+            if ( *cp == '"' || *cp == '\'' ) {
                 doingquote = *cp++;
                 /*
                  * insert length if requested
                  */
-                if (!in_dices->isimplied && len == -1) {
-                    if (doingquote == '\'') {
-                        Api_setDetail
-                            ("'-quote is for fixed length strings");
+                if ( !in_dices->isimplied && len == -1 ) {
+                    if ( doingquote == '\'' ) {
+                        Api_setDetail( "'-quote is for fixed length strings" );
                         return 0;
                     }
-                    if (*objidlen >= maxlen)
+                    if ( *objidlen >= maxlen )
                         goto goto_badId;
                     len_index = *objidlen;
-                    (*objidlen)++;
-                } else if (doingquote == '"') {
-                    Api_setDetail
-                        ("\"-quote is for variable length strings");
+                    ( *objidlen )++;
+                } else if ( doingquote == '"' ) {
+                    Api_setDetail( "\"-quote is for variable length strings" );
                     return 0;
                 }
 
-        cp2 = _Mib_applyEscapes(cp, doingquote);
-        if (!cp2) goto goto_badId;
-        else {
-            unsigned char *new_val;
-            int new_val_len;
-            int parsed_hint = 0;
-            const char *parsed_value;
+                cp2 = _Mib_applyEscapes( cp, doingquote );
+                if ( !cp2 )
+                    goto goto_badId;
+                else {
+                    unsigned char* new_val;
+                    int new_val_len;
+                    int parsed_hint = 0;
+                    const char* parsed_value;
 
-            if (do_hint && tp->hint) {
-            parsed_value = Mib_parseOctetHint(tp->hint, cp,
-                                            &new_val, &new_val_len);
-            parsed_hint = parsed_value == NULL;
-            }
-            if (parsed_hint) {
-            int i;
-            for (i = 0; i < new_val_len; i++) {
-                if (*objidlen >= maxlen) goto goto_badId;
-                objid[ *objidlen ] = new_val[i];
-                (*objidlen)++;
-                pos++;
-            }
-            TOOLS_FREE(new_val);
-            } else {
-            while(*cp) {
-                if (*objidlen >= maxlen) goto goto_badId;
-                objid[ *objidlen ] = *cp++;
-                (*objidlen)++;
-                pos++;
-            }
-            }
-        }
+                    if ( do_hint && tp->hint ) {
+                        parsed_value = Mib_parseOctetHint( tp->hint, cp,
+                            &new_val, &new_val_len );
+                        parsed_hint = parsed_value == NULL;
+                    }
+                    if ( parsed_hint ) {
+                        int i;
+                        for ( i = 0; i < new_val_len; i++ ) {
+                            if ( *objidlen >= maxlen )
+                                goto goto_badId;
+                            objid[ *objidlen ] = new_val[ i ];
+                            ( *objidlen )++;
+                            pos++;
+                        }
+                        TOOLS_FREE( new_val );
+                    } else {
+                        while ( *cp ) {
+                            if ( *objidlen >= maxlen )
+                                goto goto_badId;
+                            objid[ *objidlen ] = *cp++;
+                            ( *objidlen )++;
+                            pos++;
+                        }
+                    }
+                }
 
-        cp2++;
-                if (!*cp2)
+                cp2++;
+                if ( !*cp2 )
                     cp2 = NULL;
-                else if (*cp2 != '.')
+                else if ( *cp2 != '.' )
                     goto goto_badId;
                 else
                     cp2++;
-        if (check) {
-                    if (len == -1) {
-                        struct Parse_RangeList_s *rp = tp->ranges;
-                        int             ok = 0;
-                        while (rp && !ok)
-                            if (rp->low <= pos && pos <= rp->high)
+                if ( check ) {
+                    if ( len == -1 ) {
+                        struct Parse_RangeList_s* rp = tp->ranges;
+                        int ok = 0;
+                        while ( rp && !ok )
+                            if ( rp->low <= pos && pos <= rp->high )
                                 ok = 1;
                             else
                                 rp = rp->next;
-                        if (!ok)
+                        if ( !ok )
                             goto goto_badId;
-                        if (!in_dices->isimplied)
-                            objid[len_index] = pos;
-                    } else if (pos != len)
+                        if ( !in_dices->isimplied )
+                            objid[ len_index ] = pos;
+                    } else if ( pos != len )
                         goto goto_badId;
-        }
-        else if (len == -1 && !in_dices->isimplied)
-            objid[len_index] = pos;
+                } else if ( len == -1 && !in_dices->isimplied )
+                    objid[ len_index ] = pos;
             } else {
-                if (!in_dices->isimplied && len == -1) {
+                if ( !in_dices->isimplied && len == -1 ) {
                     fcp = cp;
-                    cp2 = strchr(cp, '.');
-                    if (cp2)
+                    cp2 = strchr( cp, '.' );
+                    if ( cp2 )
                         *cp2++ = 0;
-                    len = strtoul(cp, &ecp, 0);
-                    if (*ecp)
+                    len = strtoul( cp, &ecp, 0 );
+                    if ( *ecp )
                         goto goto_badId;
-                    if (*objidlen + len + 1 >= maxlen)
+                    if ( *objidlen + len + 1 >= maxlen )
                         goto goto_badId;
-                    objid[*objidlen] = len;
-                    (*objidlen)++;
+                    objid[ *objidlen ] = len;
+                    ( *objidlen )++;
                     cp = cp2;
                 }
-                while (len && cp) {
+                while ( len && cp ) {
                     fcp = cp;
-                    cp2 = strchr(cp, '.');
-                    if (cp2)
+                    cp2 = strchr( cp, '.' );
+                    if ( cp2 )
                         *cp2++ = 0;
-                    objid[*objidlen] = strtoul(cp, &ecp, 0);
-                    if (*ecp)
+                    objid[ *objidlen ] = strtoul( cp, &ecp, 0 );
+                    if ( *ecp )
                         goto goto_badId;
-                    if (check && objid[*objidlen] > 255)
+                    if ( check && objid[ *objidlen ] > 255 )
                         goto goto_badId;
-                    (*objidlen)++;
+                    ( *objidlen )++;
                     len--;
                     cp = cp2;
                 }
@@ -5221,56 +5089,55 @@ static int _Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
             in_dices = NULL;
             cp2 = cp;
             break;
-    case PARSE_TYPE_NETADDR:
-        fcp = cp;
-        cp2 = strchr(cp, '.');
-        if (cp2)
-        *cp2++ = 0;
-        subid = strtoul(cp, &ecp, 0);
-        if (*ecp)
-        goto goto_badId;
-        if (*objidlen + 1 >= maxlen)
-        goto goto_badId;
-        objid[*objidlen] = subid;
-        (*objidlen)++;
-        cp = cp2;
-        if (subid == 1) {
-        for (len = 0; cp && len < 4; len++) {
+        case PARSE_TYPE_NETADDR:
             fcp = cp;
-            cp2 = strchr(cp, '.');
-            if (cp2)
-            *cp2++ = 0;
-            subid = strtoul(cp, &ecp, 0);
-            if (*ecp)
-            goto goto_badId;
-            if (*objidlen + 1 >= maxlen)
-            goto goto_badId;
-            if (check && subid > 255)
-            goto goto_badId;
-            objid[*objidlen] = subid;
-            (*objidlen)++;
+            cp2 = strchr( cp, '.' );
+            if ( cp2 )
+                *cp2++ = 0;
+            subid = strtoul( cp, &ecp, 0 );
+            if ( *ecp )
+                goto goto_badId;
+            if ( *objidlen + 1 >= maxlen )
+                goto goto_badId;
+            objid[ *objidlen ] = subid;
+            ( *objidlen )++;
             cp = cp2;
-        }
-        }
-        else {
-        in_dices = NULL;
-        }
-        break;
+            if ( subid == 1 ) {
+                for ( len = 0; cp && len < 4; len++ ) {
+                    fcp = cp;
+                    cp2 = strchr( cp, '.' );
+                    if ( cp2 )
+                        *cp2++ = 0;
+                    subid = strtoul( cp, &ecp, 0 );
+                    if ( *ecp )
+                        goto goto_badId;
+                    if ( *objidlen + 1 >= maxlen )
+                        goto goto_badId;
+                    if ( check && subid > 255 )
+                        goto goto_badId;
+                    objid[ *objidlen ] = subid;
+                    ( *objidlen )++;
+                    cp = cp2;
+                }
+            } else {
+                in_dices = NULL;
+            }
+            break;
         default:
-            Logger_log(LOGGER_PRIORITY_ERR, "Unexpected index type: %d %s %s\n",
-                     tp->type, in_dices->ilabel, cp);
+            Logger_log( LOGGER_PRIORITY_ERR, "Unexpected index type: %d %s %s\n",
+                tp->type, in_dices->ilabel, cp );
             in_dices = NULL;
             cp2 = cp;
             break;
         }
         cp = cp2;
-        if (in_dices)
+        if ( in_dices )
             in_dices = in_dices->next;
     }
 
-    while (cp) {
+    while ( cp ) {
         fcp = cp;
-        switch (*cp) {
+        switch ( *cp ) {
         case '0':
         case '1':
         case '2':
@@ -5281,16 +5148,16 @@ static int _Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
         case '7':
         case '8':
         case '9':
-            cp2 = strchr(cp, '.');
-            if (cp2)
+            cp2 = strchr( cp, '.' );
+            if ( cp2 )
                 *cp2++ = 0;
-            subid = strtoul(cp, &ecp, 0);
-            if (*ecp)
+            subid = strtoul( cp, &ecp, 0 );
+            if ( *ecp )
                 goto goto_badId;
-            if (*objidlen >= maxlen)
+            if ( *objidlen >= maxlen )
                 goto goto_badId;
-            objid[*objidlen] = subid;
-            (*objidlen)++;
+            objid[ *objidlen ] = subid;
+            ( *objidlen )++;
             break;
         case '"':
         case '\'':
@@ -5298,25 +5165,25 @@ static int _Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
             /*
              * insert length if requested
              */
-            if (doingquote == '"') {
-                if (*objidlen >= maxlen)
+            if ( doingquote == '"' ) {
+                if ( *objidlen >= maxlen )
                     goto goto_badId;
-                objid[*objidlen] = len = strchr(cp, doingquote) - cp;
-                (*objidlen)++;
+                objid[ *objidlen ] = len = strchr( cp, doingquote ) - cp;
+                ( *objidlen )++;
             }
 
-            if (!cp)
+            if ( !cp )
                 goto goto_badId;
-            while (*cp && *cp != doingquote) {
-                if (*objidlen >= maxlen)
+            while ( *cp && *cp != doingquote ) {
+                if ( *objidlen >= maxlen )
                     goto goto_badId;
-                objid[*objidlen] = *cp++;
-                (*objidlen)++;
+                objid[ *objidlen ] = *cp++;
+                ( *objidlen )++;
             }
             cp2 = cp + 1;
-            if (!*cp2)
+            if ( !*cp2 )
                 cp2 = NULL;
-            else if (*cp2 == '.')
+            else if ( *cp2 == '.' )
                 cp2++;
             else
                 goto goto_badId;
@@ -5328,77 +5195,75 @@ static int _Mib_addStringsToOid(struct Parse_Tree_s *tp, char *cp,
     }
     return 1;
 
-  goto_badId:
-    {
-        char            buf[256];
-        if (in_dices)
-            snprintf(buf, sizeof(buf), "Index out of range: %s (%s)",
-                    fcp, in_dices->ilabel);
-        else if (tp)
-            snprintf(buf, sizeof(buf), "Sub-id not found: %s -> %s", tp->label, fcp);
-        else
-            snprintf(buf, sizeof(buf), "%s", fcp);
-        buf[ sizeof(buf)-1 ] = 0;
+goto_badId : {
+    char buf[ 256 ];
+    if ( in_dices )
+        snprintf( buf, sizeof( buf ), "Index out of range: %s (%s)",
+            fcp, in_dices->ilabel );
+    else if ( tp )
+        snprintf( buf, sizeof( buf ), "Sub-id not found: %s -> %s", tp->label, fcp );
+    else
+        snprintf( buf, sizeof( buf ), "%s", fcp );
+    buf[ sizeof( buf ) - 1 ] = 0;
 
-        Api_setDetail(buf);
-    }
+    Api_setDetail( buf );
+}
     return 0;
 }
-
 
 /**
  * @see comments on find_best_tree_node for usage after first time.
  */
-int Mib_getWildNode(const char *name, oid * objid, size_t * objidlen)
+int Mib_getWildNode( const char* name, oid* objid, size_t* objidlen )
 {
-    struct Parse_Tree_s    *tp = Parse_findBestTreeNode(name, parse_treeHead, NULL);
-    if (!tp)
+    struct Parse_Tree_s* tp = Parse_findBestTreeNode( name, parse_treeHead, NULL );
+    if ( !tp )
         return 0;
-    return Mib_getNode(tp->label, objid, objidlen);
+    return Mib_getNode( tp->label, objid, objidlen );
 }
 
-int Mib_getNode(const char *name, oid * objid, size_t * objidlen)
+int Mib_getNode( const char* name, oid* objid, size_t* objidlen )
 {
-    const char     *cp;
-    char            ch;
-    int             res;
+    const char* cp;
+    char ch;
+    int res;
 
     cp = name;
-    while ((ch = *cp))
-        if (('0' <= ch && ch <= '9')
-            || ('a' <= ch && ch <= 'z')
-            || ('A' <= ch && ch <= 'Z')
-            || ch == '-')
+    while ( ( ch = *cp ) )
+        if ( ( '0' <= ch && ch <= '9' )
+            || ( 'a' <= ch && ch <= 'z' )
+            || ( 'A' <= ch && ch <= 'Z' )
+            || ch == '-' )
             cp++;
         else
             break;
-    if (ch != ':')
-        if (*name == '.')
-            res = Mib_getModuleNode(name + 1, "ANY", objid, objidlen);
+    if ( ch != ':' )
+        if ( *name == '.' )
+            res = Mib_getModuleNode( name + 1, "ANY", objid, objidlen );
         else
-            res = Mib_getModuleNode(name, "ANY", objid, objidlen);
+            res = Mib_getModuleNode( name, "ANY", objid, objidlen );
     else {
-        char           *module;
+        char* module;
         /*
          *  requested name is of the form
          *      "module:subidentifier"
          */
-        module = (char *) malloc((size_t) (cp - name + 1));
-        if (!module)
+        module = ( char* )malloc( ( size_t )( cp - name + 1 ) );
+        if ( !module )
             return ErrorCode_GENERR;
-        sprintf(module, "%.*s", (int) (cp - name), name);
-        cp++;                   /* cp now point to the subidentifier */
-        if (*cp == ':')
+        sprintf( module, "%.*s", ( int )( cp - name ), name );
+        cp++; /* cp now point to the subidentifier */
+        if ( *cp == ':' )
             cp++;
 
         /*
          * 'cp' and 'name' *do* go that way round!
          */
-        res = Mib_getModuleNode(cp, module, objid, objidlen);
-        TOOLS_FREE(module);
+        res = Mib_getModuleNode( cp, module, objid, objidlen );
+        TOOLS_FREE( module );
     }
-    if (res == 0) {
-        API_SET_PRIOT_ERROR(ErrorCode_UNKNOWN_OBJID);
+    if ( res == 0 ) {
+        API_SET_PRIOT_ERROR( ErrorCode_UNKNOWN_OBJID );
     }
 
     return res;
@@ -5407,12 +5272,12 @@ int Mib_getNode(const char *name, oid * objid, size_t * objidlen)
 /*
  * initialize: no peers included in the report.
  */
-void Mib_clearTreeFlags(register struct Parse_Tree_s *tp)
+void Mib_clearTreeFlags( register struct Parse_Tree_s* tp )
 {
-    for (; tp; tp = tp->next_peer) {
+    for ( ; tp; tp = tp->next_peer ) {
         tp->reported = 0;
-        if (tp->child_list)
-            Mib_clearTreeFlags(tp->child_list);
+        if ( tp->child_list )
+            Mib_clearTreeFlags( tp->child_list );
      /*RECURSE*/}
 }
 
@@ -5420,51 +5285,50 @@ void Mib_clearTreeFlags(register struct Parse_Tree_s *tp)
  * Update: 1998-07-17 <jhy@gsu.edu>
  * Added print_oid_report* functions.
  */
-static int      _mib_printSubtreeOidReportLabeledOid = 0;
-static int      _mib_printSubtreeOidReportOid = 0;
-static int      _mib_printSubtreeOidReportSymbolic = 0;
-static int      _mib_printSubtreeOidReportMibChildOid = 0;
-static int      _mib_printSubtreeOidReportSuffix = 0;
+static int _mib_printSubtreeOidReportLabeledOid = 0;
+static int _mib_printSubtreeOidReportOid = 0;
+static int _mib_printSubtreeOidReportSymbolic = 0;
+static int _mib_printSubtreeOidReportMibChildOid = 0;
+static int _mib_printSubtreeOidReportSuffix = 0;
 
 /*
  * These methods recurse.
  */
-static void     _Mib_printParentLabeledOid(FILE *, struct Parse_Tree_s *);
-static void     _Mib_printParentOid(FILE *, struct Parse_Tree_s *);
-static void     _Mib_printParentMibChildOid(FILE *, struct Parse_Tree_s *);
-static void     _Mib_printParentLabel(FILE *, struct Parse_Tree_s *);
-static void     _Mib_printSubtreeOidReport(FILE *, struct Parse_Tree_s *, int);
+static void _Mib_printParentLabeledOid( FILE*, struct Parse_Tree_s* );
+static void _Mib_printParentOid( FILE*, struct Parse_Tree_s* );
+static void _Mib_printParentMibChildOid( FILE*, struct Parse_Tree_s* );
+static void _Mib_printParentLabel( FILE*, struct Parse_Tree_s* );
+static void _Mib_printSubtreeOidReport( FILE*, struct Parse_Tree_s*, int );
 
-
-void Mib_printOidReport(FILE * fp)
+void Mib_printOidReport( FILE* fp )
 {
-    struct Parse_Tree_s    *tp;
-    Mib_clearTreeFlags(parse_treeHead);
-    for (tp = parse_treeHead; tp; tp = tp->next_peer)
-        _Mib_printSubtreeOidReport(fp, tp, 0);
+    struct Parse_Tree_s* tp;
+    Mib_clearTreeFlags( parse_treeHead );
+    for ( tp = parse_treeHead; tp; tp = tp->next_peer )
+        _Mib_printSubtreeOidReport( fp, tp, 0 );
 }
 
-void Mib_printOidReportEnableLabeledoid(void)
+void Mib_printOidReportEnableLabeledoid( void )
 {
     _mib_printSubtreeOidReportLabeledOid = 1;
 }
 
-void Mib_printOidReportEnableOid(void)
+void Mib_printOidReportEnableOid( void )
 {
     _mib_printSubtreeOidReportOid = 1;
 }
 
-void Mib_printOidReportEnableSuffix(void)
+void Mib_printOidReportEnableSuffix( void )
 {
     _mib_printSubtreeOidReportSuffix = 1;
 }
 
-void Mib_printOidReportEnableSymbolic(void)
+void Mib_printOidReportEnableSymbolic( void )
 {
     _mib_printSubtreeOidReportSymbolic = 1;
 }
 
-void Mib_printOidReportEnableMibChildOid(void)
+void Mib_printOidReportEnableMibChildOid( void )
 {
     _mib_printSubtreeOidReportMibChildOid = 1;
 }
@@ -5478,57 +5342,56 @@ void Mib_printOidReportEnableMibChildOid(void)
  * Warning: these methods are all recursive.
  */
 
-static void _Mib_printParentLabeledOid(FILE * f, struct Parse_Tree_s *tp)
+static void _Mib_printParentLabeledOid( FILE* f, struct Parse_Tree_s* tp )
 {
-    if (tp) {
-        if (tp->parent) {
-            _Mib_printParentLabeledOid(f, tp->parent);
+    if ( tp ) {
+        if ( tp->parent ) {
+            _Mib_printParentLabeledOid( f, tp->parent );
          /*RECURSE*/}
-        fprintf(f, ".%s(%lu)", tp->label, tp->subid);
+         fprintf( f, ".%s(%lu)", tp->label, tp->subid );
     }
 }
 
-static void _Mib_printParentOid(FILE * f, struct Parse_Tree_s *tp)
+static void _Mib_printParentOid( FILE* f, struct Parse_Tree_s* tp )
 {
-    if (tp) {
-        if (tp->parent) {
-            _Mib_printParentOid(f, tp->parent);
+    if ( tp ) {
+        if ( tp->parent ) {
+            _Mib_printParentOid( f, tp->parent );
          /*RECURSE*/}
-        fprintf(f, ".%lu", tp->subid);
+         fprintf( f, ".%lu", tp->subid );
     }
 }
 
-
-static void _Mib_printParentMibChildOid(FILE * f, struct Parse_Tree_s *tp)
+static void _Mib_printParentMibChildOid( FILE* f, struct Parse_Tree_s* tp )
 {
-    static struct Parse_Tree_s *temp;
-    unsigned long elems[100];
+    static struct Parse_Tree_s* temp;
+    unsigned long elems[ 100 ];
     int elem_cnt = 0;
     int i = 0;
     temp = tp;
-    if (temp) {
-        while (temp->parent) {
-                elems[elem_cnt++] = temp->subid;
-                temp = temp->parent;
+    if ( temp ) {
+        while ( temp->parent ) {
+            elems[ elem_cnt++ ] = temp->subid;
+            temp = temp->parent;
         }
-        elems[elem_cnt++] = temp->subid;
+        elems[ elem_cnt++ ] = temp->subid;
     }
-    for (i = elem_cnt - 1; i >= 0; i--) {
-        if (i == elem_cnt - 1) {
-            fprintf(f, "%lu", elems[i]);
-            } else {
-            fprintf(f, ".%lu", elems[i]);
+    for ( i = elem_cnt - 1; i >= 0; i-- ) {
+        if ( i == elem_cnt - 1 ) {
+            fprintf( f, "%lu", elems[ i ] );
+        } else {
+            fprintf( f, ".%lu", elems[ i ] );
         }
     }
 }
 
-static void _Mib_printParentLabel(FILE * f, struct Parse_Tree_s *tp)
+static void _Mib_printParentLabel( FILE* f, struct Parse_Tree_s* tp )
 {
-    if (tp) {
-        if (tp->parent) {
-            _Mib_printParentLabel(f, tp->parent);
+    if ( tp ) {
+        if ( tp->parent ) {
+            _Mib_printParentLabel( f, tp->parent );
          /*RECURSE*/}
-        fprintf(f, ".%s", tp->label);
+         fprintf( f, ".%s", tp->label );
     }
 }
 
@@ -5543,16 +5406,16 @@ static void _Mib_printParentLabel(FILE * f, struct Parse_Tree_s *tp)
  * @param count   ???
  */
 
-static void _Mib_printSubtreeOidReport(FILE * f, struct Parse_Tree_s *tree, int count)
+static void _Mib_printSubtreeOidReport( FILE* f, struct Parse_Tree_s* tree, int count )
 {
-    struct Parse_Tree_s    *tp;
+    struct Parse_Tree_s* tp;
 
     count++;
 
     /*
      * sanity check
      */
-    if (!tree) {
+    if ( !tree ) {
         return;
     }
 
@@ -5562,58 +5425,57 @@ static void _Mib_printSubtreeOidReport(FILE * f, struct Parse_Tree_s *tree, int 
      * set "reported" flag, and create report for this peer.
      * recurse using the children of this peer, if any.
      */
-    while (1) {
-        register struct Parse_Tree_s *ntp;
+    while ( 1 ) {
+        register struct Parse_Tree_s* ntp;
 
         tp = NULL;
-        for (ntp = tree->child_list; ntp; ntp = ntp->next_peer) {
-            if (ntp->reported)
+        for ( ntp = tree->child_list; ntp; ntp = ntp->next_peer ) {
+            if ( ntp->reported )
                 continue;
 
-            if (!tp || (tp->subid > ntp->subid))
+            if ( !tp || ( tp->subid > ntp->subid ) )
                 tp = ntp;
         }
-        if (!tp)
+        if ( !tp )
             break;
 
         tp->reported = 1;
 
-        if (_mib_printSubtreeOidReportLabeledOid) {
-            _Mib_printParentLabeledOid(f, tp);
-            fprintf(f, "\n");
+        if ( _mib_printSubtreeOidReportLabeledOid ) {
+            _Mib_printParentLabeledOid( f, tp );
+            fprintf( f, "\n" );
         }
-        if (_mib_printSubtreeOidReportOid) {
-            _Mib_printParentOid(f, tp);
-            fprintf(f, "\n");
+        if ( _mib_printSubtreeOidReportOid ) {
+            _Mib_printParentOid( f, tp );
+            fprintf( f, "\n" );
         }
-        if (_mib_printSubtreeOidReportSymbolic) {
-            _Mib_printParentLabel(f, tp);
-            fprintf(f, "\n");
+        if ( _mib_printSubtreeOidReportSymbolic ) {
+            _Mib_printParentLabel( f, tp );
+            fprintf( f, "\n" );
         }
-        if (_mib_printSubtreeOidReportMibChildOid) {
-        fprintf(f, "\"%s\"\t", tp->label);
-            fprintf(f, "\t\t\"");
-            _Mib_printParentMibChildOid(f, tp);
-            fprintf(f, "\"\n");
+        if ( _mib_printSubtreeOidReportMibChildOid ) {
+            fprintf( f, "\"%s\"\t", tp->label );
+            fprintf( f, "\t\t\"" );
+            _Mib_printParentMibChildOid( f, tp );
+            fprintf( f, "\"\n" );
         }
-        if (_mib_printSubtreeOidReportSuffix) {
-            int             i;
-            for (i = 0; i < count; i++)
-                fprintf(f, "  ");
-            fprintf(f, "%s(%ld) type=%d", tp->label, tp->subid, tp->type);
-            if (tp->tc_index != -1)
-                fprintf(f, " tc=%d", tp->tc_index);
-            if (tp->hint)
-                fprintf(f, " hint=%s", tp->hint);
-            if (tp->units)
-                fprintf(f, " units=%s", tp->units);
+        if ( _mib_printSubtreeOidReportSuffix ) {
+            int i;
+            for ( i = 0; i < count; i++ )
+                fprintf( f, "  " );
+            fprintf( f, "%s(%ld) type=%d", tp->label, tp->subid, tp->type );
+            if ( tp->tc_index != -1 )
+                fprintf( f, " tc=%d", tp->tc_index );
+            if ( tp->hint )
+                fprintf( f, " hint=%s", tp->hint );
+            if ( tp->units )
+                fprintf( f, " units=%s", tp->units );
 
-            fprintf(f, "\n");
+            fprintf( f, "\n" );
         }
-        _Mib_printSubtreeOidReport(f, tp, count);
+        _Mib_printSubtreeOidReport( f, tp, count );
      /*RECURSE*/}
 }
-
 
 /**
  * Converts timeticks to hours, minutes, seconds string.
@@ -5626,14 +5488,14 @@ static void _Mib_printSubtreeOidReport(FILE * f, struct Parse_Tree_s *tree, int 
  *
  * @see uptimeString
  */
-char * Mib_uptimeString(u_long timeticks, char *buf)
+char* Mib_uptimeString( u_long timeticks, char* buf )
 {
-    return Mib_uptimeStringN( timeticks, buf, 40);
+    return Mib_uptimeStringN( timeticks, buf, 40 );
 }
 
-char * Mib_uptimeStringN(u_long timeticks, char *buf, size_t buflen)
+char* Mib_uptimeStringN( u_long timeticks, char* buf, size_t buflen )
 {
-    _Mib_uptimeString(timeticks, buf, buflen);
+    _Mib_uptimeString( timeticks, buf, buflen );
     return buf;
 }
 
@@ -5652,54 +5514,54 @@ char * Mib_uptimeStringN(u_long timeticks, char *buf, size_t buflen)
  * @return        The root oid pointer if successful, or NULL otherwise.
  */
 
-oid * Mib_parseOid(const char *argv, oid * root, size_t * rootlen)
+oid* Mib_parseOid( const char* argv, oid* root, size_t* rootlen )
 {
-    size_t          savlen = *rootlen;
-    static size_t   tmpbuf_len = 0;
-    static char    *tmpbuf;
-    const char     *suffix, *prefix;
+    size_t savlen = *rootlen;
+    static size_t tmpbuf_len = 0;
+    static char* tmpbuf;
+    const char *suffix, *prefix;
 
-    suffix = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_OIDSUFFIX);
-    prefix = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_OIDPREFIX);
+    suffix = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_OIDSUFFIX );
+    prefix = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_OIDPREFIX );
 
-    if ((suffix && suffix[0]) || (prefix && prefix[0])) {
-        if (!suffix)
+    if ( ( suffix && suffix[ 0 ] ) || ( prefix && prefix[ 0 ] ) ) {
+        if ( !suffix )
             suffix = "";
-        if (!prefix)
+        if ( !prefix )
             prefix = "";
-        if ((strlen(suffix) + strlen(prefix) + strlen(argv) + 2) > tmpbuf_len) {
-            tmpbuf_len = strlen(suffix) + strlen(argv) + strlen(prefix) + 2;
-            tmpbuf = (char *)realloc(tmpbuf, tmpbuf_len);
+        if ( ( strlen( suffix ) + strlen( prefix ) + strlen( argv ) + 2 ) > tmpbuf_len ) {
+            tmpbuf_len = strlen( suffix ) + strlen( argv ) + strlen( prefix ) + 2;
+            tmpbuf = ( char* )realloc( tmpbuf, tmpbuf_len );
         }
-        snprintf(tmpbuf, tmpbuf_len, "%s%s%s%s", prefix, argv,
-                 ((suffix[0] == '.' || suffix[0] == '\0') ? "" : "."),
-                 suffix);
+        snprintf( tmpbuf, tmpbuf_len, "%s%s%s%s", prefix, argv,
+            ( ( suffix[ 0 ] == '.' || suffix[ 0 ] == '\0' ) ? "" : "." ),
+            suffix );
         argv = tmpbuf;
-        DEBUG_MSGTL(("priotParseOid","Parsing: %s\n",argv));
+        DEBUG_MSGTL( ( "priotParseOid", "Parsing: %s\n", argv ) );
     }
 
-    if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_RANDOM_ACCESS)
-        || strchr(argv, ':')) {
-        if (Mib_getNode(argv, root, rootlen)) {
+    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_RANDOM_ACCESS )
+        || strchr( argv, ':' ) ) {
+        if ( Mib_getNode( argv, root, rootlen ) ) {
             return root;
         }
-    } else if (DefaultStore_getBoolean(DsStorage_LIBRARY_ID, DsBool_REGEX_ACCESS)) {
-    Mib_clearTreeFlags(parse_treeHead);
-        if (Mib_getWildNode(argv, root, rootlen)) {
+    } else if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_REGEX_ACCESS ) ) {
+        Mib_clearTreeFlags( parse_treeHead );
+        if ( Mib_getWildNode( argv, root, rootlen ) ) {
             return root;
         }
     } else {
-        if (Mib_readObjid(argv, root, rootlen)) {
+        if ( Mib_readObjid( argv, root, rootlen ) ) {
             return root;
         }
         *rootlen = savlen;
-        if (Mib_getNode(argv, root, rootlen)) {
+        if ( Mib_getNode( argv, root, rootlen ) ) {
             return root;
         }
         *rootlen = savlen;
-        DEBUG_MSGTL(("parseOid", "wildly parsing\n"));
-    Mib_clearTreeFlags(parse_treeHead);
-        if (Mib_getWildNode(argv, root, rootlen)) {
+        DEBUG_MSGTL( ( "parseOid", "wildly parsing\n" ) );
+        Mib_clearTreeFlags( parse_treeHead );
+        if ( Mib_getWildNode( argv, root, rootlen ) ) {
             return root;
         }
     }
@@ -5721,12 +5583,12 @@ struct Mib_ParseHints_s {
     int format;
     int separator;
     int terminator;
-    unsigned char *result;
+    unsigned char* result;
     int result_max;
     int result_len;
 };
 
-static void _Mib_parseHintsReset(struct Mib_ParseHints_s *ph)
+static void _Mib_parseHintsReset( struct Mib_ParseHints_s* ph )
 {
     ph->length = 0;
     ph->repeat = 0;
@@ -5735,215 +5597,217 @@ static void _Mib_parseHintsReset(struct Mib_ParseHints_s *ph)
     ph->terminator = 0;
 }
 
-static void _Mib_parseHintsCtor(struct Mib_ParseHints_s *ph)
+static void _Mib_parseHintsCtor( struct Mib_ParseHints_s* ph )
 {
-    _Mib_parseHintsReset(ph);
+    _Mib_parseHintsReset( ph );
     ph->result = NULL;
     ph->result_max = 0;
     ph->result_len = 0;
 }
 
-static int _Mib_parseHintsAddResultOctet(struct Mib_ParseHints_s *ph, unsigned char octet)
+static int _Mib_parseHintsAddResultOctet( struct Mib_ParseHints_s* ph, unsigned char octet )
 {
-    if (!(ph->result_len < ph->result_max)) {
-    ph->result_max = ph->result_len + 32;
-    if (!ph->result) {
-        ph->result = (unsigned char *)malloc(ph->result_max);
-    } else {
-        ph->result = (unsigned char *)realloc(ph->result, ph->result_max);
-    }
-    }
-
-    if (!ph->result) {
-    return 0;		/* failed */
+    if ( !( ph->result_len < ph->result_max ) ) {
+        ph->result_max = ph->result_len + 32;
+        if ( !ph->result ) {
+            ph->result = ( unsigned char* )malloc( ph->result_max );
+        } else {
+            ph->result = ( unsigned char* )realloc( ph->result, ph->result_max );
+        }
     }
 
-    ph->result[ph->result_len++] = octet;
-    return 1;			/* success */
+    if ( !ph->result ) {
+        return 0; /* failed */
+    }
+
+    ph->result[ ph->result_len++ ] = octet;
+    return 1; /* success */
 }
 
-static int _Mib_parseHintsParse(struct Mib_ParseHints_s *ph, const char **v_in_out)
+static int _Mib_parseHintsParse( struct Mib_ParseHints_s* ph, const char** v_in_out )
 {
-    const char *v = *v_in_out;
-    char *nv;
+    const char* v = *v_in_out;
+    char* nv;
     int base;
     int repeats = 0;
     int repeat_fixup = ph->result_len;
 
-    if (ph->repeat) {
-    if (!_Mib_parseHintsAddResultOctet(ph, 0)) {
-        return 0;
-    }
+    if ( ph->repeat ) {
+        if ( !_Mib_parseHintsAddResultOctet( ph, 0 ) ) {
+            return 0;
+        }
     }
     do {
-    base = 0;
-    switch (ph->format) {
-    case 'x': base += 6;	/* fall through */
-    case 'd': base += 2;	/* fall through */
-    case 'o': base += 8;	/* fall through */
-        {
-        int i;
-        unsigned long number = strtol(v, &nv, base);
-        if (nv == v) return 0;
-        v = nv;
-        for (i = 0; i < ph->length; i++) {
-            int shift = 8 * (ph->length - 1 - i);
-            if (!_Mib_parseHintsAddResultOctet(ph, (u_char)(number >> shift) )) {
-            return 0; /* failed */
+        base = 0;
+        switch ( ph->format ) {
+        case 'x':
+            base += 6; /* fall through */
+        case 'd':
+            base += 2; /* fall through */
+        case 'o':
+            base += 8; /* fall through */
+            {
+                int i;
+                unsigned long number = strtol( v, &nv, base );
+                if ( nv == v )
+                    return 0;
+                v = nv;
+                for ( i = 0; i < ph->length; i++ ) {
+                    int shift = 8 * ( ph->length - 1 - i );
+                    if ( !_Mib_parseHintsAddResultOctet( ph, ( u_char )( number >> shift ) ) ) {
+                        return 0; /* failed */
+                    }
+                }
+            }
+            break;
+
+        case 'a': {
+            int i;
+
+            for ( i = 0; i < ph->length && *v; i++ ) {
+                if ( !_Mib_parseHintsAddResultOctet( ph, *v++ ) ) {
+                    return 0; /* failed */
+                }
+            }
+        } break;
+        }
+
+        repeats++;
+
+        if ( ph->separator && *v ) {
+            if ( *v == ph->separator ) {
+                v++;
+            } else {
+                return 0; /* failed */
             }
         }
-        }
-        break;
 
-    case 'a':
-        {
-        int i;
-
-        for (i = 0; i < ph->length && *v; i++) {
-            if (!_Mib_parseHintsAddResultOctet(ph, *v++)) {
-            return 0;	/* failed */
+        if ( ph->terminator ) {
+            if ( *v == ph->terminator ) {
+                v++;
+                break;
             }
         }
-        }
-        break;
-    }
-
-    repeats++;
-
-    if (ph->separator && *v) {
-        if (*v == ph->separator) {
-        v++;
-        } else {
-        return 0;		/* failed */
-        }
-    }
-
-    if (ph->terminator) {
-        if (*v == ph->terminator) {
-        v++;
-        break;
-        }
-    }
-    } while (ph->repeat && *v);
-    if (ph->repeat) {
-    ph->result[repeat_fixup] = repeats;
+    } while ( ph->repeat && *v );
+    if ( ph->repeat ) {
+        ph->result[ repeat_fixup ] = repeats;
     }
 
     *v_in_out = v;
     return 1;
 }
 
-static void _Mib_parseHintsLengthAddDigit(struct Mib_ParseHints_s *ph, int digit)
+static void _Mib_parseHintsLengthAddDigit( struct Mib_ParseHints_s* ph, int digit )
 {
     ph->length *= 10;
     ph->length += digit - '0';
 }
 
-const char * Mib_parseOctetHint(const char *hint, const char *value, unsigned char **new_val, int *new_val_len)
+const char* Mib_parseOctetHint( const char* hint, const char* value, unsigned char** new_val, int* new_val_len )
 {
-    const char *h = hint;
-    const char *v = value;
+    const char* h = hint;
+    const char* v = value;
     struct Mib_ParseHints_s ph;
     int retval = 1;
     /* See RFC 1443 */
     enum {
-    HINT_1_2,
-    HINT_2_3,
-    HINT_1_2_4,
-    HINT_1_2_5
-    } state = HINT_1_2;
+        HINT_1_2,
+        HINT_2_3,
+        HINT_1_2_4,
+        HINT_1_2_5
+    } state
+        = HINT_1_2;
 
-    _Mib_parseHintsCtor(&ph);
-    while (*h && *v && retval) {
-    switch (state) {
-    case HINT_1_2:
-        if ('*' == *h) {
-        ph.repeat = 1;
-        state = HINT_2_3;
-        } else if (isdigit((unsigned char)(*h))) {
-        _Mib_parseHintsLengthAddDigit(&ph, *h);
-        state = HINT_2_3;
-        } else {
-        return v;	/* failed */
+    _Mib_parseHintsCtor( &ph );
+    while ( *h && *v && retval ) {
+        switch ( state ) {
+        case HINT_1_2:
+            if ( '*' == *h ) {
+                ph.repeat = 1;
+                state = HINT_2_3;
+            } else if ( isdigit( ( unsigned char )( *h ) ) ) {
+                _Mib_parseHintsLengthAddDigit( &ph, *h );
+                state = HINT_2_3;
+            } else {
+                return v; /* failed */
+            }
+            break;
+
+        case HINT_2_3:
+            if ( isdigit( ( unsigned char )( *h ) ) ) {
+                _Mib_parseHintsLengthAddDigit( &ph, *h );
+                /* state = HINT_2_3 */
+            } else if ( 'x' == *h || 'd' == *h || 'o' == *h || 'a' == *h ) {
+                ph.format = *h;
+                state = HINT_1_2_4;
+            } else {
+                return v; /* failed */
+            }
+            break;
+
+        case HINT_1_2_4:
+            if ( '*' == *h ) {
+                retval = _Mib_parseHintsParse( &ph, &v );
+                _Mib_parseHintsReset( &ph );
+
+                ph.repeat = 1;
+                state = HINT_2_3;
+            } else if ( isdigit( ( unsigned char )( *h ) ) ) {
+                retval = _Mib_parseHintsParse( &ph, &v );
+                _Mib_parseHintsReset( &ph );
+
+                _Mib_parseHintsLengthAddDigit( &ph, *h );
+                state = HINT_2_3;
+            } else {
+                ph.separator = *h;
+                state = HINT_1_2_5;
+            }
+            break;
+
+        case HINT_1_2_5:
+            if ( '*' == *h ) {
+                retval = _Mib_parseHintsParse( &ph, &v );
+                _Mib_parseHintsReset( &ph );
+
+                ph.repeat = 1;
+                state = HINT_2_3;
+            } else if ( isdigit( ( unsigned char )( *h ) ) ) {
+                retval = _Mib_parseHintsParse( &ph, &v );
+                _Mib_parseHintsReset( &ph );
+
+                _Mib_parseHintsLengthAddDigit( &ph, *h );
+                state = HINT_2_3;
+            } else {
+                ph.terminator = *h;
+
+                retval = _Mib_parseHintsParse( &ph, &v );
+                _Mib_parseHintsReset( &ph );
+
+                state = HINT_1_2;
+            }
+            break;
         }
-        break;
-
-    case HINT_2_3:
-        if (isdigit((unsigned char)(*h))) {
-        _Mib_parseHintsLengthAddDigit(&ph, *h);
-        /* state = HINT_2_3 */
-        } else if ('x' == *h || 'd' == *h || 'o' == *h || 'a' == *h) {
-        ph.format = *h;
-        state = HINT_1_2_4;
-        } else {
-        return v;	/* failed */
-        }
-        break;
-
-    case HINT_1_2_4:
-        if ('*' == *h) {
-        retval = _Mib_parseHintsParse(&ph, &v);
-        _Mib_parseHintsReset(&ph);
-
-        ph.repeat = 1;
-        state = HINT_2_3;
-        } else if (isdigit((unsigned char)(*h))) {
-        retval = _Mib_parseHintsParse(&ph, &v);
-        _Mib_parseHintsReset(&ph);
-
-        _Mib_parseHintsLengthAddDigit(&ph, *h);
-        state = HINT_2_3;
-        } else {
-        ph.separator = *h;
-        state = HINT_1_2_5;
-        }
-        break;
-
-    case HINT_1_2_5:
-        if ('*' == *h) {
-        retval = _Mib_parseHintsParse(&ph, &v);
-        _Mib_parseHintsReset(&ph);
-
-        ph.repeat = 1;
-        state = HINT_2_3;
-        } else if (isdigit((unsigned char)(*h))) {
-        retval = _Mib_parseHintsParse(&ph, &v);
-        _Mib_parseHintsReset(&ph);
-
-        _Mib_parseHintsLengthAddDigit(&ph, *h);
-        state = HINT_2_3;
-        } else {
-        ph.terminator = *h;
-
-        retval = _Mib_parseHintsParse(&ph, &v);
-        _Mib_parseHintsReset(&ph);
-
-        state = HINT_1_2;
-        }
-        break;
+        h++;
     }
-    h++;
+    while ( *v && retval ) {
+        retval = _Mib_parseHintsParse( &ph, &v );
     }
-    while (*v && retval) {
-    retval = _Mib_parseHintsParse(&ph, &v);
-    }
-    if (retval) {
-    *new_val = ph.result;
-    *new_val_len = ph.result_len;
+    if ( retval ) {
+        *new_val = ph.result;
+        *new_val_len = ph.result_len;
     } else {
-    if (ph.result) {
-        TOOLS_FREE(ph.result);
-    }
-    *new_val = NULL;
-    *new_val_len = 0;
+        if ( ph.result ) {
+            TOOLS_FREE( ph.result );
+        }
+        *new_val = NULL;
+        *new_val_len = 0;
     }
     return retval ? NULL : v;
 }
 
-
-u_char Mib_toAsnType(int mib_type)
+u_char Mib_toAsnType( int mib_type )
 {
-    switch (mib_type) {
+    switch ( mib_type ) {
     case PARSE_TYPE_OBJID:
         return ASN01_OBJECT_ID;
 
@@ -5985,7 +5849,6 @@ u_char Mib_toAsnType(int mib_type)
 
     case PARSE_TYPE_NSAPADDRESS:
         return ASN01_NSAP;
-
     }
     return -1;
 }
@@ -6000,20 +5863,20 @@ u_char Mib_toAsnType(int mib_type)
  *
  * @return 0 on Sucess, 1 on failure.
  */
-int Mib_str2oid(const char *S, oid * O, int L)
+int Mib_str2oid( const char* S, oid* O, int L )
 {
-    const char     *c = S;
-    oid            *o = &O[1];
+    const char* c = S;
+    oid* o = &O[ 1 ];
 
-    --L;                        /* leave room for length prefix */
+    --L; /* leave room for length prefix */
 
-    for (; *c && L; --L, ++o, ++c)
+    for ( ; *c && L; --L, ++o, ++c )
         *o = *c;
 
     /*
      * make sure we got to the end of the string
      */
-    if (*c != 0)
+    if ( *c != 0 )
         return 1;
 
     /*
@@ -6034,19 +5897,19 @@ int Mib_str2oid(const char *S, oid * O, int L)
  *
  * @return 0 on Sucess, 1 on failure.
  */
-int Mib_oid2chars(char *C, int L, const oid * O)
+int Mib_oid2chars( char* C, int L, const oid* O )
 {
-    char           *c = C;
-    const oid      *o = &O[1];
+    char* c = C;
+    const oid* o = &O[ 1 ];
 
-    if (L < (int)*O)
+    if ( L < ( int )*O )
         return 1;
 
     L = *O; /** length */
-    for (; L; --L, ++o, ++c) {
-        if (*o > 0xFF)
+    for ( ; L; --L, ++o, ++c ) {
+        if ( *o > 0xFF )
             return 1;
-        *c = (char)*o;
+        *c = ( char )*o;
     }
     return 0;
 }
@@ -6061,15 +5924,15 @@ int Mib_oid2chars(char *C, int L, const oid * O)
  *
  * @return 0 on Sucess, 1 on failure.
  */
-int Mib_oid2str(char *S, int L, oid * O)
+int Mib_oid2str( char* S, int L, oid* O )
 {
-    int            rc;
+    int rc;
 
-    if (L <= (int)*O)
+    if ( L <= ( int )*O )
         return 1;
 
-    rc = Mib_oid2chars(S, L, O);
-    if (rc)
+    rc = Mib_oid2chars( S, L, O );
+    if ( rc )
         return 1;
 
     S[ *O ] = 0;
@@ -6077,261 +5940,251 @@ int Mib_oid2str(char *S, int L, oid * O)
     return 0;
 }
 
-
-int Mib_snprintByType(char *buf, size_t buf_len,
-                Types_VariableList * var,
-                const struct Parse_EnumList_s *enums,
-                const char *hint, const char *units)
+int Mib_snprintByType( char* buf, size_t buf_len,
+    Types_VariableList* var,
+    const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocByType((u_char **) & buf, &buf_len, &out_len, 0,
-                               var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocByType( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintHexString(char *buf, size_t buf_len, const u_char * cp, size_t len)
+int Mib_snprintHexString( char* buf, size_t buf_len, const u_char* cp, size_t len )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocHexString((u_char **) & buf, &buf_len, &out_len, 0,
-                                 cp, len))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocHexString( ( u_char** )&buf, &buf_len, &out_len, 0,
+             cp, len ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintAsciiString(char *buf, size_t buf_len,
-                    const u_char * cp, size_t len)
+int Mib_snprintAsciiString( char* buf, size_t buf_len,
+    const u_char* cp, size_t len )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocAsciiString
-        ((u_char **) & buf, &buf_len, &out_len, 0, cp, len))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocAsciiString( ( u_char** )&buf, &buf_len, &out_len, 0, cp, len ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintOctetString(char *buf, size_t buf_len,
-                     const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                     const char *hint, const char *units)
+int Mib_snprintOctetString( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocOctetString
-        ((u_char **) & buf, &buf_len, &out_len, 0, var, enums, hint,
-         units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocOctetString( ( u_char** )&buf, &buf_len, &out_len, 0, var, enums, hint,
+             units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintOpaque(char *buf, size_t buf_len,
-               const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-               const char *hint, const char *units)
+int Mib_snprintOpaque( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocOpaque((u_char **) & buf, &buf_len, &out_len, 0,
-                              var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocOpaque( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintObjectIdentifier(char *buf, size_t buf_len,
-                          const Types_VariableList * var,
-                          const struct Parse_EnumList_s *enums, const char *hint,
-                          const char *units)
+int Mib_snprintObjectIdentifier( char* buf, size_t buf_len,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums, const char* hint,
+    const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocObjectIdentifier
-        ((u_char **) & buf, &buf_len, &out_len, 0, var, enums, hint,
-         units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocObjectIdentifier( ( u_char** )&buf, &buf_len, &out_len, 0, var, enums, hint,
+             units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintTimeTicks(char *buf, size_t buf_len,
-                  const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                  const char *hint, const char *units)
+int Mib_snprintTimeTicks( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocTimeTicks((u_char **) & buf, &buf_len, &out_len, 0,
-                                 var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocTimeTicks( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintHintedInteger(char *buf, size_t buf_len,
-                       long val, const char *hint, const char *units)
+int Mib_snprintHintedInteger( char* buf, size_t buf_len,
+    long val, const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocHintedInteger
-        ((u_char **) & buf, &buf_len, &out_len, 0, val, 'd', hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocHintedInteger( ( u_char** )&buf, &buf_len, &out_len, 0, val, 'd', hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintInteger(char *buf, size_t buf_len,
-                const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                const char *hint, const char *units)
+int Mib_snprintInteger( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocInteger((u_char **) & buf, &buf_len, &out_len, 0,
-                               var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocInteger( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintUinteger(char *buf, size_t buf_len,
-                 const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                 const char *hint, const char *units)
+int Mib_snprintUinteger( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocUinteger((u_char **) & buf, &buf_len, &out_len, 0,
-                                var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocUinteger( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintGauge(char *buf, size_t buf_len,
-              const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-              const char *hint, const char *units)
+int Mib_snprintGauge( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocGauge((u_char **) & buf, &buf_len, &out_len, 0,
-                             var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocGauge( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintCounter(char *buf, size_t buf_len,
-                const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                const char *hint, const char *units)
+int Mib_snprintCounter( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocCounter((u_char **) & buf, &buf_len, &out_len, 0,
-                               var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocCounter( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintNetworkAddress(char *buf, size_t buf_len,
-                       const Types_VariableList * var,
-                       const struct Parse_EnumList_s *enums, const char *hint,
-                       const char *units)
+int Mib_snprintNetworkAddress( char* buf, size_t buf_len,
+    const Types_VariableList* var,
+    const struct Parse_EnumList_s* enums, const char* hint,
+    const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocNetworkAddress
-        ((u_char **) & buf, &buf_len, &out_len, 0, var, enums, hint,
-         units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocNetworkAddress( ( u_char** )&buf, &buf_len, &out_len, 0, var, enums, hint,
+             units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintIpAddress(char *buf, size_t buf_len,
-                  const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                  const char *hint, const char *units)
+int Mib_snprintIpAddress( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocIpAddress((u_char **) & buf, &buf_len, &out_len, 0,
-                                 var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocIpAddress( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintNull(char *buf, size_t buf_len,
-             const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-             const char *hint, const char *units)
+int Mib_snprintNull( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocNull((u_char **) & buf, &buf_len, &out_len, 0,
-                            var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocNull( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintBitString(char *buf, size_t buf_len,
-                  const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                  const char *hint, const char *units)
+int Mib_snprintBitString( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocBitString((u_char **) & buf, &buf_len, &out_len, 0,
-                                 var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocBitString( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintNsapAddress(char *buf, size_t buf_len,
-                    const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                    const char *hint, const char *units)
+int Mib_snprintNsapAddress( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocNsapAddress
-        ((u_char **) & buf, &buf_len, &out_len, 0, var, enums, hint,
-         units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocNsapAddress( ( u_char** )&buf, &buf_len, &out_len, 0, var, enums, hint,
+             units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintCounter64(char *buf, size_t buf_len,
-                  const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                  const char *hint, const char *units)
+int Mib_snprintCounter64( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocCounter64((u_char **) & buf, &buf_len, &out_len, 0,
-                                 var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocCounter64( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintBadType(char *buf, size_t buf_len,
-                const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-                const char *hint, const char *units)
+int Mib_snprintBadType( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocBadType((u_char **) & buf, &buf_len, &out_len, 0,
-                               var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocBadType( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintFloat(char *buf, size_t buf_len,
-              const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-              const char *hint, const char *units)
+int Mib_snprintFloat( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocFloat((u_char **) & buf, &buf_len, &out_len, 0,
-                             var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocFloat( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
 
-int Mib_snprintDouble(char *buf, size_t buf_len,
-               const Types_VariableList * var, const struct Parse_EnumList_s *enums,
-               const char *hint, const char *units)
+int Mib_snprintDouble( char* buf, size_t buf_len,
+    const Types_VariableList* var, const struct Parse_EnumList_s* enums,
+    const char* hint, const char* units )
 {
-    size_t          out_len = 0;
-    if (Mib_sprintReallocDouble((u_char **) & buf, &buf_len, &out_len, 0,
-                              var, enums, hint, units))
-        return (int) out_len;
+    size_t out_len = 0;
+    if ( Mib_sprintReallocDouble( ( u_char** )&buf, &buf_len, &out_len, 0,
+             var, enums, hint, units ) )
+        return ( int )out_len;
     else
         return -1;
 }
-
-
-

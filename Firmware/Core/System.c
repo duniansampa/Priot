@@ -1,19 +1,18 @@
 #include "System.h"
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <bits/ioctls.h>
-#include <pwd.h>
-#include <grp.h>
 #include "Debug.h"
 #include <arpa/inet.h>
+#include <grp.h>
+#include <net/if.h>
+#include <pwd.h>
+#include <sys/ioctl.h>
+#include <sys/ioctl.h>
 #include <sys/utsname.h>
 
-#include "Logger.h"
 #include "Api.h"
 #include "Assert.h"
-#include "Strlcpy.h"
+#include "Logger.h"
 #include "ReadConfig.h"
-
+#include "Strlcpy.h"
 
 /**
  * Compute res = a + b.
@@ -23,15 +22,15 @@
  * @note res may be the same variable as one of the operands. In other
  *   words, &a == &res || &b == &res may hold.
  */
-#define SYSTEM_TIMERADD(a, b, res)                   \
-{                                                    \
-    (res)->tv_sec  = (a)->tv_sec  + (b)->tv_sec;     \
-    (res)->tv_usec = (a)->tv_usec + (b)->tv_usec;    \
-    if ((res)->tv_usec >= 1000000L) {                \
-        (res)->tv_usec -= 1000000L;                  \
-        (res)->tv_sec++;                             \
-    }                                                \
-}
+#define SYSTEM_TIMERADD( a, b, res )                        \
+    {                                                       \
+        ( res )->tv_sec = ( a )->tv_sec + ( b )->tv_sec;    \
+        ( res )->tv_usec = ( a )->tv_usec + ( b )->tv_usec; \
+        if ( ( res )->tv_usec >= 1000000L ) {               \
+            ( res )->tv_usec -= 1000000L;                   \
+            ( res )->tv_sec++;                              \
+        }                                                   \
+    }
 
 /**
  * Compute res = a - b.
@@ -41,38 +40,38 @@
  * @note res may be the same variable as one of the operands. In other
  *   words, &a == &res || &b == &res may hold.
  */
-#define SYSTEM_TIMERSUB(a, b, res)                              \
-{                                                               \
-    (res)->tv_sec  = (a)->tv_sec  - (b)->tv_sec - 1;            \
-    (res)->tv_usec = (a)->tv_usec - (b)->tv_usec + 1000000L;    \
-    if ((res)->tv_usec >= 1000000L) {                           \
-        (res)->tv_usec -= 1000000L;                             \
-        (res)->tv_sec++;                                        \
-    }                                                           \
-}
+#define SYSTEM_TIMERSUB( a, b, res )                                   \
+    {                                                                  \
+        ( res )->tv_sec = ( a )->tv_sec - ( b )->tv_sec - 1;           \
+        ( res )->tv_usec = ( a )->tv_usec - ( b )->tv_usec + 1000000L; \
+        if ( ( res )->tv_usec >= 1000000L ) {                          \
+            ( res )->tv_usec -= 1000000L;                              \
+            ( res )->tv_sec++;                                         \
+        }                                                              \
+    }
 
-static void _System_daemonPrep(int stderr_log)
+static void _System_daemonPrep( int stderr_log )
 {
     /* Avoid keeping any directory in use. */
-    chdir("/");
+    chdir( "/" );
 
-    if (stderr_log)
+    if ( stderr_log )
         return;
 
     /*
      * Close inherited file descriptors to avoid
      * keeping unnecessary references.
      */
-    close(0);
-    close(1);
-    close(2);
+    close( 0 );
+    close( 1 );
+    close( 2 );
 
     /*
      * Redirect std{in,out,err} to /dev/null, just in case.
      */
-    open("/dev/null", O_RDWR);
-    dup(0);
-    dup(0);
+    open( "/dev/null", O_RDWR );
+    dup( 0 );
+    dup( 0 );
 }
 
 /**
@@ -97,27 +96,27 @@ static void _System_daemonPrep(int stderr_log)
  *           0 : child process returning
  *          >0 : parent process returning. returned value is the child PID.
  */
-int System_daemonize(int quit_immediately, int stderr_log)
+int System_daemonize( int quit_immediately, int stderr_log )
 {
     int i = 0;
-    DEBUG_MSGT(("daemonize","deamonizing...\n"));
+    DEBUG_MSGT( ( "daemonize", "deamonizing...\n" ) );
 
     /*
      * Fork to return control to the invoking process and to
      * guarantee that we aren't a process group leader.
      */
     i = fork();
-    if (i != 0) {
+    if ( i != 0 ) {
         /* Parent. */
-        DEBUG_MSGT(("daemonize","first fork returned %d.\n", i));
-        if(i == -1) {
-            //snmp_log(LOG_ERR,"first fork failed (errno %d) in "
+        DEBUG_MSGT( ( "daemonize", "first fork returned %d.\n", i ) );
+        if ( i == -1 ) {
+            //Logger_log(LOGGER_PRIORITY_ERR,"first fork failed (errno %d) in "
             //                 "netsnmp_daemonize()\n", errno);
             return -1;
         }
-        if (quit_immediately) {
-            DEBUG_MSGT(("daemonize","parent exiting\n"));
-            exit(0);
+        if ( quit_immediately ) {
+            DEBUG_MSGT( ( "daemonize", "parent exiting\n" ) );
+            exit( 0 );
         }
     } else {
         /* Child. */
@@ -128,42 +127,39 @@ int System_daemonize(int quit_immediately, int stderr_log)
         /*
          * Fork to let the process/session group leader exit.
          */
-        if ((i = fork()) != 0) {
-            DEBUG_MSGT(("daemonize","second fork returned %d.\n", i));
-            if(i == -1) {
-               //snmp_log(LOG_ERR,"second fork failed (errno %d) in netsnmp_daemonize()\n", errno);
+        if ( ( i = fork() ) != 0 ) {
+            DEBUG_MSGT( ( "daemonize", "second fork returned %d.\n", i ) );
+            if ( i == -1 ) {
+                //Logger_log(LOGGER_PRIORITY_ERR,"second fork failed (errno %d) in netsnmp_daemonize()\n", errno);
             }
             /* Parent. */
-            exit(0);
-        }
-        else {
+            exit( 0 );
+        } else {
             /* Child. */
 
-            DEBUG_MSGT(("daemonize","child continuing\n"));
+            DEBUG_MSGT( ( "daemonize", "child continuing\n" ) );
 
-            _System_daemonPrep(stderr_log);
-
+            _System_daemonPrep( stderr_log );
         }
     }
 
     return i;
 }
 
-
 /*
  * XXX  What if we have multiple addresses?  Or no addresses for that matter?
  * XXX  Could it be computed once then cached?  Probably not worth it (not
  *                                                           used very often).
  */
-in_addr_t System_getMyAddr(void)
+in_addr_t System_getMyAddr( void )
 {
-    int             sd, i, lastlen = 0;
-    struct ifconf   ifc;
-    struct ifreq   *ifrp = NULL;
-    in_addr_t       addr;
-    char           *buf = NULL;
+    int sd, i, lastlen = 0;
+    struct ifconf ifc;
+    struct ifreq* ifrp = NULL;
+    in_addr_t addr;
+    char* buf = NULL;
 
-    if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ( ( sd = socket( AF_INET, SOCK_DGRAM, 0 ) ) < 0 ) {
         return 0;
     }
 
@@ -173,29 +169,29 @@ in_addr_t System_getMyAddr(void)
      * I'', p.435.
      */
 
-    for (i = 8;; i += 8) {
-        buf = (char *) calloc(i, sizeof(struct ifreq));
-        if (buf == NULL) {
-            close(sd);
+    for ( i = 8;; i += 8 ) {
+        buf = ( char* )calloc( i, sizeof( struct ifreq ) );
+        if ( buf == NULL ) {
+            close( sd );
             return 0;
         }
-        ifc.ifc_len = i * sizeof(struct ifreq);
-        ifc.ifc_buf = (caddr_t) buf;
+        ifc.ifc_len = i * sizeof( struct ifreq );
+        ifc.ifc_buf = ( caddr_t )buf;
 
-        if (ioctl(sd, SIOCGIFCONF, (char *) &ifc) < 0) {
-            if (errno != EINVAL || lastlen != 0) {
+        if ( ioctl( sd, SIOCGIFCONF, ( char* )&ifc ) < 0 ) {
+            if ( errno != EINVAL || lastlen != 0 ) {
                 /*
                  * Something has gone genuinely wrong.
                  */
-                free(buf);
-                close(sd);
+                free( buf );
+                close( sd );
                 return 0;
             }
             /*
              * Otherwise, it could just be that the buffer is too small.
              */
         } else {
-            if (ifc.ifc_len == lastlen) {
+            if ( ifc.ifc_len == lastlen ) {
                 /*
                  * The length is the same as the last time; we're done.
                  */
@@ -203,169 +199,164 @@ in_addr_t System_getMyAddr(void)
             }
             lastlen = ifc.ifc_len;
         }
-        free(buf);
+        free( buf );
     }
 
-    for (ifrp = ifc.ifc_req; (char *)ifrp < (char *)ifc.ifc_req + ifc.ifc_len; ifrp++) {
+    for ( ifrp = ifc.ifc_req; ( char* )ifrp < ( char* )ifc.ifc_req + ifc.ifc_len; ifrp++ ) {
 
-        if (ifrp->ifr_addr.sa_family != AF_INET) {
+        if ( ifrp->ifr_addr.sa_family != AF_INET ) {
             continue;
         }
-        addr = ((struct sockaddr_in *) &(ifrp->ifr_addr))->sin_addr.s_addr;
+        addr = ( ( struct sockaddr_in* )&( ifrp->ifr_addr ) )->sin_addr.s_addr;
 
-        if (ioctl(sd, SIOCGIFFLAGS, (char *) ifrp) < 0) {
+        if ( ioctl( sd, SIOCGIFFLAGS, ( char* )ifrp ) < 0 ) {
             continue;
         }
-        if ((ifrp->ifr_flags & IFF_UP) && (ifrp->ifr_flags & IFF_RUNNING)
-                /* IFF_RUNNING */
-                && !(ifrp->ifr_flags & IFF_LOOPBACK)
-                && addr != INADDR_LOOPBACK) {
+        if ( ( ifrp->ifr_flags & IFF_UP ) && ( ifrp->ifr_flags & IFF_RUNNING )
+            /* IFF_RUNNING */
+            && !( ifrp->ifr_flags & IFF_LOOPBACK )
+            && addr != INADDR_LOOPBACK ) {
             /*
               * I *really* don't understand why this is necessary.  Perhaps for
               * some broken platform?  Leave it for now.  JBPN
               */
-            if (ioctl(sd, SIOCGIFADDR, (char *) ifrp) < 0) {
+            if ( ioctl( sd, SIOCGIFADDR, ( char* )ifrp ) < 0 ) {
                 continue;
             }
-            addr =
-                    ((struct sockaddr_in *) &(ifrp->ifr_addr))->sin_addr.
-                    s_addr;
+            addr = ( ( struct sockaddr_in* )&( ifrp->ifr_addr ) )->sin_addr.s_addr;
 
-            free(buf);
-            close(sd);
+            free( buf );
+            close( sd );
             return addr;
         }
     }
-    free(buf);
-    close(sd);
+    free( buf );
+    close( sd );
     return 0;
 }
-
 
 /**
  * Returns the system uptime in centiseconds.
  *
  * @note The value returned by this function is not identical to sysUpTime
- *   defined in RFC 1213. get_uptime() returns the system uptime while
+ *   defined in RFC 1213. System_getUptime() returns the system uptime while
  *   sysUpTime represents the time that has elapsed since the most recent
  *   restart of the network manager (snmpd).
  *
- * @see See also netsnmp_get_agent_uptime().
+ * @see See also Agent_getAgentUptime().
  */
-long System_getUptime(void) {
+long System_getUptime( void )
+{
 
-    FILE           *in = fopen("/proc/uptime", "r");
-    long            uptim = 0, a, b;
-    if (in) {
-        if (2 == fscanf(in, "%ld.%ld", &a, &b))
+    FILE* in = fopen( "/proc/uptime", "r" );
+    long uptim = 0, a, b;
+    if ( in ) {
+        if ( 2 == fscanf( in, "%ld.%ld", &a, &b ) )
             uptim = a * 100 + b;
-        fclose(in);
+        fclose( in );
     }
     return uptim;
 }
 
-
-int System_gethostbynameV4(const char * name, in_addr_t *addr_out)
+int System_gethostbynameV4( const char* name, in_addr_t* addr_out )
 {
 
-    struct addrinfo *addrs = NULL;
+    struct addrinfo* addrs = NULL;
     struct addrinfo hint;
-    int             err;
+    int err;
 
-    memset(&hint, 0, sizeof hint);
+    memset( &hint, 0, sizeof hint );
     hint.ai_flags = 0;
     hint.ai_family = PF_INET;
     hint.ai_socktype = SOCK_DGRAM;
     hint.ai_protocol = 0;
 
-    err = System_getaddrinfo(name, NULL, &hint, &addrs);
-    if (err != 0) {
+    err = System_getaddrinfo( name, NULL, &hint, &addrs );
+    if ( err != 0 ) {
         return -1;
     }
 
-    if (addrs != NULL) {
-        memcpy(addr_out,
-               &((struct sockaddr_in *) addrs->ai_addr)->sin_addr,
-               sizeof(in_addr_t));
-        freeaddrinfo(addrs);
+    if ( addrs != NULL ) {
+        memcpy( addr_out,
+            &( ( struct sockaddr_in* )addrs->ai_addr )->sin_addr,
+            sizeof( in_addr_t ) );
+        freeaddrinfo( addrs );
     } else {
-        DEBUG_MSGTL(("get_thisaddr",
-                    "Failed to resolve IPv4 hostname\n"));
+        DEBUG_MSGTL( ( "get_thisaddr",
+            "Failed to resolve IPv4 hostname\n" ) );
     }
     return 0;
 }
 
-
-int System_getaddrinfo(const char *name, const char *service,
-                    const struct addrinfo *hints, struct addrinfo **res)
+int System_getaddrinfo( const char* name, const char* service,
+    const struct addrinfo* hints, struct addrinfo** res )
 {
-    struct addrinfo *addrs = NULL;
+    struct addrinfo* addrs = NULL;
     struct addrinfo hint;
-    int             err;
+    int err;
 
-    DEBUG_MSGTL(("dns:getaddrinfo", "looking up "));
-    if (name)
-        DEBUG_MSG(("dns:getaddrinfo", "\"%s\"", name));
+    DEBUG_MSGTL( ( "dns:getaddrinfo", "looking up " ) );
+    if ( name )
+        DEBUG_MSG( ( "dns:getaddrinfo", "\"%s\"", name ) );
     else
-        DEBUG_MSG(("dns:getaddrinfo", "<NULL>"));
+        DEBUG_MSG( ( "dns:getaddrinfo", "<NULL>" ) );
 
-    if (service)
-    DEBUG_MSG(("dns:getaddrinfo", ":\"%s\"", service));
+    if ( service )
+        DEBUG_MSG( ( "dns:getaddrinfo", ":\"%s\"", service ) );
 
-    if (hints)
-    DEBUG_MSG(("dns:getaddrinfo", " with hint ({ ... })"));
+    if ( hints )
+        DEBUG_MSG( ( "dns:getaddrinfo", " with hint ({ ... })" ) );
     else
-    DEBUG_MSG(("dns:getaddrinfo", " with no hint"));
+        DEBUG_MSG( ( "dns:getaddrinfo", " with no hint" ) );
 
-    DEBUG_MSG(("dns:getaddrinfo", "\n"));
+    DEBUG_MSG( ( "dns:getaddrinfo", "\n" ) );
 
-    if (NULL == hints) {
-        memset(&hint, 0, sizeof hint);
+    if ( NULL == hints ) {
+        memset( &hint, 0, sizeof hint );
         hint.ai_flags = 0;
         hint.ai_family = PF_INET;
         hint.ai_socktype = SOCK_DGRAM;
         hint.ai_protocol = 0;
         hints = &hint;
     } else {
-        memcpy(&hint, hints, sizeof hint);
+        memcpy( &hint, hints, sizeof hint );
     }
 
-    err = getaddrinfo(name, NULL, &hint, &addrs);
+    err = getaddrinfo( name, NULL, &hint, &addrs );
 
     *res = addrs;
-    if ((0 == err) && addrs && addrs->ai_addr) {
-        DEBUG_MSGTL(("dns:getaddrinfo", "answer { AF_INET, %s:%hu }\n",
-                    inet_ntoa(((struct sockaddr_in*)addrs->ai_addr)->sin_addr),
-                    ntohs(((struct sockaddr_in*)addrs->ai_addr)->sin_port)));
+    if ( ( 0 == err ) && addrs && addrs->ai_addr ) {
+        DEBUG_MSGTL( ( "dns:getaddrinfo", "answer { AF_INET, %s:%hu }\n",
+            inet_ntoa( ( ( struct sockaddr_in* )addrs->ai_addr )->sin_addr ),
+            ntohs( ( ( struct sockaddr_in* )addrs->ai_addr )->sin_port ) ) );
     }
     return err;
 }
 
-struct hostent * System_gethostbyname(const char *name)
+struct hostent* System_gethostbyname( const char* name )
 {
 
-    struct hostent *hp = NULL;
+    struct hostent* hp = NULL;
 
-    if (NULL == name)
+    if ( NULL == name )
         return NULL;
 
-    DEBUG_MSGTL(("dns:gethostbyname", "looking up %s\n", name));
+    DEBUG_MSGTL( ( "dns:gethostbyname", "looking up %s\n", name ) );
 
-    hp = gethostbyname(name);
+    hp = gethostbyname( name );
 
-    if (hp == NULL) {
-        DEBUG_MSGTL(("dns:gethostbyname",
-                    "couldn't resolve %s\n", name));
-    } else if (hp->h_addrtype != AF_INET) {
-        DEBUG_MSGTL(("dns:gethostbyname",
-                    "warning: response for %s not AF_INET!\n", name));
+    if ( hp == NULL ) {
+        DEBUG_MSGTL( ( "dns:gethostbyname",
+            "couldn't resolve %s\n", name ) );
+    } else if ( hp->h_addrtype != AF_INET ) {
+        DEBUG_MSGTL( ( "dns:gethostbyname",
+            "warning: response for %s not AF_INET!\n", name ) );
     } else {
-        DEBUG_MSGTL(("dns:gethostbyname",
-                    "%s resolved okay\n", name));
+        DEBUG_MSGTL( ( "dns:gethostbyname",
+            "%s resolved okay\n", name ) );
     }
     return hp;
 }
-
 
 /**
  * Look up the host name via DNS.
@@ -380,22 +371,22 @@ struct hostent * System_gethostbyname(const char *name)
  *
  * @see See also the gethostbyaddr() man page.
  */
-struct hostent * System_gethostbyaddr(const void *addr, socklen_t len, int type)
+struct hostent* System_gethostbyaddr( const void* addr, socklen_t len, int type )
 {
-    struct hostent *hp = NULL;
-    char buf[64];
+    struct hostent* hp = NULL;
+    char buf[ 64 ];
 
-    DEBUG_MSGTL(("dns:gethostbyaddr", "resolving %s\n", inet_ntop(type, addr, buf, sizeof(buf))));
+    DEBUG_MSGTL( ( "dns:gethostbyaddr", "resolving %s\n", inet_ntop( type, addr, buf, sizeof( buf ) ) ) );
 
-    hp = gethostbyaddr(addr, len, type);
+    hp = gethostbyaddr( addr, len, type );
 
-    if (hp == NULL) {
-        DEBUG_MSGTL(("dns:gethostbyaddr", "couldn't resolve addr\n"));
-    } else if (hp->h_addrtype != AF_INET) {
-        DEBUG_MSGTL(("dns:gethostbyaddr",
-                    "warning: response for addr not AF_INET!\n"));
+    if ( hp == NULL ) {
+        DEBUG_MSGTL( ( "dns:gethostbyaddr", "couldn't resolve addr\n" ) );
+    } else if ( hp->h_addrtype != AF_INET ) {
+        DEBUG_MSGTL( ( "dns:gethostbyaddr",
+            "warning: response for addr not AF_INET!\n" ) );
     } else {
-        DEBUG_MSGTL(("dns:gethostbyaddr", "addr resolved okay\n"));
+        DEBUG_MSGTL( ( "dns:gethostbyaddr", "addr resolved okay\n" ) );
     }
     return hp;
 }
@@ -403,67 +394,66 @@ struct hostent * System_gethostbyaddr(const void *addr, socklen_t len, int type)
 /**
  * Compute (*now - *then) in centiseconds.
  */
-int System_calculateTimeDiff(const struct timeval *now, const struct timeval *then)
+int System_calculateTimeDiff( const struct timeval* now, const struct timeval* then )
 {
-    struct timeval  diff;
+    struct timeval diff;
 
-    SYSTEM_TIMERSUB(now, then, &diff);
-    return (int)(diff.tv_sec * 100 + diff.tv_usec / 10000);
+    SYSTEM_TIMERSUB( now, then, &diff );
+    return ( int )( diff.tv_sec * 100 + diff.tv_usec / 10000 );
 }
 
 /** Compute rounded (*now - *then) in seconds. */
-uint System_calculateSectimeDiff(const struct timeval *now, const struct timeval *then)
+uint System_calculateSectimeDiff( const struct timeval* now, const struct timeval* then )
 {
-    struct timeval  diff;
+    struct timeval diff;
 
-    SYSTEM_TIMERSUB(now, then, &diff);
-    return diff.tv_sec + (diff.tv_usec >= 500000L);
+    SYSTEM_TIMERSUB( now, then, &diff );
+    return diff.tv_sec + ( diff.tv_usec >= 500000L );
 }
 
-
-int System_mkdirhier(const char *pathname, mode_t mode, int skiplast)
+int System_mkdirhier( const char* pathname, mode_t mode, int skiplast )
 {
-    struct stat     sbuf;
-    char           *ourcopy = strdup(pathname);
-    char           *entry;
-    char           *buf = NULL;
-    char           *st = NULL;
-    int          res;
+    struct stat sbuf;
+    char* ourcopy = strdup( pathname );
+    char* entry;
+    char* buf = NULL;
+    char* st = NULL;
+    int res;
 
     res = ErrorCode_GENERR;
-    if (!ourcopy)
+    if ( !ourcopy )
         goto goto_out;
 
-    buf = (char *)malloc(strlen(pathname) + 2);
-    if (!buf)
+    buf = ( char* )malloc( strlen( pathname ) + 2 );
+    if ( !buf )
         goto goto_out;
 
-    entry = strtok_r(ourcopy, "/", &st);
+    entry = strtok_r( ourcopy, "/", &st );
 
-    buf[0] = '\0';
+    buf[ 0 ] = '\0';
 
     /*
      * check to see if filename is a directory
      */
-    while (entry) {
-        strcat(buf, "/");
-        strcat(buf, entry);
-        entry = strtok_r(NULL, "/", &st);
-        if (entry == NULL && skiplast)
+    while ( entry ) {
+        strcat( buf, "/" );
+        strcat( buf, entry );
+        entry = strtok_r( NULL, "/", &st );
+        if ( entry == NULL && skiplast )
             break;
-        if (stat(buf, &sbuf) < 0) {
+        if ( stat( buf, &sbuf ) < 0 ) {
             /*
              * DNE, make it
              */
-            if (mkdir(buf, mode) == -1)
+            if ( mkdir( buf, mode ) == -1 )
                 goto goto_out;
             else
-                Logger_log(LOGGER_PRIORITY_INFO, "Created directory: %s\n", buf);
+                Logger_log( LOGGER_PRIORITY_INFO, "Created directory: %s\n", buf );
         } else {
             /*
              * exists, is it a file?
              */
-            if ((sbuf.st_mode & S_IFDIR) == 0) {
+            if ( ( sbuf.st_mode & S_IFDIR ) == 0 ) {
                 /*
                  * ack! can't make a directory on top of a file
                  */
@@ -473,11 +463,10 @@ int System_mkdirhier(const char *pathname, mode_t mode, int skiplast)
     }
     res = ErrorCode_SUCCESS;
 goto_out:
-    free(buf);
-    free(ourcopy);
+    free( buf );
+    free( ourcopy );
     return res;
 }
-
 
 /**
  * netsnmp_mktemp creates a temporary file based on the
@@ -485,28 +474,28 @@ goto_out:
  *
  * @return file descriptor
  */
-const char *
-System_mktemp(void)
+const char*
+System_mktemp( void )
 {
-    static char     name[PATH_MAX];
-    int             fd = -1;
+    static char name[ PATH_MAX ];
+    int fd = -1;
 
-    Strlcpy_strlcpy(name, ReadConfig_getTempFilePattern(), sizeof(name));
+    Strlcpy_strlcpy( name, ReadConfig_getTempFilePattern(), sizeof( name ) );
 
     {
-        mode_t oldmask = umask(~(S_IRUSR | S_IWUSR));
-        Assert_assert(oldmask != (mode_t)(-1));
-        fd = mkstemp(name);
-        umask(oldmask);
+        mode_t oldmask = umask( ~( S_IRUSR | S_IWUSR ) );
+        Assert_assert( oldmask != ( mode_t )( -1 ) );
+        fd = mkstemp( name );
+        umask( oldmask );
     }
-    if (fd >= 0) {
-        close(fd);
-        DEBUG_MSGTL(("System_mktemp", "temp file created: %s\n",
-                    name));
+    if ( fd >= 0 ) {
+        close( fd );
+        DEBUG_MSGTL( ( "System_mktemp", "temp file created: %s\n",
+            name ) );
         return name;
     }
-    Logger_log(LOGGER_PRIORITY_ERR, "System_mktemp: error creating file %s\n",
-             name);
+    Logger_log( LOGGER_PRIORITY_ERR, "System_mktemp: error creating file %s\n",
+        name );
     return NULL;
 }
 
@@ -523,25 +512,25 @@ System_mktemp(void)
  * If the release is ordered higher, return 1.
  * Be aware that "ordered higher" is not a guarantee of correctness.
  */
-int
-System_osPrematch(const char *ospmname,
-                    const char *ospmrelprefix){
-  static int printOSonce = 1;
-  struct utsname utsbuf;
-  if ( 0 > uname(&utsbuf))
-    return -1;
+int System_osPrematch( const char* ospmname,
+    const char* ospmrelprefix )
+{
+    static int printOSonce = 1;
+    struct utsname utsbuf;
+    if ( 0 > uname( &utsbuf ) )
+        return -1;
 
-  if (printOSonce) {
-    printOSonce = 0;
-    /* show the four elements that the kernel can be sure of */
-    DEBUG_MSGT(("daemonize","sysname '%s',\nrelease '%s',\nversion '%s',\nmachine '%s'\n",
-    utsbuf.sysname, utsbuf.release, utsbuf.version, utsbuf.machine));
-  }
-  if (0 != strcasecmp(utsbuf.sysname, ospmname))
-     return -1;
+    if ( printOSonce ) {
+        printOSonce = 0;
+        /* show the four elements that the kernel can be sure of */
+        DEBUG_MSGT( ( "daemonize", "sysname '%s',\nrelease '%s',\nversion '%s',\nmachine '%s'\n",
+            utsbuf.sysname, utsbuf.release, utsbuf.version, utsbuf.machine ) );
+    }
+    if ( 0 != strcasecmp( utsbuf.sysname, ospmname ) )
+        return -1;
 
-  /* Required to match only the leading characters */
-  return strncasecmp(utsbuf.release, ospmrelprefix, strlen(ospmrelprefix));
+    /* Required to match only the leading characters */
+    return strncasecmp( utsbuf.release, ospmrelprefix, strlen( ospmrelprefix ) );
 }
 
 /**
@@ -553,18 +542,19 @@ System_osPrematch(const char *ospmname,
  * @return Either a user number > 0 or 0 if useroruid is not a valid user
  *   name, not a valid user number or the name of the root user.
  */
-int System_strToUid(const char *useroruid) {
+int System_strToUid( const char* useroruid )
+{
     int uid;
-    struct passwd *pwd;
+    struct passwd* pwd;
 
-    uid = atoi(useroruid);
+    uid = atoi( useroruid );
 
-    if (uid == 0) {
-        pwd = getpwnam(useroruid);
+    if ( uid == 0 ) {
+        pwd = getpwnam( useroruid );
         uid = pwd ? pwd->pw_uid : 0;
         endpwent();
-        if (uid == 0)
-            Logger_log(LOGGER_PRIORITY_WARNING, "Can't identify user (%s).\n", useroruid);
+        if ( uid == 0 )
+            Logger_log( LOGGER_PRIORITY_WARNING, "Can't identify user (%s).\n", useroruid );
     }
     return uid;
 }
@@ -578,20 +568,20 @@ int System_strToUid(const char *useroruid) {
  * @return Either a group number > 0 or 0 if grouporgid is not a valid group
  *   name, not a valid group number or the root group.
  */
-int System_strToGid(const char *grouporgid)
+int System_strToGid( const char* grouporgid )
 {
     int gid;
 
-    gid = atoi(grouporgid);
+    gid = atoi( grouporgid );
 
-    if (gid == 0) {
-        struct group  *grp;
+    if ( gid == 0 ) {
+        struct group* grp;
 
-        grp = getgrnam(grouporgid);
+        grp = getgrnam( grouporgid );
         gid = grp ? grp->gr_gid : 0;
         endgrent();
-        if (gid == 0)
-            Logger_log(LOGGER_PRIORITY_WARNING, "Can't identify group (%s).\n", grouporgid);
+        if ( gid == 0 )
+            Logger_log( LOGGER_PRIORITY_WARNING, "Can't identify group (%s).\n", grouporgid );
     }
     return gid;
 }

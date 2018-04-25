@@ -39,7 +39,7 @@
  */
 #define WATCHER_SIZE_STRLEN    0x08
 /** If set then size is in units of object identifiers.
- *  This is useful if you have an OID and tracks the OID_LENGTH of it as
+ *  This is useful if you have an OID and tracks the ASN01_OID_LENGTH of it as
  *  opposed to it's size.
  *  @hideinitializer
  *  @since Net-SNMP 5.5.1

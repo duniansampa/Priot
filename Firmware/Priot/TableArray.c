@@ -159,14 +159,14 @@ TableArray_containerRegister(HandlerRegistration *reginfo,
           (NULL==cb->row_copy)) )) {
         Logger_log(LOGGER_PRIORITY_ERR, "table_array registration with incomplete "
                  "callback structure.\n");
-        free(tad); /* SNMP_FREE is overkill for local var */
+        free(tad); /* TOOLS_FREE is overkill for local var */
         return ErrorCode_GENERR;
     }
 
     if (NULL==container) {
         tad->table = Container_find("tableArray");
         Logger_log(LOGGER_PRIORITY_ERR, "table_array couldn't allocate container\n" );
-        free(tad); /* SNMP_FREE is overkill for local var */
+        free(tad); /* TOOLS_FREE is overkill for local var */
         return ErrorCode_GENERR;
     } else
         tad->table = container;

@@ -58,11 +58,11 @@ HEADERS += \
     TableIterator.h \
     TableRow.h \
     TableTdata.h \
-    ../Plugin/Utilities/Iquery.h \
-    ../Plugin/Utilities/ExecuteCmd.h \
+    ../Plugin/utilities/Iquery.h \
+    ../Plugin/utilities/ExecuteCmd.h \
     ../Plugin/Struct.h \
-    ../Plugin/V3/UsmConf.h \
-    ../Plugin/MibII/VacmConf.h \
+    ../Plugin/v3/UsmConf.h \
+    ../Plugin/mibII/VacmConf.h \
     ../Plugin/Agentx/Protocol.h \
     ../Plugin/Agentx/Protocol.h \
     ../Plugin/Agentx/Subagent.h \
@@ -109,10 +109,10 @@ SOURCES += \
     TableIterator.c \
     TableRow.c \
     TableTdata.c \
-    ../Plugin/Utilities/Iquery.c \
-    ../Plugin/Utilities/ExecuteCmd.c \
-    ../Plugin/V3/UsmConf.c \
-    ../Plugin/MibII/VacmConf.c \
+    ../Plugin/utilities/Iquery.c \
+    ../Plugin/utilities/ExecuteCmd.c \
+    ../Plugin/v3/UsmConf.c \
+    ../Plugin/mibII/VacmConf.c \
     ../Plugin/Agentx/Protocol.c \
     ../Plugin/Agentx/AgentxConfig.c \
     ../Plugin/Agentx/XClient.c \

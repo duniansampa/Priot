@@ -570,7 +570,7 @@ Client_setVarObjid(Types_VariableList * vp,
 /**
  * Client_setVarTypedValue is used to set data into the Types_VariableList
  * structure.  Used to return data to the snmp request via the
- * netsnmp_request_info structure's requestvb pointer.
+ * RequestInfo structure's requestvb pointer.
  *
  * @param newvar   the structure gets populated with the given data, type,
  *                 val_str, and valLen.
