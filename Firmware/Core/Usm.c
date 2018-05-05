@@ -1,18 +1,18 @@
 #include "Usm.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Tools.h"
 #include "Api.h"
-#include "LcdTime.h"
-#include "Priot.h"
-#include "Scapi.h"
-#include "Tc.h"
+#include "Client.h"
+#include "Debug.h"
 #include "DefaultStore.h"
 #include "Keytools.h"
-#include "Secmod.h"
+#include "LcdTime.h"
+#include "Logger.h"
+#include "Priot.h"
 #include "ReadConfig.h"
+#include "Scapi.h"
+#include "Secmod.h"
+#include "Tc.h"
+#include "Tools.h"
 #include "V3.h"
-#include "Client.h"
 
 /*
  * Usm.c
@@ -27,62 +27,59 @@
  *    (Designated on a per function.)
  */
 
-
-oid             usm_noAuthProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 1, 1 };
-oid             usm_hMACMD5AuthProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 1, 2 };
-oid             usm_hMACSHA1AuthProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 1, 3 };
-oid             usm_noPrivProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 1 };
-oid             usm_dESPrivProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 2 };
-oid             usm_aESPrivProtocol[10] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 4 };
+oid usm_noAuthProtocol[ 10 ] = { 1, 3, 6, 1, 6, 3, 10, 1, 1, 1 };
+oid usm_hMACMD5AuthProtocol[ 10 ] = { 1, 3, 6, 1, 6, 3, 10, 1, 1, 2 };
+oid usm_hMACSHA1AuthProtocol[ 10 ] = { 1, 3, 6, 1, 6, 3, 10, 1, 1, 3 };
+oid usm_noPrivProtocol[ 10 ] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 1 };
+oid usm_dESPrivProtocol[ 10 ] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 2 };
+oid usm_aESPrivProtocol[ 10 ] = { 1, 3, 6, 1, 6, 3, 10, 1, 2, 4 };
 /* backwards compat */
-oid *           usm_aES128PrivProtocol = usm_aESPrivProtocol;
+oid* usm_aES128PrivProtocol = usm_aESPrivProtocol;
 
-static u_int    _usm_dummyEtime, _usm_dummyEboot;       /* For LCDTIME_ISENGINEKNOWN(). */
+static u_int _usm_dummyEtime, _usm_dummyEboot; /* For LCDTIME_ISENGINEKNOWN(). */
 
 /*
  * Set up default snmpv3 parameter value storage.
  */
-static const oid * _usm_defaultAuthType = NULL;
-static size_t       _usm_defaultAuthTypeLen = 0;
-static const oid * _usm_defaultPrivType = NULL;
-static size_t       _usm_defaultPrivTypeLen = 0;
+static const oid* _usm_defaultAuthType = NULL;
+static size_t _usm_defaultAuthTypeLen = 0;
+static const oid* _usm_defaultPrivType = NULL;
+static size_t _usm_defaultPrivTypeLen = 0;
 
 /*
  * Globals.
  */
-static u_int    _usm_saltInteger;
-static u_int    _usm_saltInteger64One, _usm_saltInteger64Two;
-        /*
+static u_int _usm_saltInteger;
+static u_int _usm_saltInteger64One, _usm_saltInteger64Two;
+/*
          * 1/2 of seed for the salt.   Cf. RFC2274, Sect 8.1.1.1.
          */
 
-static struct Usm_User_s * _usm_noNameUser = NULL;
+static struct Usm_User_s* _usm_noNameUser = NULL;
 /*
  * Local storage (LCD) of the default user list.
  */
-static struct Usm_User_s * _usm_userList = NULL;
+static struct Usm_User_s* _usm_userList = NULL;
 
 /*
  * Prototypes
  */
-int
-                Usm_checkSecLevelVsProtocols(int level,
-                                                const oid * authProtocol,
-                                                u_int authProtocolLen,
-                                                const oid * privProtocol,
-                                                u_int privProtocolLen);
-int
-                Usm_calcOffsets(size_t globalDataLen,
-                                 int secLevel, size_t secEngineIDLen,
-                                 size_t secNameLen, size_t scopedPduLen,
-                                 u_long engineboots, long engine_time,
-                                 size_t * theTotalLength,
-                                 size_t * authParamsOffset,
-                                 size_t * privParamsOffset,
-                                 size_t * dataOffset, size_t * datalen,
-                                 size_t * msgAuthParmLen,
-                                 size_t * msgPrivParmLen, size_t * otstlen,
-                                 size_t * seq_len, size_t * msgSecParmLen);
+int Usm_checkSecLevelVsProtocols( int level,
+    const oid* authProtocol,
+    u_int authProtocolLen,
+    const oid* privProtocol,
+    u_int privProtocolLen );
+int Usm_calcOffsets( size_t globalDataLen,
+    int secLevel, size_t secEngineIDLen,
+    size_t secNameLen, size_t scopedPduLen,
+    u_long engineboots, long engine_time,
+    size_t* theTotalLength,
+    size_t* authParamsOffset,
+    size_t* privParamsOffset,
+    size_t* dataOffset, size_t* datalen,
+    size_t* msgAuthParmLen,
+    size_t* msgPrivParmLen, size_t* otstlen,
+    size_t* seq_len, size_t* msgSecParmLen );
 /*
  * Set a given field of the secStateRef.
  *
@@ -91,177 +88,153 @@ int
  *
  * Return 0 on success, -1 otherwise.
  */
-#define USM_MAKE_ENTRY( type, item, len, field, field_len )		\
-{									                            \
-    if (ref == NULL)						                    \
-        return -1;						                        \
-    if (ref->field != NULL)	{					                \
-        TOOLS_ZERO(ref->field, ref->field_len);			        \
-        TOOLS_FREE(ref->field);					                \
-    }								                            \
-    ref->field_len = 0;						                    \
-        if (len == 0 || item == NULL) {					        \
-        return 0;						                        \
-    }					 			                            \
-    if ((ref->field = (type*) malloc (len * sizeof(type))) == NULL)	\
-    {								                            \
-        return -1;						                        \
-    }								                            \
-                                                                \
-    memcpy (ref->field, item, len * sizeof(type));			    \
-    ref->field_len = len;						                \
-                                                                \
-    return 0;							                        \
-}
+#define USM_MAKE_ENTRY( type, item, len, field, field_len )                       \
+    {                                                                             \
+        if ( ref == NULL )                                                        \
+            return -1;                                                            \
+        if ( ref->field != NULL ) {                                               \
+            TOOLS_ZERO( ref->field, ref->field_len );                             \
+            TOOLS_FREE( ref->field );                                             \
+        }                                                                         \
+        ref->field_len = 0;                                                       \
+        if ( len == 0 || item == NULL ) {                                         \
+            return 0;                                                             \
+        }                                                                         \
+        if ( ( ref->field = ( type* )malloc( len * sizeof( type ) ) ) == NULL ) { \
+            return -1;                                                            \
+        }                                                                         \
+                                                                                  \
+        memcpy( ref->field, item, len * sizeof( type ) );                         \
+        ref->field_len = len;                                                     \
+                                                                                  \
+        return 0;                                                                 \
+    }
 
-
-int Usm_freeEnginetimeOnShutdown(int majorid, int minorid, void *serverarg,
-                void *clientarg)
+int Usm_freeEnginetimeOnShutdown( int majorid, int minorid, void* serverarg,
+    void* clientarg )
 {
-    u_char engineID[API_MAX_ENG_SIZE];
-    size_t engineID_len = sizeof(engineID);
+    u_char engineID[ API_MAX_ENG_SIZE ];
+    size_t engineID_len = sizeof( engineID );
 
-    DEBUG_MSGTL(("snmpv3", "free enginetime callback called\n"));
+    DEBUG_MSGTL( ( "snmpv3", "free enginetime callback called\n" ) );
 
-    engineID_len = V3_getEngineID(engineID, engineID_len);
-    if (engineID_len > 0)
-    LcdTime_freeEnginetime(engineID, engineID_len);
+    engineID_len = V3_getEngineID( engineID, engineID_len );
+    if ( engineID_len > 0 )
+        LcdTime_freeEnginetime( engineID, engineID_len );
     return 0;
 }
 
-struct Usm_StateReference_s *
-Usm_mallocUsmStateReference(void)
+struct Usm_StateReference_s*
+Usm_mallocUsmStateReference( void )
 {
-    struct Usm_StateReference_s *retval = (struct Usm_StateReference_s *)
-        calloc(1, sizeof(struct Usm_StateReference_s));
+    struct Usm_StateReference_s* retval = ( struct Usm_StateReference_s* )
+        calloc( 1, sizeof( struct Usm_StateReference_s ) );
 
     return retval;
-}                               /* end Usm_mallocUsmStateReference() */
+} /* end Usm_mallocUsmStateReference() */
 
-
-void
-Usm_freeUsmStateReference(void *old)
+void Usm_freeUsmStateReference( void* old )
 {
-    struct Usm_StateReference_s *old_ref = (struct Usm_StateReference_s *) old;
+    struct Usm_StateReference_s* old_ref = ( struct Usm_StateReference_s* )old;
 
-    if (old_ref) {
+    if ( old_ref ) {
 
-        TOOLS_FREE(old_ref->usr_name);
-        TOOLS_FREE(old_ref->usr_engine_id);
-        TOOLS_FREE(old_ref->usr_auth_protocol);
-        TOOLS_FREE(old_ref->usr_priv_protocol);
+        TOOLS_FREE( old_ref->usr_name );
+        TOOLS_FREE( old_ref->usr_engine_id );
+        TOOLS_FREE( old_ref->usr_auth_protocol );
+        TOOLS_FREE( old_ref->usr_priv_protocol );
 
-        if (old_ref->usr_auth_key) {
-            TOOLS_ZERO(old_ref->usr_auth_key, old_ref->usr_auth_key_length);
-            TOOLS_FREE(old_ref->usr_auth_key);
+        if ( old_ref->usr_auth_key ) {
+            TOOLS_ZERO( old_ref->usr_auth_key, old_ref->usr_auth_key_length );
+            TOOLS_FREE( old_ref->usr_auth_key );
         }
-        if (old_ref->usr_priv_key) {
-            TOOLS_ZERO(old_ref->usr_priv_key, old_ref->usr_priv_key_length);
-            TOOLS_FREE(old_ref->usr_priv_key);
+        if ( old_ref->usr_priv_key ) {
+            TOOLS_ZERO( old_ref->usr_priv_key, old_ref->usr_priv_key_length );
+            TOOLS_FREE( old_ref->usr_priv_key );
         }
 
-        TOOLS_ZERO(old_ref, sizeof(*old_ref));
-        TOOLS_FREE(old_ref);
-
+        TOOLS_ZERO( old_ref, sizeof( *old_ref ) );
+        TOOLS_FREE( old_ref );
     }
 
-}                               /* end Usm_freeUsmStateReference() */
+} /* end Usm_freeUsmStateReference() */
 
-struct Usm_User_s * Usm_getUserList(void)
+struct Usm_User_s* Usm_getUserList( void )
 {
     return _usm_userList;
 }
 
-int
-Usm_setUsmStateReferenceName(struct Usm_StateReference_s *ref,
-                               char *name, size_t name_len)
+int Usm_setUsmStateReferenceName( struct Usm_StateReference_s* ref,
+    char* name, size_t name_len )
 {
-    USM_MAKE_ENTRY(char, name, name_len, usr_name, usr_name_length);
+    USM_MAKE_ENTRY( char, name, name_len, usr_name, usr_name_length );
 }
 
-int
-Usm_setUsmStateReferenceEngineId(struct Usm_StateReference_s *ref,
-                                    u_char * engine_id,
-                                    size_t engine_id_len)
+int Usm_setUsmStateReferenceEngineId( struct Usm_StateReference_s* ref,
+    u_char* engine_id,
+    size_t engine_id_len )
 {
-    USM_MAKE_ENTRY(u_char, engine_id, engine_id_len,
-               usr_engine_id, usr_engine_id_length);
+    USM_MAKE_ENTRY( u_char, engine_id, engine_id_len,
+        usr_engine_id, usr_engine_id_length );
 }
 
-int
-Usm_setUsmStateReferenceAuthProtocol(struct Usm_StateReference_s *ref,
-                                        oid * auth_protocol,
-                                        size_t auth_protocol_len)
+int Usm_setUsmStateReferenceAuthProtocol( struct Usm_StateReference_s* ref,
+    oid* auth_protocol,
+    size_t auth_protocol_len )
 {
-    USM_MAKE_ENTRY(oid, auth_protocol, auth_protocol_len,
-               usr_auth_protocol, usr_auth_protocol_length);
+    USM_MAKE_ENTRY( oid, auth_protocol, auth_protocol_len,
+        usr_auth_protocol, usr_auth_protocol_length );
 }
 
-int
-Usm_setUsmStateReferenceAuthKey(struct Usm_StateReference_s *ref,
-                                   u_char * auth_key, size_t auth_key_len)
+int Usm_setUsmStateReferenceAuthKey( struct Usm_StateReference_s* ref,
+    u_char* auth_key, size_t auth_key_len )
 {
-    USM_MAKE_ENTRY(u_char, auth_key, auth_key_len,
-               usr_auth_key, usr_auth_key_length);
+    USM_MAKE_ENTRY( u_char, auth_key, auth_key_len,
+        usr_auth_key, usr_auth_key_length );
 }
 
-int
-Usm_setUsmStateReferencePrivProtocol(struct Usm_StateReference_s *ref,
-                                        oid * priv_protocol,
-                                        size_t priv_protocol_len)
+int Usm_setUsmStateReferencePrivProtocol( struct Usm_StateReference_s* ref,
+    oid* priv_protocol,
+    size_t priv_protocol_len )
 {
-    USM_MAKE_ENTRY(oid, priv_protocol, priv_protocol_len,
-               usr_priv_protocol, usr_priv_protocol_length);
+    USM_MAKE_ENTRY( oid, priv_protocol, priv_protocol_len,
+        usr_priv_protocol, usr_priv_protocol_length );
 }
 
-int
-Usm_setUsmStateReferencePrivKey(struct Usm_StateReference_s *ref,
-                                   u_char * priv_key, size_t priv_key_len)
+int Usm_setUsmStateReferencePrivKey( struct Usm_StateReference_s* ref,
+    u_char* priv_key, size_t priv_key_len )
 {
-    USM_MAKE_ENTRY(u_char, priv_key, priv_key_len,
-               usr_priv_key, usr_priv_key_length);
+    USM_MAKE_ENTRY( u_char, priv_key, priv_key_len,
+        usr_priv_key, usr_priv_key_length );
 }
 
-int
-Usm_setUsmStateReferenceSecLevel(struct Usm_StateReference_s *ref,
-                                    int sec_level)
+int Usm_setUsmStateReferenceSecLevel( struct Usm_StateReference_s* ref,
+    int sec_level )
 {
-    if (ref == NULL)
+    if ( ref == NULL )
         return -1;
     ref->usr_sec_level = sec_level;
     return 0;
 }
 
-int
-Usm_cloneUsmStateReference(struct Usm_StateReference_s *from, struct Usm_StateReference_s **to)
+int Usm_cloneUsmStateReference( struct Usm_StateReference_s* from, struct Usm_StateReference_s** to )
 {
-    struct Usm_StateReference_s *cloned_usmStateRef;
+    struct Usm_StateReference_s* cloned_usmStateRef;
 
-    if (from == NULL || to == NULL)
+    if ( from == NULL || to == NULL )
         return -1;
 
     *to = Usm_mallocUsmStateReference();
     cloned_usmStateRef = *to;
 
-    if (Usm_setUsmStateReferenceName(cloned_usmStateRef, from->usr_name, from->usr_name_length) ||
-        Usm_setUsmStateReferenceEngineId(cloned_usmStateRef, from->usr_engine_id, from->usr_engine_id_length) ||
-        Usm_setUsmStateReferenceAuthProtocol(cloned_usmStateRef, from->usr_auth_protocol, from->usr_auth_protocol_length) ||
-        Usm_setUsmStateReferenceAuthKey(cloned_usmStateRef, from->usr_auth_key, from->usr_auth_key_length) ||
-        Usm_setUsmStateReferencePrivProtocol(cloned_usmStateRef, from->usr_priv_protocol, from->usr_priv_protocol_length) ||
-        Usm_setUsmStateReferencePrivKey(cloned_usmStateRef, from->usr_priv_key, from->usr_priv_key_length) ||
-        Usm_setUsmStateReferenceSecLevel(cloned_usmStateRef, from->usr_sec_level))
-    {
-        Usm_freeUsmStateReference(*to);
+    if ( Usm_setUsmStateReferenceName( cloned_usmStateRef, from->usr_name, from->usr_name_length ) || Usm_setUsmStateReferenceEngineId( cloned_usmStateRef, from->usr_engine_id, from->usr_engine_id_length ) || Usm_setUsmStateReferenceAuthProtocol( cloned_usmStateRef, from->usr_auth_protocol, from->usr_auth_protocol_length ) || Usm_setUsmStateReferenceAuthKey( cloned_usmStateRef, from->usr_auth_key, from->usr_auth_key_length ) || Usm_setUsmStateReferencePrivProtocol( cloned_usmStateRef, from->usr_priv_protocol, from->usr_priv_protocol_length ) || Usm_setUsmStateReferencePrivKey( cloned_usmStateRef, from->usr_priv_key, from->usr_priv_key_length ) || Usm_setUsmStateReferenceSecLevel( cloned_usmStateRef, from->usr_sec_level ) ) {
+        Usm_freeUsmStateReference( *to );
         *to = NULL;
         return -1;
     }
 
     return 0;
-
 }
-
-
-
 
 /*******************************************************************-o-******
  * Usm_asnPredictIntLength
@@ -282,32 +255,27 @@ Usm_cloneUsmStateReference(struct Usm_StateReference_s *from, struct Usm_StateRe
  *
  *	Do this the same way as Asn01_buildInt()...
  */
-int
-Usm_asnPredictIntLength(int type, long number, size_t len)
+int Usm_asnPredictIntLength( int type, long number, size_t len )
 {
     register u_long mask;
 
-
-    if (len != sizeof(long))
+    if ( len != sizeof( long ) )
         return -1;
 
-    mask = ((u_long) 0x1FF) << ((8 * (sizeof(long) - 1)) - 1);
+    mask = ( ( u_long )0x1FF ) << ( ( 8 * ( sizeof( long ) - 1 ) ) - 1 );
     /*
      * mask is 0xFF800000 on a big-endian machine
      */
 
-    while ((((number & mask) == 0) || ((number & mask) == mask))
-           && len > 1) {
+    while ( ( ( ( number & mask ) == 0 ) || ( ( number & mask ) == mask ) )
+        && len > 1 ) {
         len--;
         number <<= 8;
     }
 
     return len;
 
-}                               /* end Usm_asnPredictLength() */
-
-
-
+} /* end Usm_asnPredictLength() */
 
 /*******************************************************************-o-******
  * Usm_asnPredictLength
@@ -330,30 +298,26 @@ Usm_asnPredictIntLength(int type, long number, size_t len)
  *
  * XXX	How is <n> chosen, exactly??
  */
-int
-Usm_asnPredictLength(int type, u_char * ptr, size_t u_char_len)
+int Usm_asnPredictLength( int type, u_char* ptr, size_t u_char_len )
 {
 
-    if (type & ASN01_SEQUENCE)
+    if ( type & ASN01_SEQUENCE )
         return 1 + 3 + u_char_len;
 
-    if (type & ASN01_INTEGER) {
-        u_long          value;
-        memcpy(&value, ptr, u_char_len);
-        u_char_len = Usm_asnPredictIntLength(type, value, u_char_len);
+    if ( type & ASN01_INTEGER ) {
+        u_long value;
+        memcpy( &value, ptr, u_char_len );
+        u_char_len = Usm_asnPredictIntLength( type, value, u_char_len );
     }
 
-    if (u_char_len < 0x80)
+    if ( u_char_len < 0x80 )
         return 1 + 1 + u_char_len;
-    else if (u_char_len < 0xFF)
+    else if ( u_char_len < 0xFF )
         return 1 + 2 + u_char_len;
     else
         return 1 + 3 + u_char_len;
 
-}                               /* end Usm_asnPredictLength() */
-
-
-
+} /* end Usm_asnPredictLength() */
 
 /*******************************************************************-o-******
  * Usm_calcOffsets
@@ -410,96 +374,102 @@ Usm_asnPredictLength(int type, u_char * ptr, size_t u_char_len)
  *	[11] = theTotalLength - the length of the header itself
  *	[12] = theTotalLength
  */
-int
-Usm_calcOffsets(size_t globalDataLen,  /* SNMPv3Message + HeaderData */
-                 int secLevel, size_t secEngineIDLen, size_t secNameLen, size_t scopedPduLen,   /* An BER encoded sequence. */
-                 u_long engineboots,    /* XXX (asn1.c works in long, not int.) */
-                 long engine_time,      /* XXX (asn1.c works in long, not int.) */
-                 size_t * theTotalLength,       /* globalDataLen + msgSecurityP. + msgData */
-                 size_t * authParamsOffset,     /* Distance to auth bytes.                 */
-                 size_t * privParamsOffset,     /* Distance to priv bytes.                 */
-                 size_t * dataOffset,   /* Distance to scopedPdu SEQ  -or-  the
+int Usm_calcOffsets( size_t globalDataLen, /* SNMPv3Message + HeaderData */
+    int secLevel, size_t secEngineIDLen, size_t secNameLen, size_t scopedPduLen, /* An BER encoded sequence. */
+    u_long engineboots, /* XXX (asn1.c works in long, not int.) */
+    long engine_time, /* XXX (asn1.c works in long, not int.) */
+    size_t* theTotalLength, /* globalDataLen + msgSecurityP. + msgData */
+    size_t* authParamsOffset, /* Distance to auth bytes.                 */
+    size_t* privParamsOffset, /* Distance to priv bytes.                 */
+    size_t* dataOffset, /* Distance to scopedPdu SEQ  -or-  the
                                          *   crypted (data) portion of msgData.    */
-                 size_t * datalen,      /* Size of msgData OCTET STRING encoding.  */
-                 size_t * msgAuthParmLen,       /* Size of msgAuthenticationParameters.    */
-                 size_t * msgPrivParmLen,       /* Size of msgPrivacyParameters.           */
-                 size_t * otstlen,      /* Size of msgSecurityP. O.S. encoding.    */
-                 size_t * seq_len,      /* Size of msgSecurityP. SEQ data.         */
-                 size_t * msgSecParmLen)
-{                               /* Size of msgSecurityP. SEQ.              */
-    int             engIDlen,   /* Sizes of OCTET STRING and SEQ encodings */
-                    engBtlen,   /*   for fields within                     */
-                    engTmlen,   /*   msgSecurityParameters portion of      */
-                    namelen,    /*   SNMPv3Message.                        */
-                    authlen, privlen, ret;
+    size_t* datalen, /* Size of msgData OCTET STRING encoding.  */
+    size_t* msgAuthParmLen, /* Size of msgAuthenticationParameters.    */
+    size_t* msgPrivParmLen, /* Size of msgPrivacyParameters.           */
+    size_t* otstlen, /* Size of msgSecurityP. O.S. encoding.    */
+    size_t* seq_len, /* Size of msgSecurityP. SEQ data.         */
+    size_t* msgSecParmLen )
+{ /* Size of msgSecurityP. SEQ.              */
+    int engIDlen, /* Sizes of OCTET STRING and SEQ encodings */
+        engBtlen, /*   for fields within                     */
+        engTmlen, /*   msgSecurityParameters portion of      */
+        namelen, /*   SNMPv3Message.                        */
+        authlen, privlen, ret;
 
     /*
      * If doing authentication, msgAuthParmLen = 12 else msgAuthParmLen = 0.
      * If doing encryption,     msgPrivParmLen = 8  else msgPrivParmLen = 0.
      */
-    *msgAuthParmLen = (secLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
-                       || secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) ? 12 : 0;
+    *msgAuthParmLen = ( secLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
+                          || secLevel == PRIOT_SEC_LEVEL_AUTHPRIV )
+        ? 12
+        : 0;
 
-    *msgPrivParmLen = (secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) ? 8 : 0;
-
+    *msgPrivParmLen = ( secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) ? 8 : 0;
 
     /*
      * Calculate lengths.
      */
-    if ((engIDlen = Usm_asnPredictLength(ASN01_OCTET_STR,
-                                       NULL, secEngineIDLen)) == -1) {
+    if ( ( engIDlen = Usm_asnPredictLength( ASN01_OCTET_STR,
+               NULL, secEngineIDLen ) )
+        == -1 ) {
         return -1;
     }
 
-    if ((engBtlen = Usm_asnPredictLength(ASN01_INTEGER,
-                                       (u_char *) & engineboots,
-                                       sizeof(long))) == -1) {
+    if ( ( engBtlen = Usm_asnPredictLength( ASN01_INTEGER,
+               ( u_char* )&engineboots,
+               sizeof( long ) ) )
+        == -1 ) {
         return -1;
     }
 
-    if ((engTmlen = Usm_asnPredictLength(ASN01_INTEGER,
-                                       (u_char *) & engine_time,
-                                       sizeof(long))) == -1) {
+    if ( ( engTmlen = Usm_asnPredictLength( ASN01_INTEGER,
+               ( u_char* )&engine_time,
+               sizeof( long ) ) )
+        == -1 ) {
         return -1;
     }
 
-    if ((namelen = Usm_asnPredictLength(ASN01_OCTET_STR,
-                                      NULL, secNameLen)) == -1) {
+    if ( ( namelen = Usm_asnPredictLength( ASN01_OCTET_STR,
+               NULL, secNameLen ) )
+        == -1 ) {
         return -1;
     }
 
-    if ((authlen = Usm_asnPredictLength(ASN01_OCTET_STR,
-                                      NULL, *msgAuthParmLen)) == -1) {
+    if ( ( authlen = Usm_asnPredictLength( ASN01_OCTET_STR,
+               NULL, *msgAuthParmLen ) )
+        == -1 ) {
         return -1;
     }
 
-    if ((privlen = Usm_asnPredictLength(ASN01_OCTET_STR,
-                                      NULL, *msgPrivParmLen)) == -1) {
+    if ( ( privlen = Usm_asnPredictLength( ASN01_OCTET_STR,
+               NULL, *msgPrivParmLen ) )
+        == -1 ) {
         return -1;
     }
 
-    *seq_len =
-        engIDlen + engBtlen + engTmlen + namelen + authlen + privlen;
+    *seq_len = engIDlen + engBtlen + engTmlen + namelen + authlen + privlen;
 
-    if ((ret = Usm_asnPredictLength(ASN01_SEQUENCE,
-                                      NULL, *seq_len)) == -1) {
+    if ( ( ret = Usm_asnPredictLength( ASN01_SEQUENCE,
+               NULL, *seq_len ) )
+        == -1 ) {
         return -1;
     }
-    *otstlen = (size_t)ret;
+    *otstlen = ( size_t )ret;
 
-    if ((ret = Usm_asnPredictLength(ASN01_OCTET_STR,
-                                      NULL, *otstlen)) == -1) {
+    if ( ( ret = Usm_asnPredictLength( ASN01_OCTET_STR,
+               NULL, *otstlen ) )
+        == -1 ) {
         return -1;
     }
-    *msgSecParmLen = (size_t)ret;
+    *msgSecParmLen = ( size_t )ret;
 
-    *authParamsOffset = globalDataLen + +(*msgSecParmLen - *seq_len)
+    *authParamsOffset = globalDataLen + +( *msgSecParmLen - *seq_len )
         + engIDlen + engBtlen + engTmlen + namelen
-        + (authlen - *msgAuthParmLen);
+        + ( authlen - *msgAuthParmLen );
 
     *privParamsOffset = *authParamsOffset + *msgAuthParmLen
-        + (privlen - *msgPrivParmLen);
-
+        + ( privlen - *msgPrivParmLen );
 
     /*
      * Compute the size of the plaintext.  Round up to account for cipher
@@ -513,28 +483,23 @@ Usm_calcOffsets(size_t globalDataLen,  /* SNMPv3Message + HeaderData */
      *      setting and sanity checking of theTotalLength, et al. should
      *      occur *after* encryption has taken place.
      */
-    if (secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        scopedPduLen = TOOLS_ROUNDUP8(scopedPduLen);
+    if ( secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        scopedPduLen = TOOLS_ROUNDUP8( scopedPduLen );
 
-        if ((ret = Usm_asnPredictLength(ASN01_OCTET_STR, NULL, scopedPduLen)) == -1) {
+        if ( ( ret = Usm_asnPredictLength( ASN01_OCTET_STR, NULL, scopedPduLen ) ) == -1 ) {
             return -1;
         }
-        *datalen = (size_t)ret;
+        *datalen = ( size_t )ret;
     } else {
         *datalen = scopedPduLen;
     }
 
-    *dataOffset = globalDataLen + *msgSecParmLen +
-        (*datalen - scopedPduLen);
+    *dataOffset = globalDataLen + *msgSecParmLen + ( *datalen - scopedPduLen );
     *theTotalLength = globalDataLen + *msgSecParmLen + *datalen;
 
     return 0;
 
-}                               /* end Usm_calcOffsets() */
-
-
-
-
+} /* end Usm_calcOffsets() */
 
 /*******************************************************************-o-******
  * Usm_setSalt
@@ -561,52 +526,47 @@ Usm_calcOffsets(size_t globalDataLen,  /* SNMPv3Message + HeaderData */
  *		portion of the private key (last 8 bytes).
  *	The IV result is returned individually for further use.
  */
-int
-Usm_setSalt(u_char * iv,
-             size_t * iv_length,
-             u_char * priv_salt, size_t priv_salt_length, u_char * msgSalt)
+int Usm_setSalt( u_char* iv,
+    size_t* iv_length,
+    u_char* priv_salt, size_t priv_salt_length, u_char* msgSalt )
 {
-    size_t          propersize_salt = TOOLS_BYTESIZE(USM_DES_SALT_LENGTH);
-    int             net_boots;
-    int             net_salt_int;
+    size_t propersize_salt = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+    int net_boots;
+    int net_salt_int;
     /*
      * net_* should be encoded in network byte order.  XXX  Why?
      */
-    int             iindex;
-
+    int iindex;
 
     /*
      * Sanity check.
      */
-    if (!iv || !iv_length || !priv_salt || (*iv_length != propersize_salt)
-        || (priv_salt_length < propersize_salt)) {
+    if ( !iv || !iv_length || !priv_salt || ( *iv_length != propersize_salt )
+        || ( priv_salt_length < propersize_salt ) ) {
         return -1;
     }
 
-
-    net_boots = htonl(V3_localEngineBoots());
-    net_salt_int = htonl(_usm_saltInteger);
+    net_boots = htonl( V3_localEngineBoots() );
+    net_salt_int = htonl( _usm_saltInteger );
 
     _usm_saltInteger += 1;
 
-    memcpy(iv, &net_boots, propersize_salt / 2);
-    memcpy(iv + (propersize_salt / 2), &net_salt_int, propersize_salt / 2);
+    memcpy( iv, &net_boots, propersize_salt / 2 );
+    memcpy( iv + ( propersize_salt / 2 ), &net_salt_int, propersize_salt / 2 );
 
-    if (msgSalt)
-        memcpy(msgSalt, iv, propersize_salt);
-
+    if ( msgSalt )
+        memcpy( msgSalt, iv, propersize_salt );
 
     /*
      * Turn the salt into an IV: XOR <boots, salt_int> with salt
      * portion of priv_key.
      */
-    for (iindex = 0; iindex < (int) propersize_salt; iindex++)
-        iv[iindex] ^= priv_salt[iindex];
-
+    for ( iindex = 0; iindex < ( int )propersize_salt; iindex++ )
+        iv[ iindex ] ^= priv_salt[ iindex ];
 
     return 0;
 
-}                               /* end Usm_setSalt() */
+} /* end Usm_setSalt() */
 
 /*******************************************************************-o-******
  * Usm_setAesIv
@@ -631,58 +591,56 @@ Usm_setSalt(u_char * iv,
  *	The resulting salt is copied into the salt buffer.
  *	The IV result is returned individually for further use.
  */
-int
-Usm_setAesIv(u_char * iv,
-               size_t * iv_length,
-               u_int net_boots,
-               u_int net_time,
-               u_char * salt)
+int Usm_setAesIv( u_char* iv,
+    size_t* iv_length,
+    u_int net_boots,
+    u_int net_time,
+    u_char* salt )
 {
     /*
      * net_* should be encoded in network byte order.
      */
-    int             net_salt_int1, net_salt_int2;
+    int net_salt_int1, net_salt_int2;
 #define PROPER_AES_IV_SIZE 64
 
     /*
      * Sanity check.
      */
-    if (!iv || !iv_length) {
+    if ( !iv || !iv_length ) {
         return -1;
     }
 
-    net_salt_int1 = htonl(_usm_saltInteger64One);
-    net_salt_int2 = htonl(_usm_saltInteger64Two);
+    net_salt_int1 = htonl( _usm_saltInteger64One );
+    net_salt_int2 = htonl( _usm_saltInteger64Two );
 
-    if ((_usm_saltInteger64Two += 1) == 0)
+    if ( ( _usm_saltInteger64Two += 1 ) == 0 )
         _usm_saltInteger64Two += 1;
 
     /* XXX: warning: hard coded proper lengths */
-    memcpy(iv, &net_boots, 4);
-    memcpy(iv+4, &net_time, 4);
-    memcpy(iv+8, &net_salt_int1, 4);
-    memcpy(iv+12, &net_salt_int2, 4);
+    memcpy( iv, &net_boots, 4 );
+    memcpy( iv + 4, &net_time, 4 );
+    memcpy( iv + 8, &net_salt_int1, 4 );
+    memcpy( iv + 12, &net_salt_int2, 4 );
 
-    memcpy(salt, iv+8, 8); /* only copy the needed portion */
+    memcpy( salt, iv + 8, 8 ); /* only copy the needed portion */
     return 0;
-}                               /* end Usm_setSalt() */
+} /* end Usm_setSalt() */
 
-int
-Usm_secmodGenerateOutMsg(struct Secmod_OutgoingParams_s *parms)
+int Usm_secmodGenerateOutMsg( struct Secmod_OutgoingParams_s* parms )
 {
-    if (!parms)
+    if ( !parms )
         return ErrorCode_GENERR;
 
-    return Usm_generateOutMsg(parms->msgProcModel,
-                                parms->globalData, parms->globalDataLen,
-                                parms->maxMsgSize, parms->secModel,
-                                parms->secEngineID, parms->secEngineIDLen,
-                                parms->secName, parms->secNameLen,
-                                parms->secLevel,
-                                parms->scopedPdu, parms->scopedPduLen,
-                                parms->secStateRef,
-                                parms->secParams, parms->secParamsLen,
-                                parms->wholeMsg, parms->wholeMsgLen);
+    return Usm_generateOutMsg( parms->msgProcModel,
+        parms->globalData, parms->globalDataLen,
+        parms->maxMsgSize, parms->secModel,
+        parms->secEngineID, parms->secEngineIDLen,
+        parms->secName, parms->secNameLen,
+        parms->secLevel,
+        parms->scopedPdu, parms->scopedPduLen,
+        parms->secStateRef,
+        parms->secParams, parms->secParamsLen,
+        parms->wholeMsg, parms->wholeMsgLen );
 }
 
 /*******************************************************************-o-******
@@ -705,10 +663,9 @@ Usm_secmodGenerateOutMsg(struct Secmod_OutgoingParams_s *parms)
  *
  * XXX	Beware of misnomers!
  */
-int
-Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
-                     u_char * globalData,       /* IN */
-                     /*
+int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
+    u_char* globalData, /* IN */
+    /*
                       * Pointer to msg header data will point to the beginning
                       * * of the entire packet buffer to be transmitted on wire,
                       * * memory will be contiguous with secParams, typically
@@ -721,64 +678,64 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
                       * * HeaderData.  globalDataLen (next parameter) represents
                       * * the length of these two completed parts.
                       */
-                     size_t globalDataLen,      /* IN - Length of msg header data.      */
-                     int maxMsgSize,    /* (UNUSED) */
-                     int secModel,      /* (UNUSED) */
-                     u_char * secEngineID,      /* IN - Pointer snmpEngineID.           */
-                     size_t secEngineIDLen,     /* IN - SnmpEngineID length.            */
-                     char *secName,     /* IN - Pointer to securityName.        */
-                     size_t secNameLen, /* IN - SecurityName length.            */
-                     int secLevel,      /* IN - AuthNoPriv, authPriv etc.       */
-                     u_char * scopedPdu,        /* IN */
-                     /*
+    size_t globalDataLen, /* IN - Length of msg header data.      */
+    int maxMsgSize, /* (UNUSED) */
+    int secModel, /* (UNUSED) */
+    u_char* secEngineID, /* IN - Pointer snmpEngineID.           */
+    size_t secEngineIDLen, /* IN - SnmpEngineID length.            */
+    char* secName, /* IN - Pointer to securityName.        */
+    size_t secNameLen, /* IN - SecurityName length.            */
+    int secLevel, /* IN - AuthNoPriv, authPriv etc.       */
+    u_char* scopedPdu, /* IN */
+    /*
                       * Pointer to scopedPdu will be encrypted by USM if needed
                       * * and written to packet buffer immediately following
                       * * securityParameters, entire msg will be authenticated by
                       * * USM if needed.
                       */
-                     size_t scopedPduLen,       /* IN - scopedPdu length. */
-                     void *secStateRef, /* IN */
-                     /*
+    size_t scopedPduLen, /* IN - scopedPdu length. */
+    void* secStateRef, /* IN */
+    /*
                       * secStateRef, pointer to cached info provided only for
                       * * Response, otherwise NULL.
                       */
-                     u_char * secParams,        /* OUT */
-                     /*
+    u_char* secParams, /* OUT */
+    /*
                       * BER encoded securityParameters pointer to offset within
                       * * packet buffer where secParams should be written, the
                       * * entire BER encoded OCTET STRING (including header) is
                       * * written here by USM secParams = globalData +
                       * * globalDataLen.
                       */
-                     size_t * secParamsLen,     /* IN/OUT - Len available, len returned. */
-                     u_char ** wholeMsg,        /* OUT */
-                     /*
+    size_t* secParamsLen, /* IN/OUT - Len available, len returned. */
+    u_char** wholeMsg, /* OUT */
+    /*
                       * Complete authenticated/encrypted message - typically
                       * * the pointer to start of packet buffer provided in
                       * * globalData is returned here, could also be a separate
                       * * buffer.
                       */
-                     size_t * wholeMsgLen)
-{                               /* IN/OUT - Len available, len returned. */
-    size_t          otstlen;
-    size_t          seq_len;
-    size_t          msgAuthParmLen;
-    size_t          msgPrivParmLen;
-    size_t          msgSecParmLen;
-    size_t          authParamsOffset;
-    size_t          privParamsOffset;
-    size_t          datalen;
-    size_t          dataOffset;
-    size_t          theTotalLength;
+    size_t* wholeMsgLen )
+{ /* IN/OUT - Len available, len returned. */
+    size_t otstlen;
+    size_t seq_len;
+    size_t msgAuthParmLen;
+    size_t msgPrivParmLen;
+    size_t msgSecParmLen;
+    size_t authParamsOffset;
+    size_t privParamsOffset;
+    size_t datalen;
+    size_t dataOffset;
+    size_t theTotalLength;
 
-    u_char         *ptr;
-    size_t          ptr_len;
-    size_t          remaining;
-    size_t          offSet;
-    u_int           boots_uint;
-    u_int           time_uint;
-    long            boots_long;
-    long            time_long;
+    u_char* ptr;
+    size_t ptr_len;
+    size_t remaining;
+    size_t offSet;
+    u_int boots_uint;
+    u_int time_uint;
+    long boots_long;
+    long time_long;
 
     /*
      * Indirection because secStateRef values override parameters.
@@ -788,37 +745,37 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      * actual prarmeter list or the user list.
      */
 
-    char           *theName = NULL;
-    u_int           theNameLength = 0;
-    u_char         *theEngineID = NULL;
-    u_int           theEngineIDLength = 0;
-    u_char         *theAuthKey = NULL;
-    u_int           theAuthKeyLength = 0;
-    const oid      *theAuthProtocol = NULL;
-    u_int           theAuthProtocolLength = 0;
-    u_char         *thePrivKey = NULL;
-    u_int           thePrivKeyLength = 0;
-    const oid      *thePrivProtocol = NULL;
-    u_int           thePrivProtocolLength = 0;
-    int             theSecLevel = 0;    /* No defined const for bad
+    char* theName = NULL;
+    u_int theNameLength = 0;
+    u_char* theEngineID = NULL;
+    u_int theEngineIDLength = 0;
+    u_char* theAuthKey = NULL;
+    u_int theAuthKeyLength = 0;
+    const oid* theAuthProtocol = NULL;
+    u_int theAuthProtocolLength = 0;
+    u_char* thePrivKey = NULL;
+    u_int thePrivKeyLength = 0;
+    const oid* thePrivProtocol = NULL;
+    u_int thePrivProtocolLength = 0;
+    int theSecLevel = 0; /* No defined const for bad
                                          * value (other then err).
                                          */
 
-    DEBUG_MSGTL(("usm", "USM processing has begun.\n"));
+    DEBUG_MSGTL( ( "usm", "USM processing has begun.\n" ) );
 
-    if (secStateRef != NULL) {
+    if ( secStateRef != NULL ) {
         /*
          * To hush the compiler for now.  XXX
          */
-        struct Usm_StateReference_s *ref
-            = (struct Usm_StateReference_s *) secStateRef;
+        struct Usm_StateReference_s* ref
+            = ( struct Usm_StateReference_s* )secStateRef;
 
         theName = ref->usr_name;
         theNameLength = ref->usr_name_length;
         theEngineID = ref->usr_engine_id;
         theEngineIDLength = ref->usr_engine_id_length;
 
-        if (!theEngineIDLength) {
+        if ( !theEngineIDLength ) {
             theEngineID = secEngineID;
             theEngineIDLength = secEngineIDLen;
         }
@@ -838,16 +795,17 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      * Identify the user record.
      */
     else {
-        struct Usm_User_s *user;
+        struct Usm_User_s* user;
 
         /*
          * we do allow an unknown user name for
          * unauthenticated requests.
          */
-        if ((user = Usm_getUser(secEngineID, secEngineIDLen, secName))
-            == NULL && secLevel != PRIOT_SEC_LEVEL_NOAUTH) {
-            DEBUG_MSGTL(("usm", "Unknown User(%s)\n", secName));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( ( user = Usm_getUser( secEngineID, secEngineIDLen, secName ) )
+                == NULL
+            && secLevel != PRIOT_SEC_LEVEL_NOAUTH ) {
+            DEBUG_MSGTL( ( "usm", "Unknown User(%s)\n", secName ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_UNKNOWNSECURITYNAME;
         }
 
@@ -856,7 +814,7 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
         theEngineID = secEngineID;
         theSecLevel = secLevel;
         theEngineIDLength = secEngineIDLen;
-        if (user) {
+        if ( user ) {
             theAuthProtocol = user->authProtocol;
             theAuthProtocolLength = user->authProtocolLen;
             theAuthKey = user->authKey;
@@ -870,39 +828,35 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
              * unknown users can not do authentication (obviously)
              */
             theAuthProtocol = usm_noAuthProtocol;
-            theAuthProtocolLength =
-                sizeof(usm_noAuthProtocol) / sizeof(oid);
+            theAuthProtocolLength = sizeof( usm_noAuthProtocol ) / sizeof( oid );
             theAuthKey = NULL;
             theAuthKeyLength = 0;
             thePrivProtocol = usm_noPrivProtocol;
-            thePrivProtocolLength =
-                sizeof(usm_noPrivProtocol) / sizeof(oid);
+            thePrivProtocolLength = sizeof( usm_noPrivProtocol ) / sizeof( oid );
             thePrivKey = NULL;
             thePrivKeyLength = 0;
         }
-    }                           /* endif -- secStateRef==NULL */
-
+    } /* endif -- secStateRef==NULL */
 
     /*
      * From here to the end of the function, avoid reference to
      * secName, secEngineID, secLevel, and associated lengths.
      */
 
-
     /*
      * Check to see if the user can use the requested sec services.
      */
-    if (Usm_checkSecLevelVsProtocols(theSecLevel,
-                                        theAuthProtocol,
-                                        theAuthProtocolLength,
-                                        thePrivProtocol,
-                                        thePrivProtocolLength) == 1) {
-        DEBUG_MSGTL(("usm", "Unsupported Security Level (%d)\n",
-                    theSecLevel));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( Usm_checkSecLevelVsProtocols( theSecLevel,
+             theAuthProtocol,
+             theAuthProtocolLength,
+             thePrivProtocol,
+             thePrivProtocolLength )
+        == 1 ) {
+        DEBUG_MSGTL( ( "usm", "Unsupported Security Level (%d)\n",
+            theSecLevel ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL;
     }
-
 
     /*
      * Retrieve the engine information.
@@ -910,26 +864,27 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      * XXX  No error is declared in the EoP when sending messages to
      *      unknown engines, processing continues w/ boots/time == (0,0).
      */
-    if (LcdTime_getEnginetime(theEngineID, theEngineIDLength,
-                       &boots_uint, &time_uint, FALSE) == -1) {
-        DEBUG_MSGTL(("usm", "%s\n", "Failed to find engine data."));
+    if ( LcdTime_getEnginetime( theEngineID, theEngineIDLength,
+             &boots_uint, &time_uint, FALSE )
+        == -1 ) {
+        DEBUG_MSGTL( ( "usm", "%s\n", "Failed to find engine data." ) );
     }
 
     boots_long = boots_uint;
     time_long = time_uint;
 
-
     /*
      * Set up the Offsets.
      */
-    if (Usm_calcOffsets(globalDataLen, theSecLevel, theEngineIDLength,
-                         theNameLength, scopedPduLen, boots_long,
-                         time_long, &theTotalLength, &authParamsOffset,
-                         &privParamsOffset, &dataOffset, &datalen,
-                         &msgAuthParmLen, &msgPrivParmLen, &otstlen,
-                         &seq_len, &msgSecParmLen) == -1) {
-        DEBUG_MSGTL(("usm", "Failed calculating offsets.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( Usm_calcOffsets( globalDataLen, theSecLevel, theEngineIDLength,
+             theNameLength, scopedPduLen, boots_long,
+             time_long, &theTotalLength, &authParamsOffset,
+             &privParamsOffset, &dataOffset, &datalen,
+             &msgAuthParmLen, &msgPrivParmLen, &otstlen,
+             &seq_len, &msgSecParmLen )
+        == -1 ) {
+        DEBUG_MSGTL( ( "usm", "Failed calculating offsets.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_USM_GENERICERROR;
     }
 
@@ -940,7 +895,6 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      * whether or not we need to make a new buffer, etc.
      */
 
-
     /*
      * Set wholeMsg as a pointer to globalData.  Sanity check for
      * the proper size.
@@ -949,9 +903,9 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      * easier to find mistakes in raw message dumps.
      */
     ptr = *wholeMsg = globalData;
-    if (theTotalLength > *wholeMsgLen) {
-        DEBUG_MSGTL(("usm", "Message won't fit in buffer.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( theTotalLength > *wholeMsgLen ) {
+        DEBUG_MSGTL( ( "usm", "Message won't fit in buffer.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_USM_GENERICERROR;
     }
 
@@ -960,73 +914,66 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
     /*
      * Do the encryption.
      */
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        size_t          encrypted_length = theTotalLength - dataOffset;
-        size_t          salt_length = TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH);
-        u_char          salt[TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH)];
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        size_t encrypted_length = theTotalLength - dataOffset;
+        size_t salt_length = TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH );
+        u_char salt[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
 
         /*
          * XXX  Hardwired to seek into a 1DES private key!
          */
-        if (TOOLS_ISTRANSFORM(thePrivProtocol, aESPriv)) {
-            if (!thePrivKey ||
-                Usm_setAesIv(salt, &salt_length,
-                               htonl(boots_uint), htonl(time_uint),
-                               &ptr[privParamsOffset]) == -1) {
-                DEBUG_MSGTL(("usm", "Can't set AES iv.\n"));
-                Usm_freeUsmStateReference(secStateRef);
+        if ( TOOLS_ISTRANSFORM( thePrivProtocol, aESPriv ) ) {
+            if ( !thePrivKey || Usm_setAesIv( salt, &salt_length, htonl( boots_uint ), htonl( time_uint ), &ptr[ privParamsOffset ] ) == -1 ) {
+                DEBUG_MSGTL( ( "usm", "Can't set AES iv.\n" ) );
+                Usm_freeUsmStateReference( secStateRef );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
-        if (TOOLS_ISTRANSFORM(thePrivProtocol, dESPriv)) {
-            if (!thePrivKey ||
-                (Usm_setSalt(salt, &salt_length,
-                              thePrivKey + 8, thePrivKeyLength - 8,
-                              &ptr[privParamsOffset])
-                 == -1)) {
-                DEBUG_MSGTL(("usm", "Can't set DES-CBC salt.\n"));
-                Usm_freeUsmStateReference(secStateRef);
+        if ( TOOLS_ISTRANSFORM( thePrivProtocol, dESPriv ) ) {
+            if ( !thePrivKey || ( Usm_setSalt( salt, &salt_length,
+                                      thePrivKey + 8, thePrivKeyLength - 8,
+                                      &ptr[ privParamsOffset ] )
+                                    == -1 ) ) {
+                DEBUG_MSGTL( ( "usm", "Can't set DES-CBC salt.\n" ) );
+                Usm_freeUsmStateReference( secStateRef );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
 
-        if (Scapi_encrypt(thePrivProtocol, thePrivProtocolLength,
-                       thePrivKey, thePrivKeyLength,
-                       salt, salt_length,
-                       scopedPdu, scopedPduLen,
-                       &ptr[dataOffset], &encrypted_length)
-            != PRIOT_ERR_NOERROR) {
-            DEBUG_MSGTL(("usm", "encryption error.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( Scapi_encrypt( thePrivProtocol, thePrivProtocolLength,
+                 thePrivKey, thePrivKeyLength,
+                 salt, salt_length,
+                 scopedPdu, scopedPduLen,
+                 &ptr[ dataOffset ], &encrypted_length )
+            != PRIOT_ERR_NOERROR ) {
+            DEBUG_MSGTL( ( "usm", "encryption error.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_ENCRYPTIONERROR;
         }
 
         ptr = *wholeMsg;
         ptr_len = *wholeMsgLen = theTotalLength;
 
-
         /*
          * XXX  Sanity check for salt length should be moved up
          *      under Usm_calcOffsets() or tossed.
          */
-        if ((encrypted_length != (theTotalLength - dataOffset))
-            || (salt_length != msgPrivParmLen)) {
-            DEBUG_MSGTL(("usm", "encryption length error.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( ( encrypted_length != ( theTotalLength - dataOffset ) )
+            || ( salt_length != msgPrivParmLen ) ) {
+            DEBUG_MSGTL( ( "usm", "encryption length error.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_ENCRYPTIONERROR;
         }
 
-        DEBUG_MSGTL(("usm", "Encryption successful.\n"));
+        DEBUG_MSGTL( ( "usm", "Encryption successful.\n" ) );
     }
 
     /*
      * No encryption for you!
      */
     else {
-        memcpy(&ptr[dataOffset], scopedPdu, scopedPduLen);
+        memcpy( &ptr[ dataOffset ], scopedPdu, scopedPduLen );
     }
-
-
 
     /*
      * Start filling in the other fields (in prep for authentication).
@@ -1037,44 +984,40 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
     remaining = ptr_len - globalDataLen;
 
     offSet = ptr_len - remaining;
-    Asn01_buildHeader(&ptr[offSet], &remaining,
-                     (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                               ASN01_OCTET_STR), otstlen);
+    Asn01_buildHeader( &ptr[ offSet ], &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), otstlen );
 
     offSet = ptr_len - remaining;
-    Asn01_buildSequence(&ptr[offSet], &remaining,
-                       (u_char) (ASN01_SEQUENCE | ASN01_CONSTRUCTOR), seq_len);
+    Asn01_buildSequence( &ptr[ offSet ], &remaining,
+        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), seq_len );
 
     offSet = ptr_len - remaining;
-    DEBUG_DUMPHEADER("send", "msgAuthoritativeEngineID");
-    Asn01_buildString(&ptr[offSet], &remaining,
-                     (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                               ASN01_OCTET_STR), theEngineID,
-                     theEngineIDLength);
+    DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineID" );
+    Asn01_buildString( &ptr[ offSet ], &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), theEngineID,
+        theEngineIDLength );
     DEBUG_INDENTLESS();
 
     offSet = ptr_len - remaining;
-    DEBUG_DUMPHEADER("send", "msgAuthoritativeEngineBoots");
-    Asn01_buildInt(&ptr[offSet], &remaining,
-                  (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER),
-                  &boots_long, sizeof(long));
+    DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineBoots" );
+    Asn01_buildInt( &ptr[ offSet ], &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+        &boots_long, sizeof( long ) );
     DEBUG_INDENTLESS();
 
     offSet = ptr_len - remaining;
-    DEBUG_DUMPHEADER("send", "msgAuthoritativeEngineTime");
-    Asn01_buildInt(&ptr[offSet], &remaining,
-                  (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER),
-                  &time_long, sizeof(long));
+    DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineTime" );
+    Asn01_buildInt( &ptr[ offSet ], &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+        &time_long, sizeof( long ) );
     DEBUG_INDENTLESS();
 
     offSet = ptr_len - remaining;
-    DEBUG_DUMPHEADER("send", "msgUserName");
-    Asn01_buildString(&ptr[offSet], &remaining,
-                     (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                               ASN01_OCTET_STR), (u_char *) theName,
-                     theNameLength);
+    DEBUG_DUMPHEADER( "send", "msgUserName" );
+    Asn01_buildString( &ptr[ offSet ], &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), ( u_char* )theName,
+        theNameLength );
     DEBUG_INDENTLESS();
-
 
     /*
      * Note: if there is no authentication being done,
@@ -1084,19 +1027,17 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      */
 
     offSet = ptr_len - remaining;
-    Asn01_buildHeader(&ptr[offSet],
-                     &remaining,
-                     (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                               ASN01_OCTET_STR), msgAuthParmLen);
+    Asn01_buildHeader( &ptr[ offSet ],
+        &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), msgAuthParmLen );
 
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
-        || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
+        || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
         offSet = ptr_len - remaining;
-        memset(&ptr[offSet], 0, msgAuthParmLen);
+        memset( &ptr[ offSet ], 0, msgAuthParmLen );
     }
 
     remaining -= msgAuthParmLen;
-
 
     /*
      * Note: if there is no encryption being done, msgPrivParmLen
@@ -1105,26 +1046,22 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      */
 
     offSet = ptr_len - remaining;
-    Asn01_buildHeader(&ptr[offSet],
-                     &remaining,
-                     (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                               ASN01_OCTET_STR), msgPrivParmLen);
+    Asn01_buildHeader( &ptr[ offSet ],
+        &remaining,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), msgPrivParmLen );
 
-    remaining -= msgPrivParmLen;        /* Skipping the IV already there. */
-
+    remaining -= msgPrivParmLen; /* Skipping the IV already there. */
 
     /*
      * For privacy, need to add the octet string header for it.
      */
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
         offSet = ptr_len - remaining;
-        Asn01_buildHeader(&ptr[offSet],
-                         &remaining,
-                         (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                                   ASN01_OCTET_STR),
-                         theTotalLength - dataOffset);
+        Asn01_buildHeader( &ptr[ offSet ],
+            &remaining,
+            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+            theTotalLength - dataOffset );
     }
-
 
     /*
      * Adjust overall length and store it as the first SEQ length
@@ -1133,134 +1070,130 @@ Usm_generateOutMsg(int msgProcModel,  /* (UNUSED) */
      * FIX  4 is a magic number!
      */
     remaining = theTotalLength;
-    Asn01_buildSequence(ptr, &remaining,
-                       (u_char) (ASN01_SEQUENCE | ASN01_CONSTRUCTOR),
-                       theTotalLength - 4);
-
+    Asn01_buildSequence( ptr, &remaining,
+        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        theTotalLength - 4 );
 
     /*
      * Now, time to consider / do authentication.
      */
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
-        || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        size_t          temp_sig_len = msgAuthParmLen;
-        u_char         *temp_sig = (u_char *) malloc(temp_sig_len);
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
+        || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        size_t temp_sig_len = msgAuthParmLen;
+        u_char* temp_sig = ( u_char* )malloc( temp_sig_len );
 
-        if (temp_sig == NULL) {
-            DEBUG_MSGTL(("usm", "Out of memory.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( temp_sig == NULL ) {
+            DEBUG_MSGTL( ( "usm", "Out of memory.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Scapi_generateKeyedHash(theAuthProtocol, theAuthProtocolLength,
-                                   theAuthKey, theAuthKeyLength,
-                                   ptr, ptr_len, temp_sig, &temp_sig_len)
-            != PRIOT_ERR_NOERROR) {
+        if ( Scapi_generateKeyedHash( theAuthProtocol, theAuthProtocolLength,
+                 theAuthKey, theAuthKeyLength,
+                 ptr, ptr_len, temp_sig, &temp_sig_len )
+            != PRIOT_ERR_NOERROR ) {
             /*
              * FIX temp_sig_len defined?!
              */
-            TOOLS_ZERO(temp_sig, temp_sig_len);
-            TOOLS_FREE(temp_sig);
-            DEBUG_MSGTL(("usm", "Signing failed.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+            TOOLS_ZERO( temp_sig, temp_sig_len );
+            TOOLS_FREE( temp_sig );
+            DEBUG_MSGTL( ( "usm", "Signing failed.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
-        if (temp_sig_len != msgAuthParmLen) {
-            TOOLS_ZERO(temp_sig, temp_sig_len);
-            TOOLS_FREE(temp_sig);
-            DEBUG_MSGTL(("usm", "Signing lengths failed.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( temp_sig_len != msgAuthParmLen ) {
+            TOOLS_ZERO( temp_sig, temp_sig_len );
+            TOOLS_FREE( temp_sig );
+            DEBUG_MSGTL( ( "usm", "Signing lengths failed.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
-        memcpy(&ptr[authParamsOffset], temp_sig, msgAuthParmLen);
+        memcpy( &ptr[ authParamsOffset ], temp_sig, msgAuthParmLen );
 
-        TOOLS_ZERO(temp_sig, temp_sig_len);
-        TOOLS_FREE(temp_sig);
-
+        TOOLS_ZERO( temp_sig, temp_sig_len );
+        TOOLS_FREE( temp_sig );
     }
 
     /*
      * endif -- create keyed hash
      */
-    Usm_freeUsmStateReference(secStateRef);
+    Usm_freeUsmStateReference( secStateRef );
 
-    DEBUG_MSGTL(("usm", "USM processing completed.\n"));
+    DEBUG_MSGTL( ( "usm", "USM processing completed.\n" ) );
 
     return ErrorCode_SUCCESS;
 
-}                               /* end Usm_generateOutMsg() */
+} /* end Usm_generateOutMsg() */
 
-int
-Usm_secmodRgenerateOutMsg(struct Secmod_OutgoingParams_s *parms)
+int Usm_secmodRgenerateOutMsg( struct Secmod_OutgoingParams_s* parms )
 {
-    if (!parms)
+    if ( !parms )
         return ErrorCode_GENERR;
 
-    return Usm_rgenerateOutMsg(parms->msgProcModel,
-                                 parms->globalData, parms->globalDataLen,
-                                 parms->maxMsgSize, parms->secModel,
-                                 parms->secEngineID, parms->secEngineIDLen,
-                                 parms->secName, parms->secNameLen,
-                                 parms->secLevel,
-                                 parms->scopedPdu, parms->scopedPduLen,
-                                 parms->secStateRef,
-                                 parms->wholeMsg, parms->wholeMsgLen,
-                                 parms->wholeMsgOffset);
+    return Usm_rgenerateOutMsg( parms->msgProcModel,
+        parms->globalData, parms->globalDataLen,
+        parms->maxMsgSize, parms->secModel,
+        parms->secEngineID, parms->secEngineIDLen,
+        parms->secName, parms->secNameLen,
+        parms->secLevel,
+        parms->scopedPdu, parms->scopedPduLen,
+        parms->secStateRef,
+        parms->wholeMsg, parms->wholeMsgLen,
+        parms->wholeMsgOffset );
 }
 
-int
-Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
-                      u_char * globalData,      /* IN */
-                      /*
+int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
+    u_char* globalData, /* IN */
+    /*
                        * points at the msgGlobalData, which is of length given by next
                        * parameter.
                        */
-                      size_t globalDataLen,     /* IN - Length of msg header data.      */
-                      int maxMsgSize,   /* (UNUSED) */
-                      int secModel,     /* (UNUSED) */
-                      u_char * secEngineID,     /* IN - Pointer snmpEngineID.           */
-                      size_t secEngineIDLen,    /* IN - SnmpEngineID length.            */
-                      char *secName,    /* IN - Pointer to securityName.        */
-                      size_t secNameLen,        /* IN - SecurityName length.            */
-                      int secLevel,     /* IN - AuthNoPriv, authPriv etc.       */
-                      u_char * scopedPdu,       /* IN */
-                      /*
+    size_t globalDataLen, /* IN - Length of msg header data.      */
+    int maxMsgSize, /* (UNUSED) */
+    int secModel, /* (UNUSED) */
+    u_char* secEngineID, /* IN - Pointer snmpEngineID.           */
+    size_t secEngineIDLen, /* IN - SnmpEngineID length.            */
+    char* secName, /* IN - Pointer to securityName.        */
+    size_t secNameLen, /* IN - SecurityName length.            */
+    int secLevel, /* IN - AuthNoPriv, authPriv etc.       */
+    u_char* scopedPdu, /* IN */
+    /*
                        * Pointer to scopedPdu will be encrypted by USM if needed
                        * * and written to packet buffer immediately following
                        * * securityParameters, entire msg will be authenticated by
                        * * USM if needed.
                        */
-                      size_t scopedPduLen,      /* IN - scopedPdu length. */
-                      void *secStateRef,        /* IN */
-                      /*
+    size_t scopedPduLen, /* IN - scopedPdu length. */
+    void* secStateRef, /* IN */
+    /*
                        * secStateRef, pointer to cached info provided only for
                        * * Response, otherwise NULL.
                        */
-                      u_char ** wholeMsg,       /*  IN/OUT  */
-                      /*
+    u_char** wholeMsg, /*  IN/OUT  */
+    /*
                        * Points at the pointer to the packet buffer, which might get extended
                        * if necessary via realloc().
                        */
-                      size_t * wholeMsgLen,     /*  IN/OUT  */
-                      /*
+    size_t* wholeMsgLen, /*  IN/OUT  */
+    /*
                        * Length of the entire packet buffer, **not** the length of the
                        * packet.
                        */
-                      size_t * offset   /*  IN/OUT  */
-                      /*
+    size_t* offset /*  IN/OUT  */
+    /*
                        * Offset from the end of the packet buffer to the start of the packet,
                        * also known as the packet length.
                        */
     )
 {
-    size_t          msgAuthParmLen = 0;
+    size_t msgAuthParmLen = 0;
 
-    u_int           boots_uint;
-    u_int           time_uint;
-    long            boots_long;
-    long            time_long;
+    u_int boots_uint;
+    u_int time_uint;
+    long boots_long;
+    long time_long;
 
     /*
      * Indirection because secStateRef values override parameters.
@@ -1270,42 +1203,42 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
      * actual parameter list or the user list.
      */
 
-    char           *theName = NULL;
-    u_int           theNameLength = 0;
-    u_char         *theEngineID = NULL;
-    u_int           theEngineIDLength = 0;
-    u_char         *theAuthKey = NULL;
-    u_int           theAuthKeyLength = 0;
-    const oid      *theAuthProtocol = NULL;
-    u_int           theAuthProtocolLength = 0;
-    u_char         *thePrivKey = NULL;
-    u_int           thePrivKeyLength = 0;
-    const oid      *thePrivProtocol = NULL;
-    u_int           thePrivProtocolLength = 0;
-    int             theSecLevel = 0;    /* No defined const for bad
+    char* theName = NULL;
+    u_int theNameLength = 0;
+    u_char* theEngineID = NULL;
+    u_int theEngineIDLength = 0;
+    u_char* theAuthKey = NULL;
+    u_int theAuthKeyLength = 0;
+    const oid* theAuthProtocol = NULL;
+    u_int theAuthProtocolLength = 0;
+    u_char* thePrivKey = NULL;
+    u_int thePrivKeyLength = 0;
+    const oid* thePrivProtocol = NULL;
+    u_int thePrivProtocolLength = 0;
+    int theSecLevel = 0; /* No defined const for bad
                                          * value (other then err). */
-    size_t          salt_length = 0, save_salt_length = 0;
-    u_char          salt[TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH)];
-    u_char          authParams[USM_MAX_AUTHSIZE];
-    u_char          iv[TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH)];
-    size_t          sp_offset = 0, mac_offset = 0;
-    int             rc = 0;
+    size_t salt_length = 0, save_salt_length = 0;
+    u_char salt[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+    u_char authParams[ USM_MAX_AUTHSIZE ];
+    u_char iv[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+    size_t sp_offset = 0, mac_offset = 0;
+    int rc = 0;
 
-    DEBUG_MSGTL(("usm", "USM processing has begun (offset %d)\n", (int)*offset));
+    DEBUG_MSGTL( ( "usm", "USM processing has begun (offset %d)\n", ( int )*offset ) );
 
-    if (secStateRef != NULL) {
+    if ( secStateRef != NULL ) {
         /*
          * To hush the compiler for now.  XXX
          */
-        struct Usm_StateReference_s *ref
-            = (struct Usm_StateReference_s *) secStateRef;
+        struct Usm_StateReference_s* ref
+            = ( struct Usm_StateReference_s* )secStateRef;
 
         theName = ref->usr_name;
         theNameLength = ref->usr_name_length;
         theEngineID = ref->usr_engine_id;
         theEngineIDLength = ref->usr_engine_id_length;
 
-        if (!theEngineIDLength) {
+        if ( !theEngineIDLength ) {
             theEngineID = secEngineID;
             theEngineIDLength = secEngineIDLen;
         }
@@ -1325,16 +1258,17 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
      * * Identify the user record.
      */
     else {
-        struct Usm_User_s *user;
+        struct Usm_User_s* user;
 
         /*
          * we do allow an unknown user name for
          * unauthenticated requests.
          */
-        if ((user = Usm_getUser(secEngineID, secEngineIDLen, secName))
-            == NULL && secLevel != PRIOT_SEC_LEVEL_NOAUTH) {
-            DEBUG_MSGTL(("usm", "Unknown User\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( ( user = Usm_getUser( secEngineID, secEngineIDLen, secName ) )
+                == NULL
+            && secLevel != PRIOT_SEC_LEVEL_NOAUTH ) {
+            DEBUG_MSGTL( ( "usm", "Unknown User\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_UNKNOWNSECURITYNAME;
         }
 
@@ -1343,7 +1277,7 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
         theEngineID = secEngineID;
         theSecLevel = secLevel;
         theEngineIDLength = secEngineIDLen;
-        if (user) {
+        if ( user ) {
             theAuthProtocol = user->authProtocol;
             theAuthProtocolLength = user->authProtocolLen;
             theAuthKey = user->authKey;
@@ -1357,40 +1291,36 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
              * unknown users can not do authentication (obviously)
              */
             theAuthProtocol = usm_noAuthProtocol;
-            theAuthProtocolLength =
-                sizeof(usm_noAuthProtocol) / sizeof(oid);
+            theAuthProtocolLength = sizeof( usm_noAuthProtocol ) / sizeof( oid );
             theAuthKey = NULL;
             theAuthKeyLength = 0;
             thePrivProtocol = usm_noPrivProtocol;
-            thePrivProtocolLength =
-                sizeof(usm_noPrivProtocol) / sizeof(oid);
+            thePrivProtocolLength = sizeof( usm_noPrivProtocol ) / sizeof( oid );
             thePrivKey = NULL;
             thePrivKeyLength = 0;
         }
-    }                           /* endif -- secStateRef==NULL */
-
+    } /* endif -- secStateRef==NULL */
 
     /*
      * From here to the end of the function, avoid reference to
      * secName, secEngineID, secLevel, and associated lengths.
      */
 
-
     /*
      * Check to see if the user can use the requested sec services.
      */
-    if (Usm_checkSecLevelVsProtocols(theSecLevel,
-                                        theAuthProtocol,
-                                        theAuthProtocolLength,
-                                        thePrivProtocol,
-                                        thePrivProtocolLength) == 1) {
-        DEBUG_MSGTL(("usm", "Unsupported Security Level or type (%d)\n",
-                    theSecLevel));
+    if ( Usm_checkSecLevelVsProtocols( theSecLevel,
+             theAuthProtocol,
+             theAuthProtocolLength,
+             thePrivProtocol,
+             thePrivProtocolLength )
+        == 1 ) {
+        DEBUG_MSGTL( ( "usm", "Unsupported Security Level or type (%d)\n",
+            theSecLevel ) );
 
-        Usm_freeUsmStateReference(secStateRef);
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL;
     }
-
 
     /*
      * * Retrieve the engine information.
@@ -1398,71 +1328,70 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
      * * XXX    No error is declared in the EoP when sending messages to
      * *        unknown engines, processing continues w/ boots/time == (0,0).
      */
-    if (LcdTime_getEnginetime(theEngineID, theEngineIDLength,
-                       &boots_uint, &time_uint, FALSE) == -1) {
-        DEBUG_MSGTL(("usm", "%s\n", "Failed to find engine data."));
+    if ( LcdTime_getEnginetime( theEngineID, theEngineIDLength,
+             &boots_uint, &time_uint, FALSE )
+        == -1 ) {
+        DEBUG_MSGTL( ( "usm", "%s\n", "Failed to find engine data." ) );
     }
 
     boots_long = boots_uint;
     time_long = time_uint;
 
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
         /*
          * Initially assume that the ciphertext will end up the same size as
          * the plaintext plus some padding.  Really Scapi_encrypt ought to be able
          * to grow this for us, a la Asn01_reallocRbuild_<type> functions, but
          * this will do for now.
          */
-        u_char         *ciphertext = NULL;
-        size_t          ciphertextlen = scopedPduLen + 64;
+        u_char* ciphertext = NULL;
+        size_t ciphertextlen = scopedPduLen + 64;
 
-        if ((ciphertext = (u_char *) malloc(ciphertextlen)) == NULL) {
-            DEBUG_MSGTL(("usm",
-                        "couldn't malloc %d bytes for encrypted PDU\n",
-                        (int)ciphertextlen));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( ( ciphertext = ( u_char* )malloc( ciphertextlen ) ) == NULL ) {
+            DEBUG_MSGTL( ( "usm",
+                "couldn't malloc %d bytes for encrypted PDU\n",
+                ( int )ciphertextlen ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_MALLOC;
         }
 
         /*
          * XXX Hardwired to seek into a 1DES private key!
          */
-        if (TOOLS_ISTRANSFORM(thePrivProtocol, aESPriv)) {
-            salt_length = TOOLS_BYTESIZE(USM_AES_SALT_LENGTH);
-            save_salt_length = TOOLS_BYTESIZE(USM_AES_SALT_LENGTH)/2;
-            if (!thePrivKey ||
-                Usm_setAesIv(salt, &salt_length,
-                               htonl(boots_uint), htonl(time_uint),
-                               iv) == -1) {
-                DEBUG_MSGTL(("usm", "Can't set AES iv.\n"));
-                Usm_freeUsmStateReference(secStateRef);
-                TOOLS_FREE(ciphertext);
+        if ( TOOLS_ISTRANSFORM( thePrivProtocol, aESPriv ) ) {
+            salt_length = TOOLS_BYTESIZE( USM_AES_SALT_LENGTH );
+            save_salt_length = TOOLS_BYTESIZE( USM_AES_SALT_LENGTH ) / 2;
+            if ( !thePrivKey || Usm_setAesIv( salt, &salt_length, htonl( boots_uint ), htonl( time_uint ), iv ) == -1 ) {
+                DEBUG_MSGTL( ( "usm", "Can't set AES iv.\n" ) );
+                Usm_freeUsmStateReference( secStateRef );
+                TOOLS_FREE( ciphertext );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
-        if (TOOLS_ISTRANSFORM(thePrivProtocol, dESPriv)) {
-            salt_length = TOOLS_BYTESIZE(USM_DES_SALT_LENGTH);
-            save_salt_length = TOOLS_BYTESIZE(USM_DES_SALT_LENGTH);
-            if (!thePrivKey || (Usm_setSalt(salt, &salt_length,
-                                             thePrivKey + 8,
-                                             thePrivKeyLength - 8,
-                                             iv) == -1)) {
-                DEBUG_MSGTL(("usm", "Can't set DES-CBC salt.\n"));
-                Usm_freeUsmStateReference(secStateRef);
-                TOOLS_FREE(ciphertext);
+        if ( TOOLS_ISTRANSFORM( thePrivProtocol, dESPriv ) ) {
+            salt_length = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+            save_salt_length = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+            if ( !thePrivKey || ( Usm_setSalt( salt, &salt_length,
+                                      thePrivKey + 8,
+                                      thePrivKeyLength - 8,
+                                      iv )
+                                    == -1 ) ) {
+                DEBUG_MSGTL( ( "usm", "Can't set DES-CBC salt.\n" ) );
+                Usm_freeUsmStateReference( secStateRef );
+                TOOLS_FREE( ciphertext );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
 
-
-        if (Scapi_encrypt(thePrivProtocol, thePrivProtocolLength,
-                       thePrivKey, thePrivKeyLength,
-                       salt, salt_length,
-                       scopedPdu, scopedPduLen,
-                       ciphertext, &ciphertextlen) != PRIOT_ERR_NOERROR) {
-            DEBUG_MSGTL(("usm", "encryption error.\n"));
-            Usm_freeUsmStateReference(secStateRef);
-            TOOLS_FREE(ciphertext);
+        if ( Scapi_encrypt( thePrivProtocol, thePrivProtocolLength,
+                 thePrivKey, thePrivKeyLength,
+                 salt, salt_length,
+                 scopedPdu, scopedPduLen,
+                 ciphertext, &ciphertextlen )
+            != PRIOT_ERR_NOERROR ) {
+            DEBUG_MSGTL( ( "usm", "encryption error.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
+            TOOLS_FREE( ciphertext );
             return ErrorCode_USM_ENCRYPTIONERROR;
         }
 
@@ -1470,23 +1399,19 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
          * Write the encrypted scopedPdu back into the packet buffer.
          */
 
-
         *offset = 0;
-        rc = Asn01_reallocRbuildString(wholeMsg, wholeMsgLen, offset, 1,
-                                       (u_char) (ASN01_UNIVERSAL |
-                                                 ASN01_PRIMITIVE |
-                                                 ASN01_OCTET_STR),
-                                       ciphertext, ciphertextlen);
-        if (rc == 0) {
-            DEBUG_MSGTL(("usm", "Encryption failed.\n"));
-            Usm_freeUsmStateReference(secStateRef);
-            TOOLS_FREE(ciphertext);
+        rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
+            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+            ciphertext, ciphertextlen );
+        if ( rc == 0 ) {
+            DEBUG_MSGTL( ( "usm", "Encryption failed.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
+            TOOLS_FREE( ciphertext );
             return ErrorCode_USM_ENCRYPTIONERROR;
         }
 
-
-        DEBUG_MSGTL(("usm", "Encryption successful.\n"));
-        TOOLS_FREE(ciphertext);
+        DEBUG_MSGTL( ( "usm", "Encryption successful.\n" ) );
+        TOOLS_FREE( ciphertext );
     } else {
         /*
          * theSecLevel != PRIOT_SEC_LEVEL_AUTHPRIV
@@ -1499,40 +1424,41 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
 
     sp_offset = *offset;
 
-    DEBUG_DUMPHEADER("send", "msgPrivacyParameters");
+    DEBUG_DUMPHEADER( "send", "msgPrivacyParameters" );
     /*
      * msgPrivacyParameters (warning: assumes DES salt).
      */
-    rc = Asn01_reallocRbuildString(wholeMsg, wholeMsgLen, offset, 1,
-                                   (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                             | ASN01_OCTET_STR),
-                                   iv,
-                                   save_salt_length);
+    rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
+                                        | ASN01_OCTET_STR ),
+        iv,
+        save_salt_length );
     DEBUG_INDENTLESS();
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building privParams failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building privParams failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
-    DEBUG_DUMPHEADER("send", "msgAuthenticationParameters");
+    DEBUG_DUMPHEADER( "send", "msgAuthenticationParameters" );
     /*
      * msgAuthenticationParameters (warnings assumes 0x00 by 12).
      */
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
-        || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        memset(authParams, 0, USM_MD5_AND_SHA_AUTH_LEN);
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
+        || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        memset( authParams, 0, USM_MD5_AND_SHA_AUTH_LEN );
         msgAuthParmLen = USM_MD5_AND_SHA_AUTH_LEN;
     }
 
-    rc = Asn01_reallocRbuildString(wholeMsg, wholeMsgLen, offset, 1,
-                                   (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                             | ASN01_OCTET_STR), authParams,
-                                   msgAuthParmLen);
+    rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
+                                        | ASN01_OCTET_STR ),
+        authParams,
+        msgAuthParmLen );
     DEBUG_INDENTLESS();
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building authParams failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building authParams failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
@@ -1547,112 +1473,109 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
     /*
      * msgUserName.
      */
-    DEBUG_DUMPHEADER("send", "msgUserName");
-    rc = Asn01_reallocRbuildString(wholeMsg, wholeMsgLen, offset, 1,
-                                   (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                             | ASN01_OCTET_STR),
-                                   (u_char *) theName, theNameLength);
+    DEBUG_DUMPHEADER( "send", "msgUserName" );
+    rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
+                                        | ASN01_OCTET_STR ),
+        ( u_char* )theName, theNameLength );
     DEBUG_INDENTLESS();
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building authParams failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building authParams failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
     /*
      * msgAuthoritativeEngineTime.
      */
-    DEBUG_DUMPHEADER("send", "msgAuthoritativeEngineTime");
-    rc = Asn01_reallocRbuildInt(wholeMsg, wholeMsgLen, offset, 1,
-                                (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                                          ASN01_INTEGER), &time_long,
-                                sizeof(long));
+    DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineTime" );
+    rc = Asn01_reallocRbuildInt( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &time_long,
+        sizeof( long ) );
     DEBUG_INDENTLESS();
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm",
-                    "building msgAuthoritativeEngineTime failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm",
+            "building msgAuthoritativeEngineTime failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
     /*
      * msgAuthoritativeEngineBoots.
      */
-    DEBUG_DUMPHEADER("send", "msgAuthoritativeEngineBoots");
-    rc = Asn01_reallocRbuildInt(wholeMsg, wholeMsgLen, offset, 1,
-                                (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                                          ASN01_INTEGER), &boots_long,
-                                sizeof(long));
+    DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineBoots" );
+    rc = Asn01_reallocRbuildInt( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &boots_long,
+        sizeof( long ) );
     DEBUG_INDENTLESS();
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm",
-                    "building msgAuthoritativeEngineBoots failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm",
+            "building msgAuthoritativeEngineBoots failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
-    DEBUG_DUMPHEADER("send", "msgAuthoritativeEngineID");
-    rc = Asn01_reallocRbuildString(wholeMsg, wholeMsgLen, offset, 1,
-                                   (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                             | ASN01_OCTET_STR), theEngineID,
-                                   theEngineIDLength);
+    DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineID" );
+    rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
+                                        | ASN01_OCTET_STR ),
+        theEngineID,
+        theEngineIDLength );
     DEBUG_INDENTLESS();
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building msgAuthoritativeEngineID failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building msgAuthoritativeEngineID failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
     /*
      * USM msgSecurityParameters sequence header
      */
-    rc = Asn01_reallocRbuildSequence(wholeMsg, wholeMsgLen, offset, 1,
-                                     (u_char) (ASN01_SEQUENCE |
-                                               ASN01_CONSTRUCTOR),
-                                     *offset - sp_offset);
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building usm security parameters failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    rc = Asn01_reallocRbuildSequence( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        *offset - sp_offset );
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building usm security parameters failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
     /*
      * msgSecurityParameters OCTET STRING wrapper.
      */
-    rc = Asn01_reallocRbuildHeader(wholeMsg, wholeMsgLen, offset, 1,
-                                   (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                             | ASN01_OCTET_STR),
-                                   *offset - sp_offset);
+    rc = Asn01_reallocRbuildHeader( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
+                                        | ASN01_OCTET_STR ),
+        *offset - sp_offset );
 
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building msgSecurityParameters failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building msgSecurityParameters failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
     /*
      * Copy in the msgGlobalData and msgVersion.
      */
-    while ((*wholeMsgLen - *offset) < globalDataLen) {
-        if (!Asn01_realloc(wholeMsg, wholeMsgLen)) {
-            DEBUG_MSGTL(("usm", "building global data failed.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+    while ( ( *wholeMsgLen - *offset ) < globalDataLen ) {
+        if ( !Asn01_realloc( wholeMsg, wholeMsgLen ) ) {
+            DEBUG_MSGTL( ( "usm", "building global data failed.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_TOO_LONG;
         }
     }
 
     *offset += globalDataLen;
-    memcpy(*wholeMsg + *wholeMsgLen - *offset, globalData, globalDataLen);
+    memcpy( *wholeMsg + *wholeMsgLen - *offset, globalData, globalDataLen );
 
     /*
      * Total packet sequence.
      */
-    rc = Asn01_reallocRbuildSequence(wholeMsg, wholeMsgLen, offset, 1,
-                                     (u_char) (ASN01_SEQUENCE |
-                                               ASN01_CONSTRUCTOR), *offset);
-    if (rc == 0) {
-        DEBUG_MSGTL(("usm", "building master packet sequence failed.\n"));
-        Usm_freeUsmStateReference(secStateRef);
+    rc = Asn01_reallocRbuildSequence( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), *offset );
+    if ( rc == 0 ) {
+        DEBUG_MSGTL( ( "usm", "building master packet sequence failed.\n" ) );
+        Usm_freeUsmStateReference( secStateRef );
         return ErrorCode_TOO_LONG;
     }
 
@@ -1660,53 +1583,47 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
      * Now consider / do authentication.
      */
 
-    if (theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV ||
-        theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        size_t          temp_sig_len = msgAuthParmLen;
-        u_char         *temp_sig = (u_char *) malloc(temp_sig_len);
-        u_char         *proto_msg = *wholeMsg + *wholeMsgLen - *offset;
-        size_t          proto_msg_len = *offset;
+    if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        size_t temp_sig_len = msgAuthParmLen;
+        u_char* temp_sig = ( u_char* )malloc( temp_sig_len );
+        u_char* proto_msg = *wholeMsg + *wholeMsgLen - *offset;
+        size_t proto_msg_len = *offset;
 
-
-        if (temp_sig == NULL) {
-            DEBUG_MSGTL(("usm", "Out of memory.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( temp_sig == NULL ) {
+            DEBUG_MSGTL( ( "usm", "Out of memory.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Scapi_generateKeyedHash(theAuthProtocol, theAuthProtocolLength,
-                                   theAuthKey, theAuthKeyLength,
-                                   proto_msg, proto_msg_len,
-                                   temp_sig, &temp_sig_len)
-            != PRIOT_ERR_NOERROR) {
-            TOOLS_FREE(temp_sig);
-            DEBUG_MSGTL(("usm", "Signing failed.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( Scapi_generateKeyedHash( theAuthProtocol, theAuthProtocolLength,
+                 theAuthKey, theAuthKeyLength,
+                 proto_msg, proto_msg_len,
+                 temp_sig, &temp_sig_len )
+            != PRIOT_ERR_NOERROR ) {
+            TOOLS_FREE( temp_sig );
+            DEBUG_MSGTL( ( "usm", "Signing failed.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
-        if (temp_sig_len != msgAuthParmLen) {
-            TOOLS_FREE(temp_sig);
-            DEBUG_MSGTL(("usm", "Signing lengths failed.\n"));
-            Usm_freeUsmStateReference(secStateRef);
+        if ( temp_sig_len != msgAuthParmLen ) {
+            TOOLS_FREE( temp_sig );
+            DEBUG_MSGTL( ( "usm", "Signing lengths failed.\n" ) );
+            Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
-        memcpy(*wholeMsg + *wholeMsgLen - mac_offset, temp_sig,
-               msgAuthParmLen);
-        TOOLS_FREE(temp_sig);
+        memcpy( *wholeMsg + *wholeMsgLen - mac_offset, temp_sig,
+            msgAuthParmLen );
+        TOOLS_FREE( temp_sig );
     }
     /*
      * endif -- create keyed hash
      */
-    Usm_freeUsmStateReference(secStateRef);
-    DEBUG_MSGTL(("usm", "USM processing completed.\n"));
+    Usm_freeUsmStateReference( secStateRef );
+    DEBUG_MSGTL( ( "usm", "USM processing completed.\n" ) );
     return ErrorCode_SUCCESS;
-}                               /* end Usm_rgenerateOutMsg() */
-
-
-
-
+} /* end Usm_rgenerateOutMsg() */
 
 /*******************************************************************-o-******
  * Usm_parseSecurityParameters
@@ -1723,48 +1640,45 @@ Usm_rgenerateOutMsg(int msgProcModel, /* (UNUSED) */
  *	Extracts values from the security header and data portions of the
  *	incoming buffer.
  */
-int
-Usm_parseSecurityParameters(u_char * secParams,
-                              size_t remaining,
-                              u_char * secEngineID,
-                              size_t * secEngineIDLen,
-                              u_int * boots_uint,
-                              u_int * time_uint,
-                              char *secName,
-                              size_t * secNameLen,
-                              u_char * signature,
-                              size_t * signature_length,
-                              u_char * salt,
-                              size_t * salt_length, u_char ** data_ptr)
+int Usm_parseSecurityParameters( u_char* secParams,
+    size_t remaining,
+    u_char* secEngineID,
+    size_t* secEngineIDLen,
+    u_int* boots_uint,
+    u_int* time_uint,
+    char* secName,
+    size_t* secNameLen,
+    u_char* signature,
+    size_t* signature_length,
+    u_char* salt,
+    size_t* salt_length, u_char** data_ptr )
 {
-    u_char         *parse_ptr = secParams;
-    u_char         *value_ptr;
-    u_char         *next_ptr;
-    u_char          type_value;
+    u_char* parse_ptr = secParams;
+    u_char* value_ptr;
+    u_char* next_ptr;
+    u_char type_value;
 
-    size_t          octet_string_length = remaining;
-    size_t          sequence_length;
-    size_t          remaining_bytes;
+    size_t octet_string_length = remaining;
+    size_t sequence_length;
+    size_t remaining_bytes;
 
-    long            boots_long;
-    long            time_long;
+    long boots_long;
+    long time_long;
 
-    u_int           origNameLen;
-
+    u_int origNameLen;
 
     /*
      * Eat the first octet header.
      */
-    if ((value_ptr = Asn01_parseSequence(parse_ptr, &octet_string_length,
-                                        &type_value,
-                                        (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                                         ASN01_OCTET_STR),
-                                        "usm first octet")) == NULL) {
+    if ( ( value_ptr = Asn01_parseSequence( parse_ptr, &octet_string_length,
+               &type_value,
+               ( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+               "usm first octet" ) )
+        == NULL ) {
         /*
          * RETURN parse error
          */ return -1;
     }
-
 
     /*
      * Eat the sequence header.
@@ -1772,15 +1686,15 @@ Usm_parseSecurityParameters(u_char * secParams,
     parse_ptr = value_ptr;
     sequence_length = octet_string_length;
 
-    if ((value_ptr = Asn01_parseSequence(parse_ptr, &sequence_length,
-                                        &type_value,
-                                        (ASN01_SEQUENCE | ASN01_CONSTRUCTOR),
-                                        "usm sequence")) == NULL) {
+    if ( ( value_ptr = Asn01_parseSequence( parse_ptr, &sequence_length,
+               &type_value,
+               ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+               "usm sequence" ) )
+        == NULL ) {
         /*
          * RETURN parse error
          */ return -1;
     }
-
 
     /*
      * Retrieve the engineID.
@@ -1788,10 +1702,11 @@ Usm_parseSecurityParameters(u_char * secParams,
     parse_ptr = value_ptr;
     remaining_bytes = sequence_length;
 
-    DEBUG_DUMPHEADER("recv", "msgAuthoritativeEngineID");
-    if ((next_ptr
-         = Asn01_parseString(parse_ptr, &remaining_bytes, &type_value,
-                            secEngineID, secEngineIDLen)) == NULL) {
+    DEBUG_DUMPHEADER( "recv", "msgAuthoritativeEngineID" );
+    if ( ( next_ptr
+             = Asn01_parseString( parse_ptr, &remaining_bytes, &type_value,
+                 secEngineID, secEngineIDLen ) )
+        == NULL ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
@@ -1799,21 +1714,20 @@ Usm_parseSecurityParameters(u_char * secParams,
     }
     DEBUG_INDENTLESS();
 
-    if (type_value !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR)) {
+    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -1;
     }
-
 
     /*
      * Retrieve the engine boots, notice switch in the way next_ptr and
      * remaining_bytes are used (to accomodate the asn code).
      */
-    DEBUG_DUMPHEADER("recv", "msgAuthoritativeEngineBoots");
-    if ((next_ptr = Asn01_parseInt(next_ptr, &remaining_bytes, &type_value,
-                                  &boots_long, sizeof(long))) == NULL) {
+    DEBUG_DUMPHEADER( "recv", "msgAuthoritativeEngineBoots" );
+    if ( ( next_ptr = Asn01_parseInt( next_ptr, &remaining_bytes, &type_value,
+               &boots_long, sizeof( long ) ) )
+        == NULL ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
@@ -1821,39 +1735,37 @@ Usm_parseSecurityParameters(u_char * secParams,
     }
     DEBUG_INDENTLESS();
 
-    if (type_value !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER)) {
+    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ) ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
          */ return -1;
     }
 
-    *boots_uint = (u_int) boots_long;
-
+    *boots_uint = ( u_int )boots_long;
 
     /*
      * Retrieve the time value.
      */
-    DEBUG_DUMPHEADER("recv", "msgAuthoritativeEngineTime");
-    if ((next_ptr = Asn01_parseInt(next_ptr, &remaining_bytes, &type_value,
-                                  &time_long, sizeof(long))) == NULL) {
+    DEBUG_DUMPHEADER( "recv", "msgAuthoritativeEngineTime" );
+    if ( ( next_ptr = Asn01_parseInt( next_ptr, &remaining_bytes, &type_value,
+               &time_long, sizeof( long ) ) )
+        == NULL ) {
         /*
          * RETURN parse error
          */ return -1;
     }
     DEBUG_INDENTLESS();
 
-    if (type_value !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER)) {
+    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ) ) {
         /*
          * RETURN parse error
          */ return -1;
     }
 
-    *time_uint = (u_int) time_long;
+    *time_uint = ( u_int )time_long;
 
-    if (*boots_uint > TOOLS_ENGINEBOOT_MAX || *time_uint > TOOLS_ENGINETIME_MAX) {
+    if ( *boots_uint > TOOLS_ENGINEBOOT_MAX || *time_uint > TOOLS_ENGINETIME_MAX ) {
         return -1;
     }
 
@@ -1862,11 +1774,11 @@ Usm_parseSecurityParameters(u_char * secParams,
      */
     origNameLen = *secNameLen;
 
-
-    DEBUG_DUMPHEADER("recv", "msgUserName");
-    if ((next_ptr
-         = Asn01_parseString(next_ptr, &remaining_bytes, &type_value,
-                            (u_char *) secName, secNameLen)) == NULL) {
+    DEBUG_DUMPHEADER( "recv", "msgUserName" );
+    if ( ( next_ptr
+             = Asn01_parseString( next_ptr, &remaining_bytes, &type_value,
+                 ( u_char* )secName, secNameLen ) )
+        == NULL ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
@@ -1877,14 +1789,14 @@ Usm_parseSecurityParameters(u_char * secParams,
     /*
      * FIX -- doesn't this also indicate a buffer overrun?
      */
-    if (origNameLen < *secNameLen + 1) {
+    if ( origNameLen < *secNameLen + 1 ) {
         /*
          * RETURN parse error, but it's really a parameter error
          */
         return -1;
     }
 
-    if (*secNameLen > 32) {
+    if ( *secNameLen > 32 ) {
         /*
          * This is a USM-specific limitation over and above the above
          * limitation (which will probably default to the length of an
@@ -1893,23 +1805,22 @@ Usm_parseSecurityParameters(u_char * secParams,
         return -1;
     }
 
-    secName[*secNameLen] = '\0';
+    secName[ *secNameLen ] = '\0';
 
-    if (type_value !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR)) {
+    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -1;
     }
 
-
     /*
      * Retrieve the signature and blank it if there.
      */
-    DEBUG_DUMPHEADER("recv", "msgAuthenticationParameters");
-    if ((next_ptr
-         = Asn01_parseString(next_ptr, &remaining_bytes, &type_value,
-                            signature, signature_length)) == NULL) {
+    DEBUG_DUMPHEADER( "recv", "msgAuthenticationParameters" );
+    if ( ( next_ptr
+             = Asn01_parseString( next_ptr, &remaining_bytes, &type_value,
+                 signature, signature_length ) )
+        == NULL ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
@@ -1917,28 +1828,27 @@ Usm_parseSecurityParameters(u_char * secParams,
     }
     DEBUG_INDENTLESS();
 
-    if (type_value !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR)) {
+    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -1;
     }
 
-    if (*signature_length != 0) {       /* Blanking for authentication step later */
-        memset(next_ptr - (u_long) * signature_length,
-               0, *signature_length);
+    if ( *signature_length != 0 ) { /* Blanking for authentication step later */
+        memset( next_ptr - ( u_long )*signature_length,
+            0, *signature_length );
     }
-
 
     /*
      * Retrieve the salt.
      *
      * Note that the next ptr is where the data section starts.
      */
-    DEBUG_DUMPHEADER("recv", "msgPrivacyParameters");
-    if ((*data_ptr
-         = Asn01_parseString(next_ptr, &remaining_bytes, &type_value,
-                            salt, salt_length)) == NULL) {
+    DEBUG_DUMPHEADER( "recv", "msgPrivacyParameters" );
+    if ( ( *data_ptr
+             = Asn01_parseString( next_ptr, &remaining_bytes, &type_value,
+                 salt, salt_length ) )
+        == NULL ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
@@ -1946,8 +1856,7 @@ Usm_parseSecurityParameters(u_char * secParams,
     }
     DEBUG_INDENTLESS();
 
-    if (type_value !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR)) {
+    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -2;
@@ -1955,10 +1864,7 @@ Usm_parseSecurityParameters(u_char * secParams,
 
     return 0;
 
-}                               /* end Usm_parseSecurityParameters() */
-
-
-
+} /* end Usm_parseSecurityParameters() */
 
 /*******************************************************************-o-******
  * Usm_checkAndUpdateTimeliness
@@ -1977,32 +1883,27 @@ Usm_parseSecurityParameters(u_char * secParams,
  *
  * Performs the incoming timeliness checking and setting.
  */
-int
-Usm_checkAndUpdateTimeliness(u_char * secEngineID,
-                                size_t secEngineIDLen,
-                                u_int boots_uint,
-                                u_int time_uint, int *error)
+int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
+    size_t secEngineIDLen,
+    u_int boots_uint,
+    u_int time_uint, int* error )
 {
-    u_char          myID[USM_MAX_ID_LENGTH];
-    u_long          myIDLength =
-        V3_getEngineID(myID, USM_MAX_ID_LENGTH);
-    u_int           myBoots;
-    u_int           myTime;
+    u_char myID[ USM_MAX_ID_LENGTH ];
+    u_long myIDLength = V3_getEngineID( myID, USM_MAX_ID_LENGTH );
+    u_int myBoots;
+    u_int myTime;
 
-
-
-    if ((myIDLength > USM_MAX_ID_LENGTH) || (myIDLength == 0)) {
+    if ( ( myIDLength > USM_MAX_ID_LENGTH ) || ( myIDLength == 0 ) ) {
         /*
          * We're probably already screwed...buffer overwrite.  XXX?
          */
-        DEBUG_MSGTL(("usm", "Buffer overflow.\n"));
+        DEBUG_MSGTL( ( "usm", "Buffer overflow.\n" ) );
         *error = ErrorCode_USM_GENERICERROR;
         return -1;
     }
 
     myBoots = V3_localEngineBoots();
     myTime = V3_localEngineTime();
-
 
     /*
      * IF the time involved is local
@@ -2023,19 +1924,18 @@ Usm_checkAndUpdateTimeliness(u_char * secEngineID,
     /*
      * This is a local reference.
      */
-    if (secEngineIDLen == myIDLength
-        && memcmp(secEngineID, myID, myIDLength) == 0) {
-        u_int           time_difference = myTime > time_uint ?
-            myTime - time_uint : time_uint - myTime;
+    if ( secEngineIDLen == myIDLength
+        && memcmp( secEngineID, myID, myIDLength ) == 0 ) {
+        u_int time_difference = myTime > time_uint ? myTime - time_uint : time_uint - myTime;
 
-        if (boots_uint == TOOLS_ENGINEBOOT_MAX
+        if ( boots_uint == TOOLS_ENGINEBOOT_MAX
             || boots_uint != myBoots
-            || time_difference > USM_TIME_WINDOW) {
-            Api_incrementStatistic(API_STAT_USMSTATSNOTINTIMEWINDOWS);
+            || time_difference > USM_TIME_WINDOW ) {
+            Api_incrementStatistic( API_STAT_USMSTATSNOTINTIMEWINDOWS );
 
-            DEBUG_MSGTL(("usm",
-                        "boot_uint %u myBoots %u time_diff %u => not in time window\n",
-                        boots_uint, myBoots, time_difference));
+            DEBUG_MSGTL( ( "usm",
+                "boot_uint %u myBoots %u time_diff %u => not in time window\n",
+                boots_uint, myBoots, time_difference ) );
             *error = ErrorCode_USM_NOTINTIMEWINDOW;
             return -1;
         }
@@ -2048,101 +1948,93 @@ Usm_checkAndUpdateTimeliness(u_char * secEngineID,
      * This is a remote reference.
      */
     else {
-        u_int           theirBoots, theirTime, theirLastTime;
-        u_int           time_difference;
+        u_int theirBoots, theirTime, theirLastTime;
+        u_int time_difference;
 
-        if (LcdTime_getEnginetimeEx(secEngineID, secEngineIDLen,
-                              &theirBoots, &theirTime,
-                              &theirLastTime, TRUE)
-            != ErrorCode_SUCCESS) {
-            DEBUG_MSGTL(("usm", "%s\n",
-                        "Failed to get remote engine's times."));
+        if ( LcdTime_getEnginetimeEx( secEngineID, secEngineIDLen,
+                 &theirBoots, &theirTime,
+                 &theirLastTime, TRUE )
+            != ErrorCode_SUCCESS ) {
+            DEBUG_MSGTL( ( "usm", "%s\n",
+                "Failed to get remote engine's times." ) );
 
             *error = ErrorCode_USM_GENERICERROR;
             return -1;
         }
 
-        time_difference = theirTime > time_uint ?
-            theirTime - time_uint : time_uint - theirTime;
-
+        time_difference = theirTime > time_uint ? theirTime - time_uint : time_uint - theirTime;
 
         /*
          * XXX  Contrary to the pseudocode:
          *      See if boots is invalid first.
          */
-        if (theirBoots == TOOLS_ENGINEBOOT_MAX || theirBoots > boots_uint) {
-            DEBUG_MSGTL(("usm", "%s\n", "Remote boot count invalid."));
+        if ( theirBoots == TOOLS_ENGINEBOOT_MAX || theirBoots > boots_uint ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Remote boot count invalid." ) );
 
             *error = ErrorCode_USM_NOTINTIMEWINDOW;
             return -1;
         }
 
-
         /*
          * Boots is ok, see if the boots is the same but the time
          * is old.
          */
-        if (theirBoots == boots_uint && time_uint < theirLastTime) {
-            if (time_difference > USM_TIME_WINDOW) {
-                DEBUG_MSGTL(("usm", "%s\n", "Message too old."));
+        if ( theirBoots == boots_uint && time_uint < theirLastTime ) {
+            if ( time_difference > USM_TIME_WINDOW ) {
+                DEBUG_MSGTL( ( "usm", "%s\n", "Message too old." ) );
                 *error = ErrorCode_USM_NOTINTIMEWINDOW;
                 return -1;
             }
 
-            else {              /* Old, but acceptable */
+            else { /* Old, but acceptable */
 
                 *error = ErrorCode_SUCCESS;
                 return 0;
             }
         }
 
-
         /*
          * Message is ok, either boots has been advanced, or
          * time is greater than before with the same boots.
          */
 
-        if (LcdTime_setEnginetime(secEngineID, secEngineIDLen,
-                           boots_uint, time_uint, TRUE)
-            != ErrorCode_SUCCESS) {
-            DEBUG_MSGTL(("usm", "%s\n",
-                        "Failed updating remote boot/time."));
+        if ( LcdTime_setEnginetime( secEngineID, secEngineIDLen,
+                 boots_uint, time_uint, TRUE )
+            != ErrorCode_SUCCESS ) {
+            DEBUG_MSGTL( ( "usm", "%s\n",
+                "Failed updating remote boot/time." ) );
             *error = ErrorCode_USM_GENERICERROR;
             return -1;
         }
 
         *error = ErrorCode_SUCCESS;
-        return 0;               /* Fresh message and time updated */
+        return 0; /* Fresh message and time updated */
 
-    }                           /* endif -- local or remote time reference. */
+    } /* endif -- local or remote time reference. */
 
+} /* end Usm_checkAndUpdateTimeliness() */
 
-}                               /* end Usm_checkAndUpdateTimeliness() */
-
-
-
-int
-Usm_secmodProcessInMsg(struct Secmod_IncomingParams_s *parms)
+int Usm_secmodProcessInMsg( struct Secmod_IncomingParams_s* parms )
 {
-    if (!parms)
+    if ( !parms )
         return ErrorCode_GENERR;
 
-    return Usm_processInMsg(parms->msgProcModel,
-                              parms->maxMsgSize,
-                              parms->secParams,
-                              parms->secModel,
-                              parms->secLevel,
-                              parms->wholeMsg,
-                              parms->wholeMsgLen,
-                              parms->secEngineID,
-                              parms->secEngineIDLen,
-                              parms->secName,
-                              parms->secNameLen,
-                              parms->scopedPdu,
-                              parms->scopedPduLen,
-                              parms->maxSizeResponse,
-                              parms->secStateRef,
-                              parms->sess, parms->msg_flags);
+    return Usm_processInMsg( parms->msgProcModel,
+        parms->maxMsgSize,
+        parms->secParams,
+        parms->secModel,
+        parms->secLevel,
+        parms->wholeMsg,
+        parms->wholeMsgLen,
+        parms->secEngineID,
+        parms->secEngineIDLen,
+        parms->secName,
+        parms->secNameLen,
+        parms->scopedPdu,
+        parms->scopedPduLen,
+        parms->maxSizeResponse,
+        parms->secStateRef,
+        parms->sess, parms->msg_flags );
 }
 
 /*******************************************************************-o-******
@@ -2168,84 +2060,79 @@ Usm_secmodProcessInMsg(struct Secmod_IncomingParams_s *parms)
  * FIX  Memory leaks if secStateRef is allocated and a return occurs
  *	without cleaning up.  May contain secrets...
  */
-int
-Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
-                   size_t maxMsgSize,   /* IN     - Used to calc maxSizeResponse.  */
-                   u_char * secParams,  /* IN     - BER encoded securityParameters. */
-                   int secModel,        /* (UNUSED) */
-                   int secLevel,        /* IN     - AuthNoPriv, authPriv etc.      */
-                   u_char * wholeMsg,   /* IN     - Original v3 message.           */
-                   size_t wholeMsgLen,  /* IN     - Msg length.                    */
-                   u_char * secEngineID,        /* OUT    - Pointer snmpEngineID.          */
-                   size_t * secEngineIDLen,     /* IN/OUT - Len available, len returned.   */
-                   /*
+int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
+    size_t maxMsgSize, /* IN     - Used to calc maxSizeResponse.  */
+    u_char* secParams, /* IN     - BER encoded securityParameters. */
+    int secModel, /* (UNUSED) */
+    int secLevel, /* IN     - AuthNoPriv, authPriv etc.      */
+    u_char* wholeMsg, /* IN     - Original v3 message.           */
+    size_t wholeMsgLen, /* IN     - Msg length.                    */
+    u_char* secEngineID, /* OUT    - Pointer snmpEngineID.          */
+    size_t* secEngineIDLen, /* IN/OUT - Len available, len returned.   */
+    /*
                     * NOTE: Memory provided by caller.
                     */
-                   char *secName,       /* OUT    - Pointer to securityName.       */
-                   size_t * secNameLen, /* IN/OUT - Len available, len returned.   */
-                   u_char ** scopedPdu, /* OUT    - Pointer to plaintext scopedPdu. */
-                   size_t * scopedPduLen,       /* IN/OUT - Len available, len returned.   */
-                   size_t * maxSizeResponse,    /* OUT    - Max size of Response PDU.      */
-                   void **secStateRf,   /* OUT    - Ref to security state.         */
-                   Types_Session * sess,      /* IN     - session which got the message  */
-                   u_char msg_flags)
-{                               /* IN     - v3 Message flags.              */
-    size_t          remaining = wholeMsgLen - (u_int)
-        ((u_long) * secParams - (u_long) * wholeMsg);
-    u_int           boots_uint;
-    u_int           time_uint;
-    u_int           net_boots, net_time;
-    u_char          signature[TOOLS_BYTESIZE(USM_MAX_KEYEDHASH_LENGTH)];
-    size_t          signature_length = TOOLS_BYTESIZE(USM_MAX_KEYEDHASH_LENGTH);
-    u_char          salt[TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH)];
-    size_t          salt_length = TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH);
-    u_char          iv[TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH)];
-    u_int           iv_length = TOOLS_BYTESIZE(USM_MAX_SALT_LENGTH);
-    u_char         *data_ptr;
-    u_char         *value_ptr;
-    u_char          type_value;
-    u_char         *end_of_overhead = NULL;
-    int             error;
-    int             i, rc = 0;
-    struct Usm_StateReference_s **secStateRef =
-        (struct Usm_StateReference_s **) secStateRf;
+    char* secName, /* OUT    - Pointer to securityName.       */
+    size_t* secNameLen, /* IN/OUT - Len available, len returned.   */
+    u_char** scopedPdu, /* OUT    - Pointer to plaintext scopedPdu. */
+    size_t* scopedPduLen, /* IN/OUT - Len available, len returned.   */
+    size_t* maxSizeResponse, /* OUT    - Max size of Response PDU.      */
+    void** secStateRf, /* OUT    - Ref to security state.         */
+    Types_Session* sess, /* IN     - session which got the message  */
+    u_char msg_flags )
+{ /* IN     - v3 Message flags.              */
+    size_t remaining = wholeMsgLen - ( u_int )( ( u_long )*secParams - ( u_long )*wholeMsg );
+    u_int boots_uint;
+    u_int time_uint;
+    u_int net_boots, net_time;
+    u_char signature[ TOOLS_BYTESIZE( USM_MAX_KEYEDHASH_LENGTH ) ];
+    size_t signature_length = TOOLS_BYTESIZE( USM_MAX_KEYEDHASH_LENGTH );
+    u_char salt[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+    size_t salt_length = TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH );
+    u_char iv[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+    u_int iv_length = TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH );
+    u_char* data_ptr;
+    u_char* value_ptr;
+    u_char type_value;
+    u_char* end_of_overhead = NULL;
+    int error;
+    int i, rc = 0;
+    struct Usm_StateReference_s** secStateRef = ( struct Usm_StateReference_s** )secStateRf;
 
-    struct Usm_User_s *user;
+    struct Usm_User_s* user;
 
+    DEBUG_MSGTL( ( "usm", "USM processing begun...\n" ) );
 
-    DEBUG_MSGTL(("usm", "USM processing begun...\n"));
-
-
-    if (secStateRef) {
-        Usm_freeUsmStateReference(*secStateRef);
+    if ( secStateRef ) {
+        Usm_freeUsmStateReference( *secStateRef );
         *secStateRef = Usm_mallocUsmStateReference();
-        if (*secStateRef == NULL) {
-            DEBUG_MSGTL(("usm", "Out of memory.\n"));
+        if ( *secStateRef == NULL ) {
+            DEBUG_MSGTL( ( "usm", "Out of memory.\n" ) );
             return ErrorCode_USM_GENERICERROR;
         }
     }
-
 
     /*
      * Make sure the *secParms is an OCTET STRING.
      * Extract the user name, engine ID, and security level.
      */
-    if ((rc = Usm_parseSecurityParameters(secParams, remaining,
-                                            secEngineID, secEngineIDLen,
-                                            &boots_uint, &time_uint,
-                                            secName, secNameLen,
-                                            signature, &signature_length,
-                                            salt, &salt_length,
-                                            &data_ptr)) < 0) {
-        DEBUG_MSGTL(("usm", "Parsing failed (rc %d).\n", rc));
-        if (rc == -2) {
+    if ( ( rc = Usm_parseSecurityParameters( secParams, remaining,
+               secEngineID, secEngineIDLen,
+               &boots_uint, &time_uint,
+               secName, secNameLen,
+               signature, &signature_length,
+               salt, &salt_length,
+               &data_ptr ) )
+        < 0 ) {
+        DEBUG_MSGTL( ( "usm", "Parsing failed (rc %d).\n", rc ) );
+        if ( rc == -2 ) {
             /*
              * This indicates a decryptionError.
              */
-            Api_incrementStatistic(API_STAT_USMSTATSDECRYPTIONERRORS);
+            Api_incrementStatistic( API_STAT_USMSTATSDECRYPTIONERRORS );
             return ErrorCode_USM_DECRYPTIONERROR;
         }
-        Api_incrementStatistic(API_STAT_SNMPINASNPARSEERRS);
+        Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
         return ErrorCode_USM_PARSEERROR;
     }
 
@@ -2255,86 +2142,75 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
      * then an error indication (decryptionError) is returned to the
      * calling module.
      */
-    if ((secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) && (salt_length != 8)) {
-        Api_incrementStatistic(API_STAT_USMSTATSDECRYPTIONERRORS);
+    if ( ( secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) && ( salt_length != 8 ) ) {
+        Api_incrementStatistic( API_STAT_USMSTATSDECRYPTIONERRORS );
         return ErrorCode_USM_DECRYPTIONERROR;
     }
 
-    if (secLevel != PRIOT_SEC_LEVEL_AUTHPRIV) {
+    if ( secLevel != PRIOT_SEC_LEVEL_AUTHPRIV ) {
         /*
          * pull these out now so reports can use them
          */
         *scopedPdu = data_ptr;
-        *scopedPduLen = wholeMsgLen - (data_ptr - wholeMsg);
+        *scopedPduLen = wholeMsgLen - ( data_ptr - wholeMsg );
         end_of_overhead = data_ptr;
     }
 
-    if (secStateRef) {
+    if ( secStateRef ) {
         /*
          * Cache the name, engine ID, and security level,
          * * per step 2 (section 3.2)
          */
-        if (Usm_setUsmStateReferenceName
-            (*secStateRef, secName, *secNameLen) == -1) {
-            DEBUG_MSGTL(("usm", "%s\n", "Couldn't cache name."));
+        if ( Usm_setUsmStateReferenceName( *secStateRef, secName, *secNameLen ) == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Couldn't cache name." ) );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Usm_setUsmStateReferenceEngineId
-            (*secStateRef, secEngineID, *secEngineIDLen) == -1) {
-            DEBUG_MSGTL(("usm", "%s\n", "Couldn't cache engine id."));
+        if ( Usm_setUsmStateReferenceEngineId( *secStateRef, secEngineID, *secEngineIDLen ) == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Couldn't cache engine id." ) );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Usm_setUsmStateReferenceSecLevel(*secStateRef, secLevel) ==
-            -1) {
-            DEBUG_MSGTL(("usm", "%s\n", "Couldn't cache security level."));
+        if ( Usm_setUsmStateReferenceSecLevel( *secStateRef, secLevel ) == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Couldn't cache security level." ) );
             return ErrorCode_USM_GENERICERROR;
         }
     }
-
 
     /*
      * Locate the engine ID record.
      * If it is unknown, then either create one or note this as an error.
      */
-    if ((sess && (sess->isAuthoritative == API_SESS_AUTHORITATIVE ||
-                  (sess->isAuthoritative == API_SESS_UNKNOWNAUTH &&
-                   (msg_flags & PRIOT_MSG_FLAG_RPRT_BIT)))) ||
-        (!sess && (msg_flags & PRIOT_MSG_FLAG_RPRT_BIT))) {
-        if (LCDTIME_ISENGINEKNOWN(secEngineID, *secEngineIDLen) == FALSE) {
-            DEBUG_MSGTL(("usm", "Unknown Engine ID.\n"));
-            Api_incrementStatistic(API_STAT_USMSTATSUNKNOWNENGINEIDS);
+    if ( ( sess && ( sess->isAuthoritative == API_SESS_AUTHORITATIVE || ( sess->isAuthoritative == API_SESS_UNKNOWNAUTH && ( msg_flags & PRIOT_MSG_FLAG_RPRT_BIT ) ) ) ) || ( !sess && ( msg_flags & PRIOT_MSG_FLAG_RPRT_BIT ) ) ) {
+        if ( LCDTIME_ISENGINEKNOWN( secEngineID, *secEngineIDLen ) == FALSE ) {
+            DEBUG_MSGTL( ( "usm", "Unknown Engine ID.\n" ) );
+            Api_incrementStatistic( API_STAT_USMSTATSUNKNOWNENGINEIDS );
             return ErrorCode_USM_UNKNOWNENGINEID;
         }
     } else {
-        if (LCDTIME_ENSURE_ENGINE_RECORD(secEngineID, *secEngineIDLen)
-            != ErrorCode_SUCCESS) {
-            DEBUG_MSGTL(("usm", "%s\n", "Couldn't ensure engine record."));
+        if ( LCDTIME_ENSURE_ENGINE_RECORD( secEngineID, *secEngineIDLen )
+            != ErrorCode_SUCCESS ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Couldn't ensure engine record." ) );
             return ErrorCode_USM_GENERICERROR;
         }
-
     }
-
 
     /*
      * Locate the User record.
      * If the user/engine ID is unknown, report this as an error.
      */
-    if ((user = Usm_getUserFromList(secEngineID, *secEngineIDLen,
-                                       secName, _usm_userList,
-                                       (((sess && sess->isAuthoritative ==
-                                          API_SESS_AUTHORITATIVE) ||
-                                         (!sess)) ? 0 : 1)))
-        == NULL) {
-        DEBUG_MSGTL(("usm", "Unknown User(%s)\n", secName));
-        Api_incrementStatistic(API_STAT_USMSTATSUNKNOWNUSERNAMES);
+    if ( ( user = Usm_getUserFromList( secEngineID, *secEngineIDLen,
+               secName, _usm_userList,
+               ( ( ( sess && sess->isAuthoritative == API_SESS_AUTHORITATIVE ) || ( !sess ) ) ? 0 : 1 ) ) )
+        == NULL ) {
+        DEBUG_MSGTL( ( "usm", "Unknown User(%s)\n", secName ) );
+        Api_incrementStatistic( API_STAT_USMSTATSUNKNOWNUSERNAMES );
         return ErrorCode_USM_UNKNOWNSECURITYNAME;
     }
 
     /* ensure the user is active */
-    if (user->userStatus != TC_RS_ACTIVE) {
-        DEBUG_MSGTL(("usm", "Attempt to use an inactive user.\n"));
+    if ( user->userStatus != TC_RS_ACTIVE ) {
+        DEBUG_MSGTL( ( "usm", "Attempt to use an inactive user.\n" ) );
         return ErrorCode_USM_UNKNOWNSECURITYNAME;
     }
 
@@ -2342,37 +2218,36 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
      * Make sure the security level is appropriate.
      */
 
-    rc = Usm_checkSecLevel(secLevel, user);
-    if (1 == rc) {
-        DEBUG_MSGTL(("usm", "Unsupported Security Level (%d).\n",
-                    secLevel));
-        Api_incrementStatistic(API_STAT_USMSTATSUNSUPPORTEDSECLEVELS);
+    rc = Usm_checkSecLevel( secLevel, user );
+    if ( 1 == rc ) {
+        DEBUG_MSGTL( ( "usm", "Unsupported Security Level (%d).\n",
+            secLevel ) );
+        Api_incrementStatistic( API_STAT_USMSTATSUNSUPPORTEDSECLEVELS );
         return ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL;
-    } else if (rc != 0) {
-        DEBUG_MSGTL(("usm", "Unknown issue.\n"));
+    } else if ( rc != 0 ) {
+        DEBUG_MSGTL( ( "usm", "Unknown issue.\n" ) );
         return ErrorCode_USM_GENERICERROR;
     }
 
     /*
      * Check the authentication credentials of the message.
      */
-    if (secLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
-        || secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        if (Scapi_checkKeyedHash(user->authProtocol, user->authProtocolLen,
-                                user->authKey, user->authKeyLen,
-                                wholeMsg, wholeMsgLen,
-                                signature, signature_length)
-            != PRIOT_ERR_NOERROR) {
-            DEBUG_MSGTL(("usm", "Verification failed.\n"));
-            Api_incrementStatistic(API_STAT_USMSTATSWRONGDIGESTS);
-        Logger_log(LOGGER_PRIORITY_WARNING, "Authentication failed for %s\n",
-                user->name);
+    if ( secLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
+        || secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        if ( Scapi_checkKeyedHash( user->authProtocol, user->authProtocolLen,
+                 user->authKey, user->authKeyLen,
+                 wholeMsg, wholeMsgLen,
+                 signature, signature_length )
+            != PRIOT_ERR_NOERROR ) {
+            DEBUG_MSGTL( ( "usm", "Verification failed.\n" ) );
+            Api_incrementStatistic( API_STAT_USMSTATSWRONGDIGESTS );
+            Logger_log( LOGGER_PRIORITY_WARNING, "Authentication failed for %s\n",
+                user->name );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
-        DEBUG_MSGTL(("usm", "Verification succeeded.\n"));
+        DEBUG_MSGTL( ( "usm", "Verification succeeded.\n" ) );
     }
-
 
     /*
      * Steps 10-11  user is already set - relocated before timeliness
@@ -2380,52 +2255,52 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
      *
      * Cache the keys and protocol oids, per step 11 (s3.2).
      */
-    if (secStateRef) {
-        if (Usm_setUsmStateReferenceAuthProtocol(*secStateRef,
-                                                    user->authProtocol,
-                                                    user->
-                                                    authProtocolLen) ==
-            -1) {
-            DEBUG_MSGTL(("usm", "%s\n",
-                        "Couldn't cache authentication protocol."));
+    if ( secStateRef ) {
+        if ( Usm_setUsmStateReferenceAuthProtocol( *secStateRef,
+                 user->authProtocol,
+                 user->authProtocolLen )
+            == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n",
+                "Couldn't cache authentication protocol." ) );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Usm_setUsmStateReferenceAuthKey(*secStateRef,
-                                               user->authKey,
-                                               user->authKeyLen) == -1) {
-            DEBUG_MSGTL(("usm", "%s\n",
-                        "Couldn't cache authentication key."));
+        if ( Usm_setUsmStateReferenceAuthKey( *secStateRef,
+                 user->authKey,
+                 user->authKeyLen )
+            == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n",
+                "Couldn't cache authentication key." ) );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Usm_setUsmStateReferencePrivProtocol(*secStateRef,
-                                                    user->privProtocol,
-                                                    user->
-                                                    privProtocolLen) ==
-            -1) {
-            DEBUG_MSGTL(("usm", "%s\n",
-                        "Couldn't cache privacy protocol."));
+        if ( Usm_setUsmStateReferencePrivProtocol( *secStateRef,
+                 user->privProtocol,
+                 user->privProtocolLen )
+            == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n",
+                "Couldn't cache privacy protocol." ) );
             return ErrorCode_USM_GENERICERROR;
         }
 
-        if (Usm_setUsmStateReferencePrivKey(*secStateRef,
-                                               user->privKey,
-                                               user->privKeyLen) == -1) {
-            DEBUG_MSGTL(("usm", "%s\n", "Couldn't cache privacy key."));
+        if ( Usm_setUsmStateReferencePrivKey( *secStateRef,
+                 user->privKey,
+                 user->privKeyLen )
+            == -1 ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Couldn't cache privacy key." ) );
             return ErrorCode_USM_GENERICERROR;
         }
     }
 
-
     /*
      * Perform the timeliness/time manager functions.
      */
-    if (secLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
-        || secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        if (Usm_checkAndUpdateTimeliness(secEngineID, *secEngineIDLen,
-                                            boots_uint, time_uint,
-                                            &error) == -1) {
+    if ( secLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
+        || secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        if ( Usm_checkAndUpdateTimeliness( secEngineID, *secEngineIDLen,
+                 boots_uint, time_uint,
+                 &error )
+            == -1 ) {
             return error;
         }
     }
@@ -2435,31 +2310,31 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
      * that we normally use.
      */
     else {
-        LcdTime_setEnginetime(secEngineID, *secEngineIDLen,
-                       boots_uint, time_uint, FALSE);
+        LcdTime_setEnginetime( secEngineID, *secEngineIDLen,
+            boots_uint, time_uint, FALSE );
     }
-
 
     /*
      * If needed, decrypt the scoped PDU.
      */
-    if (secLevel == PRIOT_SEC_LEVEL_AUTHPRIV) {
-        remaining = wholeMsgLen - (data_ptr - wholeMsg);
+    if ( secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
+        remaining = wholeMsgLen - ( data_ptr - wholeMsg );
 
-        if ((value_ptr = Asn01_parseSequence(data_ptr, &remaining,
-                                            &type_value,
-                                            (ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                             | ASN01_OCTET_STR),
-                                            "encrypted sPDU")) == NULL) {
-            DEBUG_MSGTL(("usm", "%s\n",
-                        "Failed while parsing encrypted sPDU."));
-            Api_incrementStatistic(API_STAT_SNMPINASNPARSEERRS);
-            Usm_freeUsmStateReference(*secStateRef);
+        if ( ( value_ptr = Asn01_parseSequence( data_ptr, &remaining,
+                   &type_value,
+                   ( ASN01_UNIVERSAL | ASN01_PRIMITIVE
+                                                    | ASN01_OCTET_STR ),
+                   "encrypted sPDU" ) )
+            == NULL ) {
+            DEBUG_MSGTL( ( "usm", "%s\n",
+                "Failed while parsing encrypted sPDU." ) );
+            Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
+            Usm_freeUsmStateReference( *secStateRef );
             *secStateRef = NULL;
             return ErrorCode_USM_PARSEERROR;
         }
 
-        if (TOOLS_ISTRANSFORM(user->privProtocol, dESPriv)) {
+        if ( TOOLS_ISTRANSFORM( user->privProtocol, dESPriv ) ) {
             /*
              * From RFC2574:
              *
@@ -2469,12 +2344,12 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
              * is halted and an appropriate exception noted."
              */
 
-            if (remaining % 8 != 0) {
-                DEBUG_MSGTL(("usm",
-                            "Ciphertext is %lu bytes, not an integer multiple of 8 (rem %lu)\n",
-                            (unsigned long)remaining, (unsigned long)remaining % 8));
-                Api_incrementStatistic(API_STAT_USMSTATSDECRYPTIONERRORS);
-                Usm_freeUsmStateReference(*secStateRef);
+            if ( remaining % 8 != 0 ) {
+                DEBUG_MSGTL( ( "usm",
+                    "Ciphertext is %lu bytes, not an integer multiple of 8 (rem %lu)\n",
+                    ( unsigned long )remaining, ( unsigned long )remaining % 8 ) );
+                Api_incrementStatistic( API_STAT_USMSTATSDECRYPTIONERRORS );
+                Usm_freeUsmStateReference( *secStateRef );
                 *secStateRef = NULL;
                 return ErrorCode_USM_DECRYPTIONERROR;
             }
@@ -2482,9 +2357,9 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
             end_of_overhead = value_ptr;
 
             if ( !user->privKey ) {
-                DEBUG_MSGTL(("usm", "No privacy pass phrase for %s\n", user->secName));
-                Api_incrementStatistic(API_STAT_USMSTATSDECRYPTIONERRORS);
-                Usm_freeUsmStateReference(*secStateRef);
+                DEBUG_MSGTL( ( "usm", "No privacy pass phrase for %s\n", user->secName ) );
+                Api_incrementStatistic( API_STAT_USMSTATSDECRYPTIONERRORS );
+                Usm_freeUsmStateReference( *secStateRef );
                 *secStateRef = NULL;
                 return ErrorCode_USM_DECRYPTIONERROR;
             }
@@ -2493,26 +2368,26 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
              * XOR the salt with the last (iv_length) bytes
              * of the priv_key to obtain the IV.
              */
-            iv_length = TOOLS_BYTESIZE(USM_DES_SALT_LENGTH);
-            for (i = 0; i < (int) iv_length; i++)
-                iv[i] = salt[i] ^ user->privKey[iv_length + i];
+            iv_length = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+            for ( i = 0; i < ( int )iv_length; i++ )
+                iv[ i ] = salt[ i ] ^ user->privKey[ iv_length + i ];
         }
-        if (TOOLS_ISTRANSFORM(user->privProtocol, aESPriv)) {
-            iv_length = TOOLS_BYTESIZE(USM_AES_SALT_LENGTH);
-            net_boots = ntohl(boots_uint);
-            net_time = ntohl(time_uint);
-            memcpy(iv, &net_boots, 4);
-            memcpy(iv+4, &net_time, 4);
-            memcpy(iv+8, salt, salt_length);
+        if ( TOOLS_ISTRANSFORM( user->privProtocol, aESPriv ) ) {
+            iv_length = TOOLS_BYTESIZE( USM_AES_SALT_LENGTH );
+            net_boots = ntohl( boots_uint );
+            net_time = ntohl( time_uint );
+            memcpy( iv, &net_boots, 4 );
+            memcpy( iv + 4, &net_time, 4 );
+            memcpy( iv + 8, salt, salt_length );
         }
 
-        if (Scapi_decrypt(user->privProtocol, user->privProtocolLen,
-                       user->privKey, user->privKeyLen,
-                       iv, iv_length,
-                       value_ptr, remaining, *scopedPdu, scopedPduLen)
-            != PRIOT_ERR_NOERROR) {
-            DEBUG_MSGTL(("usm", "%s\n", "Failed decryption."));
-            Api_incrementStatistic(API_STAT_USMSTATSDECRYPTIONERRORS);
+        if ( Scapi_decrypt( user->privProtocol, user->privProtocolLen,
+                 user->privKey, user->privKeyLen,
+                 iv, iv_length,
+                 value_ptr, remaining, *scopedPdu, scopedPduLen )
+            != PRIOT_ERR_NOERROR ) {
+            DEBUG_MSGTL( ( "usm", "%s\n", "Failed decryption." ) );
+            Api_incrementStatistic( API_STAT_USMSTATSDECRYPTIONERRORS );
             return ErrorCode_USM_DECRYPTIONERROR;
         }
 
@@ -2522,70 +2397,60 @@ Usm_processInMsg(int msgProcModel,    /* (UNUSED) */
      */
     else {
         *scopedPdu = data_ptr;
-        *scopedPduLen = wholeMsgLen - (data_ptr - wholeMsg);
+        *scopedPduLen = wholeMsgLen - ( data_ptr - wholeMsg );
         end_of_overhead = data_ptr;
 
-    }                           /* endif -- PDU decryption */
-
+    } /* endif -- PDU decryption */
 
     /*
      * Calculate the biggest sPDU for the response (i.e., whole - ovrhd).
      *
      * FIX  Correct?
      */
-    *maxSizeResponse = maxMsgSize - (end_of_overhead - wholeMsg);
+    *maxSizeResponse = maxMsgSize - ( end_of_overhead - wholeMsg );
 
-
-    DEBUG_MSGTL(("usm", "USM processing completed.\n"));
+    DEBUG_MSGTL( ( "usm", "USM processing completed.\n" ) );
 
     return ErrorCode_SUCCESS;
 
-}                               /* end Usm_processInMsg() */
+} /* end Usm_processInMsg() */
 
-void
-Usm_handleReport(void *sessp,
-                  Transport_Transport *transport, Types_Session *session,
-                  int result, Types_Pdu *pdu)
+void Usm_handleReport( void* sessp,
+    Transport_Transport* transport, Types_Session* session,
+    int result, Types_Pdu* pdu )
 {
     /*
      * handle reportable errors
      */
 
     /* this will get in our way */
-    Usm_freeUsmStateReference(pdu->securityStateRef);
+    Usm_freeUsmStateReference( pdu->securityStateRef );
     pdu->securityStateRef = NULL;
 
-    if(result == ErrorCode_USM_AUTHENTICATIONFAILURE)
-    {
+    if ( result == ErrorCode_USM_AUTHENTICATIONFAILURE ) {
         int res = session->s_snmp_errno;
         session->s_snmp_errno = result;
-        if (session->callback) {
-            session->callback(API_CALLBACK_OP_RECEIVED_MESSAGE,
-                              session, pdu->reqid, pdu,
-                              session->callback_magic);
+        if ( session->callback ) {
+            session->callback( API_CALLBACK_OP_RECEIVED_MESSAGE,
+                session, pdu->reqid, pdu,
+                session->callback_magic );
         }
         session->s_snmp_errno = res;
     }
     /* fallthrough */
-    if(result == ErrorCode_USM_AUTHENTICATIONFAILURE ||
-       result == ErrorCode_USM_UNKNOWNENGINEID ||
-       result == ErrorCode_USM_UNKNOWNSECURITYNAME ||
-       result == ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL ||
-       result == ErrorCode_USM_NOTINTIMEWINDOW ||
-       result == ErrorCode_USM_DECRYPTIONERROR ){
+    if ( result == ErrorCode_USM_AUTHENTICATIONFAILURE || result == ErrorCode_USM_UNKNOWNENGINEID || result == ErrorCode_USM_UNKNOWNSECURITYNAME || result == ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL || result == ErrorCode_USM_NOTINTIMEWINDOW || result == ErrorCode_USM_DECRYPTIONERROR ) {
 
-        if (PRIOT_CMD_CONFIRMED(pdu->command) ||
-            (pdu->command == 0
-             && (pdu->flags & PRIOT_MSG_FLAG_RPRT_BIT))) {
-            Types_Pdu    *pdu2;
-            int             flags = pdu->flags;
+        if ( PRIOT_CMD_CONFIRMED( pdu->command ) || ( pdu->command == 0
+                                                        && ( pdu->flags & PRIOT_MSG_FLAG_RPRT_BIT ) ) ) {
+            Types_Pdu* pdu2;
+            int flags = pdu->flags;
 
             pdu->flags |= PRIOT_UCD_MSG_FLAG_FORCE_PDU_COPY;
-            pdu2 = Client_clonePdu(pdu);
+            pdu2 = Client_clonePdu( pdu );
             pdu->flags = pdu2->flags = flags;
-             Api_v3MakeReport(pdu2, result);
-            if (0 == Api_sessSend(sessp, pdu2)) {
-                Api_freePdu(pdu2);
+            Api_v3MakeReport( pdu2, result );
+            if ( 0 == Api_sessSend( sessp, pdu2 ) ) {
+                Api_freePdu( pdu2 );
                 /*
                  * TODO: indicate error
                  */
@@ -2595,102 +2460,91 @@ Usm_handleReport(void *sessp,
 }
 
 /* sets up initial default session parameters */
-int
-Usm_sessionInit(Types_Session *in_session, Types_Session *session)
+int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
 {
-    char *cp;
+    char* cp;
     size_t i;
 
-    if (in_session->securityAuthProtoLen > 0) {
-        session->securityAuthProto =
-            Api_duplicateObjid(in_session->securityAuthProto,
-                                 in_session->securityAuthProtoLen);
-        if (session->securityAuthProto == NULL) {
+    if ( in_session->securityAuthProtoLen > 0 ) {
+        session->securityAuthProto = Api_duplicateObjid( in_session->securityAuthProto,
+            in_session->securityAuthProtoLen );
+        if ( session->securityAuthProto == NULL ) {
             in_session->s_snmp_errno = ErrorCode_MALLOC;
             return ErrorCode_MALLOC;
         }
-    } else if (Usm_getDefaultAuthtype(&i) != NULL) {
-        session->securityAuthProto =
-            Api_duplicateObjid(Usm_getDefaultAuthtype(NULL), i);
+    } else if ( Usm_getDefaultAuthtype( &i ) != NULL ) {
+        session->securityAuthProto = Api_duplicateObjid( Usm_getDefaultAuthtype( NULL ), i );
         session->securityAuthProtoLen = i;
     }
 
-    if (in_session->securityPrivProtoLen > 0) {
-        session->securityPrivProto =
-            Api_duplicateObjid(in_session->securityPrivProto,
-                                 in_session->securityPrivProtoLen);
-        if (session->securityPrivProto == NULL) {
+    if ( in_session->securityPrivProtoLen > 0 ) {
+        session->securityPrivProto = Api_duplicateObjid( in_session->securityPrivProto,
+            in_session->securityPrivProtoLen );
+        if ( session->securityPrivProto == NULL ) {
             in_session->s_snmp_errno = ErrorCode_MALLOC;
             return ErrorCode_MALLOC;
         }
-    } else if (Usm_getDefaultPrivtype(&i) != NULL) {
-        session->securityPrivProto =
-            Api_duplicateObjid(Usm_getDefaultPrivtype(NULL), i);
+    } else if ( Usm_getDefaultPrivtype( &i ) != NULL ) {
+        session->securityPrivProto = Api_duplicateObjid( Usm_getDefaultPrivtype( NULL ), i );
         session->securityPrivProtoLen = i;
     }
 
-    if ((in_session->securityAuthKeyLen <= 0) &&
-        ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                     DsStr_AUTHMASTERKEY)))) {
-        size_t buflen = sizeof(session->securityAuthKey);
-        u_char *tmpp = session->securityAuthKey;
+    if ( ( in_session->securityAuthKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                            DsStr_AUTHMASTERKEY ) ) ) ) {
+        size_t buflen = sizeof( session->securityAuthKey );
+        u_char* tmpp = session->securityAuthKey;
         session->securityAuthKeyLen = 0;
         /* it will be a hex string */
-        if (!Tools_hexToBinary1(&tmpp, &buflen,
-                                &session->securityAuthKeyLen, 0, cp)) {
-            Api_setDetail("error parsing authentication master key");
+        if ( !Tools_hexToBinary1( &tmpp, &buflen,
+                 &session->securityAuthKeyLen, 0, cp ) ) {
+            Api_setDetail( "error parsing authentication master key" );
             return PRIOT_ERR_GENERR;
         }
-    } else if ((in_session->securityAuthKeyLen <= 0) &&
-               ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                            DsStr_AUTHPASSPHRASE)) ||
-                (cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                            DsStr_PASSPHRASE)))) {
+    } else if ( ( in_session->securityAuthKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                                   DsStr_AUTHPASSPHRASE ) )
+                                                               || ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                                        DsStr_PASSPHRASE ) ) ) ) {
         session->securityAuthKeyLen = USM_AUTH_KU_LEN;
-        if (Keytools_generateKu(session->securityAuthProto,
-                        session->securityAuthProtoLen,
-                        (u_char *) cp, strlen(cp),
-                        session->securityAuthKey,
-                        &session->securityAuthKeyLen) != ErrorCode_SUCCESS) {
-            Api_setDetail
-                ("Error generating a key (Ku) from the supplied authentication pass phrase.");
+        if ( Keytools_generateKu( session->securityAuthProto,
+                 session->securityAuthProtoLen,
+                 ( u_char* )cp, strlen( cp ),
+                 session->securityAuthKey,
+                 &session->securityAuthKeyLen )
+            != ErrorCode_SUCCESS ) {
+            Api_setDetail( "Error generating a key (Ku) from the supplied authentication pass phrase." );
             return PRIOT_ERR_GENERR;
         }
     }
 
-
-    if ((in_session->securityPrivKeyLen <= 0) &&
-        ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                     DsStr_PRIVMASTERKEY)))) {
-        size_t buflen = sizeof(session->securityPrivKey);
-        u_char *tmpp = session->securityPrivKey;
+    if ( ( in_session->securityPrivKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                            DsStr_PRIVMASTERKEY ) ) ) ) {
+        size_t buflen = sizeof( session->securityPrivKey );
+        u_char* tmpp = session->securityPrivKey;
         session->securityPrivKeyLen = 0;
         /* it will be a hex string */
-        if (!Tools_hexToBinary1(&tmpp, &buflen,
-                                &session->securityPrivKeyLen, 0, cp)) {
-            Api_setDetail("error parsing encryption master key");
+        if ( !Tools_hexToBinary1( &tmpp, &buflen,
+                 &session->securityPrivKeyLen, 0, cp ) ) {
+            Api_setDetail( "error parsing encryption master key" );
             return PRIOT_ERR_GENERR;
         }
-    } else if ((in_session->securityPrivKeyLen <= 0) &&
-               ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                            DsStr_PRIVPASSPHRASE)) ||
-                (cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                            DsStr_PASSPHRASE)))) {
+    } else if ( ( in_session->securityPrivKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                                   DsStr_PRIVPASSPHRASE ) )
+                                                               || ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                                        DsStr_PASSPHRASE ) ) ) ) {
         session->securityPrivKeyLen = USM_PRIV_KU_LEN;
-        if (Keytools_generateKu(session->securityAuthProto,
-                        session->securityAuthProtoLen,
-                        (u_char *) cp, strlen(cp),
-                        session->securityPrivKey,
-                        &session->securityPrivKeyLen) != ErrorCode_SUCCESS) {
-            Api_setDetail
-                ("Error generating a key (Ku) from the supplied privacy pass phrase.");
+        if ( Keytools_generateKu( session->securityAuthProto,
+                 session->securityAuthProtoLen,
+                 ( u_char* )cp, strlen( cp ),
+                 session->securityPrivKey,
+                 &session->securityPrivKeyLen )
+            != ErrorCode_SUCCESS ) {
+            Api_setDetail( "Error generating a key (Ku) from the supplied privacy pass phrase." );
             return PRIOT_ERR_GENERR;
         }
     }
 
     return ErrorCode_SUCCESS;
 }
-
 
 /*
  * Usm_createUserFromession(Types_Session *session):
@@ -2706,53 +2560,49 @@ Usm_sessionInit(Types_Session *in_session, Types_Session *session)
  * ErrorCode_SUCCESS
  * ErrorCode_GENERR
  */
-int Usm_createUserFromSession(Types_Session * session)
+int Usm_createUserFromSession( Types_Session* session )
 {
-    struct Usm_User_s *user;
-    int             user_just_created = 0;
-    char *cp;
+    struct Usm_User_s* user;
+    int user_just_created = 0;
+    char* cp;
 
     /*
      * - don't create-another/copy-into user for this session by default
      * - bail now (no error) if we don't have an engineID
      */
-    if (API_FLAGS_USER_CREATED == (session->flags & API_FLAGS_USER_CREATED) ||
-        session->securityModel != PRIOT_SEC_MODEL_USM ||
-        session->version != PRIOT_VERSION_3 ||
-        session->securityNameLen == 0 ||
-        session->securityEngineIDLen == 0)
+    if ( API_FLAGS_USER_CREATED == ( session->flags & API_FLAGS_USER_CREATED ) || session->securityModel != PRIOT_SEC_MODEL_USM || session->version != PRIOT_VERSION_3 || session->securityNameLen == 0 || session->securityEngineIDLen == 0 )
         return ErrorCode_SUCCESS;
 
-    DEBUG_MSGTL(("usm", "no flag defined...  continuing\n"));
+    DEBUG_MSGTL( ( "usm", "no flag defined...  continuing\n" ) );
     session->flags |= API_FLAGS_USER_CREATED;
 
     /*
      * now that we have the engineID, create an entry in the USM list
      * for this user using the information in the session
      */
-    user = Usm_getUserFromList(session->securityEngineID,
-                                  session->securityEngineIDLen,
-                                  session->securityName,
-                                  Usm_getUserList(), 0);
-    DEBUG_MSGTL(("usm", "user exists? x=%p\n", user));
-    if (user == NULL) {
-        DEBUG_MSGTL(("usm", "Building user %s...\n",
-                    session->securityName));
+    user = Usm_getUserFromList( session->securityEngineID,
+        session->securityEngineIDLen,
+        session->securityName,
+        Usm_getUserList(), 0 );
+    DEBUG_MSGTL( ( "usm", "user exists? x=%p\n", user ) );
+    if ( user == NULL ) {
+        DEBUG_MSGTL( ( "usm", "Building user %s...\n",
+            session->securityName ) );
         /*
          * user doesn't exist so we create and add it
          */
-        user = (struct Usm_User_s *) calloc(1, sizeof(struct Usm_User_s));
-        if (user == NULL)
+        user = ( struct Usm_User_s* )calloc( 1, sizeof( struct Usm_User_s ) );
+        if ( user == NULL )
             return ErrorCode_GENERR;
 
         /*
          * copy in the securityName
          */
-        if (session->securityName) {
-            user->name = strdup(session->securityName);
-            user->secName = strdup(session->securityName);
-            if (user->name == NULL || user->secName == NULL) {
-                Usm_freeUser(user);
+        if ( session->securityName ) {
+            user->name = strdup( session->securityName );
+            user->secName = strdup( session->securityName );
+            if ( user->name == NULL || user->secName == NULL ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
         }
@@ -2760,10 +2610,10 @@ int Usm_createUserFromSession(Types_Session * session)
         /*
          * copy in the engineID
          */
-        user->engineID = (u_char *)Tools_memdup(session->securityEngineID,
-                                        session->securityEngineIDLen);
-        if (session->securityEngineID && !user->engineID) {
-            Usm_freeUser(user);
+        user->engineID = ( u_char* )Tools_memdup( session->securityEngineID,
+            session->securityEngineIDLen );
+        if ( session->securityEngineID && !user->engineID ) {
+            Usm_freeUser( user );
             return ErrorCode_GENERR;
         }
         user->engineIDLen = session->securityEngineIDLen;
@@ -2774,13 +2624,12 @@ int Usm_createUserFromSession(Types_Session * session)
     /*
      * copy the auth protocol
      */
-    if (user->authProtocol == NULL && session->securityAuthProto != NULL) {
-        TOOLS_FREE(user->authProtocol);
-        user->authProtocol =
-            Api_duplicateObjid(session->securityAuthProto,
-                                 session->securityAuthProtoLen);
-        if (user->authProtocol == NULL) {
-            Usm_freeUser(user);
+    if ( user->authProtocol == NULL && session->securityAuthProto != NULL ) {
+        TOOLS_FREE( user->authProtocol );
+        user->authProtocol = Api_duplicateObjid( session->securityAuthProto,
+            session->securityAuthProtoLen );
+        if ( user->authProtocol == NULL ) {
+            Usm_freeUser( user );
             return ErrorCode_GENERR;
         }
         user->authProtocolLen = session->securityAuthProtoLen;
@@ -2789,13 +2638,12 @@ int Usm_createUserFromSession(Types_Session * session)
     /*
      * copy the priv protocol
      */
-    if (user->privProtocol == NULL && session->securityPrivProto != NULL) {
-        TOOLS_FREE(user->privProtocol);
-        user->privProtocol =
-            Api_duplicateObjid(session->securityPrivProto,
-                                 session->securityPrivProtoLen);
-        if (user->privProtocol == NULL) {
-            Usm_freeUser(user);
+    if ( user->privProtocol == NULL && session->securityPrivProto != NULL ) {
+        TOOLS_FREE( user->privProtocol );
+        user->privProtocol = Api_duplicateObjid( session->securityPrivProto,
+            session->securityPrivProtoLen );
+        if ( user->privProtocol == NULL ) {
+            Usm_freeUser( user );
             return ErrorCode_GENERR;
         }
         user->privProtocolLen = session->securityPrivProtoLen;
@@ -2804,46 +2652,47 @@ int Usm_createUserFromSession(Types_Session * session)
     /*
      * copy in the authentication Key.  If not localized, localize it
      */
-    if (user->authKey == NULL) {
-        if (session->securityAuthLocalKey != NULL
-            && session->securityAuthLocalKeyLen != 0) {
+    if ( user->authKey == NULL ) {
+        if ( session->securityAuthLocalKey != NULL
+            && session->securityAuthLocalKeyLen != 0 ) {
             /* already localized key passed in.  use it */
-            TOOLS_FREE(user->authKey);
-            user->authKey = (u_char *)Tools_memdup(session->securityAuthLocalKey,
-                                           session->securityAuthLocalKeyLen);
-            if (!user->authKey) {
-                Usm_freeUser(user);
+            TOOLS_FREE( user->authKey );
+            user->authKey = ( u_char* )Tools_memdup( session->securityAuthLocalKey,
+                session->securityAuthLocalKeyLen );
+            if ( !user->authKey ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
             user->authKeyLen = session->securityAuthLocalKeyLen;
-        } else if (session->securityAuthKey != NULL
-                   && session->securityAuthKeyLen != 0) {
-            TOOLS_FREE(user->authKey);
-            user->authKey = (u_char *) calloc(1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK);
-            if (user->authKey == NULL) {
-                Usm_freeUser(user);
+        } else if ( session->securityAuthKey != NULL
+            && session->securityAuthKeyLen != 0 ) {
+            TOOLS_FREE( user->authKey );
+            user->authKey = ( u_char* )calloc( 1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK );
+            if ( user->authKey == NULL ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
             user->authKeyLen = KEYTOOLS_USM_LENGTH_KU_HASHBLOCK;
-            if (Keytools_generateKul(user->authProtocol, user->authProtocolLen,
-                             session->securityEngineID,
-                             session->securityEngineIDLen,
-                             session->securityAuthKey,
-                             session->securityAuthKeyLen, user->authKey,
-                             &user->authKeyLen) != ErrorCode_SUCCESS) {
-                Usm_freeUser(user);
+            if ( Keytools_generateKul( user->authProtocol, user->authProtocolLen,
+                     session->securityEngineID,
+                     session->securityEngineIDLen,
+                     session->securityAuthKey,
+                     session->securityAuthKeyLen, user->authKey,
+                     &user->authKeyLen )
+                != ErrorCode_SUCCESS ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
-        } else if ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                               DsStr_AUTHLOCALIZEDKEY))) {
+        } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                          DsStr_AUTHLOCALIZEDKEY ) ) ) {
             size_t buflen = USM_AUTH_KU_LEN;
-            TOOLS_FREE(user->authKey);
-            user->authKey = (u_char *)malloc(buflen); /* max length needed */
+            TOOLS_FREE( user->authKey );
+            user->authKey = ( u_char* )malloc( buflen ); /* max length needed */
             user->authKeyLen = 0;
             /* it will be a hex string */
-            if (!Tools_hexToBinary1(&user->authKey, &buflen, &user->authKeyLen,
-                                    0, cp)) {
-                Usm_freeUser(user);
+            if ( !Tools_hexToBinary1( &user->authKey, &buflen, &user->authKeyLen,
+                     0, cp ) ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
         }
@@ -2852,201 +2701,201 @@ int Usm_createUserFromSession(Types_Session * session)
     /*
      * copy in the privacy Key.  If not localized, localize it
      */
-    if (user->privKey == NULL) {
-        if (session->securityPrivLocalKey != NULL
-            && session->securityPrivLocalKeyLen != 0) {
+    if ( user->privKey == NULL ) {
+        if ( session->securityPrivLocalKey != NULL
+            && session->securityPrivLocalKeyLen != 0 ) {
             /* already localized key passed in.  use it */
-            TOOLS_FREE(user->privKey);
-            user->privKey = (u_char *)Tools_memdup(session->securityPrivLocalKey,
-                                           session->securityPrivLocalKeyLen);
-            if (!user->privKey) {
-                Usm_freeUser(user);
+            TOOLS_FREE( user->privKey );
+            user->privKey = ( u_char* )Tools_memdup( session->securityPrivLocalKey,
+                session->securityPrivLocalKeyLen );
+            if ( !user->privKey ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
             user->privKeyLen = session->securityPrivLocalKeyLen;
-        } else if (session->securityPrivKey != NULL
-                   && session->securityPrivKeyLen != 0) {
-            TOOLS_FREE(user->privKey);
-            user->privKey = (u_char *) calloc(1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK);
-            if (user->privKey == NULL) {
-                Usm_freeUser(user);
+        } else if ( session->securityPrivKey != NULL
+            && session->securityPrivKeyLen != 0 ) {
+            TOOLS_FREE( user->privKey );
+            user->privKey = ( u_char* )calloc( 1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK );
+            if ( user->privKey == NULL ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
             user->privKeyLen = KEYTOOLS_USM_LENGTH_KU_HASHBLOCK;
-            if (Keytools_generateKul(user->authProtocol, user->authProtocolLen,
-                             session->securityEngineID,
-                             session->securityEngineIDLen,
-                             session->securityPrivKey,
-                             session->securityPrivKeyLen, user->privKey,
-                             &user->privKeyLen) != ErrorCode_SUCCESS) {
-                Usm_freeUser(user);
+            if ( Keytools_generateKul( user->authProtocol, user->authProtocolLen,
+                     session->securityEngineID,
+                     session->securityEngineIDLen,
+                     session->securityPrivKey,
+                     session->securityPrivKeyLen, user->privKey,
+                     &user->privKeyLen )
+                != ErrorCode_SUCCESS ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
-        } else if ((cp = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                                               DsStr_PRIVLOCALIZEDKEY))) {
+        } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                          DsStr_PRIVLOCALIZEDKEY ) ) ) {
             size_t buflen = USM_PRIV_KU_LEN;
-            TOOLS_FREE(user->privKey);
-            user->privKey = (u_char *)malloc(buflen); /* max length needed */
+            TOOLS_FREE( user->privKey );
+            user->privKey = ( u_char* )malloc( buflen ); /* max length needed */
             user->privKeyLen = 0;
             /* it will be a hex string */
-            if (!Tools_hexToBinary1(&user->privKey, &buflen, &user->privKeyLen,
-                                    0, cp)) {
-                Usm_freeUser(user);
+            if ( !Tools_hexToBinary1( &user->privKey, &buflen, &user->privKeyLen,
+                     0, cp ) ) {
+                Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
         }
     }
 
-    if (user_just_created) {
+    if ( user_just_created ) {
         /*
          * add the user into the database
          */
         user->userStatus = TC_RS_ACTIVE;
         user->userStorageType = TC_ST_READONLY;
-        Usm_addUser(user);
+        Usm_addUser( user );
     }
 
     return ErrorCode_SUCCESS;
-
-
 }
 
 /* A wrapper around the hook */
-int
-Usm_createUserFromSessionHook(void *slp, Types_Session *session)
+int Usm_createUserFromSessionHook( void* slp, Types_Session* session )
 {
-    DEBUG_MSGTL(("usm", "potentially bootstrapping the USM table from session data\n"));
-    return Usm_createUserFromSession(session);
+    DEBUG_MSGTL( ( "usm", "potentially bootstrapping the USM table from session data\n" ) );
+    return Usm_createUserFromSession( session );
 }
 
 static int
-_Usm_buildProbePdu(Types_Pdu **pdu)
+_Usm_buildProbePdu( Types_Pdu** pdu )
 {
-    struct Usm_User_s *user;
+    struct Usm_User_s* user;
 
     /*
      * create the pdu
      */
-    if (!pdu)
+    if ( !pdu )
         return -1;
-    *pdu = Client_pduCreate(PRIOT_MSG_GET);
-    if (!(*pdu))
+    *pdu = Client_pduCreate( PRIOT_MSG_GET );
+    if ( !( *pdu ) )
         return -1;
-    (*pdu)->version = PRIOT_VERSION_3;
-    (*pdu)->securityName = strdup("");
-    (*pdu)->securityNameLen = strlen((*pdu)->securityName);
-    (*pdu)->securityLevel = PRIOT_SEC_LEVEL_NOAUTH;
-    (*pdu)->securityModel = PRIOT_SEC_MODEL_USM;
+    ( *pdu )->version = PRIOT_VERSION_3;
+    ( *pdu )->securityName = strdup( "" );
+    ( *pdu )->securityNameLen = strlen( ( *pdu )->securityName );
+    ( *pdu )->securityLevel = PRIOT_SEC_LEVEL_NOAUTH;
+    ( *pdu )->securityModel = PRIOT_SEC_MODEL_USM;
 
     /*
      * create the empty user
      */
-    user = Usm_getUser(NULL, 0, (*pdu)->securityName);
-    if (user == NULL) {
-        user = (struct Usm_User_s *) calloc(1, sizeof(struct Usm_User_s));
-        if (user == NULL) {
-            Api_freePdu(*pdu);
-            *pdu = (Types_Pdu *) NULL;
+    user = Usm_getUser( NULL, 0, ( *pdu )->securityName );
+    if ( user == NULL ) {
+        user = ( struct Usm_User_s* )calloc( 1, sizeof( struct Usm_User_s ) );
+        if ( user == NULL ) {
+            Api_freePdu( *pdu );
+            *pdu = ( Types_Pdu* )NULL;
             return -1;
         }
-        user->name = strdup((*pdu)->securityName);
-        user->secName = strdup((*pdu)->securityName);
-        user->authProtocolLen = sizeof(usm_noAuthProtocol) / sizeof(oid);
-        user->authProtocol =
-            Api_duplicateObjid(usm_noAuthProtocol, user->authProtocolLen);
-        user->privProtocolLen = sizeof(usm_noPrivProtocol) / sizeof(oid);
-        user->privProtocol =
-            Api_duplicateObjid(usm_noPrivProtocol, user->privProtocolLen);
-        Usm_addUser(user);
+        user->name = strdup( ( *pdu )->securityName );
+        user->secName = strdup( ( *pdu )->securityName );
+        user->authProtocolLen = sizeof( usm_noAuthProtocol ) / sizeof( oid );
+        user->authProtocol = Api_duplicateObjid( usm_noAuthProtocol, user->authProtocolLen );
+        user->privProtocolLen = sizeof( usm_noPrivProtocol ) / sizeof( oid );
+        user->privProtocol = Api_duplicateObjid( usm_noPrivProtocol, user->privProtocolLen );
+        Usm_addUser( user );
     }
     return 0;
 }
 
-int Usm_discoverEngineid(void *slpv, Types_Session *session) {
-    Types_Pdu    *pdu = NULL, *response = NULL;
+int Usm_discoverEngineid( void* slpv, Types_Session* session )
+{
+    Types_Pdu *pdu = NULL, *response = NULL;
     int status, i;
-    struct Api_SessionList_s *slp = (struct Api_SessionList_s *) slpv;
+    struct Api_SessionList_s* slp = ( struct Api_SessionList_s* )slpv;
 
-    if (_Usm_buildProbePdu(&pdu) != 0) {
-        DEBUG_MSGTL(("snmp_api", "unable to create probe PDU\n"));
+    if ( _Usm_buildProbePdu( &pdu ) != 0 ) {
+        DEBUG_MSGTL( ( "snmp_api", "unable to create probe PDU\n" ) );
         return PRIOT_ERR_GENERR;
     }
-    DEBUG_MSGTL(("snmp_api", "probing for engineID...\n"));
+    DEBUG_MSGTL( ( "snmp_api", "probing for engineID...\n" ) );
     session->flags |= API_FLAGS_DONT_PROBE; /* prevent recursion */
-    status = Client_sessSynchResponse(slp, pdu, &response);
+    status = Client_sessSynchResponse( slp, pdu, &response );
 
-    if ((response == NULL) && (status == CLIENT_STAT_SUCCESS)) {
+    if ( ( response == NULL ) && ( status == CLIENT_STAT_SUCCESS ) ) {
         status = CLIENT_STAT_ERROR;
     }
 
-    switch (status) {
+    switch ( status ) {
     case CLIENT_STAT_SUCCESS:
         session->s_snmp_errno = ErrorCode_INVALID_MSG; /* XX?? */
-        DEBUG_MSGTL(("snmp_sess_open",
-                    "error: expected Report as response to probe: %s (%ld)\n",
-                    Api_errstring(response->errstat),
-                    response->errstat));
+        DEBUG_MSGTL( ( "snmp_sess_open",
+            "error: expected Report as response to probe: %s (%ld)\n",
+            Api_errstring( response->errstat ),
+            response->errstat ) );
         break;
-    case CLIENT_STAT_ERROR:   /* this is what we expected -> Report == STAT_ERROR */
+    case CLIENT_STAT_ERROR: /* this is what we expected -> Report == STAT_ERROR */
         session->s_snmp_errno = ErrorCode_UNKNOWN_ENG_ID;
         break;
     case CLIENT_STAT_TIMEOUT:
         session->s_snmp_errno = ErrorCode_TIMEOUT;
         break;
     default:
-        DEBUG_MSGTL(("snmp_sess_open",
-                    "unable to connect with remote engine: %s (%d)\n",
-                    Api_errstring(session->s_snmp_errno),
-                    session->s_snmp_errno));
+        DEBUG_MSGTL( ( "snmp_sess_open",
+            "unable to connect with remote engine: %s (%d)\n",
+            Api_errstring( session->s_snmp_errno ),
+            session->s_snmp_errno ) );
         break;
     }
 
-    if (slp->session->securityEngineIDLen == 0) {
-        DEBUG_MSGTL(("snmp_api",
-                    "unable to determine remote engine ID\n"));
+    if ( slp->session->securityEngineIDLen == 0 ) {
+        DEBUG_MSGTL( ( "snmp_api",
+            "unable to determine remote engine ID\n" ) );
         /* clear the flag so that probe occurs on next inform */
         session->flags &= ~API_FLAGS_DONT_PROBE;
         return PRIOT_ERR_GENERR;
     }
 
     session->s_snmp_errno = ErrorCode_SUCCESS;
-    if (Debug_getDoDebugging()) {
-        DEBUG_MSGTL(("snmp_sess_open",
-                    "  probe found engineID:  "));
-        for (i = 0; i < slp->session->securityEngineIDLen; i++)
-            DEBUG_MSG(("snmp_sess_open", "%02x",
-                      slp->session->securityEngineID[i]));
-        DEBUG_MSG(("snmp_sess_open", "\n"));
+    if ( Debug_getDoDebugging() ) {
+        DEBUG_MSGTL( ( "snmp_sess_open",
+            "  probe found engineID:  " ) );
+        for ( i = 0; i < slp->session->securityEngineIDLen; i++ )
+            DEBUG_MSG( ( "snmp_sess_open", "%02x",
+                slp->session->securityEngineID[ i ] ) );
+        DEBUG_MSG( ( "snmp_sess_open", "\n" ) );
     }
 
     /*
      * if boot/time supplied set it for this engineID
      */
-    if (session->engineBoots || session->engineTime) {
-        LcdTime_setEnginetime(session->securityEngineID,
-                       session->securityEngineIDLen,
-                       session->engineBoots, session->engineTime,
-                       TRUE);
+    if ( session->engineBoots || session->engineTime ) {
+        LcdTime_setEnginetime( session->securityEngineID,
+            session->securityEngineIDLen,
+            session->engineBoots, session->engineTime,
+            TRUE );
     }
     return ErrorCode_SUCCESS;
 }
 
-void
-Usm_initUsm(void)
+void Usm_initUsm( void )
 {
-    struct Secmod_Def_s *def;
-    char *type;
+    struct Secmod_Def_s* def;
+    char* type;
 
-    DEBUG_MSGTL(("init_usm", "unit_usm: %" "l" "u %" "l" "u\n",
-                usm_noPrivProtocol[0], usm_noPrivProtocol[1]));
+    DEBUG_MSGTL( ( "init_usm", "unit_usm: %"
+                               "l"
+                               "u %"
+                               "l"
+                               "u\n",
+        usm_noPrivProtocol[ 0 ], usm_noPrivProtocol[ 1 ] ) );
 
-    Scapi_init();                  /* initalize scapi code */
+    Scapi_init(); /* initalize scapi code */
 
     /*
      * register ourselves as a security service
      */
-    def = TOOLS_MALLOC_STRUCT(Secmod_Def_s);
-    if (def == NULL)
+    def = TOOLS_MALLOC_STRUCT( Secmod_Def_s );
+    if ( def == NULL )
         return;
     /*
      * XXX: def->init_sess_secmod move stuff from snmp_api.c
@@ -3059,65 +2908,62 @@ Usm_initUsm(void)
     def->handle_report = Usm_handleReport;
     def->probe_engineid = Usm_discoverEngineid;
     def->post_probe_engineid = Usm_createUserFromSessionHook;
-    Secmod_register(USM_SEC_MODEL_NUMBER, "usm", def);
+    Secmod_register( USM_SEC_MODEL_NUMBER, "usm", def );
 
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                           CALLBACK_POST_PREMIB_READ_CONFIG,
-                           Usm_initUsmPostConfig, NULL);
+    Callback_registerCallback( CALLBACK_LIBRARY,
+        CALLBACK_POST_PREMIB_READ_CONFIG,
+        Usm_initUsmPostConfig, NULL );
 
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                           CALLBACK_SHUTDOWN,
-                           Usm_deinitUsmPostConfig, NULL);
+    Callback_registerCallback( CALLBACK_LIBRARY,
+        CALLBACK_SHUTDOWN,
+        Usm_deinitUsmPostConfig, NULL );
 
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                           CALLBACK_SHUTDOWN,
-                           V3_freeEngineID, NULL);
+    Callback_registerCallback( CALLBACK_LIBRARY,
+        CALLBACK_SHUTDOWN,
+        V3_freeEngineID, NULL );
 
-    ReadConfig_registerConfigHandler("priot", "defAuthType", Usm_v3AuthtypeConf,
-                            NULL, "MD5|SHA");
-    ReadConfig_registerConfigHandler("priot", "defPrivType", Usm_v3PrivtypeConf,
-                            NULL,
-                            "DES|AES"
-                           );
+    ReadConfig_registerConfigHandler( "priot", "defAuthType", Usm_v3AuthtypeConf,
+        NULL, "MD5|SHA" );
+    ReadConfig_registerConfigHandler( "priot", "defPrivType", Usm_v3PrivtypeConf,
+        NULL,
+        "DES|AES" );
 
     /*
      * Free stuff at shutdown time
      */
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                           CALLBACK_SHUTDOWN,
-                           Usm_freeEnginetimeOnShutdown, NULL);
+    Callback_registerCallback( CALLBACK_LIBRARY,
+        CALLBACK_SHUTDOWN,
+        Usm_freeEnginetimeOnShutdown, NULL );
 
+    type = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_APPTYPE );
 
-    type = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_APPTYPE);
-
-    ReadConfig_registerConfigHandler(type, "userSetAuthPass", Usm_setPassword,
-                            NULL, NULL);
-    ReadConfig_registerConfigHandler(type, "userSetPrivPass", Usm_setPassword,
-                            NULL, NULL);
-    ReadConfig_registerConfigHandler(type, "userSetAuthKey", Usm_setPassword, NULL,
-                            NULL);
-    ReadConfig_registerConfigHandler(type, "userSetPrivKey", Usm_setPassword, NULL,
-                            NULL);
-    ReadConfig_registerConfigHandler(type, "userSetAuthLocalKey", Usm_setPassword,
-                            NULL, NULL);
-    ReadConfig_registerConfigHandler(type, "userSetPrivLocalKey", Usm_setPassword,
-                            NULL, NULL);
+    ReadConfig_registerConfigHandler( type, "userSetAuthPass", Usm_setPassword,
+        NULL, NULL );
+    ReadConfig_registerConfigHandler( type, "userSetPrivPass", Usm_setPassword,
+        NULL, NULL );
+    ReadConfig_registerConfigHandler( type, "userSetAuthKey", Usm_setPassword, NULL,
+        NULL );
+    ReadConfig_registerConfigHandler( type, "userSetPrivKey", Usm_setPassword, NULL,
+        NULL );
+    ReadConfig_registerConfigHandler( type, "userSetAuthLocalKey", Usm_setPassword,
+        NULL, NULL );
+    ReadConfig_registerConfigHandler( type, "userSetPrivLocalKey", Usm_setPassword,
+        NULL, NULL );
 }
 
-void
-Usm_initUsmConf(const char *app)
+void Usm_initUsmConf( const char* app )
 {
-    ReadConfig_registerConfigHandler(app, "usmUser",
-                                  Usm_parseConfigUsmUser, NULL, NULL);
-    ReadConfig_registerConfigHandler(app, "createUser",
-                                  Usm_parseCreateUsmUser, NULL,
-                                  "username [-e ENGINEID] (MD5|SHA) authpassphrase [DES [privpassphrase]]");
+    ReadConfig_registerConfigHandler( app, "usmUser",
+        Usm_parseConfigUsmUser, NULL, NULL );
+    ReadConfig_registerConfigHandler( app, "createUser",
+        Usm_parseCreateUsmUser, NULL,
+        "username [-e ENGINEID] (MD5|SHA) authpassphrase [DES [privpassphrase]]" );
 
     /*
      * we need to be called back later
      */
-    Callback_registerCallback(CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
-                           Usm_storeUsers, NULL);
+    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+        Usm_storeUsers, NULL );
 }
 
 /*
@@ -3127,74 +2973,66 @@ Usm_initUsmConf(const char *app)
  *
  * Set "arbitrary" portion of salt to a random number.
  */
-int
-Usm_initUsmPostConfig(int majorid, int minorid, void *serverarg,
-                     void *clientarg)
+int Usm_initUsmPostConfig( int majorid, int minorid, void* serverarg,
+    void* clientarg )
 {
-    size_t          salt_integer_len = sizeof(_usm_saltInteger);
+    size_t salt_integer_len = sizeof( _usm_saltInteger );
 
-    if (Scapi_random((u_char *) & _usm_saltInteger, &salt_integer_len) !=
-        ErrorCode_SUCCESS) {
-        DEBUG_MSGTL(("usm", "Scapi_random() failed: using time() as salt.\n"));
-        _usm_saltInteger = (u_int) time(NULL);
+    if ( Scapi_random( ( u_char* )&_usm_saltInteger, &salt_integer_len ) != ErrorCode_SUCCESS ) {
+        DEBUG_MSGTL( ( "usm", "Scapi_random() failed: using time() as salt.\n" ) );
+        _usm_saltInteger = ( u_int )time( NULL );
     }
 
-    salt_integer_len = sizeof (_usm_saltInteger64One);
-    if (Scapi_random((u_char *) & _usm_saltInteger64One, &salt_integer_len) !=
-        ErrorCode_SUCCESS) {
-        DEBUG_MSGTL(("usm", "Scapi_random() failed: using time() as aes1 salt.\n"));
-        _usm_saltInteger64One = (u_int) time(NULL);
+    salt_integer_len = sizeof( _usm_saltInteger64One );
+    if ( Scapi_random( ( u_char* )&_usm_saltInteger64One, &salt_integer_len ) != ErrorCode_SUCCESS ) {
+        DEBUG_MSGTL( ( "usm", "Scapi_random() failed: using time() as aes1 salt.\n" ) );
+        _usm_saltInteger64One = ( u_int )time( NULL );
     }
-    salt_integer_len = sizeof (_usm_saltInteger64One);
-    if (Scapi_random((u_char *) & _usm_saltInteger64Two, &salt_integer_len) !=
-        ErrorCode_SUCCESS) {
-        DEBUG_MSGTL(("usm", "Scapi_random() failed: using time() as aes2 salt.\n"));
-        _usm_saltInteger64Two = (u_int) time(NULL);
+    salt_integer_len = sizeof( _usm_saltInteger64One );
+    if ( Scapi_random( ( u_char* )&_usm_saltInteger64Two, &salt_integer_len ) != ErrorCode_SUCCESS ) {
+        DEBUG_MSGTL( ( "usm", "Scapi_random() failed: using time() as aes2 salt.\n" ) );
+        _usm_saltInteger64Two = ( u_int )time( NULL );
     }
 
-    _usm_noNameUser = Usm_createInitialUser("", usm_hMACMD5AuthProtocol,
-                                         TOOLS_USM_LENGTH_OID_TRANSFORM,
-                                         usm_dESPrivProtocol,
-                                         TOOLS_USM_LENGTH_OID_TRANSFORM);
+    _usm_noNameUser = Usm_createInitialUser( "", usm_hMACMD5AuthProtocol,
+        TOOLS_USM_LENGTH_OID_TRANSFORM,
+        usm_dESPrivProtocol,
+        TOOLS_USM_LENGTH_OID_TRANSFORM );
 
     if ( _usm_noNameUser ) {
-        TOOLS_FREE(_usm_noNameUser->engineID);
+        TOOLS_FREE( _usm_noNameUser->engineID );
         _usm_noNameUser->engineIDLen = 0;
     }
 
     return ErrorCode_SUCCESS;
-}                               /* end Usm_initUsmPostConfig() */
+} /* end Usm_initUsmPostConfig() */
 
-int
-Usm_deinitUsmPostConfig(int majorid, int minorid, void *serverarg,
-               void *clientarg)
+int Usm_deinitUsmPostConfig( int majorid, int minorid, void* serverarg,
+    void* clientarg )
 {
-    if (Usm_freeUser(_usm_noNameUser) != NULL) {
-    DEBUG_MSGTL(("Usm_deinitUsmPostConfig", "could not free initial user\n"));
-    return ErrorCode_GENERR;
+    if ( Usm_freeUser( _usm_noNameUser ) != NULL ) {
+        DEBUG_MSGTL( ( "Usm_deinitUsmPostConfig", "could not free initial user\n" ) );
+        return ErrorCode_GENERR;
     }
     _usm_noNameUser = NULL;
 
-    DEBUG_MSGTL(("Usm_deinitUsmPostConfig", "initial user removed\n"));
+    DEBUG_MSGTL( ( "Usm_deinitUsmPostConfig", "initial user removed\n" ) );
     return ErrorCode_SUCCESS;
-}                               /* end Usm_deinitUsmPostConfig() */
+} /* end Usm_deinitUsmPostConfig() */
 
-void
-Usm_clearUserList(void)
+void Usm_clearUserList( void )
 {
     struct Usm_User_s *tmp = _usm_userList, *next = NULL;
 
-    while (tmp != NULL) {
-    next = tmp->next;
-    Usm_freeUser(tmp);
-    tmp = next;
+    while ( tmp != NULL ) {
+        next = tmp->next;
+        Usm_freeUser( tmp );
+        tmp = next;
     }
     _usm_userList = NULL;
-
 }
 
-void
-Usm_shutdownUsm(void)
+void Usm_shutdownUsm( void )
 {
     LcdTime_freeEtimelist();
     Usm_clearUserList();
@@ -3213,52 +3051,51 @@ Usm_shutdownUsm(void)
  *
  * Checks that a given security level is valid for a given user.
  */
-int
-Usm_checkSecLevel(int level, struct Usm_User_s *user)
+int Usm_checkSecLevel( int level, struct Usm_User_s* user )
 {
 
-    if (user->userStatus != TC_RS_ACTIVE)
+    if ( user->userStatus != TC_RS_ACTIVE )
         return -1;
 
-    DEBUG_MSGTL(("comparex", "Comparing: %" "l" "u %" "l" "u ",
-                usm_noPrivProtocol[0], usm_noPrivProtocol[1]));
-    DEBUG_MSGOID(("comparex", usm_noPrivProtocol,
-                 sizeof(usm_noPrivProtocol) / sizeof(oid)));
-    DEBUG_MSG(("comparex", "\n"));
-    if (level == PRIOT_SEC_LEVEL_AUTHPRIV
-        && (Api_oidEquals(user->privProtocol, user->privProtocolLen,
-                             usm_noPrivProtocol,
-                             sizeof(usm_noPrivProtocol) / sizeof(oid)) ==
-            0)) {
-        DEBUG_MSGTL(("usm", "Level: %d\n", level));
-        DEBUG_MSGTL(("usm", "User (%s) Auth Protocol: ", user->name));
-        DEBUG_MSGOID(("usm", user->authProtocol, user->authProtocolLen));
-        DEBUG_MSG(("usm", ", User Priv Protocol: "));
-        DEBUG_MSGOID(("usm", user->privProtocol, user->privProtocolLen));
-        DEBUG_MSG(("usm", "\n"));
+    DEBUG_MSGTL( ( "comparex", "Comparing: %"
+                               "l"
+                               "u %"
+                               "l"
+                               "u ",
+        usm_noPrivProtocol[ 0 ], usm_noPrivProtocol[ 1 ] ) );
+    DEBUG_MSGOID( ( "comparex", usm_noPrivProtocol,
+        sizeof( usm_noPrivProtocol ) / sizeof( oid ) ) );
+    DEBUG_MSG( ( "comparex", "\n" ) );
+    if ( level == PRIOT_SEC_LEVEL_AUTHPRIV
+        && ( Api_oidEquals( user->privProtocol, user->privProtocolLen,
+                 usm_noPrivProtocol,
+                 sizeof( usm_noPrivProtocol ) / sizeof( oid ) )
+               == 0 ) ) {
+        DEBUG_MSGTL( ( "usm", "Level: %d\n", level ) );
+        DEBUG_MSGTL( ( "usm", "User (%s) Auth Protocol: ", user->name ) );
+        DEBUG_MSGOID( ( "usm", user->authProtocol, user->authProtocolLen ) );
+        DEBUG_MSG( ( "usm", ", User Priv Protocol: " ) );
+        DEBUG_MSGOID( ( "usm", user->privProtocol, user->privProtocolLen ) );
+        DEBUG_MSG( ( "usm", "\n" ) );
         return 1;
     }
-    if ((level == PRIOT_SEC_LEVEL_AUTHPRIV
-         || level == PRIOT_SEC_LEVEL_AUTHNOPRIV)
-        &&
-        (Api_oidEquals
-         (user->authProtocol, user->authProtocolLen, usm_noAuthProtocol,
-          sizeof(usm_noAuthProtocol) / sizeof(oid)) == 0)) {
-        DEBUG_MSGTL(("usm", "Level: %d\n", level));
-        DEBUG_MSGTL(("usm", "User (%s) Auth Protocol: ", user->name));
-        DEBUG_MSGOID(("usm", user->authProtocol, user->authProtocolLen));
-        DEBUG_MSG(("usm", ", User Priv Protocol: "));
-        DEBUG_MSGOID(("usm", user->privProtocol, user->privProtocolLen));
-        DEBUG_MSG(("usm", "\n"));
+    if ( ( level == PRIOT_SEC_LEVEL_AUTHPRIV
+             || level == PRIOT_SEC_LEVEL_AUTHNOPRIV )
+        && ( Api_oidEquals( user->authProtocol, user->authProtocolLen, usm_noAuthProtocol,
+                 sizeof( usm_noAuthProtocol ) / sizeof( oid ) )
+               == 0 ) ) {
+        DEBUG_MSGTL( ( "usm", "Level: %d\n", level ) );
+        DEBUG_MSGTL( ( "usm", "User (%s) Auth Protocol: ", user->name ) );
+        DEBUG_MSGOID( ( "usm", user->authProtocol, user->authProtocolLen ) );
+        DEBUG_MSG( ( "usm", ", User Priv Protocol: " ) );
+        DEBUG_MSGOID( ( "usm", user->privProtocol, user->privProtocolLen ) );
+        DEBUG_MSG( ( "usm", "\n" ) );
         return 1;
     }
 
     return 0;
 
-}                               /* end Usm_checkSecLevel() */
-
-
-
+} /* end Usm_checkSecLevel() */
 
 /*******************************************************************-o-******
  * Usm_checkSecLevelVsProtocols
@@ -3277,93 +3114,84 @@ Usm_checkSecLevel(int level, struct Usm_User_s *user)
  * Same as above but with explicitly named transform types instead of taking
  * from the usmUser structure.
  */
-int
-Usm_checkSecLevelVsProtocols(int level,
-                                const oid * authProtocol,
-                                u_int authProtocolLen,
-                                const oid * privProtocol,
-                                u_int privProtocolLen)
+int Usm_checkSecLevelVsProtocols( int level,
+    const oid* authProtocol,
+    u_int authProtocolLen,
+    const oid* privProtocol,
+    u_int privProtocolLen )
 {
 
-    if (level == PRIOT_SEC_LEVEL_AUTHPRIV
-        &&
-        (Api_oidEquals
-         (privProtocol, privProtocolLen, usm_noPrivProtocol,
-          sizeof(usm_noPrivProtocol) / sizeof(oid)) == 0)) {
-        DEBUG_MSGTL(("usm", "Level: %d\n", level));
-        DEBUG_MSGTL(("usm", "Auth Protocol: "));
-        DEBUG_MSGOID(("usm", authProtocol, authProtocolLen));
-        DEBUG_MSG(("usm", ", Priv Protocol: "));
-        DEBUG_MSGOID(("usm", privProtocol, privProtocolLen));
-        DEBUG_MSG(("usm", "\n"));
+    if ( level == PRIOT_SEC_LEVEL_AUTHPRIV
+        && ( Api_oidEquals( privProtocol, privProtocolLen, usm_noPrivProtocol,
+                 sizeof( usm_noPrivProtocol ) / sizeof( oid ) )
+               == 0 ) ) {
+        DEBUG_MSGTL( ( "usm", "Level: %d\n", level ) );
+        DEBUG_MSGTL( ( "usm", "Auth Protocol: " ) );
+        DEBUG_MSGOID( ( "usm", authProtocol, authProtocolLen ) );
+        DEBUG_MSG( ( "usm", ", Priv Protocol: " ) );
+        DEBUG_MSGOID( ( "usm", privProtocol, privProtocolLen ) );
+        DEBUG_MSG( ( "usm", "\n" ) );
         return 1;
     }
-    if ((level == PRIOT_SEC_LEVEL_AUTHPRIV
-         || level == PRIOT_SEC_LEVEL_AUTHNOPRIV)
-        &&
-        (Api_oidEquals
-         (authProtocol, authProtocolLen, usm_noAuthProtocol,
-          sizeof(usm_noAuthProtocol) / sizeof(oid)) == 0)) {
-        DEBUG_MSGTL(("usm", "Level: %d\n", level));
-        DEBUG_MSGTL(("usm", "Auth Protocol: "));
-        DEBUG_MSGOID(("usm", authProtocol, authProtocolLen));
-        DEBUG_MSG(("usm", ", Priv Protocol: "));
-        DEBUG_MSGOID(("usm", privProtocol, privProtocolLen));
-        DEBUG_MSG(("usm", "\n"));
+    if ( ( level == PRIOT_SEC_LEVEL_AUTHPRIV
+             || level == PRIOT_SEC_LEVEL_AUTHNOPRIV )
+        && ( Api_oidEquals( authProtocol, authProtocolLen, usm_noAuthProtocol,
+                 sizeof( usm_noAuthProtocol ) / sizeof( oid ) )
+               == 0 ) ) {
+        DEBUG_MSGTL( ( "usm", "Level: %d\n", level ) );
+        DEBUG_MSGTL( ( "usm", "Auth Protocol: " ) );
+        DEBUG_MSGOID( ( "usm", authProtocol, authProtocolLen ) );
+        DEBUG_MSG( ( "usm", ", Priv Protocol: " ) );
+        DEBUG_MSGOID( ( "usm", privProtocol, privProtocolLen ) );
+        DEBUG_MSG( ( "usm", "\n" ) );
         return 1;
     }
 
     return 0;
 
-}                               /* end Usm_checkSecLevelVsProtocols() */
-
-
-
+} /* end Usm_checkSecLevelVsProtocols() */
 
 /*
  * Usm_getUser(): Returns a user from usm_userList based on the engineID,
  * engineIDLen and name of the requested user.
  */
 
-struct Usm_User_s *
-Usm_getUser(u_char * engineID, size_t engineIDLen, char *name)
+struct Usm_User_s*
+Usm_getUser( u_char* engineID, size_t engineIDLen, char* name )
 {
-    DEBUG_MSGTL(("usm", "getting user %s\n", name));
-    return Usm_getUserFromList(engineID, engineIDLen, name, _usm_userList,
-                                  1);
+    DEBUG_MSGTL( ( "usm", "getting user %s\n", name ) );
+    return Usm_getUserFromList( engineID, engineIDLen, name, _usm_userList,
+        1 );
 }
 
-struct Usm_User_s *
-Usm_getUserFromList(u_char * engineID, size_t engineIDLen,
-                       char *name, struct Usm_User_s *puserList,
-                       int use_default)
+struct Usm_User_s*
+Usm_getUserFromList( u_char* engineID, size_t engineIDLen,
+    char* name, struct Usm_User_s* puserList,
+    int use_default )
 {
-    struct Usm_User_s *ptr;
-    char            noName[] = "";
-    if (name == NULL)
+    struct Usm_User_s* ptr;
+    char noName[] = "";
+    if ( name == NULL )
         name = noName;
-    for (ptr = puserList; ptr != NULL; ptr = ptr->next) {
-        if (ptr->name && !strcmp(ptr->name, name)) {
-          DEBUG_MSGTL(("usm", "match on user %s\n", ptr->name));
-          if (ptr->engineIDLen == engineIDLen &&
-            ((ptr->engineID == NULL && engineID == NULL) ||
-             (ptr->engineID != NULL && engineID != NULL &&
-              memcmp(ptr->engineID, engineID, engineIDLen) == 0)))
-            return ptr;
-          DEBUG_MSGTL(("usm", "no match on engineID ("));
-          if (engineID) {
-              DEBUG_MSGHEX(("usm", engineID, engineIDLen));
-          } else {
-              DEBUG_MSGTL(("usm", "Empty EngineID"));
-          }
-          DEBUG_MSG(("usm", ")\n"));
+    for ( ptr = puserList; ptr != NULL; ptr = ptr->next ) {
+        if ( ptr->name && !strcmp( ptr->name, name ) ) {
+            DEBUG_MSGTL( ( "usm", "match on user %s\n", ptr->name ) );
+            if ( ptr->engineIDLen == engineIDLen && ( ( ptr->engineID == NULL && engineID == NULL ) || ( ptr->engineID != NULL && engineID != NULL && memcmp( ptr->engineID, engineID, engineIDLen ) == 0 ) ) )
+                return ptr;
+            DEBUG_MSGTL( ( "usm", "no match on engineID (" ) );
+            if ( engineID ) {
+                DEBUG_MSGHEX( ( "usm", engineID, engineIDLen ) );
+            } else {
+                DEBUG_MSGTL( ( "usm", "Empty EngineID" ) );
+            }
+            DEBUG_MSG( ( "usm", ")\n" ) );
         }
     }
 
     /*
      * return "" user used to facilitate engineID discovery
      */
-    if (use_default && !strcmp(name, ""))
+    if ( use_default && !strcmp( name, "" ) )
         return _usm_noNameUser;
     return NULL;
 }
@@ -3377,18 +3205,18 @@ Usm_getUserFromList(u_char * engineID, size_t engineIDLen,
  * returns the head of the list (which could change due to this add).
  */
 
-struct Usm_User_s *
-Usm_addUser(struct Usm_User_s *user)
+struct Usm_User_s*
+Usm_addUser( struct Usm_User_s* user )
 {
-    struct Usm_User_s *uptr;
-    uptr = Usm_addUserToList(user, _usm_userList);
-    if (uptr != NULL)
+    struct Usm_User_s* uptr;
+    uptr = Usm_addUserToList( user, _usm_userList );
+    if ( uptr != NULL )
         _usm_userList = uptr;
     return uptr;
 }
 
-struct Usm_User_s *
-Usm_addUserToList(struct Usm_User_s *user, struct Usm_User_s *puserList)
+struct Usm_User_s*
+Usm_addUserToList( struct Usm_User_s* user, struct Usm_User_s* puserList )
 {
     struct Usm_User_s *nptr, *pptr, *optr;
 
@@ -3398,59 +3226,47 @@ Usm_addUserToList(struct Usm_User_s *user, struct Usm_User_s *puserList)
      */
     /* XXX - how to handle a NULL user->name ?? */
     /* XXX - similarly for a NULL nptr->name ?? */
-    for (nptr = puserList, pptr = NULL; nptr != NULL;
-         pptr = nptr, nptr = nptr->next) {
-        if (nptr->engineIDLen > user->engineIDLen)
+    for ( nptr = puserList, pptr = NULL; nptr != NULL;
+          pptr = nptr, nptr = nptr->next ) {
+        if ( nptr->engineIDLen > user->engineIDLen )
             break;
 
-        if (user->engineID == NULL && nptr->engineID != NULL)
+        if ( user->engineID == NULL && nptr->engineID != NULL )
             break;
 
-        if (nptr->engineIDLen == user->engineIDLen &&
-            (nptr->engineID != NULL && user->engineID != NULL &&
-             memcmp(nptr->engineID, user->engineID,
-                    user->engineIDLen) > 0))
+        if ( nptr->engineIDLen == user->engineIDLen && ( nptr->engineID != NULL && user->engineID != NULL && memcmp( nptr->engineID, user->engineID, user->engineIDLen ) > 0 ) )
             break;
 
-        if (!(nptr->engineID == NULL && user->engineID != NULL)) {
-            if (nptr->engineIDLen == user->engineIDLen &&
-                ((nptr->engineID == NULL && user->engineID == NULL) ||
-                 memcmp(nptr->engineID, user->engineID,
-                        user->engineIDLen) == 0)
-                && strlen(nptr->name) > strlen(user->name))
+        if ( !( nptr->engineID == NULL && user->engineID != NULL ) ) {
+            if ( nptr->engineIDLen == user->engineIDLen && ( ( nptr->engineID == NULL && user->engineID == NULL ) || memcmp( nptr->engineID, user->engineID, user->engineIDLen ) == 0 )
+                && strlen( nptr->name ) > strlen( user->name ) )
                 break;
 
-            if (nptr->engineIDLen == user->engineIDLen &&
-                ((nptr->engineID == NULL && user->engineID == NULL) ||
-                 memcmp(nptr->engineID, user->engineID,
-                        user->engineIDLen) == 0)
-                && strlen(nptr->name) == strlen(user->name)
-                && strcmp(nptr->name, user->name) > 0)
+            if ( nptr->engineIDLen == user->engineIDLen && ( ( nptr->engineID == NULL && user->engineID == NULL ) || memcmp( nptr->engineID, user->engineID, user->engineIDLen ) == 0 )
+                && strlen( nptr->name ) == strlen( user->name )
+                && strcmp( nptr->name, user->name ) > 0 )
                 break;
 
-            if (nptr->engineIDLen == user->engineIDLen &&
-                ((nptr->engineID == NULL && user->engineID == NULL) ||
-                 memcmp(nptr->engineID, user->engineID,
-                        user->engineIDLen) == 0)
-                && strlen(nptr->name) == strlen(user->name)
-                && strcmp(nptr->name, user->name) == 0) {
+            if ( nptr->engineIDLen == user->engineIDLen && ( ( nptr->engineID == NULL && user->engineID == NULL ) || memcmp( nptr->engineID, user->engineID, user->engineIDLen ) == 0 )
+                && strlen( nptr->name ) == strlen( user->name )
+                && strcmp( nptr->name, user->name ) == 0 ) {
                 /*
                  * the user is an exact match of a previous entry.
                  * Credentials may be different, though, so remove
                  * the old entry (and add the new one)!
                  */
-                if (pptr) { /* change prev's next pointer */
-                  pptr->next = nptr->next;
+                if ( pptr ) { /* change prev's next pointer */
+                    pptr->next = nptr->next;
                 }
-                if (nptr->next) { /* change next's prev pointer */
-                  nptr->next->prev = pptr;
+                if ( nptr->next ) { /* change next's prev pointer */
+                    nptr->next->prev = pptr;
                 }
                 optr = nptr;
                 nptr = optr->next; /* add new user at this position */
                 /* free the old user */
-                optr->next=NULL;
-                optr->prev=NULL;
-                Usm_freeUser(optr);
+                optr->next = NULL;
+                optr->prev = NULL;
+                Usm_freeUser( optr );
                 break; /* new user will be added below */
             }
         }
@@ -3470,64 +3286,65 @@ Usm_addUserToList(struct Usm_User_s *user, struct Usm_User_s *puserList)
     /*
      * change the next's prev pointer
      */
-    if (user->next)
+    if ( user->next )
         user->next->prev = user;
 
     /*
      * change the prev's next pointer
      */
-    if (user->prev)
+    if ( user->prev )
         user->prev->next = user;
 
     /*
      * rewind to the head of the list and return it (since the new head
      * could be us, we need to notify the above routine who the head now is.
      */
-    for (pptr = user; pptr->prev != NULL; pptr = pptr->prev);
+    for ( pptr = user; pptr->prev != NULL; pptr = pptr->prev )
+        ;
     return pptr;
 }
 
 /*
  * Usm_removeUser(): finds and removes a user from a list
  */
-struct Usm_User_s *
-Usm_removeUser(struct Usm_User_s *user)
+struct Usm_User_s*
+Usm_removeUser( struct Usm_User_s* user )
 {
-    return Usm_removeUserFromList(user, &_usm_userList);
+    return Usm_removeUserFromList( user, &_usm_userList );
 }
 
-struct Usm_User_s *
-Usm_removeUserFromList(struct Usm_User_s *user,
-                          struct Usm_User_s **ppuserList)
+struct Usm_User_s*
+Usm_removeUserFromList( struct Usm_User_s* user,
+    struct Usm_User_s** ppuserList )
 {
     struct Usm_User_s *nptr, *pptr;
 
     /*
      * NULL pointers aren't allowed
      */
-    if (ppuserList == NULL)
+    if ( ppuserList == NULL )
         return NULL;
 
-    if (*ppuserList == NULL)
+    if ( *ppuserList == NULL )
         return NULL;
 
     /*
      * find the user in the list
      */
-    for (nptr = *ppuserList, pptr = NULL; nptr != NULL;
-         pptr = nptr, nptr = nptr->next) {
-        if (nptr == user)
+    for ( nptr = *ppuserList, pptr = NULL; nptr != NULL;
+          pptr = nptr, nptr = nptr->next ) {
+        if ( nptr == user )
             break;
     }
 
-    if (nptr) {
+    if ( nptr ) {
         /*
          * remove the user from the linked list
          */
-        if (pptr) {
+        if ( pptr ) {
             pptr->next = nptr->next;
         }
-        if (nptr->next) {
+        if ( nptr->next ) {
             nptr->next->prev = pptr;
         }
     } else {
@@ -3536,14 +3353,11 @@ Usm_removeUserFromList(struct Usm_User_s *user,
          */
         return NULL;
     }
-    if (nptr == *ppuserList)    /* we're the head of the list, need to change
+    if ( nptr == *ppuserList ) /* we're the head of the list, need to change
                                  * * the head to the next user */
         *ppuserList = nptr->next;
     return *ppuserList;
-}                               /* end Usm_removeUserFromList() */
-
-
-
+} /* end Usm_removeUserFromList() */
 
 /*
  * Usm_freeUser():  calls free() on all needed parts of struct Usm_User_s and
@@ -3555,99 +3369,90 @@ Usm_removeUserFromList(struct Usm_User_s *user,
  * way.  If called on the head of the list, the entire list will be
  * lost.
  */
-struct Usm_User_s *
-Usm_freeUser(struct Usm_User_s *user)
+struct Usm_User_s*
+Usm_freeUser( struct Usm_User_s* user )
 {
-    if (user == NULL)
+    if ( user == NULL )
         return NULL;
 
-    TOOLS_FREE(user->engineID);
-    TOOLS_FREE(user->name);
-    TOOLS_FREE(user->secName);
-    TOOLS_FREE(user->cloneFrom);
-    TOOLS_FREE(user->userPublicString);
-    TOOLS_FREE(user->authProtocol);
-    TOOLS_FREE(user->privProtocol);
+    TOOLS_FREE( user->engineID );
+    TOOLS_FREE( user->name );
+    TOOLS_FREE( user->secName );
+    TOOLS_FREE( user->cloneFrom );
+    TOOLS_FREE( user->userPublicString );
+    TOOLS_FREE( user->authProtocol );
+    TOOLS_FREE( user->privProtocol );
 
-    if (user->authKey != NULL) {
-        TOOLS_ZERO(user->authKey, user->authKeyLen);
-        TOOLS_FREE(user->authKey);
+    if ( user->authKey != NULL ) {
+        TOOLS_ZERO( user->authKey, user->authKeyLen );
+        TOOLS_FREE( user->authKey );
     }
 
-    if (user->privKey != NULL) {
-        TOOLS_ZERO(user->privKey, user->privKeyLen);
-        TOOLS_FREE(user->privKey);
+    if ( user->privKey != NULL ) {
+        TOOLS_ZERO( user->privKey, user->privKeyLen );
+        TOOLS_FREE( user->privKey );
     }
-
 
     /*
      * FIX  Why not put this check *first?*
      */
-    if (user->prev != NULL) {   /* ack, this shouldn't happen */
+    if ( user->prev != NULL ) { /* ack, this shouldn't happen */
         user->prev->next = user->next;
     }
-    if (user->next != NULL) {
+    if ( user->next != NULL ) {
         user->next->prev = user->prev;
-        if (user->prev != NULL) /* ack this is really bad, because it means
+        if ( user->prev != NULL ) /* ack this is really bad, because it means
                                  * * we'll loose the head of some structure tree */
-            DEBUG_MSGTL(("usm",
-                        "Severe: Asked to free the head of a usmUser tree somewhere."));
+            DEBUG_MSGTL( ( "usm",
+                "Severe: Asked to free the head of a usmUser tree somewhere." ) );
     }
 
+    TOOLS_ZERO( user, sizeof( *user ) );
+    TOOLS_FREE( user );
 
-    TOOLS_ZERO(user, sizeof(*user));
-    TOOLS_FREE(user);
+    return NULL; /* for convenience to returns from calling functions */
 
-    return NULL;                /* for convenience to returns from calling functions */
-
-}                               /* end Usm_freeUser() */
-
-
-
+} /* end Usm_freeUser() */
 
 /*
  * take a given user and clone the security info into another
  */
-struct Usm_User_s *
-Usm_cloneFromUser(struct Usm_User_s *from, struct Usm_User_s *to)
+struct Usm_User_s*
+Usm_cloneFromUser( struct Usm_User_s* from, struct Usm_User_s* to )
 {
     /*
      * copy the authProtocol oid row pointer
      */
-    TOOLS_FREE(to->authProtocol);
+    TOOLS_FREE( to->authProtocol );
 
-    if ((to->authProtocol =
-         Api_duplicateObjid(from->authProtocol,
-                              from->authProtocolLen)) != NULL)
+    if ( ( to->authProtocol = Api_duplicateObjid( from->authProtocol,
+               from->authProtocolLen ) )
+        != NULL )
         to->authProtocolLen = from->authProtocolLen;
     else
         to->authProtocolLen = 0;
 
-
     /*
      * copy the authKey
      */
-    TOOLS_FREE(to->authKey);
+    TOOLS_FREE( to->authKey );
 
-    if (from->authKeyLen > 0 &&
-        (to->authKey = (u_char *) malloc(from->authKeyLen))
-        != NULL) {
+    if ( from->authKeyLen > 0 && ( to->authKey = ( u_char* )malloc( from->authKeyLen ) ) != NULL ) {
         to->authKeyLen = from->authKeyLen;
-        memcpy(to->authKey, from->authKey, to->authKeyLen);
+        memcpy( to->authKey, from->authKey, to->authKeyLen );
     } else {
         to->authKey = NULL;
         to->authKeyLen = 0;
     }
 
-
     /*
      * copy the privProtocol oid row pointer
      */
-    TOOLS_FREE(to->privProtocol);
+    TOOLS_FREE( to->privProtocol );
 
-    if ((to->privProtocol =
-         Api_duplicateObjid(from->privProtocol,
-                              from->privProtocolLen)) != NULL)
+    if ( ( to->privProtocol = Api_duplicateObjid( from->privProtocol,
+               from->privProtocolLen ) )
+        != NULL )
         to->privProtocolLen = from->privProtocolLen;
     else
         to->privProtocolLen = 0;
@@ -3655,13 +3460,11 @@ Usm_cloneFromUser(struct Usm_User_s *from, struct Usm_User_s *to)
     /*
      * copy the privKey
      */
-    TOOLS_FREE(to->privKey);
+    TOOLS_FREE( to->privKey );
 
-    if (from->privKeyLen > 0 &&
-        (to->privKey = (u_char *) malloc(from->privKeyLen))
-        != NULL) {
+    if ( from->privKeyLen > 0 && ( to->privKey = ( u_char* )malloc( from->privKeyLen ) ) != NULL ) {
         to->privKeyLen = from->privKeyLen;
-        memcpy(to->privKey, from->privKey, to->privKeyLen);
+        memcpy( to->privKey, from->privKey, to->privKeyLen );
     } else {
         to->privKey = NULL;
         to->privKeyLen = 0;
@@ -3674,34 +3477,32 @@ Usm_cloneFromUser(struct Usm_User_s *from, struct Usm_User_s *to)
  * create a default empty user, instantiating only the auth/priv
  * protocols to noAuth and noPriv OID pointers
  */
-struct Usm_User_s *
-Usm_createUser(void)
+struct Usm_User_s*
+Usm_createUser( void )
 {
-    struct Usm_User_s *newUser;
+    struct Usm_User_s* newUser;
 
     /*
      * create the new user
      */
-    newUser = (struct Usm_User_s *) calloc(1, sizeof(struct Usm_User_s));
-    if (newUser == NULL)
+    newUser = ( struct Usm_User_s* )calloc( 1, sizeof( struct Usm_User_s ) );
+    if ( newUser == NULL )
         return NULL;
 
     /*
      * fill the auth/priv protocols
      */
-    if ((newUser->authProtocol =
-         Api_duplicateObjid(usm_noAuthProtocol,
-                              sizeof(usm_noAuthProtocol) / sizeof(oid))) ==
-        NULL)
-        return Usm_freeUser(newUser);
-    newUser->authProtocolLen = sizeof(usm_noAuthProtocol) / sizeof(oid);
+    if ( ( newUser->authProtocol = Api_duplicateObjid( usm_noAuthProtocol,
+               sizeof( usm_noAuthProtocol ) / sizeof( oid ) ) )
+        == NULL )
+        return Usm_freeUser( newUser );
+    newUser->authProtocolLen = sizeof( usm_noAuthProtocol ) / sizeof( oid );
 
-    if ((newUser->privProtocol =
-         Api_duplicateObjid(usm_noPrivProtocol,
-                              sizeof(usm_noPrivProtocol) / sizeof(oid))) ==
-        NULL)
-        return Usm_freeUser(newUser);
-    newUser->privProtocolLen = sizeof(usm_noPrivProtocol) / sizeof(oid);
+    if ( ( newUser->privProtocol = Api_duplicateObjid( usm_noPrivProtocol,
+               sizeof( usm_noPrivProtocol ) / sizeof( oid ) ) )
+        == NULL )
+        return Usm_freeUser( newUser );
+    newUser->privProtocolLen = sizeof( usm_noPrivProtocol ) / sizeof( oid );
 
     /*
      * set the storage type to nonvolatile, and the status to ACTIVE
@@ -3710,54 +3511,50 @@ Usm_createUser(void)
     newUser->userStatus = TC_RS_ACTIVE;
     return newUser;
 
-}                               /* end usm_clone_user() */
-
-
-
+} /* end usm_clone_user() */
 
 /*
  * usm_create_initial_user(void):
  * creates an initial user, filled with the defaults defined in the
  * USM document.
  */
-struct Usm_User_s *
-Usm_createInitialUser(const char *name,
-                        const oid * authProtocol, size_t authProtocolLen,
-                        const oid * privProtocol, size_t privProtocolLen)
+struct Usm_User_s*
+Usm_createInitialUser( const char* name,
+    const oid* authProtocol, size_t authProtocolLen,
+    const oid* privProtocol, size_t privProtocolLen )
 {
-    struct Usm_User_s *newUser = Usm_createUser();
-    if (newUser == NULL)
+    struct Usm_User_s* newUser = Usm_createUser();
+    if ( newUser == NULL )
         return NULL;
 
-    if ((newUser->name = strdup(name)) == NULL)
-        return Usm_freeUser(newUser);
+    if ( ( newUser->name = strdup( name ) ) == NULL )
+        return Usm_freeUser( newUser );
 
-    if ((newUser->secName = strdup(name)) == NULL)
-        return Usm_freeUser(newUser);
+    if ( ( newUser->secName = strdup( name ) ) == NULL )
+        return Usm_freeUser( newUser );
 
-    if ((newUser->engineID =
-         V3_generateEngineID(&newUser->engineIDLen)) == NULL)
-        return Usm_freeUser(newUser);
+    if ( ( newUser->engineID = V3_generateEngineID( &newUser->engineIDLen ) ) == NULL )
+        return Usm_freeUser( newUser );
 
-    if ((newUser->cloneFrom = (oid *) malloc(sizeof(oid) * 2)) == NULL)
-        return Usm_freeUser(newUser);
-    newUser->cloneFrom[0] = 0;
-    newUser->cloneFrom[1] = 0;
+    if ( ( newUser->cloneFrom = ( oid* )malloc( sizeof( oid ) * 2 ) ) == NULL )
+        return Usm_freeUser( newUser );
+    newUser->cloneFrom[ 0 ] = 0;
+    newUser->cloneFrom[ 1 ] = 0;
     newUser->cloneFromLen = 2;
 
-    TOOLS_FREE(newUser->privProtocol);
-    if ((newUser->privProtocol = Api_duplicateObjid(privProtocol,
-                                                      privProtocolLen)) ==
-        NULL) {
-        return Usm_freeUser(newUser);
+    TOOLS_FREE( newUser->privProtocol );
+    if ( ( newUser->privProtocol = Api_duplicateObjid( privProtocol,
+               privProtocolLen ) )
+        == NULL ) {
+        return Usm_freeUser( newUser );
     }
     newUser->privProtocolLen = privProtocolLen;
 
-    TOOLS_FREE(newUser->authProtocol);
-    if ((newUser->authProtocol = Api_duplicateObjid(authProtocol,
-                                                      authProtocolLen)) ==
-        NULL) {
-        return Usm_freeUser(newUser);
+    TOOLS_FREE( newUser->authProtocol );
+    if ( ( newUser->authProtocol = Api_duplicateObjid( authProtocol,
+               authProtocolLen ) )
+        == NULL ) {
+        return Usm_freeUser( newUser );
     }
     newUser->authProtocolLen = authProtocolLen;
 
@@ -3771,22 +3568,21 @@ Usm_createInitialUser(const char *name,
  * this is a callback that can store all known users based on a
  * previously registered application ID
  */
-int
-Usm_storeUsers(int majorID, int minorID, void *serverarg, void *clientarg)
+int Usm_storeUsers( int majorID, int minorID, void* serverarg, void* clientarg )
 {
     /*
      * figure out our application name
      */
-    char           *appname = (char *) clientarg;
-    if (appname == NULL) {
-        appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
-                    DsStr_APPTYPE);
+    char* appname = ( char* )clientarg;
+    if ( appname == NULL ) {
+        appname = DefaultStore_getString( DsStorage_LIBRARY_ID,
+            DsStr_APPTYPE );
     }
 
     /*
      * save the user base
      */
-    Usm_saveUsers("usmUser", appname);
+    Usm_saveUsers( "usmUser", appname );
 
     /*
      * never fails
@@ -3794,97 +3590,87 @@ Usm_storeUsers(int majorID, int minorID, void *serverarg, void *clientarg)
     return ErrorCode_SUCCESS;
 }
 
-
 /*
  * usm_save_users(): saves a list of users to the persistent cache
  */
-void
-Usm_saveUsers(const char *token, const char *type)
+void Usm_saveUsers( const char* token, const char* type )
 {
-    Usm_saveUsersFromList(_usm_userList, token, type);
+    Usm_saveUsersFromList( _usm_userList, token, type );
 }
 
-void
-Usm_saveUsersFromList(struct Usm_User_s *puserList, const char *token,
-                         const char *type)
+void Usm_saveUsersFromList( struct Usm_User_s* puserList, const char* token,
+    const char* type )
 {
-    struct Usm_User_s *uptr;
-    for (uptr = puserList; uptr != NULL; uptr = uptr->next) {
-        if (uptr->userStorageType == TC_ST_NONVOLATILE)
-            Usm_saveUser(uptr, token, type);
+    struct Usm_User_s* uptr;
+    for ( uptr = puserList; uptr != NULL; uptr = uptr->next ) {
+        if ( uptr->userStorageType == TC_ST_NONVOLATILE )
+            Usm_saveUser( uptr, token, type );
     }
 }
 
 /*
  * usm_save_user(): saves a user to the persistent cache
  */
-void
-Usm_saveUser(struct Usm_User_s *user, const char *token, const char *type)
+void Usm_saveUser( struct Usm_User_s* user, const char* token, const char* type )
 {
-    char            line[4096];
-    char           *cptr;
+    char line[ 4096 ];
+    char* cptr;
 
-    memset(line, 0, sizeof(line));
+    memset( line, 0, sizeof( line ) );
 
-    sprintf(line, "%s %d %d ", token, user->userStatus,
-            user->userStorageType);
-    cptr = &line[strlen(line)]; /* the NULL */
-    cptr =
-        ReadConfig_saveOctetString(cptr, user->engineID,
-                                      user->engineIDLen);
+    sprintf( line, "%s %d %d ", token, user->userStatus,
+        user->userStorageType );
+    cptr = &line[ strlen( line ) ]; /* the NULL */
+    cptr = ReadConfig_saveOctetString( cptr, user->engineID,
+        user->engineIDLen );
     *cptr++ = ' ';
-    cptr = ReadConfig_saveOctetString(cptr, (u_char *) user->name,
-                                         (user->name == NULL) ? 0 :
-                                         strlen(user->name));
+    cptr = ReadConfig_saveOctetString( cptr, ( u_char* )user->name,
+        ( user->name == NULL ) ? 0 : strlen( user->name ) );
     *cptr++ = ' ';
-    cptr = ReadConfig_saveOctetString(cptr, (u_char *) user->secName,
-                                         (user->secName == NULL) ? 0 :
-                                         strlen(user->secName));
+    cptr = ReadConfig_saveOctetString( cptr, ( u_char* )user->secName,
+        ( user->secName == NULL ) ? 0 : strlen( user->secName ) );
     *cptr++ = ' ';
-    cptr =
-        ReadConfig_saveObjid(cptr, user->cloneFrom, user->cloneFromLen);
+    cptr = ReadConfig_saveObjid( cptr, user->cloneFrom, user->cloneFromLen );
     *cptr++ = ' ';
-    cptr = ReadConfig_saveObjid(cptr, user->authProtocol,
-                                  user->authProtocolLen);
+    cptr = ReadConfig_saveObjid( cptr, user->authProtocol,
+        user->authProtocolLen );
     *cptr++ = ' ';
-    cptr =
-        ReadConfig_saveOctetString(cptr, user->authKey,
-                                      user->authKeyLen);
+    cptr = ReadConfig_saveOctetString( cptr, user->authKey,
+        user->authKeyLen );
     *cptr++ = ' ';
-    cptr = ReadConfig_saveObjid(cptr, user->privProtocol,
-                                  user->privProtocolLen);
+    cptr = ReadConfig_saveObjid( cptr, user->privProtocol,
+        user->privProtocolLen );
     *cptr++ = ' ';
-    cptr =
-        ReadConfig_saveOctetString(cptr, user->privKey,
-                                      user->privKeyLen);
+    cptr = ReadConfig_saveOctetString( cptr, user->privKey,
+        user->privKeyLen );
     *cptr++ = ' ';
-    cptr = ReadConfig_saveOctetString(cptr, user->userPublicString,
-                                         user->userPublicStringLen);
+    cptr = ReadConfig_saveOctetString( cptr, user->userPublicString,
+        user->userPublicStringLen );
 
-    ReadConfig_store(type, line);
+    ReadConfig_store( type, line );
 }
 
 /*
  * usm_parse_user(): reads in a line containing a saved user profile
  * and returns a pointer to a newly created struct Usm_User_s.
  */
-struct Usm_User_s *
-Usm_readUser(const char *line)
+struct Usm_User_s*
+Usm_readUser( const char* line )
 {
-    struct Usm_User_s *user;
-    size_t          len;
+    struct Usm_User_s* user;
+    size_t len;
     size_t expected_privKeyLen = 0;
 
     user = Usm_createUser();
-    if (user == NULL)
+    if ( user == NULL )
         return NULL;
 
-    user->userStatus = atoi(line);
-    line = ReadConfig_skipTokenConst(line);
-    user->userStorageType = atoi(line);
-    line = ReadConfig_skipTokenConst(line);
-    line = ReadConfig_readOctetStringConst(line, &user->engineID,
-                                               &user->engineIDLen);
+    user->userStatus = atoi( line );
+    line = ReadConfig_skipTokenConst( line );
+    user->userStorageType = atoi( line );
+    line = ReadConfig_skipTokenConst( line );
+    line = ReadConfig_readOctetStringConst( line, &user->engineID,
+        &user->engineIDLen );
 
     /*
      * set the lcd entry for this engineID to the minimum boots/time
@@ -3892,64 +3678,60 @@ Usm_readUser(const char *line)
      * This is mostly important when receiving v3 traps so that the usm
      * will at least continue processing them.
      */
-    LcdTime_setEnginetime(user->engineID, user->engineIDLen, 1, 0, 0);
+    LcdTime_setEnginetime( user->engineID, user->engineIDLen, 1, 0, 0 );
 
-    line = ReadConfig_readOctetString(line, (u_char **) & user->name,
-                                         &len);
-    line = ReadConfig_readOctetString(line, (u_char **) & user->secName,
-                                         &len);
-    TOOLS_FREE(user->cloneFrom);
+    line = ReadConfig_readOctetString( line, ( u_char** )&user->name,
+        &len );
+    line = ReadConfig_readOctetString( line, ( u_char** )&user->secName,
+        &len );
+    TOOLS_FREE( user->cloneFrom );
     user->cloneFromLen = 0;
 
-    line = ReadConfig_readObjidConst(line, &user->cloneFrom,
-                                        &user->cloneFromLen);
+    line = ReadConfig_readObjidConst( line, &user->cloneFrom,
+        &user->cloneFromLen );
 
-    TOOLS_FREE(user->authProtocol);
+    TOOLS_FREE( user->authProtocol );
     user->authProtocolLen = 0;
 
-    line = ReadConfig_readObjidConst(line, &user->authProtocol,
-                                        &user->authProtocolLen);
-    line = ReadConfig_readOctetStringConst(line, &user->authKey,
-                                               &user->authKeyLen);
-    TOOLS_FREE(user->privProtocol);
+    line = ReadConfig_readObjidConst( line, &user->authProtocol,
+        &user->authProtocolLen );
+    line = ReadConfig_readOctetStringConst( line, &user->authKey,
+        &user->authKeyLen );
+    TOOLS_FREE( user->privProtocol );
     user->privProtocolLen = 0;
 
-    line = ReadConfig_readObjidConst(line, &user->privProtocol,
-                                        &user->privProtocolLen);
-    line = ReadConfig_readOctetString(line, &user->privKey,
-                                         &user->privKeyLen);
-    if (TOOLS_ISTRANSFORM(user->privProtocol, dESPriv)) {
+    line = ReadConfig_readObjidConst( line, &user->privProtocol,
+        &user->privProtocolLen );
+    line = ReadConfig_readOctetString( line, &user->privKey,
+        &user->privKeyLen );
+    if ( TOOLS_ISTRANSFORM( user->privProtocol, dESPriv ) ) {
         /* DES uses a 128 bit key, 64 bits of which is a salt */
         expected_privKeyLen = 16;
     }
-    if (TOOLS_ISTRANSFORM(user->privProtocol, aESPriv)) {
+    if ( TOOLS_ISTRANSFORM( user->privProtocol, aESPriv ) ) {
         expected_privKeyLen = 16;
     }
     /* For backwards compatibility */
-    if (user->privKeyLen > expected_privKeyLen) {
-      user->privKeyLen = expected_privKeyLen;
+    if ( user->privKeyLen > expected_privKeyLen ) {
+        user->privKeyLen = expected_privKeyLen;
     }
 
-    line = ReadConfig_readOctetString(line, &user->userPublicString,
-                                         &user->userPublicStringLen);
+    line = ReadConfig_readOctetString( line, &user->userPublicString,
+        &user->userPublicStringLen );
     return user;
 }
 
 /*
  * priotd.conf parsing routines
  */
-void
-Usm_parseConfigUsmUser(const char *token, char *line)
+void Usm_parseConfigUsmUser( const char* token, char* line )
 {
-    struct Usm_User_s *uptr;
+    struct Usm_User_s* uptr;
 
-    uptr = Usm_readUser(line);
-    if ( uptr)
-        Usm_addUser(uptr);
+    uptr = Usm_readUser( line );
+    if ( uptr )
+        Usm_addUser( uptr );
 }
-
-
-
 
 /*******************************************************************-o-******
  * Usm_setPassword
@@ -3971,94 +3753,92 @@ Usm_parseConfigUsmUser(const char *token, char *line)
  *
  * ASSUMES  Passwords are null-terminated printable strings.
  */
-void
-Usm_setPassword(const char *token, char *line)
+void Usm_setPassword( const char* token, char* line )
 {
-    char           *cp;
-    char            nameBuf[TOOLS_MAXBUF];
-    u_char         *engineID = NULL;
-    size_t          engineIDLen = 0;
-    struct Usm_User_s *user;
+    char* cp;
+    char nameBuf[ TOOLS_MAXBUF ];
+    u_char* engineID = NULL;
+    size_t engineIDLen = 0;
+    struct Usm_User_s* user;
 
-    cp = ReadConfig_copyNword(line, nameBuf, sizeof(nameBuf));
-    if (cp == NULL) {
-        ReadConfig_configPerror("invalid name specifier");
+    cp = ReadConfig_copyNword( line, nameBuf, sizeof( nameBuf ) );
+    if ( cp == NULL ) {
+        ReadConfig_configPerror( "invalid name specifier" );
         return;
     }
 
-    DEBUG_MSGTL(("usm", "comparing: %s and %s\n", cp, USM_WILDCARDSTRING));
-    if (strncmp(cp, USM_WILDCARDSTRING, strlen(USM_WILDCARDSTRING)) == 0) {
+    DEBUG_MSGTL( ( "usm", "comparing: %s and %s\n", cp, USM_WILDCARDSTRING ) );
+    if ( strncmp( cp, USM_WILDCARDSTRING, strlen( USM_WILDCARDSTRING ) ) == 0 ) {
         /*
          * match against all engineIDs we know about
          */
-        cp = ReadConfig_skipToken(cp);
-        for (user = _usm_userList; user != NULL; user = user->next) {
-            if (user->secName && strcmp(user->secName, nameBuf) == 0) {
-                Usm_setUserPassword(user, token, cp);
+        cp = ReadConfig_skipToken( cp );
+        for ( user = _usm_userList; user != NULL; user = user->next ) {
+            if ( user->secName && strcmp( user->secName, nameBuf ) == 0 ) {
+                Usm_setUserPassword( user, token, cp );
             }
         }
     } else {
-        cp = ReadConfig_readOctetString(cp, &engineID, &engineIDLen);
-        if (cp == NULL) {
-            ReadConfig_configPerror("invalid engineID specifier");
-            TOOLS_FREE(engineID);
+        cp = ReadConfig_readOctetString( cp, &engineID, &engineIDLen );
+        if ( cp == NULL ) {
+            ReadConfig_configPerror( "invalid engineID specifier" );
+            TOOLS_FREE( engineID );
             return;
         }
 
-        user = Usm_getUser(engineID, engineIDLen, nameBuf);
-        if (user == NULL) {
-            ReadConfig_configPerror("not a valid user/engineID pair");
-            TOOLS_FREE(engineID);
+        user = Usm_getUser( engineID, engineIDLen, nameBuf );
+        if ( user == NULL ) {
+            ReadConfig_configPerror( "not a valid user/engineID pair" );
+            TOOLS_FREE( engineID );
             return;
         }
-        Usm_setUserPassword(user, token, cp);
-        TOOLS_FREE(engineID);
+        Usm_setUserPassword( user, token, cp );
+        TOOLS_FREE( engineID );
     }
 }
 
 /*
  * uses the rest of LINE to configure USER's password of type TOKEN
  */
-void
-Usm_setUserPassword(struct Usm_User_s *user, const char *token, char *line)
+void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line )
 {
-    char           *cp = line;
-    u_char         *engineID = user->engineID;
-    size_t          engineIDLen = user->engineIDLen;
+    char* cp = line;
+    u_char* engineID = user->engineID;
+    size_t engineIDLen = user->engineIDLen;
 
-    u_char        **key;
-    size_t         *keyLen;
-    u_char          userKey[TOOLS_MAXBUF_SMALL];
-    size_t          userKeyLen = TOOLS_MAXBUF_SMALL;
-    u_char         *userKeyP = userKey;
-    int             type, ret;
+    u_char** key;
+    size_t* keyLen;
+    u_char userKey[ TOOLS_MAXBUF_SMALL ];
+    size_t userKeyLen = TOOLS_MAXBUF_SMALL;
+    u_char* userKeyP = userKey;
+    int type, ret;
 
     /*
      * Retrieve the "old" key and set the key type.
      */
-    if (!token) {
+    if ( !token ) {
         return;
-    } else if (strcmp(token, "userSetAuthPass") == 0) {
+    } else if ( strcmp( token, "userSetAuthPass" ) == 0 ) {
         key = &user->authKey;
         keyLen = &user->authKeyLen;
         type = 0;
-    } else if (strcmp(token, "userSetPrivPass") == 0) {
+    } else if ( strcmp( token, "userSetPrivPass" ) == 0 ) {
         key = &user->privKey;
         keyLen = &user->privKeyLen;
         type = 0;
-    } else if (strcmp(token, "userSetAuthKey") == 0) {
+    } else if ( strcmp( token, "userSetAuthKey" ) == 0 ) {
         key = &user->authKey;
         keyLen = &user->authKeyLen;
         type = 1;
-    } else if (strcmp(token, "userSetPrivKey") == 0) {
+    } else if ( strcmp( token, "userSetPrivKey" ) == 0 ) {
         key = &user->privKey;
         keyLen = &user->privKeyLen;
         type = 1;
-    } else if (strcmp(token, "userSetAuthLocalKey") == 0) {
+    } else if ( strcmp( token, "userSetAuthLocalKey" ) == 0 ) {
         key = &user->authKey;
         keyLen = &user->authKeyLen;
         type = 2;
-    } else if (strcmp(token, "userSetPrivLocalKey") == 0) {
+    } else if ( strcmp( token, "userSetPrivLocalKey" ) == 0 ) {
         key = &user->privKey;
         keyLen = &user->privKeyLen;
         type = 2;
@@ -4069,176 +3849,174 @@ Usm_setUserPassword(struct Usm_User_s *user, const char *token, char *line)
         return;
     }
 
-    if (*key) {
+    if ( *key ) {
         /*
          * (destroy and) free the old key
          */
-        memset(*key, 0, *keyLen);
-        TOOLS_FREE(*key);
+        memset( *key, 0, *keyLen );
+        TOOLS_FREE( *key );
     }
 
-    if (type == 0) {
+    if ( type == 0 ) {
         /*
          * convert the password into a key
          */
-        if (cp == NULL) {
-            ReadConfig_configPerror("missing user password");
+        if ( cp == NULL ) {
+            ReadConfig_configPerror( "missing user password" );
             return;
         }
-        ret = Keytools_generateKu(user->authProtocol, user->authProtocolLen,
-                          (u_char *) cp, strlen(cp), userKey, &userKeyLen);
+        ret = Keytools_generateKu( user->authProtocol, user->authProtocolLen,
+            ( u_char* )cp, strlen( cp ), userKey, &userKeyLen );
 
-        if (ret != ErrorCode_SUCCESS) {
-            ReadConfig_configPerror("setting key failed (in sc_genKu())");
+        if ( ret != ErrorCode_SUCCESS ) {
+            ReadConfig_configPerror( "setting key failed (in sc_genKu())" );
             return;
         }
-    } else if (type == 1) {
-        cp = ReadConfig_readOctetString(cp, &userKeyP, &userKeyLen);
+    } else if ( type == 1 ) {
+        cp = ReadConfig_readOctetString( cp, &userKeyP, &userKeyLen );
 
-        if (cp == NULL) {
-            ReadConfig_configPerror("invalid user key");
+        if ( cp == NULL ) {
+            ReadConfig_configPerror( "invalid user key" );
             return;
         }
     }
 
-    if (type < 2) {
-        *key = (u_char *) malloc(TOOLS_MAXBUF_SMALL);
+    if ( type < 2 ) {
+        *key = ( u_char* )malloc( TOOLS_MAXBUF_SMALL );
         *keyLen = TOOLS_MAXBUF_SMALL;
-        ret = Keytools_generateKul(user->authProtocol, user->authProtocolLen,
-                           engineID, engineIDLen,
-                           userKey, userKeyLen, *key, keyLen);
-        if (ret != ErrorCode_SUCCESS) {
-            ReadConfig_configPerror("setting key failed (in Keytools_generateKul())");
+        ret = Keytools_generateKul( user->authProtocol, user->authProtocolLen,
+            engineID, engineIDLen,
+            userKey, userKeyLen, *key, keyLen );
+        if ( ret != ErrorCode_SUCCESS ) {
+            ReadConfig_configPerror( "setting key failed (in Keytools_generateKul())" );
             return;
         }
 
         /*
          * (destroy and) free the old key
          */
-        memset(userKey, 0, sizeof(userKey));
+        memset( userKey, 0, sizeof( userKey ) );
 
     } else {
         /*
          * the key is given, copy it in
          */
-        cp = ReadConfig_readOctetString(cp, key, keyLen);
+        cp = ReadConfig_readOctetString( cp, key, keyLen );
 
-        if (cp == NULL) {
-            ReadConfig_configPerror("invalid localized user key");
+        if ( cp == NULL ) {
+            ReadConfig_configPerror( "invalid localized user key" );
             return;
         }
     }
-}                               /* end Usm_setPassword() */
+} /* end Usm_setPassword() */
 
-void
-Usm_parseCreateUsmUser(const char *token, char *line)
+void Usm_parseCreateUsmUser( const char* token, char* line )
 {
-    char           *cp;
-    char            buf[TOOLS_MAXBUF_MEDIUM];
-    struct Usm_User_s *newuser;
-    u_char          userKey[TOOLS_MAXBUF_SMALL], *tmpp;
-    size_t          userKeyLen = TOOLS_MAXBUF_SMALL;
-    size_t          privKeyLen = 0;
-    size_t          ret;
-    int             ret2;
-    int             testcase;
+    char* cp;
+    char buf[ TOOLS_MAXBUF_MEDIUM ];
+    struct Usm_User_s* newuser;
+    u_char userKey[ TOOLS_MAXBUF_SMALL ], *tmpp;
+    size_t userKeyLen = TOOLS_MAXBUF_SMALL;
+    size_t privKeyLen = 0;
+    size_t ret;
+    int ret2;
+    int testcase;
 
     newuser = Usm_createUser();
 
     /*
      * READ: Security Name
      */
-    cp = ReadConfig_copyNword(line, buf, sizeof(buf));
+    cp = ReadConfig_copyNword( line, buf, sizeof( buf ) );
 
     /*
      * might be a -e ENGINEID argument
      */
-    if (strcmp(buf, "-e") == 0) {
-        size_t          ebuf_len = 32, eout_len = 0;
-        u_char         *ebuf = (u_char *) malloc(ebuf_len);
+    if ( strcmp( buf, "-e" ) == 0 ) {
+        size_t ebuf_len = 32, eout_len = 0;
+        u_char* ebuf = ( u_char* )malloc( ebuf_len );
 
-        if (ebuf == NULL) {
-            ReadConfig_configPerror("malloc failure processing -e flag");
-            Usm_freeUser(newuser);
+        if ( ebuf == NULL ) {
+            ReadConfig_configPerror( "malloc failure processing -e flag" );
+            Usm_freeUser( newuser );
             return;
         }
 
         /*
          * Get the specified engineid from the line.
          */
-        cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
-        if (!Tools_hexToBinary1(&ebuf, &ebuf_len, &eout_len, 1, buf)) {
-            ReadConfig_configPerror("invalid EngineID argument to -e");
-            Usm_freeUser(newuser);
-            TOOLS_FREE(ebuf);
+        cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
+        if ( !Tools_hexToBinary1( &ebuf, &ebuf_len, &eout_len, 1, buf ) ) {
+            ReadConfig_configPerror( "invalid EngineID argument to -e" );
+            Usm_freeUser( newuser );
+            TOOLS_FREE( ebuf );
             return;
         }
 
         newuser->engineID = ebuf;
         newuser->engineIDLen = eout_len;
-        cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
+        cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
     } else {
-        newuser->engineID = V3_generateEngineID(&ret);
-        if (ret == 0) {
-            Usm_freeUser(newuser);
+        newuser->engineID = V3_generateEngineID( &ret );
+        if ( ret == 0 ) {
+            Usm_freeUser( newuser );
             return;
         }
         newuser->engineIDLen = ret;
     }
 
-    newuser->secName = strdup(buf);
-    newuser->name = strdup(buf);
+    newuser->secName = strdup( buf );
+    newuser->name = strdup( buf );
 
-    if (!cp)
-        goto goto_add;               /* no authentication or privacy type */
+    if ( !cp )
+        goto goto_add; /* no authentication or privacy type */
 
     /*
      * READ: Authentication Type
      */
-    if (strncmp(cp, "MD5", 3) == 0) {
-        memcpy(newuser->authProtocol, usm_hMACMD5AuthProtocol,
-               sizeof(usm_hMACMD5AuthProtocol));
-    } else
-        if (strncmp(cp, "SHA", 3) == 0) {
-        memcpy(newuser->authProtocol, usm_hMACSHA1AuthProtocol,
-               sizeof(usm_hMACSHA1AuthProtocol));
+    if ( strncmp( cp, "MD5", 3 ) == 0 ) {
+        memcpy( newuser->authProtocol, usm_hMACMD5AuthProtocol,
+            sizeof( usm_hMACMD5AuthProtocol ) );
+    } else if ( strncmp( cp, "SHA", 3 ) == 0 ) {
+        memcpy( newuser->authProtocol, usm_hMACSHA1AuthProtocol,
+            sizeof( usm_hMACSHA1AuthProtocol ) );
     } else {
-        ReadConfig_configPerror("Unknown authentication protocol");
-        Usm_freeUser(newuser);
+        ReadConfig_configPerror( "Unknown authentication protocol" );
+        Usm_freeUser( newuser );
         return;
     }
 
-    cp = ReadConfig_skipToken(cp);
+    cp = ReadConfig_skipToken( cp );
 
     /*
      * READ: Authentication Pass Phrase or key
      */
-    if (!cp) {
-        ReadConfig_configPerror("no authentication pass phrase");
-        Usm_freeUser(newuser);
+    if ( !cp ) {
+        ReadConfig_configPerror( "no authentication pass phrase" );
+        Usm_freeUser( newuser );
         return;
     }
-    cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
-    if (strcmp(buf,"-m") == 0) {
+    cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
+    if ( strcmp( buf, "-m" ) == 0 ) {
         /* a master key is specified */
-        cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
-        ret = sizeof(userKey);
+        cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
+        ret = sizeof( userKey );
         tmpp = userKey;
         userKeyLen = 0;
-        if (!Tools_hexToBinary1(&tmpp, &ret, &userKeyLen, 0, buf)) {
-            ReadConfig_configPerror("invalid key value argument to -m");
-            Usm_freeUser(newuser);
+        if ( !Tools_hexToBinary1( &tmpp, &ret, &userKeyLen, 0, buf ) ) {
+            ReadConfig_configPerror( "invalid key value argument to -m" );
+            Usm_freeUser( newuser );
             return;
         }
-    } else if (strcmp(buf,"-l") != 0) {
+    } else if ( strcmp( buf, "-l" ) != 0 ) {
         /* a password is specified */
-        userKeyLen = sizeof(userKey);
-        ret2 = Keytools_generateKu(newuser->authProtocol, newuser->authProtocolLen,
-                          (u_char *) buf, strlen(buf), userKey, &userKeyLen);
-        if (ret2 != ErrorCode_SUCCESS) {
-            ReadConfig_configPerror("could not generate the authentication key from the "
-                          "supplied pass phrase.");
-            Usm_freeUser(newuser);
+        userKeyLen = sizeof( userKey );
+        ret2 = Keytools_generateKu( newuser->authProtocol, newuser->authProtocolLen,
+            ( u_char* )buf, strlen( buf ), userKey, &userKeyLen );
+        if ( ret2 != ErrorCode_SUCCESS ) {
+            ReadConfig_configPerror( "could not generate the authentication key from the "
+                                     "supplied pass phrase." );
+            Usm_freeUser( newuser );
             return;
         }
     }
@@ -4246,108 +4024,107 @@ Usm_parseCreateUsmUser(const char *token, char *line)
     /*
      * And turn it into a localized key
      */
-    ret2 = Scapi_getProperLength(newuser->authProtocol,
-                               newuser->authProtocolLen);
-    if (ret2 <= 0) {
-        ReadConfig_configPerror("Could not get proper authentication protocol key length");
-    Usm_freeUser(newuser);
+    ret2 = Scapi_getProperLength( newuser->authProtocol,
+        newuser->authProtocolLen );
+    if ( ret2 <= 0 ) {
+        ReadConfig_configPerror( "Could not get proper authentication protocol key length" );
+        Usm_freeUser( newuser );
         return;
     }
-    newuser->authKey = (u_char *) malloc(ret2);
+    newuser->authKey = ( u_char* )malloc( ret2 );
 
-    if (strcmp(buf,"-l") == 0) {
+    if ( strcmp( buf, "-l" ) == 0 ) {
         /* a local key is directly specified */
-        cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
+        cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
         newuser->authKeyLen = 0;
         ret = ret2;
-        if (!Tools_hexToBinary1(&newuser->authKey, &ret,
-                                &newuser->authKeyLen, 0, buf)) {
-            ReadConfig_configPerror("invalid key value argument to -l");
-            Usm_freeUser(newuser);
+        if ( !Tools_hexToBinary1( &newuser->authKey, &ret,
+                 &newuser->authKeyLen, 0, buf ) ) {
+            ReadConfig_configPerror( "invalid key value argument to -l" );
+            Usm_freeUser( newuser );
             return;
         }
-        if (ret != newuser->authKeyLen) {
-            ReadConfig_configPerror("improper key length to -l");
-            Usm_freeUser(newuser);
+        if ( ret != newuser->authKeyLen ) {
+            ReadConfig_configPerror( "improper key length to -l" );
+            Usm_freeUser( newuser );
             return;
         }
     } else {
         newuser->authKeyLen = ret2;
-        ret2 = Keytools_generateKul(newuser->authProtocol, newuser->authProtocolLen,
-                           newuser->engineID, newuser->engineIDLen,
-                           userKey, userKeyLen,
-                           newuser->authKey, &newuser->authKeyLen);
-        if (ret2 != ErrorCode_SUCCESS) {
-            ReadConfig_configPerror("could not generate localized authentication key "
-                          "(Kul) from the master key (Ku).");
-            Usm_freeUser(newuser);
+        ret2 = Keytools_generateKul( newuser->authProtocol, newuser->authProtocolLen,
+            newuser->engineID, newuser->engineIDLen,
+            userKey, userKeyLen,
+            newuser->authKey, &newuser->authKeyLen );
+        if ( ret2 != ErrorCode_SUCCESS ) {
+            ReadConfig_configPerror( "could not generate localized authentication key "
+                                     "(Kul) from the master key (Ku)." );
+            Usm_freeUser( newuser );
             return;
         }
     }
 
-    if (!cp)
-        goto goto_add;               /* no privacy type (which is legal) */
+    if ( !cp )
+        goto goto_add; /* no privacy type (which is legal) */
 
     /*
      * READ: Privacy Type
      */
     testcase = 0;
-    if (strncmp(cp, "DES", 3) == 0) {
-        memcpy(newuser->privProtocol, usm_dESPrivProtocol,
-               sizeof(usm_dESPrivProtocol));
+    if ( strncmp( cp, "DES", 3 ) == 0 ) {
+        memcpy( newuser->privProtocol, usm_dESPrivProtocol,
+            sizeof( usm_dESPrivProtocol ) );
         testcase = 1;
-    /* DES uses a 128 bit key, 64 bits of which is a salt */
-    privKeyLen = 16;
+        /* DES uses a 128 bit key, 64 bits of which is a salt */
+        privKeyLen = 16;
     }
 
-    if (strncmp(cp, "AES128", 6) == 0 ||
-               strncmp(cp, "AES", 3) == 0) {
-        memcpy(newuser->privProtocol, usm_aESPrivProtocol,
-               sizeof(usm_aESPrivProtocol));
+    if ( strncmp( cp, "AES128", 6 ) == 0 || strncmp( cp, "AES", 3 ) == 0 ) {
+        memcpy( newuser->privProtocol, usm_aESPrivProtocol,
+            sizeof( usm_aESPrivProtocol ) );
         testcase = 1;
-    privKeyLen = 16;
+        privKeyLen = 16;
     }
 #
-    if (testcase == 0) {
-        ReadConfig_configPerror("Unknown privacy protocol");
-        Usm_freeUser(newuser);
+    if ( testcase == 0 ) {
+        ReadConfig_configPerror( "Unknown privacy protocol" );
+        Usm_freeUser( newuser );
         return;
     }
 
-    cp = ReadConfig_skipToken(cp);
+    cp = ReadConfig_skipToken( cp );
     /*
      * READ: Encryption Pass Phrase or key
      */
-    if (!cp) {
+    if ( !cp ) {
         /*
          * assume the same as the authentication key
          */
-        newuser->privKey = (u_char *)Tools_memdup(newuser->authKey,
-                                          newuser->authKeyLen);
+        newuser->privKey = ( u_char* )Tools_memdup( newuser->authKey,
+            newuser->authKeyLen );
         newuser->privKeyLen = newuser->authKeyLen;
     } else {
-        cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
+        cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
 
-        if (strcmp(buf,"-m") == 0) {
+        if ( strcmp( buf, "-m" ) == 0 ) {
             /* a master key is specified */
-            cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
-            ret = sizeof(userKey);
+            cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
+            ret = sizeof( userKey );
             tmpp = userKey;
             userKeyLen = 0;
-            if (!Tools_hexToBinary1(&tmpp, &ret, &userKeyLen, 0, buf)) {
-                ReadConfig_configPerror("invalid key value argument to -m");
-                Usm_freeUser(newuser);
+            if ( !Tools_hexToBinary1( &tmpp, &ret, &userKeyLen, 0, buf ) ) {
+                ReadConfig_configPerror( "invalid key value argument to -m" );
+                Usm_freeUser( newuser );
                 return;
             }
-        } else if (strcmp(buf,"-l") != 0) {
+        } else if ( strcmp( buf, "-l" ) != 0 ) {
             /* a password is specified */
-            userKeyLen = sizeof(userKey);
-            ret2 = Keytools_generateKu(newuser->authProtocol, newuser->authProtocolLen,
-                              (u_char *) buf, strlen(buf), userKey, &userKeyLen);
-            if (ret2 != ErrorCode_SUCCESS) {
-                ReadConfig_configPerror("could not generate the privacy key from the "
-                              "supplied pass phrase.");
-                Usm_freeUser(newuser);
+            userKeyLen = sizeof( userKey );
+            ret2 = Keytools_generateKu( newuser->authProtocol, newuser->authProtocolLen,
+                ( u_char* )buf, strlen( buf ), userKey, &userKeyLen );
+            if ( ret2 != ErrorCode_SUCCESS ) {
+                ReadConfig_configPerror( "could not generate the privacy key from the "
+                                         "supplied pass phrase." );
+                Usm_freeUser( newuser );
                 return;
             }
         }
@@ -4355,116 +4132,110 @@ Usm_parseCreateUsmUser(const char *token, char *line)
         /*
          * And turn it into a localized key
          */
-        ret2 = Scapi_getProperLength(newuser->authProtocol,
-                                   newuser->authProtocolLen);
-        if (ret2 < 0) {
-            ReadConfig_configPerror("could not get proper key length to use for the "
-                          "privacy algorithm.");
-            Usm_freeUser(newuser);
+        ret2 = Scapi_getProperLength( newuser->authProtocol,
+            newuser->authProtocolLen );
+        if ( ret2 < 0 ) {
+            ReadConfig_configPerror( "could not get proper key length to use for the "
+                                     "privacy algorithm." );
+            Usm_freeUser( newuser );
             return;
         }
-        newuser->privKey = (u_char *) malloc(ret2);
+        newuser->privKey = ( u_char* )malloc( ret2 );
 
-        if (strcmp(buf,"-l") == 0) {
+        if ( strcmp( buf, "-l" ) == 0 ) {
             /* a local key is directly specified */
-            cp = ReadConfig_copyNword(cp, buf, sizeof(buf));
+            cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
             ret = ret2;
             newuser->privKeyLen = 0;
-            if (!Tools_hexToBinary1(&newuser->privKey, &ret,
-                                    &newuser->privKeyLen, 0, buf)) {
-                ReadConfig_configPerror("invalid key value argument to -l");
-                Usm_freeUser(newuser);
+            if ( !Tools_hexToBinary1( &newuser->privKey, &ret,
+                     &newuser->privKeyLen, 0, buf ) ) {
+                ReadConfig_configPerror( "invalid key value argument to -l" );
+                Usm_freeUser( newuser );
                 return;
             }
         } else {
             newuser->privKeyLen = ret2;
-            ret2 = Keytools_generateKul(newuser->authProtocol, newuser->authProtocolLen,
-                               newuser->engineID, newuser->engineIDLen,
-                               userKey, userKeyLen,
-                               newuser->privKey, &newuser->privKeyLen);
-            if (ret2 != ErrorCode_SUCCESS) {
-                ReadConfig_configPerror("could not generate localized privacy key "
-                              "(Kul) from the master key (Ku).");
-                Usm_freeUser(newuser);
+            ret2 = Keytools_generateKul( newuser->authProtocol, newuser->authProtocolLen,
+                newuser->engineID, newuser->engineIDLen,
+                userKey, userKeyLen,
+                newuser->privKey, &newuser->privKeyLen );
+            if ( ret2 != ErrorCode_SUCCESS ) {
+                ReadConfig_configPerror( "could not generate localized privacy key "
+                                         "(Kul) from the master key (Ku)." );
+                Usm_freeUser( newuser );
                 return;
             }
         }
     }
 
-    if ((newuser->privKeyLen >= privKeyLen) || (privKeyLen == 0)){
-      newuser->privKeyLen = privKeyLen;
-    }
-    else {
-      /* The privKey length is smaller than required by privProtocol */
-      Usm_freeUser(newuser);
-      return;
+    if ( ( newuser->privKeyLen >= privKeyLen ) || ( privKeyLen == 0 ) ) {
+        newuser->privKeyLen = privKeyLen;
+    } else {
+        /* The privKey length is smaller than required by privProtocol */
+        Usm_freeUser( newuser );
+        return;
     }
 
-  goto_add:
-    Usm_addUser(newuser);
-    DEBUG_MSGTL(("usmUser", "created a new user %s at ", newuser->secName));
-    DEBUG_MSGHEX(("usmUser", newuser->engineID, newuser->engineIDLen));
-    DEBUG_MSG(("usmUser", "\n"));
+goto_add:
+    Usm_addUser( newuser );
+    DEBUG_MSGTL( ( "usmUser", "created a new user %s at ", newuser->secName ) );
+    DEBUG_MSGHEX( ( "usmUser", newuser->engineID, newuser->engineIDLen ) );
+    DEBUG_MSG( ( "usmUser", "\n" ) );
 }
 
-void
-Usm_v3AuthtypeConf(const char *word, char *cptr)
+void Usm_v3AuthtypeConf( const char* word, char* cptr )
 {
-    if (strcasecmp(cptr, "MD5") == 0)
+    if ( strcasecmp( cptr, "MD5" ) == 0 )
         _usm_defaultAuthType = usm_hMACMD5AuthProtocol;
-    else
-        if (strcasecmp(cptr, "SHA") == 0)
+    else if ( strcasecmp( cptr, "SHA" ) == 0 )
         _usm_defaultAuthType = usm_hMACSHA1AuthProtocol;
     else
-        ReadConfig_configPerror("Unknown authentication type");
+        ReadConfig_configPerror( "Unknown authentication type" );
     _usm_defaultAuthTypeLen = TOOLS_USM_LENGTH_OID_TRANSFORM;
-    DEBUG_MSGTL(("snmpv3", "set default authentication type: %s\n", cptr));
+    DEBUG_MSGTL( ( "snmpv3", "set default authentication type: %s\n", cptr ) );
 }
 
-const oid      *
-Usm_getDefaultAuthtype(size_t * len)
+const oid*
+Usm_getDefaultAuthtype( size_t* len )
 {
-    if (_usm_defaultAuthType == NULL) {
+    if ( _usm_defaultAuthType == NULL ) {
         _usm_defaultAuthType = API_DEFAULT_AUTH_PROTO;
         _usm_defaultAuthTypeLen = API_DEFAULT_AUTH_PROTOLEN;
     }
-    if (len)
+    if ( len )
         *len = _usm_defaultAuthTypeLen;
     return _usm_defaultAuthType;
 }
 
-void
-Usm_v3PrivtypeConf(const char *word, char *cptr)
+void Usm_v3PrivtypeConf( const char* word, char* cptr )
 {
     int testcase = 0;
 
-    if (strcasecmp(cptr, "DES") == 0) {
+    if ( strcasecmp( cptr, "DES" ) == 0 ) {
         testcase = 1;
         _usm_defaultPrivType = usm_dESPrivProtocol;
     }
 
     /* XXX AES: assumes oid length == des oid length */
-    if (strcasecmp(cptr, "AES128") == 0 ||
-        strcasecmp(cptr, "AES") == 0) {
+    if ( strcasecmp( cptr, "AES128" ) == 0 || strcasecmp( cptr, "AES" ) == 0 ) {
         testcase = 1;
         _usm_defaultPrivType = usm_aES128PrivProtocol;
     }
-    if (testcase == 0)
-        ReadConfig_configPerror("Unknown privacy type");
+    if ( testcase == 0 )
+        ReadConfig_configPerror( "Unknown privacy type" );
     _usm_defaultPrivTypeLen = API_DEFAULT_PRIV_PROTOLEN;
-    DEBUG_MSGTL(("snmpv3", "set default privacy type: %s\n", cptr));
+    DEBUG_MSGTL( ( "snmpv3", "set default privacy type: %s\n", cptr ) );
 }
 
-const oid      *
-Usm_getDefaultPrivtype(size_t * len)
+const oid*
+Usm_getDefaultPrivtype( size_t* len )
 {
-    if (_usm_defaultPrivType == NULL) {
+    if ( _usm_defaultPrivType == NULL ) {
         _usm_defaultPrivType = usm_dESPrivProtocol;
 
         _usm_defaultPrivTypeLen = TOOLS_USM_LENGTH_OID_TRANSFORM;
     }
-    if (len)
+    if ( len )
         *len = _usm_defaultPrivTypeLen;
     return _usm_defaultPrivType;
 }
-

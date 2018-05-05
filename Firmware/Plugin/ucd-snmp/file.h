@@ -8,6 +8,8 @@
 #include "mibdefs.h"
 #include "Vars.h"
 
+void            init_file(void);
+
 /*
  * config file parsing routines 
  */

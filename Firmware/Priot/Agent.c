@@ -486,7 +486,7 @@ _Agent_fixEndofmibview( AgentSession* asp )
 
 /**
 * This function checks for packets arriving on the SNMP port and
-* processes them(snmp_read) if some are found, using the select(). If block
+* processes them(Api_read) if some are found, using the select(). If block
 * is non zero, the function call blocks until a packet arrives
 *
 * @param block used to control blocking in the select() function, 1 = block

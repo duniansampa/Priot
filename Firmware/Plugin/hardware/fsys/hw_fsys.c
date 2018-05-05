@@ -32,7 +32,7 @@ void init_hw_fsys( void )
     /*
      * Define a container to hold the list of filesystems
      */
-    _fsys_container = Container_find( "fsysTable:table_container" );
+    _fsys_container = Container_find( "fsysTable:tableContainer" );
     if ( NULL == _fsys_container ) {
         Logger_log( LOGGER_PRIORITY_ERR, "failed to create container for fsysTable" );
         return;
