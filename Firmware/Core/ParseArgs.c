@@ -1,20 +1,20 @@
 #include "ParseArgs.h"
 #include "Mib.h"
 #include "Parse.h"
-#include "Logger.h",
-#include "Debug.h"
+#include "System/Util/Logger.h",
+#include "System/Util/Debug.h"
 #include "ReadConfig.h"
 #include "DefaultStore.h"
 #include "Priot.h"
-#include "Tools.h"
-#include "Container.h"
+#include "System/Util/Utilities.h"
+#include "System/Containers/Container.h"
 #include "Transport.h"
 #include "Keytools.h"
 #include "Api.h"
 #include "Version.h"
 #include "Usm.h"
 #include "V3.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 
 int  parseArgs_randomAccess = 0;
 
@@ -255,7 +255,7 @@ int  ParseArgs_parseArgs(int argc,
 
         case 'T':
         {
-            char leftside[TOOLS_MAXBUF_MEDIUM], rightside[TOOLS_MAXBUF_MEDIUM];
+            char leftside[UTILITIES_MAX_BUFFER_MEDIUM], rightside[UTILITIES_MAX_BUFFER_MEDIUM];
             char *tmpcp, *tmpopt;
 
             /* ensure we have a proper argument */
@@ -284,8 +284,8 @@ int  ParseArgs_parseArgs(int argc,
             }
 
             /* set the config */
-            Strlcpy_strlcpy(leftside, tmpopt, sizeof(leftside));
-            Strlcpy_strlcpy(rightside, tmpcp, sizeof(rightside));
+            String_copyTruncate(leftside, tmpopt, sizeof(leftside));
+            String_copyTruncate(rightside, tmpcp, sizeof(rightside));
 
             CONTAINER_INSERT(session->transportConfiguration,
                              Transport_createConfig(leftside, rightside));
@@ -377,7 +377,7 @@ int  ParseArgs_parseArgs(int argc,
                     fprintf(stderr, "malloc failure processing -e flag.\n");
                     return (PARSEARGS_ERROR);
                 }
-                if (!Tools_hexToBinary1
+                if (!Convert_hexStringToBinaryStringWrapper
                     (&ebuf, &ebuf_len, &eout_len, 1, optarg)) {
                     fprintf(stderr, "Bad engine ID value after -e flag.\n");
                     free(ebuf);
@@ -401,7 +401,7 @@ int  ParseArgs_parseArgs(int argc,
                     fprintf(stderr, "malloc failure processing -E flag.\n");
                     return (PARSEARGS_ERROR);
                 }
-                if (!Tools_hexToBinary1(&ebuf, &ebuf_len,
+                if (!Convert_hexStringToBinaryStringWrapper(&ebuf, &ebuf_len,
                     &eout_len, 1, optarg)) {
                     fprintf(stderr, "Bad engine ID value after -E flag.\n");
                     free(ebuf);

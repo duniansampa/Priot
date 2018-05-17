@@ -1,10 +1,10 @@
 
 #include "siglog/agent/hardware/fsys.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include <mntent.h>
 #include <sys/statfs.h>
 
@@ -126,8 +126,8 @@ void netsnmp_fsys_arch_load( void )
             continue;
         }
 
-        Strlcpy_strlcpy( entry->path, m->NSFS_PATH, sizeof( entry->path ) );
-        Strlcpy_strlcpy( entry->device, m->NSFS_DEV, sizeof( entry->device ) );
+        String_copyTruncate( entry->path, m->NSFS_PATH, sizeof( entry->path ) );
+        String_copyTruncate( entry->device, m->NSFS_DEV, sizeof( entry->device ) );
         entry->type = _fsys_type( m->NSFS_TYPE );
         if ( !( entry->type & _NETSNMP_FS_TYPE_SKIP_BIT ) )
             entry->flags |= NETSNMP_FS_FLAG_ACTIVE;

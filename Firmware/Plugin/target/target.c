@@ -1,8 +1,8 @@
 
 #include "target.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "Tc.h"
 #include "snmpTargetAddrEntry.h"

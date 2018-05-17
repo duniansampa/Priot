@@ -6,6 +6,8 @@
 #ifndef NETSNMP_ACCESS_INTERFACE_CONFIG_H
 #define NETSNMP_ACCESS_INTERFACE_CONFIG_H
 
+#include "siglog/data_access/interface.h"
+
 /*
  * all platforms use this generic code
  */

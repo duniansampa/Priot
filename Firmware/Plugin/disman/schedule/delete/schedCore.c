@@ -6,7 +6,7 @@
 #include "schedCore.h"
 #include "Alarm.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 Tdata* schedule_table;
 

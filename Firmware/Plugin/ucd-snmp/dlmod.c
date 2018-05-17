@@ -6,11 +6,11 @@
 #include "dlmod.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "Vars.h"
 #include "Vars.h"
 #include <dlfcn.h>
@@ -136,7 +136,7 @@ dlmod_load_module( struct dlmod* dlm )
                 dlm->status = DLMOD_ERROR;
             }
         }
-        Strlcpy_strlcpy( dlm->path, tmp_path, sizeof( dlm->path ) );
+        String_copyTruncate( dlm->path, tmp_path, sizeof( dlm->path ) );
         if ( dlm->status == DLMOD_ERROR )
             return;
     }
@@ -231,16 +231,16 @@ dlmod_parse_config( const char* token, char* cptr )
         dlmod_delete_module( dlm );
         return;
     }
-    Strlcpy_strlcpy( dlm->name, dlm_name, sizeof( dlm->name ) );
+    String_copyTruncate( dlm->name, dlm_name, sizeof( dlm->name ) );
 
     /*
      * dynamic module path
      */
     dlm_path = strtok_r( NULL, "\t ", &st );
     if ( dlm_path )
-        Strlcpy_strlcpy( dlm->path, dlm_path, sizeof( dlm->path ) );
+        String_copyTruncate( dlm->path, dlm_path, sizeof( dlm->path ) );
     else
-        Strlcpy_strlcpy( dlm->path, dlm_name, sizeof( dlm->path ) );
+        String_copyTruncate( dlm->path, dlm_name, sizeof( dlm->path ) );
 
     dlmod_load_module( dlm );
 

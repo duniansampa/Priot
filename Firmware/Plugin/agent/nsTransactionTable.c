@@ -4,8 +4,8 @@
 
 #include "nsTransactionTable.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 
 /** Initialize the nsTransactionTable table by defining it's contents
    and how it's structured */
@@ -19,8 +19,8 @@ void initialize_table_nsTransactionTable( void )
     /*
      * create the table structure itself 
      */
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
 
     /*
      * if your table is read only, it's easiest to change the
@@ -34,8 +34,8 @@ void initialize_table_nsTransactionTable( void )
     if ( !my_handler || !table_info || !iinfo ) {
         if ( my_handler )
             AgentHandler_handlerRegistrationFree( my_handler );
-        TOOLS_FREE( table_info );
-        TOOLS_FREE( iinfo );
+        MEMORY_FREE( table_info );
+        MEMORY_FREE( iinfo );
         return; /* mallocs failed */
     }
 

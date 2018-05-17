@@ -1,7 +1,7 @@
 #include "MasterAdmin.h"
 #include "Types.h"
 #include "Protocol.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Agent.h"
 #include "AgentRegistry.h"
 #include "AgentIndex.h"
@@ -110,7 +110,7 @@ MasterAdmin_closeAgentxSession(Types_Session * session, int sessid)
         AgentRegistry_unregisterMibsBySession(session);
         AgentIndex_unregisterIndexBySession(session);
         SysORTable_unregisterSysORTableBySession(session);
-        TOOLS_FREE(session->myvoid);
+        MEMORY_FREE(session->myvoid);
         return AGENTX_ERR_NOERROR;
     }
 
@@ -342,7 +342,7 @@ MasterAdmin_addAgentCapsList(Types_Session * session, Types_Pdu *pdu)
     if (sp == NULL)
         return AGENTX_ERR_NOT_OPEN;
 
-    description = Tools_strdupAndNull(pdu->variables->val.string,
+    description = Memory_strdupAndNull(pdu->variables->val.string,
                                           pdu->variables->valLen);
     SysORTable_registerSysORTableSess(pdu->variables->name, pdu->variables->nameLength,
                              description, sp);

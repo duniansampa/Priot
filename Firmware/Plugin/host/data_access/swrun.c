@@ -9,11 +9,11 @@
  * distributed with the Net-SNMP package.
  */
 #include "swrun.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Logger.h"
 #include "Types.h"
 #include "siglog/data_access/swrun.h"
 
@@ -268,7 +268,7 @@ netsnmp_swrun_entry_get_by_index( Container_Container* container, oid index )
 netsnmp_swrun_entry*
 netsnmp_swrun_entry_create( int32_t index )
 {
-    netsnmp_swrun_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_swrun_entry );
+    netsnmp_swrun_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_swrun_entry );
 
     if ( NULL == entry )
         return NULL;
@@ -291,7 +291,7 @@ void netsnmp_swrun_entry_free( netsnmp_swrun_entry* entry )
         return;
 
     /*
-     * TOOLS_FREE not needed, for any of these, 
+     * MEMORY_FREE not needed, for any of these, 
      * since the whole entry is about to be freed
      */
     free( entry );

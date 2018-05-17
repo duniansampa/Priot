@@ -2,7 +2,7 @@
 #include "nsLogging.h"
 #include "Agent.h"
 #include "Client.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Table.h"
 #include "Tc.h"
 
@@ -26,7 +26,7 @@ void init_nsLogging( void )
      * We need to define the column structure and indexing....
      */
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !table_info ) {
         return;
     }
@@ -38,7 +38,7 @@ void init_nsLogging( void )
     /*
      * .... and the iteration information ....
      */
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     if ( !iinfo ) {
         return;
     }

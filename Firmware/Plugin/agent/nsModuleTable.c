@@ -6,8 +6,8 @@
 #include "nsModuleTable.h"
 #include "AgentRegistry.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "VarStruct.h"
 
 void nsModuleTable_free( void* context, IteratorInfo* dont_care )
@@ -26,8 +26,8 @@ void initialize_table_nsModuleTable( void )
     /*
      * create the table structure itself 
      */
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
 
     /*
      * if your table is read only, it's easiest to change the
@@ -42,8 +42,8 @@ void initialize_table_nsModuleTable( void )
     if ( !my_handler || !table_info || !iinfo ) {
         if ( my_handler )
             AgentHandler_handlerRegistrationFree( my_handler );
-        TOOLS_FREE( table_info );
-        TOOLS_FREE( iinfo );
+        MEMORY_FREE( table_info );
+        MEMORY_FREE( iinfo );
         return; /* mallocs failed */
     }
 
@@ -117,14 +117,14 @@ nsModuleTable_get_first_data_point( void** my_loop_context,
     u_long ultmp;
     context_tree_ptr* ctree;
 
-    ctree = TOOLS_MALLOC_TYPEDEF( context_tree_ptr );
+    ctree = MEMORY_MALLOC_TYPEDEF( context_tree_ptr );
 
     ctree->context_ptr = AgentRegistry_getTopContextCache();
     /* Skip empty context registrations */
     while ( !ctree->context_ptr->first_subtree ) {
         ctree->context_ptr = ctree->context_ptr->next;
         if ( !ctree->context_ptr ) {
-            TOOLS_FREE( ctree );
+            MEMORY_FREE( ctree );
             return NULL;
         }
     }

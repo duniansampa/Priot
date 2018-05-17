@@ -6,7 +6,7 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "Callback.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Watcher.h"
 /*
  * A watched spinlock can be fully implemented by the spinlock helper,
@@ -29,8 +29,8 @@ static void setserial_parse_config( const char* token, char* cptr )
 static int
 setserial_store_config( int a, int b, void* c, void* d )
 {
-    char line[ TOOLS_MAXBUF_SMALL ];
-    snprintf( line, TOOLS_MAXBUF_SMALL, "setserialno %d", setserialno );
+    char line[ UTILITIES_MAX_BUFFER_SMALL ];
+    snprintf( line, UTILITIES_MAX_BUFFER_SMALL, "setserialno %d", setserialno );
     AgentReadConfig_priotdStoreConfig( line );
     return 0;
 }

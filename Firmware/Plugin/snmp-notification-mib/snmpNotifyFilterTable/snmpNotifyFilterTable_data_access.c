@@ -11,8 +11,8 @@
 //#include <siglog/library/vacm.h>
 
 #include "snmpNotifyFilterTable_data_access.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Vacm.h"
 #include "Vacm.h"
 #include "siglog/agent/mfd.h"
@@ -547,7 +547,7 @@ snmpNotifyFilterTable_vacm_view_subtree( const char* profile )
     if ( j )
         tmp[ j - 1 ].next = NULL;
     else {
-        TOOLS_FREE( tmp );
+        MEMORY_FREE( tmp );
     }
 
     free( s->array );

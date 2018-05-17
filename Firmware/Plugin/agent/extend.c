@@ -2,11 +2,11 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "Enum.h"
+#include "System/Containers/MapList.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "TableData.h"
@@ -82,7 +82,7 @@ _find_extension_block( oid* name, size_t name_len )
     extend_registration_block* eptr;
     size_t len;
     for ( eptr = ereg_head; eptr; eptr = eptr->next ) {
-        len = TOOLS_MIN( name_len, eptr->oid_len );
+        len = UTILITIES_MIN_VALUE( name_len, eptr->oid_len );
         if ( !Api_oidCompare( name, len, eptr->root_oid, eptr->oid_len ) )
             return eptr;
     }
@@ -106,7 +106,7 @@ _register_extend( oid* base, size_t len )
             return eptr;
     }
     if ( !eptr ) {
-        eptr = TOOLS_MALLOC_TYPEDEF( extend_registration_block );
+        eptr = MEMORY_MALLOC_TYPEDEF( extend_registration_block );
         if ( !eptr )
             return NULL;
         eptr->root_oid = Api_duplicateObjid( base, len );
@@ -124,7 +124,7 @@ _register_extend( oid* base, size_t len )
     /*
          * Register the configuration table
          */
-    tinfo = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    tinfo = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( tinfo, ASN01_OCTET_STR, 0 );
     tinfo->min_column = COLUMN_EXTCFG_FIRST_COLUMN;
     tinfo->max_column = COLUMN_EXTCFG_LAST_COLUMN;
@@ -146,7 +146,7 @@ _register_extend( oid* base, size_t len )
          * This is sufficient to link the two tables,
          *   and implement the AUGMENTS behaviour
          */
-    tinfo = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    tinfo = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( tinfo, ASN01_OCTET_STR, 0 );
     tinfo->min_column = COLUMN_EXTOUT1_FIRST_COLUMN;
     tinfo->max_column = COLUMN_EXTOUT1_LAST_COLUMN;
@@ -168,7 +168,7 @@ _register_extend( oid* base, size_t len )
          *   the work to our handler routine.
          * Still, it was nice while it lasted...
          */
-    tinfo = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    tinfo = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( tinfo, ASN01_OCTET_STR, ASN01_INTEGER, 0 );
     tinfo->min_column = COLUMN_EXTOUT2_FIRST_COLUMN;
     tinfo->max_column = COLUMN_EXTOUT2_LAST_COLUMN;
@@ -243,7 +243,7 @@ int extend_clear_callback( int majorID, int minorID,
         AgentHandler_unregisterHandler( eptr->reg[ 1 ] );
         AgentHandler_unregisterHandler( eptr->reg[ 2 ] );
         AgentHandler_unregisterHandler( eptr->reg[ 3 ] );
-        TOOLS_FREE( eptr );
+        MEMORY_FREE( eptr );
     }
     ereg_head = NULL;
     return 0;
@@ -348,11 +348,11 @@ void extend_free_cache( Cache* cache, void* magic )
 
     DEBUG_MSGTL( ( "nsExtendTable:cache", "free %s\n", extension->token ) );
     if ( extension->output ) {
-        TOOLS_FREE( extension->output );
+        MEMORY_FREE( extension->output );
         extension->output = NULL;
     }
     if ( extension->numlines > 1 ) {
-        TOOLS_FREE( extension->lines );
+        MEMORY_FREE( extension->lines );
     }
     extension->lines = NULL;
     extension->out_len = 0;
@@ -393,12 +393,12 @@ void _free_extension( netsnmp_extend* extension, extend_registration_block* ereg
         TableData_removeAndDeleteRow( ereg->dinfo, extension->row );
     }
 
-    TOOLS_FREE( extension->token );
-    TOOLS_FREE( extension->cache );
-    TOOLS_FREE( extension->command );
-    TOOLS_FREE( extension->args );
-    TOOLS_FREE( extension->input );
-    TOOLS_FREE( extension );
+    MEMORY_FREE( extension->token );
+    MEMORY_FREE( extension->cache );
+    MEMORY_FREE( extension->command );
+    MEMORY_FREE( extension->args );
+    MEMORY_FREE( extension->input );
+    MEMORY_FREE( extension );
     return;
 }
 
@@ -412,7 +412,7 @@ _new_extension( char* exec_name, int exec_flags, extend_registration_block* ereg
 
     if ( !exec_name )
         return NULL;
-    extension = TOOLS_MALLOC_TYPEDEF( netsnmp_extend );
+    extension = MEMORY_MALLOC_TYPEDEF( netsnmp_extend );
     if ( !extension )
         return NULL;
     extension->token = strdup( exec_name );
@@ -425,7 +425,7 @@ _new_extension( char* exec_name, int exec_flags, extend_registration_block* ereg
     row = TableData_createTableDataRow();
     if ( !row || !extension->cache ) {
         _free_extension( extension, ereg );
-        TOOLS_FREE( row );
+        MEMORY_FREE( row );
         return NULL;
     }
     row->data = ( void* )extension;
@@ -434,8 +434,8 @@ _new_extension( char* exec_name, int exec_flags, extend_registration_block* ereg
         exec_name, strlen( exec_name ) );
     if ( TableData_addRow( dinfo, row ) != ErrorCode_SUCCESS ) {
         /* _free_extension( extension, ereg ); */
-        TOOLS_FREE( extension ); /* Probably not sufficient */
-        TOOLS_FREE( row );
+        MEMORY_FREE( extension ); /* Probably not sufficient */
+        MEMORY_FREE( row );
         return NULL;
     }
 
@@ -585,7 +585,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
         DEBUG_MSGOID( ( "nsExtendTable:config", request->requestvb->name,
             request->requestvb->nameLength ) );
         DEBUG_MSG( ( "nsExtendTable:config", " (%s)\n",
-            Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
+            MapList_findLabel( "agentMode", reqinfo->mode ) ) );
 
         switch ( reqinfo->mode ) {
         case MODE_GET:
@@ -872,19 +872,19 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_COMMAND:
                 extension->old_command = extension->command;
-                extension->command = Tools_strdupAndNull(
+                extension->command = Memory_strdupAndNull(
                     request->requestvb->val.string,
                     request->requestvb->valLen );
                 break;
             case COLUMN_EXTCFG_ARGS:
                 extension->old_args = extension->args;
-                extension->args = Tools_strdupAndNull(
+                extension->args = Memory_strdupAndNull(
                     request->requestvb->val.string,
                     request->requestvb->valLen );
                 break;
             case COLUMN_EXTCFG_INPUT:
                 extension->old_input = extension->input;
-                extension->input = Tools_strdupAndNull(
+                extension->input = Memory_strdupAndNull(
                     request->requestvb->val.string,
                     request->requestvb->valLen );
                 break;
@@ -903,21 +903,21 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_COMMAND:
                 if ( extension && extension->old_command ) {
-                    TOOLS_FREE( extension->command );
+                    MEMORY_FREE( extension->command );
                     extension->command = extension->old_command;
                     extension->old_command = NULL;
                 }
                 break;
             case COLUMN_EXTCFG_ARGS:
                 if ( extension && extension->old_args ) {
-                    TOOLS_FREE( extension->args );
+                    MEMORY_FREE( extension->args );
                     extension->args = extension->old_args;
                     extension->old_args = NULL;
                 }
                 break;
             case COLUMN_EXTCFG_INPUT:
                 if ( extension && extension->old_input ) {
-                    TOOLS_FREE( extension->input );
+                    MEMORY_FREE( extension->input );
                     extension->input = extension->old_input;
                     extension->old_input = NULL;
                 }

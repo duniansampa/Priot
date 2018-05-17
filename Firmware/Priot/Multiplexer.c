@@ -1,6 +1,6 @@
 #include "Multiplexer.h"
 #include "DefaultStore.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 
 /** @defgroup multiplexer multiplexer
  *  Splits mode requests into calls to different handlers.

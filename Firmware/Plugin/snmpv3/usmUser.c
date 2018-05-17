@@ -746,11 +746,11 @@ write_usmUserAuthProtocol(int action,
             }
         }
     } else if (action == IMPL_COMMIT) {
-        TOOLS_FREE(optr);
+        MEMORY_FREE(optr);
     } else if (action == IMPL_FREE || action == IMPL_UNDO) {
         if ((uptr = Usm_parseUser(name, name_len)) != NULL) {
             if (resetOnFail) {
-                TOOLS_FREE(uptr->authProtocol);
+                MEMORY_FREE(uptr->authProtocol);
                 uptr->authProtocol = optr;
                 uptr->authProtocolLen = olen;
             }
@@ -795,8 +795,8 @@ write_usmUserAuthKeyChange(int action,
                            u_char * statP, oid * name, size_t name_len)
 {
     struct Usm_User_s *uptr;
-    unsigned char   buf[TOOLS_MAXBUF_SMALL];
-    size_t          buflen = TOOLS_MAXBUF_SMALL;
+    unsigned char   buf[UTILITIES_MAX_BUFFER_SMALL];
+    size_t          buflen = UTILITIES_MAX_BUFFER_SMALL;
     const char      fnAuthKey[] = "write_usmUserAuthKeyChange";
     const char      fnOwnAuthKey[] = "write_usmUserOwnAuthKeyChange";
     const char     *fname;
@@ -880,16 +880,16 @@ write_usmUserAuthKeyChange(int action,
         resetOnFail = 1;
         oldkey = uptr->authKey;
         oldkeylen = uptr->authKeyLen;
-        uptr->authKey = (u_char *)Tools_memdup(buf, buflen);
+        uptr->authKey = (u_char *)Memory_memdup(buf, buflen);
         if (uptr->authKey == NULL) {
             return PRIOT_ERR_RESOURCEUNAVAILABLE;
         }
         uptr->authKeyLen = buflen;
     } else if (action == IMPL_COMMIT) {
-        TOOLS_FREE(oldkey);
+        MEMORY_FREE(oldkey);
     } else if (action == IMPL_UNDO) {
         if ((uptr = Usm_parseUser(name, name_len)) != NULL && resetOnFail) {
-            TOOLS_FREE(uptr->authKey);
+            MEMORY_FREE(uptr->authKey);
             uptr->authKey = oldkey;
             uptr->authKeyLen = oldkeylen;
         }
@@ -1008,11 +1008,11 @@ write_usmUserPrivProtocol(int action,
             uptr->privProtocolLen = var_val_len / sizeof(oid);
         }
     } else if (action == IMPL_COMMIT) {
-        TOOLS_FREE(optr);
+        MEMORY_FREE(optr);
     } else if (action == IMPL_FREE || action == IMPL_UNDO) {
         if ((uptr = Usm_parseUser(name, name_len)) != NULL) {
             if (resetOnFail) {
-                TOOLS_FREE(uptr->privProtocol);
+                MEMORY_FREE(uptr->privProtocol);
                 uptr->privProtocol = optr;
                 uptr->privProtocolLen = olen;
             }
@@ -1039,8 +1039,8 @@ write_usmUserPrivKeyChange(int action,
                            u_char * statP, oid * name, size_t name_len)
 {
     struct Usm_User_s *uptr;
-    unsigned char   buf[TOOLS_MAXBUF_SMALL];
-    size_t          buflen = TOOLS_MAXBUF_SMALL;
+    unsigned char   buf[UTILITIES_MAX_BUFFER_SMALL];
+    size_t          buflen = UTILITIES_MAX_BUFFER_SMALL;
     const char      fnPrivKey[] = "write_usmUserPrivKeyChange";
     const char      fnOwnPrivKey[] = "write_usmUserOwnPrivKeyChange";
     const char     *fname;
@@ -1124,16 +1124,16 @@ write_usmUserPrivKeyChange(int action,
         resetOnFail = 1;
         oldkey = uptr->privKey;
         oldkeylen = uptr->privKeyLen;
-        uptr->privKey = (u_char *)Tools_memdup(buf, buflen);
+        uptr->privKey = (u_char *)Memory_memdup(buf, buflen);
         if (uptr->privKey == NULL) {
             return PRIOT_ERR_RESOURCEUNAVAILABLE;
         }
         uptr->privKeyLen = buflen;
     } else if (action == IMPL_COMMIT) {
-        TOOLS_FREE(oldkey);
+        MEMORY_FREE(oldkey);
     } else if (action == IMPL_UNDO) {
         if ((uptr = Usm_parseUser(name, name_len)) != NULL && resetOnFail) {
-            TOOLS_FREE(uptr->privKey);
+            MEMORY_FREE(uptr->privKey);
             uptr->privKey = oldkey;
             uptr->privKeyLen = oldkeylen;
         }
@@ -1351,8 +1351,8 @@ write_usmUserStatus(int action,
 
         if (engineIDLen < 5 || engineIDLen > 32 || nameLen < 1
             || nameLen > 32) {
-            TOOLS_FREE(engineID);
-            TOOLS_FREE(newName);
+            MEMORY_FREE(engineID);
+            MEMORY_FREE(newName);
             return PRIOT_ERR_NOCREATION;
         }
 
@@ -1363,23 +1363,23 @@ write_usmUserStatus(int action,
 
         if (uptr != NULL) {
             if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT) {
-                TOOLS_FREE(engineID);
-                TOOLS_FREE(newName);
+                MEMORY_FREE(engineID);
+                MEMORY_FREE(newName);
                 long_ret = TC_RS_NOTREADY;
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            TOOLS_FREE(engineID);
-            TOOLS_FREE(newName);
+            MEMORY_FREE(engineID);
+            MEMORY_FREE(newName);
         } else {
             if (long_ret == TC_RS_ACTIVE || long_ret == TC_RS_NOTINSERVICE) {
-                TOOLS_FREE(engineID);
-                TOOLS_FREE(newName);
+                MEMORY_FREE(engineID);
+                MEMORY_FREE(newName);
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
             if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT) {
                 if ((uptr = Usm_createUser()) == NULL) {
-                    TOOLS_FREE(engineID);
-                    TOOLS_FREE(newName);
+                    MEMORY_FREE(engineID);
+                    MEMORY_FREE(newName);
                     return PRIOT_ERR_RESOURCEUNAVAILABLE;
                 }
                 uptr->engineID = engineID;
@@ -1405,8 +1405,8 @@ write_usmUserStatus(int action,
 
                 Usm_addUser(uptr);
             } else {
-                TOOLS_FREE(engineID);
-                TOOLS_FREE(newName);
+                MEMORY_FREE(engineID);
+                MEMORY_FREE(newName);
             }
         }
     } else if (action == IMPL_ACTION) {
@@ -1414,16 +1414,16 @@ write_usmUserStatus(int action,
                       &engineID, &engineIDLen, (u_char **) & newName,
                       &nameLen);
         uptr = Usm_getUser(engineID, engineIDLen, newName);
-        TOOLS_FREE(engineID);
-        TOOLS_FREE(newName);
+        MEMORY_FREE(engineID);
+        MEMORY_FREE(newName);
 
         if (uptr != NULL) {
             if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_ACTIVE) {
                 if (usmStatusCheck(uptr)) {
                     uptr->userStatus = TC_RS_ACTIVE;
                 } else {
-                    TOOLS_FREE(engineID);
-                    TOOLS_FREE(newName);
+                    MEMORY_FREE(engineID);
+                    MEMORY_FREE(newName);
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
             } else if (long_ret == TC_RS_CREATEANDWAIT) {
@@ -1446,8 +1446,8 @@ write_usmUserStatus(int action,
                       &engineID, &engineIDLen, (u_char **) & newName,
                       &nameLen);
         uptr = Usm_getUser(engineID, engineIDLen, newName);
-        TOOLS_FREE(engineID);
-        TOOLS_FREE(newName);
+        MEMORY_FREE(engineID);
+        MEMORY_FREE(newName);
 
         if (uptr != NULL) {
             if (long_ret == TC_RS_DESTROY) {
@@ -1463,8 +1463,8 @@ write_usmUserStatus(int action,
             return PRIOT_ERR_NOERROR;
         }
         uptr = Usm_getUser(engineID, engineIDLen, newName);
-        TOOLS_FREE(engineID);
-        TOOLS_FREE(newName);
+        MEMORY_FREE(engineID);
+        MEMORY_FREE(newName);
 
         if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT) {
             Usm_removeUser(uptr);

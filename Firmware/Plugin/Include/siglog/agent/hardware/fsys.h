@@ -61,8 +61,8 @@ struct netsnmp_fsys_info_s {
      Types_Index  idx;
   /* int  idx; */
 
-     char path[TOOLS_MAXPATH+1];
-     char device[TOOLS_MAXPATH+1];
+     char path[UTILITIES_MAX_PATH+1];
+     char device[UTILITIES_MAX_PATH+1];
      int  type;
 
      unsigned long long size;

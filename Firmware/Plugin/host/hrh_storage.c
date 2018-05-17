@@ -11,10 +11,10 @@
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "Scalar.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "hrh_filesys.h"
 #include "siglog/agent/hardware/fsys.h"
 #include "siglog/agent/hardware/memory.h"
@@ -356,7 +356,7 @@ really_try_next:
         return ( u_char* )storage_type_id;
     case HRSTORE_DESCR:
         if ( store_idx > NETSNMP_MEM_TYPE_MAX ) {
-            Strlcpy_strlcpy( string, HRFS_entry->path, sizeof( string ) );
+            String_copyTruncate( string, HRFS_entry->path, sizeof( string ) );
             *var_len = strlen( string );
             return ( u_char* )string;
         } else {

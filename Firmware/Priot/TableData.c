@@ -1,7 +1,7 @@
 #include "TableData.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Client.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadOnly.h"
 #include "Mib.h"
 
@@ -44,7 +44,7 @@ TableData_generateIndexOid(TableRow *row)
 TableData *
 TableData_createTableData(const char *name)
 {
-    TableData *table = TOOLS_MALLOC_TYPEDEF(TableData);
+    TableData *table = MEMORY_MALLOC_TYPEDEF(TableData);
     if (name && table)
         table->name = strdup(name);
     return table;
@@ -54,7 +54,7 @@ TableData_createTableData(const char *name)
 TableRow *
 TableData_createTableDataRow(void)
 {
-    TableRow *row = TOOLS_MALLOC_TYPEDEF(TableRow);
+    TableRow *row = MEMORY_MALLOC_TYPEDEF(TableRow);
     return row;
 }
 
@@ -66,7 +66,7 @@ TableData_cloneRow(TableRow *row)
     if (!row)
         return NULL;
 
-    newrow = (TableRow *) Tools_memdup(row, sizeof(TableRow));
+    newrow = (TableRow *) Memory_memdup(row, sizeof(TableRow));
     if (!newrow)
         return NULL;
 
@@ -106,7 +106,7 @@ TableData_deleteRow(TableRow *row)
      */
     if (row->indexes)
         Api_freeVarbind(row->indexes);
-    TOOLS_FREE(row->index_oid);
+    MEMORY_FREE(row->index_oid);
     data = row->data;
     free(row);
 
@@ -305,15 +305,15 @@ TableData_deleteTable( TableData *table )
     }
     table->first_row = NULL;
 
-    TOOLS_FREE(table->name);
-    TOOLS_FREE(table);
+    MEMORY_FREE(table->name);
+    MEMORY_FREE(table);
     return;
 }
 
 TableRow *
 TableData_createRow( void* entry )
 {
-    TableRow *row = TOOLS_MALLOC_TYPEDEF(TableRow);
+    TableRow *row = MEMORY_MALLOC_TYPEDEF(TableRow);
     if (row)
         row->data = entry;
     return row;
@@ -446,7 +446,7 @@ TableData_helperHandler(MibHandler *handler,
         case MODE_GETNEXT:
         case MODE_SET_RESERVE1:
             AgentHandler_requestAddListData(request,
-                                      DataList_create(
+                                      Map_newElement(
                                           TABLE_DATA_TABLE, table, NULL));
         }
 
@@ -466,7 +466,7 @@ TableData_helperHandler(MibHandler *handler,
                                       reginfo->rootoid,
                                       reginfo->rootoid_len);
             regresult = Api_oidCompare(request->requestvb->name,
-                                         TOOLS_MIN(request->requestvb->
+                                         UTILITIES_MIN_VALUE(request->requestvb->
                                                   nameLength,
                                                   reginfo->rootoid_len),
                                          reginfo->rootoid,
@@ -538,7 +538,7 @@ TableData_helperHandler(MibHandler *handler,
             if (row) {
                 valid_request = 1;
                 AgentHandler_requestAddListData(request,
-                                              DataList_create
+                                              Map_newElement
                                               (TABLE_DATA_ROW, row,
                                                NULL));
                 /*
@@ -589,7 +589,7 @@ TableData_helperHandler(MibHandler *handler,
             } else {
                 valid_request = 1;
                 AgentHandler_requestAddListData(request,
-                                              DataList_create
+                                              Map_newElement
                                               (TABLE_DATA_ROW, row,
                                                NULL));
             }
@@ -607,7 +607,7 @@ TableData_helperHandler(MibHandler *handler,
                                                  reginfo->rootoid_len -
                                                  2))) {
                 AgentHandler_requestAddListData(request,
-                                              DataList_create
+                                              Map_newElement
                                               (TABLE_DATA_ROW, row,
                                                NULL));
             }
@@ -734,7 +734,7 @@ TableData_insertTableRow(RequestInfo *request,
         if (Api_oidCompare(this_oid, this_oid_len,
                              that_oid, that_oid_len) == 0) {
             AgentHandler_requestAddListData(req,
-                DataList_create(TABLE_DATA_ROW, row, NULL));
+                Map_newElement(TABLE_DATA_ROW, row, NULL));
         }
     }
 }

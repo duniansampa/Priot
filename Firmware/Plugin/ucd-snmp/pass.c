@@ -1,12 +1,12 @@
 #include "pass.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
-#include "Strlcat.h"
-#include "Strlcpy.h"
+#include "System/String.h"
+#include "System/String.h"
 #include "VarStruct.h"
 #include "pass_common.h"
 #include "struct.h"
@@ -103,7 +103,7 @@ void pass_parse_config( const char* token, char* cptr )
             ;
         sprintf( ( *ppass )->command, "%.*s", ( int )( tcptr - cptr ), cptr );
     }
-    Strlcpy_strlcpy( ( *ppass )->name, ( *ppass )->command, sizeof( ( *ppass )->name ) );
+    String_copyTruncate( ( *ppass )->name, ( *ppass )->command, sizeof( ( *ppass )->name ) );
     ( *ppass )->next = NULL;
 
     AgentRegistry_registerMibPriority( "pass",
@@ -160,8 +160,8 @@ var_extensible_pass( struct Variable_s* vp,
 {
     oid newname[ TYPES_MAX_OID_LEN ];
     int i, rtest, fd, newlen;
-    char buf[ TOOLS_MAXBUF ];
-    static char buf2[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ];
+    static char buf2[ UTILITIES_MAX_BUFFER ];
     struct extensible* passthru;
     FILE* file;
 
@@ -245,7 +245,7 @@ int setPass( int action, u_char* var_val, u_char var_val_type,
 {
     int i, rtest;
     struct extensible* passthru;
-    char buf[ TOOLS_MAXBUF ], buf2[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ], buf2[ UTILITIES_MAX_BUFFER ];
 
     for ( i = 1; i <= numpassthrus; i++ ) {
         passthru = get_exten_instance( passthrus, i );
@@ -265,7 +265,7 @@ int setPass( int action, u_char* var_val, u_char var_val_type,
                 "%s -s %s ", passthru->name, buf );
             passthru->command[ sizeof( passthru->command ) - 1 ] = 0;
             netsnmp_internal_pass_set_format( buf, var_val, var_val_type, var_val_len );
-            Strlcat_strlcat( passthru->command, buf, sizeof( passthru->command ) );
+            String_appendTruncate( passthru->command, buf, sizeof( passthru->command ) );
             DEBUG_MSGTL( ( "ucd-snmp/pass", "pass-running:  %s",
                 passthru->command ) );
             exec_command( passthru );

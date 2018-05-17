@@ -1,17 +1,17 @@
 #include "V3.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Priot.h"
 #include "DefaultStore.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "ReadConfig.h"
 #include "Usm.h"
 #include "System.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Secmod.h"
 #include "LcdTime.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "Api.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -136,10 +136,10 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
                 fprintf(stderr, "malloc failure processing -3e flag.\n");
                 return (-1);
             }
-            if (!Tools_hexToBinary1
+            if (!Convert_hexStringToBinaryStringWrapper
                 (&ebuf, &ebuf_len, &eout_len, 1, optarg)) {
                 fprintf(stderr, "Bad engine ID value after -3e flag.\n");
-                TOOLS_FREE(ebuf);
+                MEMORY_FREE(ebuf);
                 return (-1);
             }
             session->securityEngineID = ebuf;
@@ -155,10 +155,10 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
                 fprintf(stderr, "malloc failure processing -3E flag.\n");
                 return (-1);
             }
-            if (!Tools_hexToBinary1
+            if (!Convert_hexStringToBinaryStringWrapper
                 (&ebuf, &ebuf_len, &eout_len, 1, optarg)) {
                 fprintf(stderr, "Bad engine ID value after -3E flag.\n");
-                TOOLS_FREE(ebuf);
+                MEMORY_FREE(ebuf);
                 return (-1);
             }
             session->contextEngineID = ebuf;
@@ -243,7 +243,7 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
     case 'm': {
         size_t bufSize = sizeof(session->securityAuthKey);
         u_char *tmpp = session->securityAuthKey;
-        if (!Tools_hexToBinary1(&tmpp, &bufSize,
+        if (!Convert_hexStringToBinaryStringWrapper(&tmpp, &bufSize,
                                 &session->securityAuthKeyLen, 0, optarg)) {
             fprintf(stderr, "Bad key value after -3m flag.\n");
             return (-1);
@@ -254,7 +254,7 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
     case 'M': {
         size_t bufSize = sizeof(session->securityPrivKey);
         u_char *tmpp = session->securityPrivKey;
-        if (!Tools_hexToBinary1(&tmpp, &bufSize,
+        if (!Convert_hexStringToBinaryStringWrapper(&tmpp, &bufSize,
              &session->securityPrivKeyLen, 0, optarg)) {
             fprintf(stderr, "Bad key value after -3M flag.\n");
             return (-1);
@@ -270,10 +270,10 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
             fprintf(stderr, "malloc failure processing -3k flag.\n");
             return (-1);
         }
-        if (!Tools_hexToBinary1
+        if (!Convert_hexStringToBinaryStringWrapper
             (&kbuf, &kbuf_len, &kout_len, 1, optarg)) {
             fprintf(stderr, "Bad key value after -3k flag.\n");
-            TOOLS_FREE(kbuf);
+            MEMORY_FREE(kbuf);
             return (-1);
         }
         session->securityAuthLocalKey = kbuf;
@@ -289,10 +289,10 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
             fprintf(stderr, "malloc failure processing -3K flag.\n");
             return (-1);
         }
-        if (!Tools_hexToBinary1
+        if (!Convert_hexStringToBinaryStringWrapper
             (&kbuf, &kbuf_len, &kout_len, 1, optarg)) {
             fprintf(stderr, "Bad key value after -3K flag.\n");
-            TOOLS_FREE(kbuf);
+            MEMORY_FREE(kbuf);
             return (-1);
         }
         session->securityPrivLocalKey = kbuf;
@@ -341,7 +341,7 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
     /*
      * Use local engineID if *eidp == NULL.
      */
-    u_char          buf[TOOLS_MAXBUF_SMALL];
+    u_char          buf[UTILITIES_MAX_BUFFER_SMALL];
     struct hostent *hent = NULL;
 
     u_char         *bufp = NULL;
@@ -520,7 +520,7 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
      * our local engineID.
      */
     if (localsetup) {
-        TOOLS_FREE(_v3_engineID);
+        MEMORY_FREE(_v3_engineID);
         _v3_engineID = bufp;
         _v3_engineIDLength = len;
 
@@ -536,9 +536,9 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
 int V3_freeEngineID(int majorid, int minorid, void *serverarg,
           void *clientarg)
 {
-    TOOLS_FREE(_v3_engineID);
-    TOOLS_FREE(_v3_engineIDNic);
-    TOOLS_FREE(_v3_oldEngineID);
+    MEMORY_FREE(_v3_engineID);
+    MEMORY_FREE(_v3_engineIDNic);
+    MEMORY_FREE(_v3_oldEngineID);
     _v3_engineIDIsSet = 0;
     return 0;
 }
@@ -624,7 +624,7 @@ V3_engineIDNicConf(const char *word, char *cptr)
         /*
          * See if already set if so erase & release it
          */
-        TOOLS_FREE(_v3_engineIDNic);
+        MEMORY_FREE(_v3_engineIDNic);
         _v3_engineIDNic = (u_char *) malloc(strlen(cptr) + 1);
         if (NULL != _v3_engineIDNic) {
             strcpy((char *) _v3_engineIDNic, cptr);
@@ -832,7 +832,7 @@ int V3_initPostConfig(int majorid, int minorid, void *serverarg,
         /*
          * Somethine went wrong - help!
          */
-        TOOLS_FREE(c_engineID);
+        MEMORY_FREE(c_engineID);
         return ErrorCode_GENERR;
     }
 
@@ -852,7 +852,7 @@ int V3_initPostConfig(int majorid, int minorid, void *serverarg,
                    V3_localEngineBoots(),
                    V3_localEngineTime(), TRUE);
 
-    TOOLS_FREE(c_engineID);
+    MEMORY_FREE(c_engineID);
     return ErrorCode_SUCCESS;
 }
 
@@ -873,8 +873,8 @@ int V3_initPostPremibConfig(int majorid, int minorid, void *serverarg,
  */
 int V3_store(int majorID, int minorID, void *serverarg, void *clientarg)
 {
-    char            line[TOOLS_MAXBUF_SMALL];
-    u_char          c_engineID[TOOLS_MAXBUF_SMALL];
+    char            line[UTILITIES_MAX_BUFFER_SMALL];
+    u_char          c_engineID[UTILITIES_MAX_BUFFER_SMALL];
     int             engineIDLen;
     const char     *type = (const char *) clientarg;
 
@@ -884,7 +884,7 @@ int V3_store(int majorID, int minorID, void *serverarg, void *clientarg)
     sprintf(line, "engineBoots %ld", _v3_engineBoots);
     ReadConfig_store(type, line);
 
-    engineIDLen = V3_getEngineID(c_engineID, TOOLS_MAXBUF_SMALL);
+    engineIDLen = V3_getEngineID(c_engineID, UTILITIES_MAX_BUFFER_SMALL);
 
     if (engineIDLen) {
         /*
@@ -962,7 +962,7 @@ V3_cloneEngineID(u_char ** dest, size_t * destlen, u_char * src,
     if (!dest || !destlen)
         return 0;
 
-    TOOLS_FREE(*dest);
+    MEMORY_FREE(*dest);
     *destlen = 0;
 
     if (srclen && src) {
@@ -1002,7 +1002,7 @@ V3_generateEngineID(size_t * length)
     }
 
     if (*length == 0) {
-        TOOLS_FREE(newID);
+        MEMORY_FREE(newID);
         newID = NULL;
     }
 
@@ -1090,7 +1090,7 @@ _V3_getHwAddress(const char *networkDevice, /* e.g. "eth0", "eth1" */
     /*
      * copy the name of the net device we want to find the HW address for
      */
-    Strlcpy_strlcpy(request.ifr_name, networkDevice, IFNAMSIZ);
+    String_copyTruncate(request.ifr_name, networkDevice, IFNAMSIZ);
     /*
      * Get the HW address
      */

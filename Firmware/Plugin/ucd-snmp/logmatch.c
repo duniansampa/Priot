@@ -3,7 +3,7 @@
  * that may apply:
  */
 /*
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
@@ -12,10 +12,10 @@
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
 #include "Alarm.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "Vars.h"
 #include "utilities/header_generic.h"

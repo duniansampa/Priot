@@ -30,13 +30,13 @@
  * include our parent header 
  */
 #include "ipAddressTable_interface.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "CheckVarbind.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
 #include "TableContainer.h"
@@ -478,7 +478,7 @@ ipAddressTable_rowreq_ctx*
 ipAddressTable_allocate_rowreq_ctx( ipAddressTable_data* data,
     void* user_init_ctx )
 {
-    ipAddressTable_rowreq_ctx* rowreq_ctx = TOOLS_MALLOC_TYPEDEF( ipAddressTable_rowreq_ctx );
+    ipAddressTable_rowreq_ctx* rowreq_ctx = MEMORY_MALLOC_TYPEDEF( ipAddressTable_rowreq_ctx );
 
     DEBUG_MSGTL( ( "internal:ipAddressTable:ipAddressTable_allocate_rowreq_ctx", "called\n" ) );
 
@@ -494,7 +494,7 @@ ipAddressTable_allocate_rowreq_ctx( ipAddressTable_data* data,
             rowreq_ctx->rowreq_flags |= MFD_ROW_DATA_FROM_USER;
             rowreq_ctx->data = data;
         } else if ( NULL == ( rowreq_ctx->data = ipAddressTable_allocate_data() ) ) {
-            TOOLS_FREE( rowreq_ctx );
+            MEMORY_FREE( rowreq_ctx );
             return NULL;
         }
     }
@@ -547,7 +547,7 @@ void ipAddressTable_release_rowreq_ctx( ipAddressTable_rowreq_ctx* rowreq_ctx )
     if ( rowreq_ctx->oid_idx.oids != rowreq_ctx->oid_tmp )
         free( rowreq_ctx->oid_idx.oids );
 
-    TOOLS_FREE( rowreq_ctx );
+    MEMORY_FREE( rowreq_ctx );
 } /* ipAddressTable_release_rowreq_ctx */
 
 /**

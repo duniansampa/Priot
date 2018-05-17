@@ -1,3 +1,14 @@
+/** \file App.c
+ *  \brief IoT application firmware
+ *
+ *  This file contains the App's
+ *  main() function.
+ *
+ *
+ *  \author Dunian Coutinho Sampa (duniansampa)
+ *  \bug    No known bugs.
+ */
+
 #include "Daemon.h"
 #include "Agent.h"
 #include "AgentReadConfig.h"
@@ -5,7 +16,7 @@
 #include "Alarm.h"
 #include "DsAgent.h"
 #include "FdEventManager.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "M2M.h"
 #include "Mib.h"
 #include "ParseArgs.h"
@@ -141,17 +152,15 @@ _Daemon_TrapNodeDown( void )
      */
 }
 
-/** \fn int main(int argc, char *argv[])
- *  \brief main function.
+/** \fn     int main(int argc, char *argv[])
+ *  \brief  main function.
  *
- * Setup and start the agent daemon.
+ * Setup and start the IoT application firmware.
  * Also successfully EXITs with zero for some options.
  *
- * @param argc
- * @param *argv[]
- *
- * @return 0 Always succeeds.  (?)
- *
+ * \param   argc
+ * \param   *argv[]
+ * \return  0 Always succeeds.  (?)
  */
 
 int main( int argc, char* argv[] )
@@ -533,7 +542,7 @@ int main( int argc, char* argv[] )
                 sprintf( astring, "%s,%s", c, argv[ i ] );
                 DefaultStore_setString( DsStorage_APPLICATION_ID,
                     DsAgentString_PORTS, astring );
-                TOOLS_FREE( astring );
+                MEMORY_FREE( astring );
             } else {
                 DefaultStore_setString( DsStorage_APPLICATION_ID,
                     DsAgentString_PORTS, argv[ i ] );
@@ -745,9 +754,9 @@ int main( int argc, char* argv[] )
         unlink( pid_file );
     }
 
-    TOOLS_FREE( restart_argvrestartname );
-    TOOLS_FREE( restart_argvrestart );
-    TOOLS_FREE( restart_argvrestartp );
+    MEMORY_FREE( restart_argvrestartname );
+    MEMORY_FREE( restart_argvrestart );
+    MEMORY_FREE( restart_argvrestartp );
 
     return 0;
 } /* End main() -- snmpd */

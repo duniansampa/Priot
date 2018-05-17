@@ -66,7 +66,7 @@ var_snmpEngine( struct Variable_s* vp,
      * variables we may use later 
      */
     static long long_ret;
-    static unsigned char engineID[ TOOLS_MAXBUF ];
+    static unsigned char engineID[ UTILITIES_MAX_BUFFER ];
 
     *write_method = ( WriteMethodFT* )0; /* assume it isnt writable for the time being */
     *var_len = sizeof( long_ret ); /* assume an integer and change later if not */
@@ -80,7 +80,7 @@ var_snmpEngine( struct Variable_s* vp,
     switch ( vp->magic ) {
 
     case SNMPENGINEID:
-        *var_len = V3_getEngineID( engineID, TOOLS_MAXBUF );
+        *var_len = V3_getEngineID( engineID, UTILITIES_MAX_BUFFER );
         /*
          * XXX  Set ERROR_MSG() upon error? 
          */

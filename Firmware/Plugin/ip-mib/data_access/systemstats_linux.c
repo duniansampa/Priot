@@ -5,9 +5,9 @@
  */
 
 #include "siglog/data_access/systemstats.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 
 static int _systemstats_v4( Container_Container* container, u_int load_flags );
 static int _additional_systemstats_v4( netsnmp_systemstats_entry* entry,

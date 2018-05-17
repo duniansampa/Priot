@@ -12,9 +12,9 @@
  */
 
 #include "udpEndpointTable.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Vars.h"
 #include "siglog/agent/mfd.h"
 #include "udpEndpointTable_constants.h"
@@ -81,7 +81,7 @@ void initialize_table_udpEndpointTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    udpEndpointTable_user_context_p = DataList_create( "udpEndpointTable", NULL, NULL );
+    udpEndpointTable_user_context_p = Map_newElement( "udpEndpointTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -104,7 +104,7 @@ void shutdown_table_udpEndpointTable( void )
      * call interface shutdown code
      */
     _udpEndpointTable_shutdown_interface( udpEndpointTable_user_context_p );
-    DataList_freeAll( udpEndpointTable_user_context_p );
+    Map_clear( udpEndpointTable_user_context_p );
     udpEndpointTable_user_context_p = NULL;
 }
 

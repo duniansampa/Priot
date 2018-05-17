@@ -3,7 +3,7 @@
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "PluginSettings.h"
 #include "ReadConfig.h"
 #include "VarStruct.h"

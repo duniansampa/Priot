@@ -1,10 +1,10 @@
 #include "Callback.h"
 
-#include "Logger.h"
-#include "Tools.h"
-#include "Assert.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Assert.h"
 #include "Api.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 /*
  * the inline callback methods use major/minor to index into arrays.
@@ -63,7 +63,7 @@ static int _Callback_lock(int major, int minor, const char* warn, int do_assert)
 
     DEBUG_MSGTL(("9:callback:lock", "locked (%s,%s)\n",
                 _callback_types[major], (CALLBACK_LIBRARY == major) ?
-                TOOLS_STRORNULL(_callback_lib[minor]) : "null"));
+                UTILITIES_STRING_OR_NULL(_callback_lib[minor]) : "null"));
 
     while (CALLBACK_LOCK_COUNT(major,minor) >= 1 && ++lock_holded < 100)
     select(0, NULL, NULL, NULL, &lock_time);
@@ -90,7 +90,7 @@ static _Callback_unlock(int major, int minor)
 
     DEBUG_MSGTL(("9:callback:lock", "unlocked (%s,%s)\n",
                 _callback_types[major], (CALLBACK_LIBRARY == major) ?
-                TOOLS_STRORNULL(_callback_lib[minor]) : "null"));
+                UTILITIES_STRING_OR_NULL(_callback_lib[minor]) : "null"));
 }
 
 
@@ -191,7 +191,7 @@ Callback_registerCallback2(int major, int minor, Callback_CallbackFT * new_callb
 
     _Callback_lock(major,minor, "Callback_registerCallback2", 1);
 
-    if ((newscp = TOOLS_MALLOC_STRUCT(Callback_GenCallback_s)) == NULL) {
+    if ((newscp = MEMORY_MALLOC_STRUCT(Callback_GenCallback_s)) == NULL) {
         _Callback_unlock(major,minor);
         return ErrorCode_GENERR;
     } else {
@@ -371,7 +371,7 @@ Callback_unregisterCallback(int major, int minor, Callback_CallbackFT * target,
                         minor, scp));
             if(1 == CALLBACK_LOCK_COUNT(major,minor)) {
                 *prevNext = scp->next;
-                TOOLS_FREE(scp);
+                MEMORY_FREE(scp);
                 scp = *prevNext;
             }
             else {
@@ -464,7 +464,7 @@ void Callback_clearCallback(void)
                     (void)Callback_clearClientArg(tmp_arg, i, j);
                     free(tmp_arg);
                 }
-                TOOLS_FREE(scp);
+                MEMORY_FREE(scp);
                 scp = _callback_thecallbacks[i][j];
             }
             _Callback_unlock(i,j);

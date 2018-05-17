@@ -1,15 +1,15 @@
 #include "TableDataset.h"
 #include "Api.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Parse.h"
 #include "ReadConfig.h"
 #include "Tc.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
-static DataList_DataList* _autoTables;
+static Map* _autoTables;
 
 typedef struct DataSetTables_s {
     TableDataSet* table_set;
@@ -79,9 +79,9 @@ _TableDataset_datasetDeleteData( TableDataSetStorage* data )
     TableDataSetStorage* nextPtr = NULL;
     if ( data ) {
         nextPtr = data->next;
-        TOOLS_FREE( data->data.voidp );
+        MEMORY_FREE( data->data.voidp );
     }
-    TOOLS_FREE( data );
+    MEMORY_FREE( data );
     return nextPtr;
 }
 
@@ -154,7 +154,7 @@ void TableDataset_removeAndDeleteRow( TableDataSet* table,
 TableDataSet*
 TableDataset_createTableDataSet( const char* table_name )
 {
-    TableDataSet* table_set = TOOLS_MALLOC_TYPEDEF( TableDataSet );
+    TableDataSet* table_set = MEMORY_MALLOC_TYPEDEF( TableDataSet );
     if ( !table_set )
         return NULL;
     table_set->table = TableData_createTableData( table_name );
@@ -200,7 +200,7 @@ TableDataset_cloneRow( TableRow* row )
         for ( newrowdata = ( TableDataSetStorage** )&( newrow->data ); data;
               newrowdata = &( ( *newrowdata )->next ), data = data->next ) {
 
-            *newrowdata = ( TableDataSetStorage* )Tools_memdup( data,
+            *newrowdata = ( TableDataSetStorage* )Memory_memdup( data,
                 sizeof( TableDataSetStorage ) );
             if ( !*newrowdata ) {
                 TableDataset_deleteRow( newrow );
@@ -208,7 +208,7 @@ TableDataset_cloneRow( TableRow* row )
             }
 
             if ( data->data.voidp ) {
-                ( *newrowdata )->data.voidp = Tools_memdup( data->data.voidp, data->data_len );
+                ( *newrowdata )->data.voidp = Memory_memdup( data->data.voidp, data->data_len );
                 if ( !( *newrowdata )->data.voidp ) {
                     TableDataset_deleteRow( newrow );
                     return NULL;
@@ -272,14 +272,14 @@ int TableDataset_addDefaultRow( TableDataSet* table_set,
         return ErrorCode_GENERR;
     }
 
-    new_col = TOOLS_MALLOC_TYPEDEF( TableDataSetStorage );
+    new_col = MEMORY_MALLOC_TYPEDEF( TableDataSetStorage );
     if ( new_col == NULL )
         return ErrorCode_GENERR;
     new_col->type = type;
     new_col->writable = writable;
     new_col->column = column;
     if ( default_value ) {
-        new_col->data.voidp = Tools_memdup( default_value, default_value_len );
+        new_col->data.voidp = Memory_memdup( default_value, default_value_len );
         new_col->data_len = default_value_len;
     }
     if ( table_set->default_row == NULL )
@@ -374,7 +374,7 @@ int TableDataset_registerTableDataSet( HandlerRegistration* reginfo,
         /*
          * allocate the table if one wasn't allocated
          */
-        table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+        table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
         if ( table_info == NULL )
             return PRIOT_ERR_GENERR;
     }
@@ -394,8 +394,8 @@ int TableDataset_registerTableDataSet( HandlerRegistration* reginfo,
         TableDataSetStorage* row;
 
         for ( row = data_set->default_row; row; row = row->next ) {
-            mincol = TOOLS_MIN( mincol, row->column );
-            maxcol = TOOLS_MAX( maxcol, row->column );
+            mincol = UTILITIES_MIN_VALUE( mincol, row->column );
+            maxcol = UTILITIES_MAX_VALUE( maxcol, row->column );
         }
         if ( !table_info->min_column )
             table_info->min_column = mincol;
@@ -419,7 +419,7 @@ TableDataset_createNewrowstash( TableDataSet* datatable,
     NewrowStash* newrowstash = NULL;
     TableRow* newrow = NULL;
 
-    newrowstash = TOOLS_MALLOC_TYPEDEF( NewrowStash );
+    newrowstash = MEMORY_MALLOC_TYPEDEF( NewrowStash );
 
     if ( newrowstash != NULL ) {
         newrowstash->created = 1;
@@ -508,7 +508,7 @@ int TableDataset_helperHandler( MibHandler* handler,
                     /*
                      * existing row that needs to be modified
                      */
-                    newrowstash = TOOLS_MALLOC_TYPEDEF( NewrowStash );
+                    newrowstash = MEMORY_MALLOC_TYPEDEF( NewrowStash );
                     if ( newrowstash == NULL ) {
                         Agent_setRequestError( reqinfo, request,
                             PRIOT_ERR_GENERR );
@@ -666,9 +666,9 @@ int TableDataset_helperHandler( MibHandler* handler,
             /*
              * modify row and set new value
              */
-            TOOLS_FREE( data->data.string );
+            MEMORY_FREE( data->data.string );
             data->data.string = ( u_char* )
-                Tools_strdupAndNull( request->requestvb->val.string,
+                Memory_strdupAndNull( request->requestvb->val.string,
                     request->requestvb->valLen );
             if ( !data->data.string ) {
                 Agent_setRequestError( reqinfo, requests,
@@ -721,7 +721,7 @@ int TableDataset_helperHandler( MibHandler* handler,
              */
             if ( newrowstash->created ) {
                 AgentHandler_requestAddListData( request,
-                    DataList_create( TABLE_DATA_NAME,
+                    Map_newElement( TABLE_DATA_NAME,
                                                      newrow, NULL ) );
             }
             break;
@@ -760,7 +760,7 @@ int TableDataset_helperHandler( MibHandler* handler,
                         if ( ( TableRow* )TableData_extractTableRow( req ) == row ) {
                             AgentHandler_requestRemoveListData( req, TABLE_DATA_ROW );
                             AgentHandler_requestAddListData( req,
-                                DataList_create( TABLE_DATA_ROW, newrow, NULL ) );
+                                Map_newElement( TABLE_DATA_ROW, newrow, NULL ) );
                         }
                     }
 
@@ -834,15 +834,15 @@ void TableDataset_registerAutoDataTable( TableDataSet* table_set,
     char* registration_name )
 {
     DataSetTables* tables;
-    tables = TOOLS_MALLOC_TYPEDEF( DataSetTables );
+    tables = MEMORY_MALLOC_TYPEDEF( DataSetTables );
     if ( !tables )
         return;
     tables->table_set = table_set;
     if ( !registration_name ) {
         registration_name = table_set->table->name;
     }
-    DataList_add( &_autoTables,
-        DataList_create( registration_name,
+    Map_insert( &_autoTables,
+        Map_newElement( registration_name,
             tables, free ) ); /* XXX */
 }
 
@@ -851,7 +851,7 @@ void TableDataset_registerAutoDataTable( TableDataSet* table_set,
 void TableDataset_unregisterAutoDataTable( TableDataSet* table_set,
     char* registration_name )
 {
-    DataList_removeNode( &_autoTables, registration_name
+    Map_erase( &_autoTables, registration_name
             ? registration_name
             : table_set->table->name );
 }
@@ -940,7 +940,7 @@ void TableDataset_configParseTableSet( const char* token, char* line )
     /*
      * check for duplicate table
      */
-    tables = ( DataSetTables* )DataList_get( _autoTables, line );
+    tables = ( DataSetTables* )Map_at( _autoTables, line );
     if ( NULL != tables ) {
         ReadConfig_configPwarn( "duplicate table definition" );
         return;
@@ -979,7 +979,7 @@ void TableDataset_configParseTableSet( const char* token, char* line )
         if ( !Mib_parseOid( tp->augments, name, &name_length ) ) {
             ReadConfig_configPwarn( "I can't parse the augment table name" );
             Logger_log( LOGGER_PRIORITY_WARNING, "  can't parse %s\n", tp->augments );
-            TOOLS_FREE( table_set );
+            MEMORY_FREE( table_set );
             return;
         }
         if ( NULL == ( tp2 = Mib_getTree( name, name_length, Mib_getTreeHead() ) ) ) {
@@ -987,7 +987,7 @@ void TableDataset_configParseTableSet( const char* token, char* line )
                                     "I can't find mib information about augment table" );
             Logger_log( LOGGER_PRIORITY_WARNING, "  table %s not found in tree\n",
                 tp->augments );
-            TOOLS_FREE( table_set );
+            MEMORY_FREE( table_set );
             return;
         }
         _TableDataset_addIndexes( table_set, tp2 );
@@ -1004,7 +1004,7 @@ void TableDataset_configParseTableSet( const char* token, char* line )
         type = Mib_toAsnType( tp->type );
         if ( type == ( u_char )-1 ) {
             ReadConfig_configPwarn( "unknown column type" );
-            TOOLS_FREE( table_set );
+            MEMORY_FREE( table_set );
             return; /* xxx mem leak */
         }
 
@@ -1025,8 +1025,8 @@ void TableDataset_configParseTableSet( const char* token, char* line )
                 "adding column %ld of type %d\n", tp->subid, type ) );
             TableDataset_addDefaultRow( table_set, tp->subid, type,
                 canwrite, NULL, 0 );
-            mincol = TOOLS_MIN( mincol, tp->subid );
-            maxcol = TOOLS_MAX( maxcol, tp->subid );
+            mincol = UTILITIES_MIN_VALUE( mincol, tp->subid );
+            maxcol = UTILITIES_MAX_VALUE( maxcol, tp->subid );
             break;
 
         case PARSE_MIB_ACCESS_NOACCESS:
@@ -1053,8 +1053,8 @@ void TableDataset_configParseTableSet( const char* token, char* line )
 /** @internal */
 void TableDataset_configParseAddRow( const char* token, char* line )
 {
-    char buf[ TOOLS_MAXBUF_MEDIUM ];
-    char tname[ TOOLS_MAXBUF_MEDIUM ];
+    char buf[ UTILITIES_MAX_BUFFER_MEDIUM ];
+    char tname[ UTILITIES_MAX_BUFFER_MEDIUM ];
     size_t buf_size;
     int rc;
 
@@ -1065,7 +1065,7 @@ void TableDataset_configParseAddRow( const char* token, char* line )
 
     line = ReadConfig_copyNword( line, tname, sizeof( tname ) );
 
-    tables = ( DataSetTables* )DataList_get( _autoTables, tname );
+    tables = ( DataSetTables* )Map_at( _autoTables, tname );
     if ( !tables ) {
         ReadConfig_configPwarn( "Unknown table trying to add a row" );
         return;
@@ -1080,7 +1080,7 @@ void TableDataset_configParseAddRow( const char* token, char* line )
           vb = vb->nextVariable ) {
         if ( !line ) {
             ReadConfig_configPwarn( "missing an index value" );
-            TOOLS_FREE( row );
+            MEMORY_FREE( row );
             return;
         }
 
@@ -1100,7 +1100,7 @@ void TableDataset_configParseAddRow( const char* token, char* line )
                                     "All columns must be specified." );
             Logger_log( LOGGER_PRIORITY_WARNING, "  can't find value for column %d\n",
                 dr->column - 1 );
-            TOOLS_FREE( row );
+            MEMORY_FREE( row );
             return;
         }
 
@@ -1241,7 +1241,7 @@ int TableDataset_markRowColumnWritable( TableRow* row, int column,
         /*
          * create it
          */
-        data = TOOLS_MALLOC_TYPEDEF( TableDataSetStorage );
+        data = MEMORY_MALLOC_TYPEDEF( TableDataSetStorage );
         if ( !data ) {
             Logger_log( LOGGER_PRIORITY_CRIT, "no memory in TableDataset_setRowColumn" );
             return ErrorCode_MALLOC;
@@ -1291,7 +1291,7 @@ int TableDataset_setRowColumn( TableRow* row, unsigned int column,
         /*
          * create it
          */
-        data = TOOLS_MALLOC_TYPEDEF( TableDataSetStorage );
+        data = MEMORY_MALLOC_TYPEDEF( TableDataSetStorage );
         if ( !data ) {
             Logger_log( LOGGER_PRIORITY_CRIT, "no memory in TableDataset_setRowColumn" );
             return ErrorCode_MALLOC;

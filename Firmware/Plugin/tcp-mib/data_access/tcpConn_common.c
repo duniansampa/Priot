@@ -5,8 +5,8 @@
  */
 
 #include "siglog/data_access/tcpConn.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 
 /**---------------------------------------------------------------------*/
@@ -121,7 +121,7 @@ void netsnmp_access_tcpconn_container_free( Container_Container* container, u_in
 netsnmp_tcpconn_entry*
 netsnmp_access_tcpconn_entry_create( void )
 {
-    netsnmp_tcpconn_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_tcpconn_entry );
+    netsnmp_tcpconn_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_tcpconn_entry );
     int rc = 0;
 
     DEBUG_MSGTL( ( "verbose:access:tcpconn:entry", "create\n" ) );

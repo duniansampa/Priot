@@ -16,8 +16,8 @@
 #include "hrh_filesys.h"
 #include "AgentRegistry.h"
 #include "Impl.h"
-#include "Strlcat.h"
-#include "Strlcpy.h"
+#include "System/String.h"
+#include "System/String.h"
 #include "Tc.h"
 #include "VarStruct.h"
 #include "host_res.h"
@@ -331,14 +331,14 @@ when_dumped( char* filesys, int level, size_t* length )
 
 char* cook_device( char* dev )
 {
-    static char cooked_dev[ TOOLS_MAXPATH + 1 ];
+    static char cooked_dev[ UTILITIES_MAX_PATH + 1 ];
 
     if ( !strncmp( dev, RAW_DEVICE_PREFIX, strlen( RAW_DEVICE_PREFIX ) ) ) {
-        Strlcpy_strlcpy( cooked_dev, COOKED_DEVICE_PREFIX, sizeof( cooked_dev ) );
-        Strlcat_strlcat( cooked_dev, dev + strlen( RAW_DEVICE_PREFIX ),
+        String_copyTruncate( cooked_dev, COOKED_DEVICE_PREFIX, sizeof( cooked_dev ) );
+        String_appendTruncate( cooked_dev, dev + strlen( RAW_DEVICE_PREFIX ),
             sizeof( cooked_dev ) );
     } else {
-        Strlcpy_strlcpy( cooked_dev, dev, sizeof( cooked_dev ) );
+        String_copyTruncate( cooked_dev, dev, sizeof( cooked_dev ) );
     }
 
     return cooked_dev;

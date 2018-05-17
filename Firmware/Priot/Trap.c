@@ -1,8 +1,8 @@
 #include "Trap.h"
 #include "Asn01.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Tools.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 #include "Callback.h"
 #include "Priot.h"
 #include "AgentCallbacks.h"
@@ -290,7 +290,7 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
         len--;
         if (vblist->val.objid[len-1] == 0)
             len--;
-        TOOLS_FREE(template_v1pdu->enterprise);
+        MEMORY_FREE(template_v1pdu->enterprise);
         template_v1pdu->enterprise =
             Api_duplicateObjid(vblist->val.objid, len);
         template_v1pdu->enterpriseLength = len;
@@ -772,7 +772,7 @@ Trap_sendTrapToSess(Types_Session * sess, Types_Pdu *template_pdu)
             u_char          tmp[IMPL_SPRINT_MAX_LEN];
 
             int len = V3_getEngineID(tmp, sizeof(tmp));
-            pdu->securityEngineID = (u_char *) Tools_memdup(tmp, len);
+            pdu->securityEngineID = (u_char *) Memory_memdup(tmp, len);
             pdu->securityEngineIDLen = len;
         }
 
@@ -1041,7 +1041,7 @@ Trap_priotdParseConfigTrapsess(const char *word, char *cptr)
             u_char          tmp[IMPL_SPRINT_MAX_LEN];
 
             len = V3_getEngineID( tmp, sizeof(tmp));
-            ss->securityEngineID = (u_char *) Tools_memdup(tmp, len);
+            ss->securityEngineID = (u_char *) Memory_memdup(tmp, len);
             ss->securityEngineIDLen = len;
     }
 

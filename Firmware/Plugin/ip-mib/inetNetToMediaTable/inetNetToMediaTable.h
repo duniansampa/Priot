@@ -7,7 +7,7 @@
 #ifndef INETNETTOMEDIATABLE_H
 #define INETNETTOMEDIATABLE_H
 
-#include "DataList.h"
+#include "System/Containers/Map.h"
 #include "siglog/data_access/arp.h"
 
 
@@ -51,7 +51,7 @@
     /*
      * TODO:101:o: |-> Review inetNetToMediaTable registration context.
      */
-    typedef DataList_DataList inetNetToMediaTable_registration;
+    typedef Map inetNetToMediaTable_registration;
 
 /**********************************************************************/
     /*
@@ -142,7 +142,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *inetNetToMediaTable_data_list;
+        Map *inetNetToMediaTable_data_list;
 
     } inetNetToMediaTable_rowreq_ctx;
 

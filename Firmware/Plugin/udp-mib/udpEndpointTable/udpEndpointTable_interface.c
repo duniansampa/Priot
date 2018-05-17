@@ -27,12 +27,12 @@
  */
 
 #include "udpEndpointTable.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
 #include "TableContainer.h"
@@ -568,7 +568,7 @@ int udpEndpointTable_index_from_oid( Types_Index* oid_idx,
 udpEndpointTable_rowreq_ctx*
 udpEndpointTable_allocate_rowreq_ctx( void )
 {
-    udpEndpointTable_rowreq_ctx* rowreq_ctx = TOOLS_MALLOC_TYPEDEF( udpEndpointTable_rowreq_ctx );
+    udpEndpointTable_rowreq_ctx* rowreq_ctx = MEMORY_MALLOC_TYPEDEF( udpEndpointTable_rowreq_ctx );
 
     DEBUG_MSGTL( ( "internal:udpEndpointTable:udpEndpointTable_allocate_rowreq_ctx", "called\n" ) );
 
@@ -602,7 +602,7 @@ void udpEndpointTable_release_rowreq_ctx( udpEndpointTable_rowreq_ctx*
     if ( rowreq_ctx->oid_idx.oids != rowreq_ctx->oid_tmp )
         free( rowreq_ctx->oid_idx.oids );
 
-    TOOLS_FREE( rowreq_ctx );
+    MEMORY_FREE( rowreq_ctx );
 } /* udpEndpointTable_release_rowreq_ctx */
 
 /**

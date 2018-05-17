@@ -5,10 +5,10 @@
  */
 
 #include "siglog/data_access/route.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 
 /**---------------------------------------------------------------------*/
@@ -101,7 +101,7 @@ void netsnmp_access_route_container_free( Container_Container* container, u_int 
 netsnmp_route_entry*
 netsnmp_access_route_entry_create( void )
 {
-    netsnmp_route_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_route_entry );
+    netsnmp_route_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_route_entry );
     if ( NULL == entry ) {
         Logger_log( LOGGER_PRIORITY_ERR, "could not allocate route entry\n" );
         return NULL;
@@ -196,7 +196,7 @@ int netsnmp_access_route_entry_copy( netsnmp_route_entry* lhs,
         if ( NETSNMP_ACCESS_ROUTE_POLICY_STATIC & lhs->flags )
             lhs->rt_policy = NULL;
         else {
-            TOOLS_FREE( lhs->rt_policy );
+            MEMORY_FREE( lhs->rt_policy );
         }
     }
     if ( NULL != rhs->rt_policy ) {
@@ -213,7 +213,7 @@ int netsnmp_access_route_entry_copy( netsnmp_route_entry* lhs,
     lhs->rt_type = rhs->rt_type;
     lhs->rt_proto = rhs->rt_proto;
 
-    TOOLS_FREE( lhs->rt_info );
+    MEMORY_FREE( lhs->rt_info );
     if ( NULL != rhs->rt_info )
         Client_cloneMem( ( void** )&lhs->rt_info, rhs->rt_info,
             rhs->rt_info_len * sizeof( oid ) );

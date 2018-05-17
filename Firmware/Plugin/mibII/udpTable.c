@@ -17,9 +17,9 @@
 #include "udpTable.h"
 #include "Api.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Enum.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Logger.h"
 #include "tcpTable.h"
 #include <netinet/udp.h>
 
@@ -63,7 +63,7 @@ void init_udpTable( void )
     /*
      * Create the table data structure, and define the indexing....
      */
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !table_info ) {
         return;
     }
@@ -75,7 +75,7 @@ void init_udpTable( void )
     /*
      * .... and iteration information ....
      */
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     if ( !iinfo ) {
         Table_registrationInfoFree( table_info );
         return;
@@ -118,7 +118,7 @@ int udpTable_handler( MibHandler* handler,
     in_addr_t addr;
 
     DEBUG_MSGTL( ( "mibII/udpTable", "Handler - mode %s\n",
-        Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
+        MapList_findLabel( "agentMode", reqinfo->mode ) ) );
     switch ( reqinfo->mode ) {
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
@@ -271,7 +271,7 @@ int udpTable_load( Cache* cache, void* vmagic )
         pcb.inp_laddr.s_addr = htonl( pcb.inp_laddr.s_addr );
         pcb.inp_lport = htons( ( unsigned short )( lport ) );
 
-        nnew = TOOLS_MALLOC_TYPEDEF( struct inpcb );
+        nnew = MEMORY_MALLOC_TYPEDEF( struct inpcb );
         if ( nnew == NULL )
             break;
         memcpy( nnew, &pcb, sizeof( struct inpcb ) );

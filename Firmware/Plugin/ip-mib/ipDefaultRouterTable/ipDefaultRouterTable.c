@@ -12,8 +12,8 @@
  */
 
 #include "ipDefaultRouterTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "Vars.h"
 #include "ipDefaultRouterTable_interface.h"
 #include "ipDefaultRouterTable_oids.h"
@@ -80,7 +80,7 @@ void initialize_table_ipDefaultRouterTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    ipDefaultRouterTable_user_context_p = DataList_create( "ipDefaultRouterTable", NULL, NULL );
+    ipDefaultRouterTable_user_context_p = Map_newElement( "ipDefaultRouterTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -103,7 +103,7 @@ void shutdown_table_ipDefaultRouterTable( void )
      * call interface shutdown code
      */
     _ipDefaultRouterTable_shutdown_interface( ipDefaultRouterTable_user_context_p );
-    DataList_freeAll( ipDefaultRouterTable_user_context_p );
+    Map_clear( ipDefaultRouterTable_user_context_p );
     ipDefaultRouterTable_user_context_p = NULL;
 }
 

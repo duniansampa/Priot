@@ -15,9 +15,9 @@
  * include our parent header 
  */
 #include "inetNetToMediaTable.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Tc.h"
 #include "Vars.h"
 #include "inetNetToMediaTable_constants.h"
@@ -84,7 +84,7 @@ void initialize_table_inetNetToMediaTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    inetNetToMediaTable_user_context_p = DataList_create( "inetNetToMediaTable", NULL, NULL );
+    inetNetToMediaTable_user_context_p = Map_newElement( "inetNetToMediaTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -107,7 +107,7 @@ void shutdown_table_inetNetToMediaTable( void )
      * call interface shutdown code
      */
     _inetNetToMediaTable_shutdown_interface( inetNetToMediaTable_user_context_p );
-    DataList_freeAll( inetNetToMediaTable_user_context_p );
+    Map_clear( inetNetToMediaTable_user_context_p );
     inetNetToMediaTable_user_context_p = NULL;
 }
 
@@ -148,7 +148,7 @@ void inetNetToMediaTable_rowreq_ctx_cleanup( inetNetToMediaTable_rowreq_ctx*
     /*
      * TODO:211:o: |-> Perform extra inetNetToMediaTable rowreq cleanup.
      */
-    TOOLS_FREE( rowreq_ctx->data );
+    MEMORY_FREE( rowreq_ctx->data );
 } /* inetNetToMediaTable_rowreq_ctx_cleanup */
 
 /**

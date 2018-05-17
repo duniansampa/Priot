@@ -1,9 +1,9 @@
 #include "OidStash.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "Priot.h"
 #include "ReadConfig.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Types.h"
 
 /** @defgroup oid_stash Store and retrieve data referenced by an OID.
@@ -46,7 +46,7 @@ OidStash_Node*
 OidStash_createSizedNode( size_t mysize )
 {
     OidStash_Node* ret;
-    ret = TOOLS_MALLOC_TYPEDEF( OidStash_Node );
+    ret = MEMORY_MALLOC_TYPEDEF( OidStash_Node );
     if ( !ret )
         return NULL;
     ret->children = ( OidStash_Node** )calloc( mysize, sizeof( OidStash_Node* ) );
@@ -330,7 +330,7 @@ void OidStash_store( OidStash_Node* root,
     oid* curoid, size_t curoid_len )
 {
 
-    char buf[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ];
     OidStash_Node* tmpp;
     char* cp;
     char* appname = DefaultStore_getString( DsStorage_LIBRARY_ID,

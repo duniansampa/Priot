@@ -4,9 +4,9 @@
  * $Id$
  */
 
-#include "Debug.h"
-#include "FileUtils.h"
 #include "ReadConfig.h"
+#include "System/Util/Debug.h"
+#include "System/Util/File.h"
 #include "TextUtils.h"
 #include "udp_endpoint_private.h"
 #include "utilities/get_pid_from_inode.h"
@@ -125,13 +125,13 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
         return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
     }
     len = ( sep - ptr );
-    if ( -1 == Tools_addrstrHton( ptr, len ) ) {
+    if ( -1 == Utilities_addrStringHton( ptr, len ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad length %d for loc addr '%s'\n",
             ( int )u_ptr_len, line_info->start ) );
         return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
     }
     offset = 0;
-    Tools_hexToBinary( &u_ptr, &u_ptr_len, &offset, 0, ptr, NULL );
+    Convert_hexStringToBinaryString( &u_ptr, &u_ptr_len, &offset, 0, ptr, NULL );
     if ( ( 4 != offset ) && ( 16 != offset ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad offset %d for loc addr '%s'\n",
             ( int )offset, line_info->start ) );
@@ -161,13 +161,13 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
         return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
     }
     len = ( sep - ptr );
-    if ( -1 == Tools_addrstrHton( ptr, len ) ) {
+    if ( -1 == Utilities_addrStringHton( ptr, len ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad length %d for rmt addr '%s'\n",
             ( int )u_ptr_len, line_info->start ) );
         return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
     }
     offset = 0;
-    Tools_hexToBinary( &u_ptr, &u_ptr_len, &offset, 0, ptr, NULL );
+    Convert_hexStringToBinaryString( &u_ptr, &u_ptr_len, &offset, 0, ptr, NULL );
     if ( ( 4 != offset ) && ( 16 != offset ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad offset %d for rmt addr '%s'\n",
             ( int )offset, line_info->start ) );
@@ -221,7 +221,7 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
 static int
 _load4( Container_Container* container, u_int load_flags )
 {
-    FileUtils_File* fp;
+    File* fp;
     TextUtils_LineProcessInfo lpi;
 
     if ( NULL == container )
@@ -230,7 +230,7 @@ _load4( Container_Container* container, u_int load_flags )
     /*
      * allocate file resources
      */
-    fp = FileUtils_fill( NULL, "/proc/net/udp", O_RDONLY, 0, 0 );
+    fp = File_fill( NULL, "/proc/net/udp", O_RDONLY, 0, 0 );
     if ( NULL == fp ) /** msg already logged */
         return -2;
 
@@ -241,6 +241,6 @@ _load4( Container_Container* container, u_int load_flags )
 
     container = TextUtils_fileTextParse( fp, container, TEXTUTILS_PM_USER_FUNCTION,
         0, &lpi );
-    FileUtils_release( fp );
+    File_release( fp );
     return ( NULL == container );
 }

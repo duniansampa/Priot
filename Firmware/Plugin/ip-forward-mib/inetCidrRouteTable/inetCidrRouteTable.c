@@ -17,11 +17,11 @@
 
 #include "inetCidrRouteTable.h"
 #include "AgentHandler.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Instance.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Tc.h"
 #include "Vars.h"
 #include "Vars.h"
@@ -95,7 +95,7 @@ void initialize_table_inetCidrRouteTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    inetCidrRouteTable_user_context_p = DataList_create( "inetCidrRouteTable", NULL, NULL );
+    inetCidrRouteTable_user_context_p = Map_newElement( "inetCidrRouteTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -142,7 +142,7 @@ void shutdown_table_inetCidrRouteTable( void )
      * call interface shutdown code
      */
     _inetCidrRouteTable_shutdown_interface( inetCidrRouteTable_user_context_p );
-    DataList_freeAll( inetCidrRouteTable_user_context_p );
+    Map_clear( inetCidrRouteTable_user_context_p );
     inetCidrRouteTable_user_context_p = NULL;
 }
 

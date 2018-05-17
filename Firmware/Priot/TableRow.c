@@ -1,11 +1,11 @@
 #include "TableRow.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Table.h"
 #include "Api.h"
 #include "Mib.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Enum.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
 
 #define TABLE_ROW_DATA  "tableRow"
 
@@ -86,7 +86,7 @@ TableRow_register(HandlerRegistration *reginfo,
     MibHandler *handler;
     oid    row_oid[ASN01_MAX_OID_LEN];
     size_t row_oid_len, len;
-    char   tmp[TOOLS_MAXBUF_MEDIUM];
+    char   tmp[UTILITIES_MAX_BUFFER_MEDIUM];
 
     if ((NULL == reginfo) || (NULL == reginfo->handler) || (NULL == tabreg)) {
         Logger_log(LOGGER_PRIORITY_ERR, "bad param in TableRow_register\n");
@@ -172,7 +172,7 @@ _TableRow_handler(MibHandler          *handler,
     Assert_assert((NULL != reginfo) && (NULL != reqinfo));
 
     DEBUG_MSGTL(("tableRow", "Mode %s, Got request:\n",
-                Enum_seFindLabelInSlist("agentMode",reqinfo->mode)));
+                MapList_findLabel("agentMode",reqinfo->mode)));
 
     /*
      * First off, get our pointer from the handler.
@@ -182,7 +182,7 @@ _TableRow_handler(MibHandler          *handler,
     row = handler->myvoid;
     for (req = requests; req; req=req->next)
         AgentHandler_requestAddListData(req,
-                DataList_create(TABLE_ROW_DATA, row, NULL));
+                Map_newElement(TABLE_ROW_DATA, row, NULL));
 
     /*
      * Then call the next handler, to actually process the request

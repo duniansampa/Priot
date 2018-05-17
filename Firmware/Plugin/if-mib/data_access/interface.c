@@ -6,13 +6,13 @@
 
 #include "interface.h"
 #include "AgentReadConfig.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Enum.h"
 #include "Int64.h"
-#include "Logger.h"
 #include "ReadConfig.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "if-mib/ifTable/ifTable.h"
 #include "if-mib/ifTable/ifTable_constants.h"
 
@@ -237,7 +237,7 @@ netsnmp_access_interface_entry_get_by_name( Container_Container* container,
         return NULL;
     }
 
-    tmp.name = TOOLS_REMOVE_CONST( char*, name );
+    tmp.name = UTILITIES_REMOVE_CONST( char*, name );
     return ( netsnmp_interface_entry* )CONTAINER_FIND( container->next, &tmp );
 }
 
@@ -250,7 +250,7 @@ netsnmp_access_interface_name_find( oid index )
     DEBUG_MSGTL( ( "access:interface:find", "name\n" ) );
     Assert_assert( 1 == _access_interface_init );
 
-    return Enum_seFindLabelInSlist( "interfaces", index );
+    return MapList_findLabel( "interfaces", index );
 }
 
 /**
@@ -258,7 +258,7 @@ netsnmp_access_interface_name_find( oid index )
 netsnmp_interface_entry*
 netsnmp_access_interface_entry_create( const char* name, oid if_index )
 {
-    netsnmp_interface_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_interface_entry );
+    netsnmp_interface_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_interface_entry );
 
     DEBUG_MSGTL( ( "access:interface:entry", "create\n" ) );
     Assert_assert( 1 == _access_interface_init );
@@ -301,7 +301,7 @@ void netsnmp_access_interface_entry_free( netsnmp_interface_entry* entry )
         return;
 
     /*
-     * TOOLS_FREE not needed, for any of these,
+     * MEMORY_FREE not needed, for any of these,
      * since the whole entry is about to be freed
      */
 
@@ -449,9 +449,9 @@ _access_interface_entry_save_name( const char* name, oid index )
     if ( NULL == name )
         return;
 
-    tmp = Enum_seFindValueInSlist( "interfaces", name );
-    if ( tmp == ENUM_SE_DNE ) {
-        Enum_seAddPairToSlist( "interfaces", strdup( name ), index );
+    tmp = MapList_findValue( "interfaces", name );
+    if ( tmp == MapListErrorCode_NULL ) {
+        MapList_addPair( "interfaces", strdup( name ), index );
         DEBUG_MSGTL( ( "access:interface:ifIndex",
             "saved ifIndex %"
             "l"
@@ -497,7 +497,7 @@ int netsnmp_access_interface_entry_update_stats( netsnmp_interface_entry* prev_v
         /*
          * if we don't have old stats, copy previous stats
          */
-        prev_vals->old_stats = TOOLS_MALLOC_TYPEDEF( netsnmp_interface_stats );
+        prev_vals->old_stats = MEMORY_MALLOC_TYPEDEF( netsnmp_interface_stats );
         if ( NULL == prev_vals->old_stats ) {
             return -2;
         }
@@ -593,7 +593,7 @@ int netsnmp_access_interface_entry_update_stats( netsnmp_interface_entry* prev_v
      * if we've decided we no longer need to check wraps, free old stats
      */
     if ( 0 == need_wrap_check ) {
-        TOOLS_FREE( prev_vals->old_stats );
+        MEMORY_FREE( prev_vals->old_stats );
     } else {
         /*
          * update old stats from new stats.
@@ -649,7 +649,7 @@ int netsnmp_access_interface_entry_copy( netsnmp_interface_entry* lhs,
     if ( ( NULL != lhs->descr ) && ( NULL != rhs->descr ) && ( 0 == strcmp( lhs->descr, rhs->descr ) ) )
         ;
     else {
-        TOOLS_FREE( lhs->descr );
+        MEMORY_FREE( lhs->descr );
         if ( rhs->descr ) {
             lhs->descr = strdup( rhs->descr );
             if ( NULL == lhs->descr )
@@ -677,7 +677,7 @@ int netsnmp_access_interface_entry_copy( netsnmp_interface_entry* lhs,
         if ( rhs->paddr_len )
             memcpy( lhs->paddr, rhs->paddr, rhs->paddr_len );
     } else {
-        TOOLS_FREE( lhs->paddr );
+        MEMORY_FREE( lhs->paddr );
         if ( rhs->paddr ) {
             lhs->paddr = ( char* )malloc( rhs->paddr_len );
             if ( NULL == lhs->paddr )
@@ -781,7 +781,7 @@ _parse_interface_config( const char* token, char* cptr )
             break;
     if ( if_ptr )
         ReadConfig_configPwarn( "Duplicate interface specification" );
-    if_new = TOOLS_MALLOC_TYPEDEF( netsnmp_conf_if_list );
+    if_new = MEMORY_MALLOC_TYPEDEF( netsnmp_conf_if_list );
     if ( !if_new ) {
         ReadConfig_configPerror( "Out of memory" );
         return;
@@ -814,7 +814,7 @@ _free_interface_config( void )
     netsnmp_conf_if_list *if_ptr = conf_list, *if_next;
     while ( if_ptr ) {
         if_next = if_ptr->next;
-        free( TOOLS_REMOVE_CONST( char*, if_ptr->name ) );
+        free( UTILITIES_REMOVE_CONST( char*, if_ptr->name ) );
         free( if_ptr );
         if_ptr = if_next;
     }

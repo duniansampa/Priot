@@ -14,10 +14,8 @@
  * @{
  */
 
-//#include <siglog/library/asn1.h>
-//#include "snmpNotifyFilterTable_constants.h"
 
-#include "DataList.h"
+#include "System/Containers/Map.h"
 #include "Types.h"
 
     /*
@@ -54,7 +52,7 @@
     /*
      * TODO:101:o: |-> Review snmpNotifyFilterTable registration context.
      */
-    typedef DataList_DataList snmpNotifyFilterTable_registration;
+    typedef Map snmpNotifyFilterTable_registration;
 
 /**********************************************************************/
     /*
@@ -166,7 +164,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *snmpNotifyFilterTable_data_list;
+        Map *snmpNotifyFilterTable_data_list;
 
     } snmpNotifyFilterTable_rowreq_ctx;
 

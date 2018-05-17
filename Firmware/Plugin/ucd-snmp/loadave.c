@@ -1,9 +1,9 @@
 #include "loadave.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "VarStruct.h"
 #include "utilities/header_simple_table.h"
@@ -14,9 +14,9 @@ static int laConfigSet = 0;
 static int
 loadave_store_config( int a, int b, void* c, void* d )
 {
-    char line[ TOOLS_MAXBUF_SMALL ];
+    char line[ UTILITIES_MAX_BUFFER_SMALL ];
     if ( laConfigSet > 0 ) {
-        snprintf( line, TOOLS_MAXBUF_SMALL, "pload %.02f %.02f %.02f", maxload[ 0 ], maxload[ 1 ], maxload[ 2 ] );
+        snprintf( line, UTILITIES_MAX_BUFFER_SMALL, "pload %.02f %.02f %.02f", maxload[ 0 ], maxload[ 1 ], maxload[ 2 ] );
         AgentReadConfig_priotdStoreConfig( line );
     }
     return ErrorCode_SUCCESS;

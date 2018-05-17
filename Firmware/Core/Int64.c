@@ -1,6 +1,6 @@
 #include "Int64.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 /**
  * Divide an unsigned 64-bit integer by 10.
  *

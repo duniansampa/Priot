@@ -12,9 +12,9 @@
  */
 
 #include "ipCidrRouteTable.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Vars.h"
 #include "ipCidrRouteTable_constants.h"
 #include "ipCidrRouteTable_interface.h"
@@ -82,7 +82,7 @@ void initialize_table_ipCidrRouteTable( void )
      * string token is used to add, find or remove pointers.
      */
     ipCidrRouteTable_user_context_p
-        = DataList_create( "ipCidrRouteTable", NULL, NULL );
+        = Map_newElement( "ipCidrRouteTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -105,7 +105,7 @@ void shutdown_table_ipCidrRouteTable( void )
      * call interface shutdown code
      */
     _ipCidrRouteTable_shutdown_interface( ipCidrRouteTable_user_context_p );
-    DataList_freeAll( ipCidrRouteTable_user_context_p );
+    Map_clear( ipCidrRouteTable_user_context_p );
     ipCidrRouteTable_user_context_p = NULL;
 }
 

@@ -1,8 +1,8 @@
 #include "errormib.h"
 #include "AgentRegistry.h"
 #include "Impl.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include "VarStruct.h"
 #include "struct.h"
 #include "utilities/header_generic.h"
@@ -24,7 +24,7 @@ void setPerrorstatus( const char* to )
 void seterrorstatus( const char* to, int prior )
 {
     if ( errorstatusprior <= prior || ( NETSNMP_ERRORTIMELENGTH < ( time( NULL ) - errorstatustime ) ) ) {
-        Strlcpy_strlcpy( errorstring, to, sizeof( errorstring ) );
+        String_copyTruncate( errorstring, to, sizeof( errorstring ) );
         errorstatusprior = prior;
         errorstatustime = time( NULL );
     }
@@ -101,7 +101,7 @@ var_extensible_errors( struct Variable_s* vp,
         return ( ( u_char* )( &long_ret ) );
     case ERRORMSG:
         if ( ( NETSNMP_ERRORTIMELENGTH >= time( NULL ) - errorstatustime ) ? 1 : 0 ) {
-            Strlcpy_strlcpy( errmsg, errorstring, sizeof( errmsg ) );
+            String_copyTruncate( errmsg, errorstring, sizeof( errmsg ) );
         } else
             errmsg[ 0 ] = 0;
         *var_len = strlen( errmsg );

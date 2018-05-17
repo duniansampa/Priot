@@ -13,7 +13,7 @@
  * @{
  */
 
-#include "DataList.h"
+#include "System/Containers/Map.h"
 #include "siglog/data_access/scopezone.h"
 
     /*
@@ -50,7 +50,7 @@
     /*
      * TODO:101:o: |-> Review ipv6ScopeZoneIndexTable registration context.
      */
-    typedef DataList_DataList ipv6ScopeZoneIndexTable_registration;
+    typedef Map ipv6ScopeZoneIndexTable_registration;
 /**********************************************************************/
     /*
      * TODO:110:r: |-> Review ipv6ScopeZoneTable data context structure.
@@ -109,7 +109,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ipv6ScopeZoneIndexTable_data_list;
+        Map *ipv6ScopeZoneIndexTable_data_list;
 
     } ipv6ScopeZoneIndexTable_rowreq_ctx;
 

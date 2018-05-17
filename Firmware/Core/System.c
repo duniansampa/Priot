@@ -1,5 +1,5 @@
 #include "System.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include <arpa/inet.h>
 #include <grp.h>
 #include <net/if.h>
@@ -9,10 +9,10 @@
 #include <sys/utsname.h>
 
 #include "Api.h"
-#include "Assert.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
 #include "ReadConfig.h"
-#include "Strlcpy.h"
+#include "System/String.h"
+#include "System/Util/Logger.h"
 
 /**
  * Compute res = a + b.
@@ -480,7 +480,7 @@ System_mktemp( void )
     static char name[ PATH_MAX ];
     int fd = -1;
 
-    Strlcpy_strlcpy( name, ReadConfig_getTempFilePattern(), sizeof( name ) );
+    String_copyTruncate( name, ReadConfig_getTempFilePattern(), sizeof( name ) );
 
     {
         mode_t oldmask = umask( ~( S_IRUSR | S_IWUSR ) );
@@ -584,4 +584,9 @@ int System_strToGid( const char* grouporgid )
             Logger_log( LOGGER_PRIORITY_WARNING, "Can't identify group (%s).\n", grouporgid );
     }
     return gid;
+}
+
+char* System_getEnvVariable( const char* name )
+{
+    return ( getenv( name ) );
 }

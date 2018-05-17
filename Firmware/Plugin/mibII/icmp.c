@@ -5,9 +5,9 @@
 #include "icmp.h"
 #include "Api.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Enum.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Logger.h"
 #include "PluginSettings.h"
 #include "Priot.h"
 #include "ScalarGroup.h"
@@ -340,14 +340,14 @@ void init_icmp( void )
         goto bail;
 
     /* register icmpStatsTable */
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !table_info )
         goto bail;
     Table_helperAddIndexes( table_info, ASN01_INTEGER, 0 );
     table_info->min_column = ICMP_STAT_INMSG;
     table_info->max_column = ICMP_STAT_OUTERR;
 
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     if ( !iinfo )
         goto bail;
     iinfo->get_first_data_point = icmp_stats_first_entry;
@@ -369,14 +369,14 @@ void init_icmp( void )
                                     icmp_stats_tbl_oid, ASN01_OID_LENGTH( icmp_stats_tbl_oid ) ) );
 
     /* register icmpMsgStatsTable */
-    msg_stats_table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    msg_stats_table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !msg_stats_table_info )
         goto bail;
     Table_helperAddIndexes( msg_stats_table_info, ASN01_INTEGER, ASN01_INTEGER, 0 );
     msg_stats_table_info->min_column = ICMP_MSG_STAT_IN_PKTS;
     msg_stats_table_info->max_column = ICMP_MSG_STAT_OUT_PKTS;
 
-    msg_stats_iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    msg_stats_iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     if ( !msg_stats_iinfo )
         goto bail;
     msg_stats_iinfo->get_first_data_point = icmp_msg_stats_first_entry;
@@ -447,7 +447,7 @@ int icmp_handler( MibHandler* handler,
      *
      */
     DEBUG_MSGTL( ( "mibII/icmp", "Handler - mode %s\n",
-        Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
+        MapList_findLabel( "agentMode", reqinfo->mode ) ) );
     switch ( reqinfo->mode ) {
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {

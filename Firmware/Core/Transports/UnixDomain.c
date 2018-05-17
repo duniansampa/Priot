@@ -4,11 +4,11 @@
 #include "Vacm.h"
 #include <stddef.h>
 #include <sys/un.h>
-#include "Debug.h"
-#include "Logger.h"
-#include "Tools.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 #include "ReadConfig.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "Impl.h"
 
 
@@ -245,7 +245,7 @@ Transport_Transport * UnixDomain_transport(struct sockaddr_un *addr, int local)
         return NULL;
     }
 
-    t = TOOLS_MALLOC_TYPEDEF(Transport_Transport);
+    t = MEMORY_MALLOC_TYPEDEF(Transport_Transport);
     if (t == NULL) {
         return NULL;
     }
@@ -399,7 +399,7 @@ Transport_Transport *   UnixDomain_createTstring(const char *string, int local, 
     (strlen(string) < sizeof(addr.sun_path))) {
         addr.sun_family = AF_UNIX;
         memset(addr.sun_path, 0, sizeof(addr.sun_path));
-        Strlcpy_strlcpy(addr.sun_path, string, sizeof(addr.sun_path));
+        String_copyTruncate(addr.sun_path, string, sizeof(addr.sun_path));
         return UnixDomain_transport(&addr, local);
     } else {
         if (string != NULL && *string != '\0') {
@@ -418,7 +418,7 @@ Transport_Transport *   UnixDomain_createOstring(const u_char * o, size_t o_len,
     if (o_len > 0 && o_len < (sizeof(addr.sun_path) - 1)) {
         addr.sun_family = AF_UNIX;
         memset(addr.sun_path, 0, sizeof(addr.sun_path));
-        Strlcpy_strlcpy(addr.sun_path, (const char *)o, sizeof(addr.sun_path));
+        String_copyTruncate(addr.sun_path, (const char *)o, sizeof(addr.sun_path));
         return UnixDomain_transport(&addr, local);
     } else {
         if (o_len > 0) {

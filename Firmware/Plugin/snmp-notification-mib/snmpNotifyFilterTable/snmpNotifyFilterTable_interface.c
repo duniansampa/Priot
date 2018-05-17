@@ -27,13 +27,13 @@
  */
 
 #include "snmpNotifyFilterTable_interface.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CheckVarbind.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "RowMerge.h"
@@ -498,7 +498,7 @@ int snmpNotifyFilterTable_index_from_oid( Types_Index* oid_idx,
 snmpNotifyFilterTable_data*
 snmpNotifyFilterTable_allocate_data( void )
 {
-    snmpNotifyFilterTable_data* rtn = TOOLS_MALLOC_TYPEDEF( snmpNotifyFilterTable_data );
+    snmpNotifyFilterTable_data* rtn = MEMORY_MALLOC_TYPEDEF( snmpNotifyFilterTable_data );
 
     DEBUG_MSGTL( ( "verbose:snmpNotifyFilterTable:snmpNotifyFilterTable_allocate_data", "called\n" ) );
 
@@ -530,7 +530,7 @@ void snmpNotifyFilterTable_release_data( snmpNotifyFilterTable_data* data )
 snmpNotifyFilterTable_rowreq_ctx*
 snmpNotifyFilterTable_allocate_rowreq_ctx( void* user_init_ctx )
 {
-    snmpNotifyFilterTable_rowreq_ctx* rowreq_ctx = TOOLS_MALLOC_TYPEDEF( snmpNotifyFilterTable_rowreq_ctx );
+    snmpNotifyFilterTable_rowreq_ctx* rowreq_ctx = MEMORY_MALLOC_TYPEDEF( snmpNotifyFilterTable_rowreq_ctx );
 
     DEBUG_MSGTL( ( "internal:snmpNotifyFilterTable:snmpNotifyFilterTable_allocate_rowreq_ctx", "called\n" ) );
 
@@ -580,7 +580,7 @@ void snmpNotifyFilterTable_release_rowreq_ctx( snmpNotifyFilterTable_rowreq_ctx*
     if ( rowreq_ctx->oid_idx.oids != rowreq_ctx->oid_tmp )
         free( rowreq_ctx->oid_idx.oids );
 
-    TOOLS_FREE( rowreq_ctx );
+    MEMORY_FREE( rowreq_ctx );
 } /* snmpNotifyFilterTable_release_rowreq_ctx */
 
 /**
@@ -1813,7 +1813,7 @@ void snmpNotifyFilterTable_container_init_persistence( Container_Container* cont
     ReadConfig_registerConfigHandler( NULL, row_token,
         _snmpNotifyFilterTable_container_row_restore,
         NULL, NULL );
-    container_p = ( Container_Container** )Tools_memdup( &container, sizeof( container ) );
+    container_p = ( Container_Container** )Memory_memdup( &container, sizeof( container ) );
     Assert_assert( container_p );
     rc = Callback_registerCallback( CALLBACK_LIBRARY,
         CALLBACK_STORE_DATA,

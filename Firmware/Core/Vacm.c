@@ -1,12 +1,12 @@
 #include "Vacm.h"
-#include "Enum.h"
+#include "System/Containers/MapList.h"
 #include "Tc.h"
 #include "ReadConfig.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Priot.h"
 #include "DefaultStore.h"
 #include "Api.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 
 /*
@@ -36,19 +36,19 @@ void
 Vacm_initVacm(void)
 {
     /* views for access via get/set/send-notifications */
-    Enum_seAddPairToSlist(VACM_VIEW_ENUM_NAME, strdup("read"),
+    MapList_addPair(VACM_VIEW_ENUM_NAME, strdup("read"),
                          VACM_VIEW_READ);
-    Enum_seAddPairToSlist(VACM_VIEW_ENUM_NAME, strdup("write"),
+    MapList_addPair(VACM_VIEW_ENUM_NAME, strdup("write"),
                          VACM_VIEW_WRITE);
-    Enum_seAddPairToSlist(VACM_VIEW_ENUM_NAME, strdup("notify"),
+    MapList_addPair(VACM_VIEW_ENUM_NAME, strdup("notify"),
                          VACM_VIEW_NOTIFY);
 
     /* views for permissions when receiving notifications */
-    Enum_seAddPairToSlist(VACM_VIEW_ENUM_NAME, strdup("log"),
+    MapList_addPair(VACM_VIEW_ENUM_NAME, strdup("log"),
                          VACM_VIEW_LOG);
-    Enum_seAddPairToSlist(VACM_VIEW_ENUM_NAME, strdup("execute"),
+    MapList_addPair(VACM_VIEW_ENUM_NAME, strdup("execute"),
                          VACM_VIEW_EXECUTE);
-    Enum_seAddPairToSlist(VACM_VIEW_ENUM_NAME, strdup("net"),
+    MapList_addPair(VACM_VIEW_ENUM_NAME, strdup("net"),
                          VACM_VIEW_NET);
 }
 
@@ -274,7 +274,7 @@ char * Vacm_parseConfigAccessCommon(struct Vacm_AccessEntry_s **aptr,
     (*aptr)->securityModel = access.securityModel;
     (*aptr)->securityLevel = access.securityLevel;
     (*aptr)->contextMatch  = access.contextMatch;
-    return TOOLS_REMOVE_CONST(char *, line);
+    return UTILITIES_REMOVE_CONST(char *, line);
 }
 
 void

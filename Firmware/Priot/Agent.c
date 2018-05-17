@@ -4,17 +4,17 @@
 #include "AgentRegistry.h"
 #include "Alarm.h"
 #include "Api.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
-#include "Enum.h"
 #include "Impl.h"
-#include "Logger.h"
 #include "Mib.h"
 #include "PriotSettings.h"
-#include "Tools.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 #include "Trap.h"
 #include "Vacm.h"
 #include "VarStruct.h"
@@ -41,11 +41,11 @@ int agent_versionSysoidLen = ASN01_OID_LENGTH( agent_versionSysoid );
 #define SNMP_ADDRCACHE_MAXAGE 300 /* in seconds */
 
 void Agent_addListData( AgentRequestInfo* ari,
-    DataList_DataList* node )
+    Map* node )
 {
     if ( ari ) {
         if ( ari->agent_data ) {
-            DataList_add( &ari->agent_data, node );
+            Map_insert( &ari->agent_data, node );
         } else {
             ari->agent_data = node;
         }
@@ -58,14 +58,14 @@ int Agent_removeListData( AgentRequestInfo* ari,
     if ( ( NULL == ari ) || ( NULL == ari->agent_data ) )
         return 1;
 
-    return DataList_removeNode( &ari->agent_data, name );
+    return Map_erase( &ari->agent_data, name );
 }
 
 void* Agent_getListData( AgentRequestInfo* ari,
     const char* name )
 {
     if ( ari ) {
-        return DataList_get( ari->agent_data, name );
+        return Map_at( ari->agent_data, name );
     }
     return NULL;
 }
@@ -73,14 +73,14 @@ void* Agent_getListData( AgentRequestInfo* ari,
 void Agent_freeAgentDataSet( AgentRequestInfo* ari )
 {
     if ( ari ) {
-        DataList_free( ari->agent_data );
+        Map_free( ari->agent_data );
     }
 }
 
 void Agent_freeAgentDataSets( AgentRequestInfo* ari )
 {
     if ( ari ) {
-        DataList_freeAll( ari->agent_data );
+        Map_clear( ari->agent_data );
     }
 }
 
@@ -88,9 +88,9 @@ void Agent_freeAgentRequestInfo( AgentRequestInfo* ari )
 {
     if ( ari ) {
         if ( ari->agent_data ) {
-            DataList_freeAll( ari->agent_data );
+            Map_clear( ari->agent_data );
         }
-        TOOLS_FREE( ari );
+        MEMORY_FREE( ari );
     }
 }
 
@@ -146,7 +146,7 @@ Agent_getOrAddLocalCachid( Cachemap** cache_store,
 {
     Cachemap* tmpp;
 
-    tmpp = TOOLS_MALLOC_TYPEDEF( Cachemap );
+    tmpp = MEMORY_MALLOC_TYPEDEF( Cachemap );
     if ( tmpp != NULL ) {
         if ( *cache_store ) {
             tmpp->next = *cache_store;
@@ -167,7 +167,7 @@ void Agent_freeCachemap( Cachemap* cache_store )
     while ( cache_store ) {
         tmpp = cache_store;
         cache_store = cache_store->next;
-        TOOLS_FREE( tmpp );
+        MEMORY_FREE( tmpp );
     }
 }
 
@@ -188,7 +188,7 @@ typedef struct AgentSetCache_s {
     int vbcount;
     RequestInfo* requests;
     Types_VariableList* saved_vars;
-    DataList_DataList* agent_data;
+    Map* agent_data;
 
     /*
     * list
@@ -206,7 +206,7 @@ Agent_saveSetCache( AgentSession* asp )
     if ( !asp || !asp->reqinfo || !asp->pdu )
         return NULL;
 
-    ptr = TOOLS_MALLOC_TYPEDEF( AgentSetCache );
+    ptr = MEMORY_MALLOC_TYPEDEF( AgentSetCache );
     if ( ptr == NULL )
         return NULL;
 
@@ -326,7 +326,7 @@ int Agent_getSetCache( AgentSession* asp )
                     asp->reqinfo, asp->requests->agent_req_info ) );
             }
 
-            TOOLS_FREE( ptr );
+            MEMORY_FREE( ptr );
             return PRIOT_ERR_NOERROR;
         }
         prev = ptr;
@@ -651,7 +651,7 @@ int Agent_addrcacheAdd( const char* addr )
                     /*
                     * Stale, reuse
                     */
-                    TOOLS_FREE( _agent_addrCache[ i ].addr );
+                    MEMORY_FREE( _agent_addrCache[ i ].addr );
                     _agent_addrCache[ i ].status = SNMP_ADDRCACHE_UNUSED;
                     /*
                     * remember this location, in case addr isn't in the cache
@@ -756,7 +756,7 @@ int Agent_checkPacket( Types_Session* session,
 
     if ( addr_string != NULL ) {
         Agent_addrcacheAdd( addr_string );
-        TOOLS_FREE( addr_string );
+        MEMORY_FREE( addr_string );
     }
     return 1;
 }
@@ -843,7 +843,7 @@ int Agent_checkParse( Types_Session* session, Types_Pdu* pdu,
                     } else {
                         Logger_log( LOGGER_PRIORITY_DEBUG, "    -- %s\n", c_oid );
                     }
-                    TOOLS_FREE( c_oid );
+                    MEMORY_FREE( c_oid );
                 }
             }
         }
@@ -891,7 +891,7 @@ int Agent_registerAgentNsap( Transport_Transport* t )
     }
     s = ( Types_Session* )malloc( sizeof( Types_Session ) );
     if ( s == NULL ) {
-        TOOLS_FREE( n );
+        MEMORY_FREE( n );
         return -1;
     }
     memset( s, 0, sizeof( Types_Session ) );
@@ -912,8 +912,8 @@ int Agent_registerAgentNsap( Transport_Transport* t )
       final call to actually open the transport */
     if ( Api_sessConfigTransport( s->transportConfiguration, t )
         != ErrorCode_SUCCESS ) {
-        TOOLS_FREE( s );
-        TOOLS_FREE( n );
+        MEMORY_FREE( s );
+        MEMORY_FREE( n );
         return -1;
     }
 
@@ -921,8 +921,8 @@ int Agent_registerAgentNsap( Transport_Transport* t )
         t = t->f_open( t );
 
     if ( NULL == t ) {
-        TOOLS_FREE( s );
-        TOOLS_FREE( n );
+        MEMORY_FREE( s );
+        MEMORY_FREE( n );
         return -1;
     }
 
@@ -931,15 +931,15 @@ int Agent_registerAgentNsap( Transport_Transport* t )
     sp = Api_add( s, t, Agent_checkPacket,
         Agent_checkParse );
     if ( sp == NULL ) {
-        TOOLS_FREE( s );
-        TOOLS_FREE( n );
+        MEMORY_FREE( s );
+        MEMORY_FREE( n );
         return -1;
     }
 
     isp = Api_sessPointer( sp );
     if ( isp == NULL ) { /*  over-cautious  */
-        TOOLS_FREE( s );
-        TOOLS_FREE( n );
+        MEMORY_FREE( s );
+        MEMORY_FREE( n );
         return -1;
     }
 
@@ -960,11 +960,11 @@ int Agent_registerAgentNsap( Transport_Transport* t )
         n->handle = handle + 1;
         n->next = a;
         *prevNext = n;
-        TOOLS_FREE( s );
+        MEMORY_FREE( s );
         return n->handle;
     } else {
-        TOOLS_FREE( s );
-        TOOLS_FREE( n );
+        MEMORY_FREE( s );
+        MEMORY_FREE( n );
         return -1;
     }
 }
@@ -991,7 +991,7 @@ void Agent_deregisterAgentNsap( int handle )
             * The above free()s the transport and session pointers.
             */
         }
-        TOOLS_FREE( a );
+        MEMORY_FREE( a );
     }
 
     /*
@@ -1131,7 +1131,7 @@ int Agent_initMasterAgent( void )
                 cptr ) );
         }
     } while ( st && *st != '\0' );
-    TOOLS_FREE( buf );
+    MEMORY_FREE( buf );
 
     if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
              DsAgentBoolean_AGENTX_MASTER )
@@ -1177,7 +1177,7 @@ Agent_initAgentPriotSession( Types_Session* session, Types_Pdu* pdu )
     asp->oldmode = 0;
     asp->treecache_num = -1;
     asp->treecache_len = 0;
-    asp->reqinfo = TOOLS_MALLOC_TYPEDEF( AgentRequestInfo );
+    asp->reqinfo = MEMORY_MALLOC_TYPEDEF( AgentRequestInfo );
     DEBUG_MSGTL( ( "verbose:asp", "asp %p reqinfo %p created\n",
         asp, asp->reqinfo ) );
 
@@ -1201,20 +1201,20 @@ void Agent_freeAgentPriotSession( AgentSession* asp )
         Api_freePdu( asp->pdu );
     if ( asp->reqinfo )
         Agent_freeAgentRequestInfo( asp->reqinfo );
-    TOOLS_FREE( asp->treecache );
-    TOOLS_FREE( asp->bulkcache );
+    MEMORY_FREE( asp->treecache );
+    MEMORY_FREE( asp->bulkcache );
     if ( asp->requests ) {
         int i;
         for ( i = 0; i < asp->vbcount; i++ ) {
             AgentHandler_freeRequestDataSets( &asp->requests[ i ] );
         }
-        TOOLS_FREE( asp->requests );
+        MEMORY_FREE( asp->requests );
     }
     if ( asp->cache_store ) {
         Agent_freeCachemap( asp->cache_store );
         asp->cache_store = NULL;
     }
-    TOOLS_FREE( asp );
+    MEMORY_FREE( asp );
 }
 
 int Agent_checkForDelegated( AgentSession* asp )
@@ -1488,7 +1488,7 @@ int Agent_wrapUpRequest( AgentSession* asp, int status )
                     } else {
                         Logger_log( LOGGER_PRIORITY_ERR, "    -- %s\n", c_oid );
                     }
-                    TOOLS_FREE( c_oid );
+                    MEMORY_FREE( c_oid );
                 }
             }
             Api_freePdu( asp->pdu );
@@ -1906,7 +1906,7 @@ int Agent_createSubtreeCache( AgentSession* asp )
     RequestInfo* request;
 
     if ( asp->treecache == NULL && asp->treecache_len == 0 ) {
-        asp->treecache_len = TOOLS_MAX( 1 + asp->vbcount / 4, 16 );
+        asp->treecache_len = UTILITIES_MAX_VALUE( 1 + asp->vbcount / 4, 16 );
         asp->treecache = ( TreeCache* )calloc( asp->treecache_len, sizeof( TreeCache ) );
         if ( asp->treecache == NULL )
             return PRIOT_ERR_GENERR;
@@ -2002,7 +2002,7 @@ int Agent_createSubtreeCache( AgentSession* asp )
                     asp->bulkcache[ bulkcount++ ] = vbptr;
 
                     for ( i = 1; i < asp->pdu->errindex; i++ ) {
-                        vbptr->nextVariable = TOOLS_MALLOC_STRUCT( Types_VariableList_s );
+                        vbptr->nextVariable = MEMORY_MALLOC_STRUCT( Types_VariableList_s );
                         /*
                         * don't clone the oid as it's got to be
                         * overwritten anyway
@@ -2134,7 +2134,7 @@ int Agent_reassignRequests( AgentSession* asp )
             if ( !Agent_addVarbindToCache( asp, asp->requests[ i ].index,
                      asp->requests[ i ].requestvb,
                      asp->requests[ i ].subtree->next ) ) {
-                TOOLS_FREE( old_treecache );
+                MEMORY_FREE( old_treecache );
             }
         } else if ( asp->requests[ i ].requestvb->type == ASN01_PRIV_RETRY ) {
             /*
@@ -2144,12 +2144,12 @@ int Agent_reassignRequests( AgentSession* asp )
             if ( !Agent_addVarbindToCache( asp, asp->requests[ i ].index,
                      asp->requests[ i ].requestvb,
                      asp->requests[ i ].subtree ) ) {
-                TOOLS_FREE( old_treecache );
+                MEMORY_FREE( old_treecache );
             }
         }
     }
 
-    TOOLS_FREE( old_treecache );
+    MEMORY_FREE( old_treecache );
     return PRIOT_ERR_NOERROR;
 }
 
@@ -2774,7 +2774,7 @@ int Agent_handleSet( AgentSession* asp )
 
     if ( asp->mode != IMPL_FINISHED_SUCCESS && asp->mode != IMPL_FINISHED_FAILURE ) {
         DEBUG_MSGTL( ( "agent_set", "doing set mode = %d (%s)\n", asp->mode,
-            Enum_seFindLabelInSlist( "agentMode", asp->mode ) ) );
+            MapList_findLabel( "agentMode", asp->mode ) ) );
         status = Agent_handleVarRequests( asp );
         DEBUG_MSGTL( ( "agent_set", "did set mode = %d, status = %d\n",
             asp->mode, status ) );
@@ -3211,10 +3211,10 @@ int Agent_requestSetErrorAll( RequestInfo* requests, int error )
 * @param[in] pm An absolute time as e.g. reported by gettimeofday().
 */
 u_long
-Agent_markerUptime( markerT pm )
+Agent_markerUptime( timeMarker pm )
 {
     u_long res;
-    constMarkerT start = Agent_getAgentStarttime();
+    timeMarkerConst start = Agent_getAgentStarttime();
 
     res = Tools_uatimeHdiff( start, pm );
     return res;
@@ -3231,7 +3231,7 @@ Agent_markerUptime( markerT pm )
 u_long
 Agent_timevalUptime( struct timeval* tv )
 {
-    return Agent_markerUptime( ( markerT )tv );
+    return Agent_markerUptime( ( timeMarker )tv );
 }
 
 struct timeval agent_starttime;
@@ -3245,7 +3245,7 @@ static struct timeval _agent_starttimeM;
 *   to know how much time elapsed since Agent_setAgentStarttime() has been
 *   called.
 */
-constMarkerT
+timeMarkerConst
 Agent_getAgentStarttime( void )
 {
     return &agent_starttime;
@@ -3263,7 +3263,7 @@ Agent_getAgentRuntime( void )
     struct timeval now, delta;
 
     Tools_getMonotonicClock( &now );
-    TOOLS_TIMERSUB( &now, &_agent_starttimeM, &delta );
+    TIME_SUB_TIME( &now, &_agent_starttimeM, &delta );
     return delta.tv_sec * ( uint64_t )100 + delta.tv_usec / 10000;
 }
 
@@ -3273,7 +3273,7 @@ Agent_getAgentRuntime( void )
 *
 * @see See also Agent_setAgentUptime().
 */
-void Agent_setAgentStarttime( markerT s )
+void Agent_setAgentStarttime( timeMarker s )
 {
     if ( s ) {
         struct timeval nowA, nowM;
@@ -3281,8 +3281,8 @@ void Agent_setAgentStarttime( markerT s )
         agent_starttime = *( struct timeval* )s;
         gettimeofday( &nowA, NULL );
         Tools_getMonotonicClock( &nowM );
-        TOOLS_TIMERSUB( &agent_starttime, &nowA, &_agent_starttimeM );
-        TOOLS_TIMERADD( &_agent_starttimeM, &nowM, &_agent_starttimeM );
+        TIME_SUB_TIME( &agent_starttime, &nowA, &_agent_starttimeM );
+        TIME_ADD_TIME( &_agent_starttimeM, &nowM, &_agent_starttimeM );
     } else {
         gettimeofday( &agent_starttime, NULL );
         Tools_getMonotonicClock( &_agent_starttimeM );
@@ -3298,7 +3298,7 @@ Agent_getAgentUptime( void )
     struct timeval now, delta;
 
     Tools_getMonotonicClock( &now );
-    TOOLS_TIMERSUB( &now, &_agent_starttimeM, &delta );
+    TIME_SUB_TIME( &now, &_agent_starttimeM, &delta );
     return delta.tv_sec * 100UL + delta.tv_usec / 10000;
 }
 
@@ -3318,8 +3318,8 @@ void Agent_setAgentUptime( u_long hsec )
     Tools_getMonotonicClock( &nowM );
     new_uptime.tv_sec = hsec / 100;
     new_uptime.tv_usec = ( uint32_t )( hsec - new_uptime.tv_sec * 100 ) * 10000L;
-    TOOLS_TIMERSUB( &nowA, &new_uptime, &agent_starttime );
-    TOOLS_TIMERSUB( &nowM, &new_uptime, &_agent_starttimeM );
+    TIME_SUB_TIME( &nowA, &new_uptime, &agent_starttime );
+    TIME_SUB_TIME( &nowM, &new_uptime, &_agent_starttimeM );
 }
 
 /*************************************************************************

@@ -1,8 +1,8 @@
 
 #include "vmstat.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "ScalarGroup.h"
 #include "Vars.h"
 #include "siglog/agent/hardware/cpu.h"

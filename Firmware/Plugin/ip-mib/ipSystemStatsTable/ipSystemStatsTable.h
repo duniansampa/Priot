@@ -14,7 +14,7 @@
  */
 
 #include "Types.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 #include "siglog/data_access/systemstats.h"
 #include <stdint.h>
 
@@ -53,7 +53,7 @@
     /*
      * TODO:101:o: |-> Review ipSystemStatsTable registration context.
      */
-    typedef DataList_DataList ipSystemStatsTable_registration;
+    typedef Map ipSystemStatsTable_registration;
 
 /**********************************************************************/
     /*
@@ -117,7 +117,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ipSystemStatsTable_data_list;
+        Map *ipSystemStatsTable_data_list;
 
     } ipSystemStatsTable_rowreq_ctx;
 

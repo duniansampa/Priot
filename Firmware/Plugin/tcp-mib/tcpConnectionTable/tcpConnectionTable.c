@@ -12,9 +12,9 @@
  */
 
 #include "tcpConnectionTable.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Vars.h"
 #include "siglog/agent/mfd.h"
 #include "tcpConnectionTable_constants.h"
@@ -234,7 +234,7 @@ tcpConnectionTable_allocate_data( void )
     /*
      * TODO:201:r: |-> allocate memory for the tcpConnectionTable data context.
      */
-    tcpConnectionTable_data* rtn = TOOLS_MALLOC_TYPEDEF( tcpConnectionTable_data );
+    tcpConnectionTable_data* rtn = MEMORY_MALLOC_TYPEDEF( tcpConnectionTable_data );
 
     DEBUG_MSGTL( ( "verbose:tcpConnectionTable:tcpConnectionTable_allocate_data", "called\n" ) );
 

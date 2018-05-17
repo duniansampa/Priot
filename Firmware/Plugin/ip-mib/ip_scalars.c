@@ -6,9 +6,9 @@
 #include "siglog/data_access/ip_scalars.h"
 #include "AgentHandler.h"
 #include "Client.h"
-#include "DataList.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Containers/Map.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Scalar.h"
 #include "ip_scalars.h"
 
@@ -132,12 +132,12 @@ handle_ipForwarding( MibHandler* handler,
                 PRIOT_ERR_NOCREATION );
         } else {
             u_long* value_save;
-            value_save = ( u_long* )Tools_memdup( &value, sizeof( value ) );
+            value_save = ( u_long* )Memory_memdup( &value, sizeof( value ) );
             if ( NULL == value_save )
                 Agent_setRequestError( reqinfo, requests, PRIOT_ERR_RESOURCEUNAVAILABLE );
             else
                 AgentHandler_requestAddListData( requests,
-                    DataList_create( "ipfw", value_save,
+                    Map_newElement( "ipfw", value_save,
                                                      free ) );
         }
         break;
@@ -225,12 +225,12 @@ handle_ipDefaultTTL( MibHandler* handler,
                 PRIOT_ERR_NOCREATION );
         } else {
             u_long* value_save;
-            value_save = ( u_long* )Tools_memdup( &value, sizeof( value ) );
+            value_save = ( u_long* )Memory_memdup( &value, sizeof( value ) );
             if ( NULL == value_save )
                 Agent_setRequestError( reqinfo, requests, PRIOT_ERR_RESOURCEUNAVAILABLE );
             else
                 AgentHandler_requestAddListData( requests,
-                    DataList_create( "ipttl", value_save,
+                    Map_newElement( "ipttl", value_save,
                                                      free ) );
         }
         break;
@@ -323,13 +323,13 @@ handle_ipv6IpForwarding( MibHandler* handler,
         } else {
             u_long* value_save;
 
-            value_save = ( u_long* )Tools_memdup( &value, sizeof( value ) );
+            value_save = ( u_long* )Memory_memdup( &value, sizeof( value ) );
             if ( NULL == value_save ) {
                 Agent_setRequestError( reqinfo, requests,
                     PRIOT_ERR_RESOURCEUNAVAILABLE );
             } else {
                 AgentHandler_requestAddListData( requests,
-                    DataList_create( "ip6fw", value_save,
+                    Map_newElement( "ip6fw", value_save,
                                                      free ) );
             }
         }

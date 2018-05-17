@@ -7,9 +7,9 @@
  * distributed with the Net-SNMP package.
  */
 #include "swinst.h"
-#include "Container.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "siglog/data_access/swinst.h"
 
 /* ---------------------------------------------------------------------
@@ -139,7 +139,7 @@ netsnmp_swinst_entry_create( int32_t swIndex )
 {
     netsnmp_swinst_entry* entry;
 
-    entry = TOOLS_MALLOC_TYPEDEF( netsnmp_swinst_entry );
+    entry = MEMORY_MALLOC_TYPEDEF( netsnmp_swinst_entry );
     if ( !entry )
         return NULL;
 

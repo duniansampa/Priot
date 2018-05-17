@@ -11,7 +11,7 @@
 #ifndef NETSNMP_SWINST_H
 #define NETSNMP_SWINST_H
 
-#include "Container.h"
+#include "System/Containers/Container.h"
 
     /*
      * Data structure for a swinst entry 

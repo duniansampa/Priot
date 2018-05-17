@@ -2,7 +2,7 @@
 #define CACHEHANDLER_H
 
 #include "AgentHandler.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 /*
  * This caching helper provides a generalised (SNMP-manageable) caching
  * mechanism.  Individual SNMP table and scalar/scalar group MIB
@@ -43,7 +43,7 @@ struct Cache_s {
     int valid;
     char expired;
     int timeout; /* Length of time the cache is valid (in s) */
-    markerT timestampM; /* When the cache was last loaded */
+    timeMarker timestampM; /* When the cache was last loaded */
     u_long timer_id; /* periodic timer id */
 
     CacheLoadFT* load_cache;

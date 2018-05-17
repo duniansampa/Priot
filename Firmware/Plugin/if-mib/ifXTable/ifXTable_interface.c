@@ -27,14 +27,14 @@
  */
 
 #include "ifXTable_interface.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "CheckVarbind.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "RowMerge.h"
@@ -452,7 +452,7 @@ int ifXTable_index_from_oid( Types_Index* oid_idx,
 ifXTable_data*
 ifXTable_allocate_data( void )
 {
-    ifXTable_data* rtn = TOOLS_MALLOC_TYPEDEF( ifXTable_data );
+    ifXTable_data* rtn = MEMORY_MALLOC_TYPEDEF( ifXTable_data );
 
     DEBUG_MSGTL( ( "verbose:ifXTable:ifXTable_allocate_data", "called\n" ) );
 
@@ -1754,7 +1754,7 @@ void ifXTable_container_init_persistence( Container_Container* container )
     ReadConfig_registerConfigHandler( NULL, row_token,
         _ifXTable_container_row_restore, NULL, NULL );
     Assert_assert( container );
-    container_p = ( Container_Container** )Tools_memdup( &container, sizeof( container ) );
+    container_p = ( Container_Container** )Memory_memdup( &container, sizeof( container ) );
     Assert_assert( container_p );
     rc = Callback_registerCallback( CALLBACK_LIBRARY,
         CALLBACK_STORE_DATA,

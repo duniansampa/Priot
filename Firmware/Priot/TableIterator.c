@@ -1,13 +1,13 @@
 #include "TableIterator.h"
 #include "Api.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "DataList.h"
-#include "Debug.h"
-#include "Enum.h"
+#include "System/Containers/Map.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
 #include "Mib.h"
 #include "StashCache.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 /** @defgroup table_iterator table_iterator
  *  The table iterator helper is designed to simplify the task of writing a table handler for the net-snmp agent when the data being accessed is not in an oid sorted form and must be accessed externally.
@@ -103,7 +103,7 @@ TableIterator_createTable( FirstDataPointFT* firstDP,
     FirstDataPointFT* getidx,
     Types_VariableList* indexes )
 {
-    IteratorInfo* iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    IteratorInfo* iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
 
     if ( !iinfo )
         return NULL;
@@ -128,7 +128,7 @@ void TableIterator_deleteTable( IteratorInfo* iinfo )
         iinfo->indexes = NULL;
     }
     Table_registrationInfoFree( iinfo->table_reginfo );
-    TOOLS_FREE( iinfo );
+    MEMORY_FREE( iinfo );
 }
 
 /*
@@ -309,7 +309,7 @@ void TableIterator_insertIteratorContext( RequestInfo* request, void* data )
                  that_oid, that_oid_len )
             == 0 ) {
             AgentHandler_requestAddListData( req,
-                DataList_create( TABLE_ITERATOR_NAME, data, NULL ) );
+                Map_newElement( TABLE_ITERATOR_NAME, data, NULL ) );
         }
     }
 }
@@ -359,11 +359,11 @@ _TableIterator_remember( RequestInfo* request,
 
     /* no existing cached state.  make a new one. */
     if ( !ti_info ) {
-        ti_info = TOOLS_MALLOC_TYPEDEF( TiCacheInfo );
+        ti_info = MEMORY_MALLOC_TYPEDEF( TiCacheInfo );
         if ( ti_info == NULL )
             return NULL;
         AgentHandler_requestAddListData( request,
-            DataList_create( TI_REQUEST_CACHE,
+            Map_newElement( TI_REQUEST_CACHE,
                                              ti_info,
                                              _TableIterator_freeTiCache ) );
     }
@@ -417,7 +417,7 @@ int TableIterator_helperHandler( MibHandler* handler,
     Types_VariableList *old_indexes = NULL, *vb;
     TableRegistrationInfo* table_reg_info = NULL;
     int i;
-    DataList_DataList* ldata = NULL;
+    Map* ldata = NULL;
 
     iinfo = ( IteratorInfo* )handler->myvoid;
     if ( !iinfo || !reginfo || !reqinfo )
@@ -448,13 +448,13 @@ int TableIterator_helperHandler( MibHandler* handler,
         table_reg_info = Table_findTableRegistrationInfo( reginfo );
 
         /* XXX: move this malloc to stash_cache handler? */
-        reqtmp = TOOLS_MALLOC_TYPEDEF( RequestInfo );
+        reqtmp = MEMORY_MALLOC_TYPEDEF( RequestInfo );
         if ( reqtmp == NULL )
             return PRIOT_ERR_GENERR;
         reqtmp->subtree = requests->subtree;
         table_info = Table_extractTableInfo( requests );
         AgentHandler_requestAddListData( reqtmp,
-            DataList_create( TABLE_HANDLER_NAME,
+            Map_newElement( TABLE_HANDLER_NAME,
                                              ( void* )table_info, NULL ) );
 
         /* remember the indexes that were originally parsed. */
@@ -486,7 +486,7 @@ int TableIterator_helperHandler( MibHandler* handler,
             ti_info = ( TiCacheInfo* )
                 AgentHandler_requestGetListData( request, TI_REQUEST_CACHE );
             if ( !ti_info ) {
-                ti_info = TOOLS_MALLOC_TYPEDEF( TiCacheInfo );
+                ti_info = MEMORY_MALLOC_TYPEDEF( TiCacheInfo );
                 if ( ti_info == NULL ) {
                     /*
                      * Cleanup
@@ -496,7 +496,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                     return PRIOT_ERR_GENERR;
                 }
                 AgentHandler_requestAddListData( request,
-                    DataList_create( TI_REQUEST_CACHE,
+                    Map_newElement( TI_REQUEST_CACHE,
                                                      ti_info,
                                                      _TableIterator_freeTiCache ) );
             }
@@ -539,7 +539,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                             "no valid requests for iterator table %s\n",
                             reginfo->handlerName );
                         AgentHandler_freeRequestDataSets( reqtmp );
-                        TOOLS_FREE( reqtmp );
+                        MEMORY_FREE( reqtmp );
                         return PRIOT_ERR_NOERROR;
                     }
                     index_search = Client_cloneVarbind( table_info->indexes );
@@ -554,7 +554,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                             "invalid index list or failed malloc for table %s\n",
                             reginfo->handlerName );
                         AgentHandler_freeRequestDataSets( reqtmp );
-                        TOOLS_FREE( reqtmp );
+                        MEMORY_FREE( reqtmp );
                         return PRIOT_ERR_NOERROR;
                     }
                 }
@@ -588,7 +588,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                         if ( free_this_index_search )
                             Api_freeVarbind( free_this_index_search );
                         AgentHandler_freeRequestDataSets( reqtmp );
-                        TOOLS_FREE( reqtmp );
+                        MEMORY_FREE( reqtmp );
                         return PRIOT_ERR_GENERR;
                     }
                     coloid[ reginfo->rootoid_len + 1 ] = table_info->colnum;
@@ -622,7 +622,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                                 if ( free_this_index_search )
                                     Api_freeVarbind( free_this_index_search );
                                 AgentHandler_freeRequestDataSets( reqtmp );
-                                TOOLS_FREE( reqtmp );
+                                MEMORY_FREE( reqtmp );
                                 return PRIOT_ERR_GENERR;
                             }
                             request_count--; /* One less to look for */
@@ -640,16 +640,16 @@ int TableIterator_helperHandler( MibHandler* handler,
                             coloid, coloid_len, index_search );
                         reqinfo->mode = MODE_GET;
                         if ( reqtmp )
-                            ldata = DataList_getNode( reqtmp->parent_data,
+                            ldata = Map_find( reqtmp->parent_data,
                                 TABLE_ITERATOR_NAME );
                         if ( !ldata ) {
                             AgentHandler_requestAddListData( reqtmp,
-                                DataList_create( TABLE_ITERATOR_NAME,
+                                Map_newElement( TABLE_ITERATOR_NAME,
                                                                  callback_data_context,
                                                                  NULL ) );
                         } else {
                             /* may have changed */
-                            ldata->data = callback_data_context;
+                            ldata->value = callback_data_context;
                         }
 
                         table_info->indexes = index_search;
@@ -657,7 +657,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                               i <= ( int )table_reg_info->max_column; i++ ) {
                             myname[ reginfo->rootoid_len + 1 ] = i;
                             table_info->colnum = i;
-                            vb = reqtmp->requestvb = TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+                            vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
                             if ( vb == NULL ) {
                                 /*
                                  * Cleanup
@@ -820,7 +820,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                     /* we don't add a free pointer, since it's in the
                        TI_REQUEST_CACHE instead */
                     AgentHandler_requestAddListData( request,
-                        DataList_create( TABLE_ITERATOR_NAME,
+                        Map_newElement( TABLE_ITERATOR_NAME,
                                                          ti_info->data_context,
                                                          NULL ) );
                 break;
@@ -839,7 +839,7 @@ int TableIterator_helperHandler( MibHandler* handler,
         }
     } else if ( reqinfo->mode == MODE_GET_STASH ) {
         AgentHandler_freeRequestDataSets( reqtmp );
-        TOOLS_FREE( reqtmp );
+        MEMORY_FREE( reqtmp );
         table_info->indexes = old_indexes;
     }
 
@@ -847,7 +847,7 @@ int TableIterator_helperHandler( MibHandler* handler,
        all that simple?  They better be glad they don't have to do it! */
     if ( reqinfo->mode != MODE_GET_STASH ) {
         DEBUG_MSGTL( ( "tableIterator", "call subhandler for mode: %s\n",
-            Enum_seFindLabelInSlist( "agentMode", oldmode ) ) );
+            MapList_findLabel( "agentMode", oldmode ) ) );
         ret = AgentHandler_callNextHandler( handler, reginfo, reqinfo, requests );
     }
 

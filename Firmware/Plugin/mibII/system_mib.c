@@ -17,7 +17,7 @@
 #include "Agent.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Priot.h"
 #include "ReadConfig.h"
@@ -170,18 +170,18 @@ int systemMib_systemModuleCount = 0;
 static int
 system_store( int a, int b, void* c, void* d )
 {
-    char line[ TOOLS_MAXBUF_SMALL ];
+    char line[ UTILITIES_MAX_BUFFER_SMALL ];
 
     if ( sysLocationSet > 0 ) {
-        snprintf( line, TOOLS_MAXBUF_SMALL, "psyslocation %s", sysLocation );
+        snprintf( line, UTILITIES_MAX_BUFFER_SMALL, "psyslocation %s", sysLocation );
         AgentReadConfig_priotdStoreConfig( line );
     }
     if ( sysContactSet > 0 ) {
-        snprintf( line, TOOLS_MAXBUF_SMALL, "psyscontact %s", sysContact );
+        snprintf( line, UTILITIES_MAX_BUFFER_SMALL, "psyscontact %s", sysContact );
         AgentReadConfig_priotdStoreConfig( line );
     }
     if ( sysNameSet > 0 ) {
-        snprintf( line, TOOLS_MAXBUF_SMALL, "psysname %s", sysName );
+        snprintf( line, UTILITIES_MAX_BUFFER_SMALL, "psysname %s", sysName );
         AgentReadConfig_priotdStoreConfig( line );
     }
 

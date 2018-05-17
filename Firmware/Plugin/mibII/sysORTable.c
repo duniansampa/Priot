@@ -1,13 +1,13 @@
 #include "sysORTable.h"
 #include "AgentHandler.h"
 #include "Client.h"
-#include "Container.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "SysORTable.h"
 #include "Table.h"
 #include "TableContainer.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Watcher.h"
 
 /** Typical data structure for a row entry */
@@ -36,7 +36,7 @@ static void register_foreach( const struct SysORTable_s* data, void* dummy )
 
     sysORLastChange = data->OR_uptime;
 
-    entry = TOOLS_MALLOC_TYPEDEF( SysORTableEntry );
+    entry = MEMORY_MALLOC_TYPEDEF( SysORTableEntry );
     if ( !entry ) {
         Logger_log( LOGGER_PRIORITY_ERR,
             "could not allocate storage, SysORTable_s is inconsistent\n" );
@@ -48,7 +48,7 @@ static void register_foreach( const struct SysORTable_s* data, void* dummy )
             const SysORTableEntry* value;
             const oid cur = sysORNextIndex;
 
-            if ( sysORNextIndex == TOOLS_MIN( TYPES_OID_MAX_SUBID, 2147483647UL ) )
+            if ( sysORNextIndex == UTILITIES_MIN_VALUE( TYPES_OID_MAX_SUBID, 2147483647UL ) )
                 sysORNextIndex = 1;
             else
                 ++sysORNextIndex;
@@ -195,12 +195,12 @@ void init_sysORTable( void )
     const oid sysORLastChange_oid[] = { 1, 3, 6, 1, 2, 1, 1, 8 };
     const oid sysORTable_oid[] = { 1, 3, 6, 1, 2, 1, 1, 9 };
 
-    sysORTable_table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    sysORTable_table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
 
     table = Container_find( "sysORTable:tableContainer" );
 
     if ( sysORTable_table_info == NULL || table == NULL ) {
-        TOOLS_FREE( sysORTable_table_info );
+        MEMORY_FREE( sysORTable_table_info );
         CONTAINER_FREE( table );
         return;
     }

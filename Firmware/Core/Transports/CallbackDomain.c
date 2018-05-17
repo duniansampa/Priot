@@ -1,6 +1,6 @@
 #include "CallbackDomain.h"
-#include "Tools.h"
-#include "Debug.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "Client.h"
 #include "Priot.h"
@@ -51,7 +51,7 @@ _CallbackDomain_debugPdu(const char *ourstring, Types_Pdu *pdu)
 void
 CallbackDomain_pushQueue(int num, CallbackPass *item)
 {
-    CallbackQueue *newitem = TOOLS_MALLOC_TYPEDEF(CallbackQueue);
+    CallbackQueue *newitem = MEMORY_MALLOC_TYPEDEF(CallbackQueue);
     CallbackQueue *ptr;
 
     if (newitem == NULL)
@@ -88,7 +88,7 @@ CallbackDomain_popQueue(int num)
                 ptr->next->prev = ptr->prev;
             }
             cp = ptr->item;
-            TOOLS_FREE(ptr);
+            MEMORY_FREE(ptr);
             DEBUG_IF("dumpRecvCallbackTransport") {
                 _CallbackDomain_debugPdu("dumpRecvCallbackTransport",
                                    cp->pdu);
@@ -184,11 +184,11 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
     CallbackHack  *ch = (CallbackHack *) * opaque;
     Types_Pdu    *pdu = ch->pdu;
     *opaque = ch->orig_transport_data;
-    TOOLS_FREE(ch);
+    MEMORY_FREE(ch);
 
     DEBUG_MSGTL(("transportCallback", "hook_send enter\n"));
 
-    cp = TOOLS_MALLOC_TYPEDEF(CallbackPass);
+    cp = MEMORY_MALLOC_TYPEDEF(CallbackPass);
     if (!cp)
         return -1;
 
@@ -197,7 +197,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
         /*
          * not needed and not properly freed later
          */
-        TOOLS_FREE(cp->pdu->transportData);
+        MEMORY_FREE(cp->pdu->transportData);
     }
 
     if (cp->pdu->flags & PRIOT_UCD_MSG_FLAG_EXPECT_RESPONSE)
@@ -218,7 +218,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
         other_side = _CallbackDomain_findTransportFromCallbackNum(mystuff->linkedto);
         if (!other_side) {
             Api_freePdu(cp->pdu);
-            TOOLS_FREE(cp);
+            MEMORY_FREE(cp);
             return -1;
         }
 
@@ -234,7 +234,7 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
         /*
          * we don't need the transport data any more
          */
-        TOOLS_FREE(*opaque);
+        MEMORY_FREE(*opaque);
     } else {
         /*
          * we're the server, send it to the person that sent us the request
@@ -243,11 +243,11 @@ CallbackDomain_send(Transport_Transport *t, void *buf, int size,
         /*
          * we don't need the transport data any more
          */
-        TOOLS_FREE(*opaque);
+        MEMORY_FREE(*opaque);
         other_side = _CallbackDomain_findTransportFromCallbackNum(from);
         if (!other_side) {
             Api_freePdu(cp->pdu);
-            TOOLS_FREE(cp);
+            MEMORY_FREE(cp);
             return -1;
         }
     while (rc < 0) {
@@ -315,16 +315,16 @@ CallbackDomain_transport(int to)
     /*
      * transport
      */
-    t = TOOLS_MALLOC_TYPEDEF(Transport_Transport);
+    t = MEMORY_MALLOC_TYPEDEF(Transport_Transport);
     if (!t)
         return NULL;
 
     /*
      * our stuff
      */
-    mydata = TOOLS_MALLOC_TYPEDEF(CallbackInfo);
+    mydata = MEMORY_MALLOC_TYPEDEF(CallbackInfo);
     if (!mydata) {
-        TOOLS_FREE(t);
+        MEMORY_FREE(t);
         return NULL;
     }
     mydata->linkedto = to;
@@ -337,8 +337,8 @@ CallbackDomain_transport(int to)
     t->sock = mydata->pipefds[0];
 
     if (rc) {
-        TOOLS_FREE(mydata);
-        TOOLS_FREE(t);
+        MEMORY_FREE(mydata);
+        MEMORY_FREE(t);
         return NULL;
     }
 
@@ -382,7 +382,7 @@ CallbackDomain_hookBuild(Types_Session * sp,
      * very gross hack, as this is passed later to the transport_send
      * function
      */
-    CallbackHack  *ch = TOOLS_MALLOC_TYPEDEF(CallbackHack);
+    CallbackHack  *ch = MEMORY_MALLOC_TYPEDEF(CallbackHack);
     if (ch == NULL)
         return -1;
     DEBUG_MSGTL(("transportCallback", "hook_build enter\n"));
@@ -463,7 +463,7 @@ CallbackDomain_createPdu(Transport_Transport *transport,
     pdu->transportDataLength = olength;
     if (opaque)                 /* if created, we're the server */
         *((int *) opaque) = cp->return_transport_num;
-    TOOLS_FREE(cp);
+    MEMORY_FREE(cp);
     return pdu;
 }
 

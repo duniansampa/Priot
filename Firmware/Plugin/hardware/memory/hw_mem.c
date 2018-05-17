@@ -1,7 +1,7 @@
 
 
 #include "CacheHandler.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "siglog/agent/hardware/memory.h"
 
 extern CacheLoadFT netsnmp_mem_arch_load;
@@ -59,7 +59,7 @@ netsnmp_memory_info* netsnmp_memory_get_byIdx( int idx, int create )
     /*
          * Create a new memory entry, and insert it into the list....
          */
-    mem = TOOLS_MALLOC_TYPEDEF( netsnmp_memory_info );
+    mem = MEMORY_MALLOC_TYPEDEF( netsnmp_memory_info );
     if ( !mem )
         return NULL;
     mem->idx = idx;
@@ -77,7 +77,7 @@ netsnmp_memory_info* netsnmp_memory_get_byIdx( int idx, int create )
             return mem;
         }
     }
-    TOOLS_FREE( mem );
+    MEMORY_FREE( mem );
     return NULL; /* Shouldn't happen! */
 }
 

@@ -48,7 +48,7 @@
     /*
      * TODO:101:o: |-> Review ipAddressTable registration context.
      */
-    typedef DataList_DataList ipAddressTable_registration;
+    typedef Map ipAddressTable_registration;
 
 /**********************************************************************/
     /*
@@ -139,7 +139,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ipAddressTable_data_list;
+        Map *ipAddressTable_data_list;
 
     } ipAddressTable_rowreq_ctx;
 

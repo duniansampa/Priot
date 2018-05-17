@@ -1,7 +1,7 @@
 #include "vacm_context.h"
 #include "AgentRegistry.h"
 #include "Client.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "TableIterator.h"
 #include <string.h>
 
@@ -78,13 +78,13 @@ void init_vacm_context( void )
     if ( !my_handler )
         return;
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
 
     if ( !table_info || !iinfo ) {
-        TOOLS_FREE( table_info );
-        TOOLS_FREE( iinfo );
-        TOOLS_FREE( my_handler );
+        MEMORY_FREE( table_info );
+        MEMORY_FREE( iinfo );
+        MEMORY_FREE( my_handler );
         return;
     }
 

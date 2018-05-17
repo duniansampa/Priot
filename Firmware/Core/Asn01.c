@@ -1,8 +1,8 @@
 #include "Asn01.h"
 
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Mib.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Int64.h"
 #include "Impl.h"
 
@@ -2457,7 +2457,7 @@ int Asn01_realloc(u_char ** pkt, size_t * pkt_len)
         DEBUG_MSGTL(("Asn01_realloc", " old_pkt %8p, old_pkt_len %lu\n",
                     *pkt, (unsigned long)old_pkt_len));
 
-        if (Tools_realloc2(pkt, pkt_len)) {
+        if (Memory_reallocIncrease(pkt, pkt_len)) {
             DEBUG_MSGTL(("Asn01_realloc", " new_pkt %8p, new_pkt_len %lu\n",
                         *pkt, (unsigned long)*pkt_len));
             DEBUG_MSGTL(("Asn01_realloc",

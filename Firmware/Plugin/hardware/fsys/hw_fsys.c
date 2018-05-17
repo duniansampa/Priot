@@ -2,9 +2,9 @@
 
 #include "Alarm.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include "siglog/agent/hardware/fsys.h"
 #include <inttypes.h>
 
@@ -172,7 +172,7 @@ netsnmp_fsys_by_path( char* path, int create_type )
      */
     sp = _fsys_create_entry();
     if ( sp )
-        Strlcpy_strlcpy( sp->path, path, sizeof( sp->path ) );
+        String_copyTruncate( sp->path, path, sizeof( sp->path ) );
     return sp;
 }
 
@@ -213,7 +213,7 @@ netsnmp_fsys_by_device( char* device, int create_type )
      */
     sp = _fsys_create_entry();
     if ( sp )
-        Strlcpy_strlcpy( sp->device, device, sizeof( sp->device ) );
+        String_copyTruncate( sp->device, device, sizeof( sp->device ) );
     return sp;
 }
 
@@ -222,7 +222,7 @@ _fsys_create_entry( void )
 {
     netsnmp_fsys_info* sp;
 
-    sp = TOOLS_MALLOC_TYPEDEF( netsnmp_fsys_info );
+    sp = MEMORY_MALLOC_TYPEDEF( netsnmp_fsys_info );
     if ( sp ) {
         /*
          * Set up the index value.
@@ -231,7 +231,7 @@ _fsys_create_entry( void )
          * Surely there must be a better way?
          */
         sp->idx.len = 1;
-        sp->idx.oids = TOOLS_MALLOC_TYPEDEF( oid );
+        sp->idx.oids = MEMORY_MALLOC_TYPEDEF( oid );
         sp->idx.oids[ 0 ] = ++_fsys_idx;
     }
 

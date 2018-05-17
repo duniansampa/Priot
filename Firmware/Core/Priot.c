@@ -1,6 +1,6 @@
 #include "Priot.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Impl.h"
 
 /** @mainpage Net-SNMP Coding Documentation

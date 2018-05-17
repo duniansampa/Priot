@@ -5,9 +5,9 @@
  */
 
 #include "siglog/data_access/ipaddress.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "ip-mib/ipAddressTable/ipAddressTable_constants.h"
 #include "siglog/data_access/interface.h"
@@ -152,7 +152,7 @@ void netsnmp_access_ipaddress_container_free( Container_Container* container, u_
 netsnmp_ipaddress_entry*
 netsnmp_access_ipaddress_entry_create( void )
 {
-    netsnmp_ipaddress_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_ipaddress_entry );
+    netsnmp_ipaddress_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_ipaddress_entry );
     int rc = 0;
 
     entry->oid_index.len = 1;

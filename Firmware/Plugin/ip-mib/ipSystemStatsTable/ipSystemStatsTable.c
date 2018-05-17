@@ -12,8 +12,8 @@
  */
 
 #include "ipSystemStatsTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "Vars.h"
 #include "ipSystemStatsTable_constants.h"
 #include "ipSystemStatsTable_interface.h"
@@ -80,7 +80,7 @@ void initialize_table_ipSystemStatsTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    ipSystemStatsTable_user_context_p = DataList_create( "ipSystemStatsTable", NULL, NULL );
+    ipSystemStatsTable_user_context_p = Map_newElement( "ipSystemStatsTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -103,7 +103,7 @@ void shutdown_table_ipSystemStatsTable( void )
      * call interface shutdown code
      */
     _ipSystemStatsTable_shutdown_interface( ipSystemStatsTable_user_context_p );
-    DataList_freeAll( ipSystemStatsTable_user_context_p );
+    Map_clear( ipSystemStatsTable_user_context_p );
     ipSystemStatsTable_user_context_p = NULL;
 }
 
@@ -223,7 +223,7 @@ ipSystemStatsTable_allocate_data( void )
     /*
      * TODO:201:r: |-> allocate memory for the ipSystemStatsTable data context.
      */
-    ipSystemStatsTable_data* rtn = TOOLS_MALLOC_TYPEDEF( ipSystemStatsTable_data );
+    ipSystemStatsTable_data* rtn = MEMORY_MALLOC_TYPEDEF( ipSystemStatsTable_data );
 
     DEBUG_MSGTL( ( "verbose:ipSystemStatsTable:ipSystemStatsTable_allocate_data", "called\n" ) );
 

@@ -5,7 +5,7 @@
 
 #include "mteEvent.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "TableData.h"
@@ -149,13 +149,13 @@ mteEvent_createEntry( const char* mteOwner, const char* mteEName, int fixed )
      * Create the mteEvent entry, and the
      * (table-independent) row wrapper structure...
      */
-    entry = TOOLS_MALLOC_TYPEDEF( struct mteEvent );
+    entry = MEMORY_MALLOC_TYPEDEF( struct mteEvent );
     if ( !entry )
         return NULL;
 
     row = TableTdata_createRow();
     if ( !row ) {
-        TOOLS_FREE( entry );
+        MEMORY_FREE( entry );
         return NULL;
     }
     row->data = entry;
@@ -196,7 +196,7 @@ void mteEvent_removeEntry( TdataRow* row )
         return; /* Nothing to remove */
     entry = ( struct mteEvent* )
         TableTdata_removeAndDeleteRow( event_table_data, row );
-    TOOLS_FREE( entry );
+    MEMORY_FREE( entry );
 }
 
 /* ===================================================
@@ -276,7 +276,7 @@ int _mteEvent_fire_notify( struct mteEvent* entry, /* The event to fire  */
         DsStorage_APPLICATION_ID,
         DsAgentBoolean_STRICT_DISMAN );
 
-    var = ( Types_VariableList* )TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+    var = ( Types_VariableList* )MEMORY_MALLOC_TYPEDEF( Types_VariableList );
     if ( !var )
         return -1;
 

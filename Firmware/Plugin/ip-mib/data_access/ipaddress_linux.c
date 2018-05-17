@@ -5,8 +5,8 @@
  */
 
 #include "ipaddress_linux.h"
-#include "Container.h"
-#include "Debug.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
 #include "ipaddress_ioctl.h"
 #include "siglog/data_access/ipaddress.h"
 

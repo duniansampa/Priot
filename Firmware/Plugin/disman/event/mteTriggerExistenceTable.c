@@ -9,7 +9,7 @@
 #include "mteTriggerExistenceTable.h"
 #include "CheckVarbind.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Table.h"
 #include "mteTrigger.h"
 
@@ -37,7 +37,7 @@ void init_mteTriggerExistenceTable( void )
         mteTExistTable_oid_len,
         HANDLER_CAN_RWRITE );
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
         ASN01_OCTET_STR, /* index: mteOwner       */
         /* index: mteTriggerName */

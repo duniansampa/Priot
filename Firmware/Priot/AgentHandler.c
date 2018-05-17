@@ -2,17 +2,17 @@
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
 #include "Api.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "BulkToNext.h"
-#include "DataList.h"
-#include "Debug.h"
-#include "Enum.h"
-#include "Logger.h"
+#include "System/Containers/Map.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "PriotSettings.h"
 #include "ReadConfig.h"
 #include "ReadConfig.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 static MibHandler*
 _AgentHandler_cloneHandler( MibHandler* it );
@@ -101,13 +101,13 @@ AgentHandler_createHandler( const char* name,
     NodeHandlerFT* handler_access_method )
 {
 
-    MibHandler* ret = TOOLS_MALLOC_TYPEDEF( MibHandler );
+    MibHandler* ret = MEMORY_MALLOC_TYPEDEF( MibHandler );
     if ( ret ) {
         ret->access_method = handler_access_method;
         if ( NULL != name ) {
             ret->handler_name = strdup( name );
             if ( NULL == ret->handler_name )
-                TOOLS_FREE( ret );
+                MEMORY_FREE( ret );
         }
     }
     return ret;
@@ -164,7 +164,7 @@ AgentHandler_registrationCreate( const char* name,
     int modes )
 {
     HandlerRegistration* the_reg;
-    the_reg = TOOLS_MALLOC_TYPEDEF( HandlerRegistration );
+    the_reg = MEMORY_MALLOC_TYPEDEF( HandlerRegistration );
     if ( !the_reg )
         return NULL;
 
@@ -504,7 +504,7 @@ int AgentHandler_callHandler( MibHandler* next_handler,
 
         DEBUG_MSGTL( ( "handler:calling", "calling handler %s for mode %s\n",
             next_handler->handler_name,
-            Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
+            MapList_findLabel( "agentMode", reqinfo->mode ) ) );
 
         /*
          * XXX: define acceptable return statuses
@@ -669,8 +669,8 @@ void AgentHandler_handlerFree( MibHandler* handler )
         if ( ( handler->myvoid != NULL ) && ( handler->data_free != NULL ) ) {
             handler->data_free( handler->myvoid );
         }
-        TOOLS_FREE( handler->handler_name );
-        TOOLS_FREE( handler );
+        MEMORY_FREE( handler->handler_name );
+        MEMORY_FREE( handler );
     }
 }
 
@@ -738,11 +738,11 @@ void AgentHandler_handlerRegistrationFree( HandlerRegistration* reginfo )
 {
     if ( reginfo != NULL ) {
         AgentHandler_handlerFree( reginfo->handler );
-        TOOLS_FREE( reginfo->handlerName );
-        TOOLS_FREE( reginfo->contextName );
-        TOOLS_FREE( reginfo->rootoid );
+        MEMORY_FREE( reginfo->handlerName );
+        MEMORY_FREE( reginfo->contextName );
+        MEMORY_FREE( reginfo->rootoid );
         reginfo->rootoid_len = 0;
-        TOOLS_FREE( reginfo );
+        MEMORY_FREE( reginfo );
     }
 }
 
@@ -829,7 +829,7 @@ AgentHandler_createDelegatedCache( MibHandler* handler,
 {
     DelegatedCache* ret;
 
-    ret = TOOLS_MALLOC_TYPEDEF( DelegatedCache );
+    ret = MEMORY_MALLOC_TYPEDEF( DelegatedCache );
     if ( ret ) {
         ret->transaction_id = reqinfo->asp->pdu->transid;
         ret->handler = handler;
@@ -880,7 +880,7 @@ void AgentHandler_freeDelegatedCache( DelegatedCache* dcache )
      * right now, no extra data is there that needs to be freed
      */
     if ( dcache )
-        TOOLS_FREE( dcache );
+        MEMORY_FREE( dcache );
 
     return;
 }
@@ -913,11 +913,11 @@ void AgentHandler_handlerMarkRequestsAsDelegated( RequestInfo* requests,
  * @see AgentHandler_requestGetListData()
  */
 void AgentHandler_requestAddListData( RequestInfo* request,
-    DataList_DataList* node )
+    Map* node )
 {
     if ( request ) {
         if ( request->parent_data )
-            DataList_add( &request->parent_data, node );
+            Map_insert( &request->parent_data, node );
         else
             request->parent_data = node;
     }
@@ -940,7 +940,7 @@ int AgentHandler_requestRemoveListData( RequestInfo* request,
     if ( ( NULL == request ) || ( NULL == request->parent_data ) )
         return 1;
 
-    return DataList_removeNode( &request->parent_data, name );
+    return Map_erase( &request->parent_data, name );
 }
 
 /** Extracts data from a request.
@@ -962,7 +962,7 @@ void* AgentHandler_requestGetListData( RequestInfo* request,
     const char* name )
 {
     if ( request )
-        return DataList_get( request->parent_data, name );
+        return Map_at( request->parent_data, name );
     return NULL;
 }
 
@@ -978,7 +978,7 @@ void* AgentHandler_requestGetListData( RequestInfo* request,
 void AgentHandler_freeRequestDataSet( RequestInfo* request )
 {
     if ( request )
-        DataList_free( request->parent_data );
+        Map_free( request->parent_data );
 }
 
 /** Free the extra data stored in a bunch of requests.
@@ -992,7 +992,7 @@ void AgentHandler_freeRequestDataSet( RequestInfo* request )
 void AgentHandler_freeRequestDataSets( RequestInfo* request )
 {
     if ( request && request->parent_data ) {
-        DataList_freeAll( request->parent_data );
+        Map_clear( request->parent_data );
         request->parent_data = NULL;
     }
 }
@@ -1070,7 +1070,7 @@ _AgentHandler_cloneHandler( MibHandler* it )
     return dup;
 }
 
-static DataList_DataList* _agentHandler_handlerReg = NULL;
+static Map* _agentHandler_handlerReg = NULL;
 
 void AgentHandler_handlerFreeCallback( void* handler )
 {
@@ -1090,8 +1090,8 @@ void AgentHandler_handlerFreeCallback( void* handler )
 void AgentHandler_registerHandlerByName( const char* name,
     MibHandler* handler )
 {
-    DataList_add( &_agentHandler_handlerReg,
-        DataList_create( name, ( void* )handler,
+    Map_insert( &_agentHandler_handlerReg,
+        Map_newElement( name, ( void* )handler,
             AgentHandler_handlerFreeCallback ) );
     DEBUG_MSGTL( ( "handler_registry", "registering helper %s\n", name ) );
 }
@@ -1107,7 +1107,7 @@ void AgentHandler_registerHandlerByName( const char* name,
 void AgentHandler_clearHandlerList( void )
 {
     DEBUG_MSGTL( ( "agent_handler", "AgentHandler_clearHandlerList() called\n" ) );
-    DataList_freeAll( _agentHandler_handlerReg );
+    Map_clear( _agentHandler_handlerReg );
     _agentHandler_handlerReg = NULL;
 }
 
@@ -1175,7 +1175,7 @@ void AgentHandler_parseInjectHandlerConf( const char* token,
         return;
 
     cptr = ReadConfig_copyNword( cptr, handler_to_insert, sizeof( handler_to_insert ) );
-    handler = ( MibHandler* )DataList_get( _agentHandler_handlerReg, handler_to_insert );
+    handler = ( MibHandler* )Map_at( _agentHandler_handlerReg, handler_to_insert );
     if ( !handler ) {
         ReadConfig_error( "no \"%s\" handler registered.",
             handler_to_insert );
@@ -1226,61 +1226,61 @@ void AgentHandler_initHandlerConf( void )
         CALLBACK_POST_READ_CONFIG,
         _AgentHandler_handlerMarkInjectHandlerDone, NULL );
 
-    Enum_seAddPairToSlist( "agentMode", strdup( "GET" ), MODE_GET );
-    Enum_seAddPairToSlist( "agentMode", strdup( "GETNEXT" ), MODE_GETNEXT );
-    Enum_seAddPairToSlist( "agentMode", strdup( "GETBULK" ), MODE_GETBULK );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_BEGIN" ),
+    MapList_addPair( "agentMode", strdup( "GET" ), MODE_GET );
+    MapList_addPair( "agentMode", strdup( "GETNEXT" ), MODE_GETNEXT );
+    MapList_addPair( "agentMode", strdup( "GETBULK" ), MODE_GETBULK );
+    MapList_addPair( "agentMode", strdup( "SET_BEGIN" ),
         MODE_SET_BEGIN );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_RESERVE1" ),
+    MapList_addPair( "agentMode", strdup( "SET_RESERVE1" ),
         MODE_SET_RESERVE1 );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_RESERVE2" ),
+    MapList_addPair( "agentMode", strdup( "SET_RESERVE2" ),
         MODE_SET_RESERVE2 );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_ACTION" ),
+    MapList_addPair( "agentMode", strdup( "SET_ACTION" ),
         MODE_SET_ACTION );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_COMMIT" ),
+    MapList_addPair( "agentMode", strdup( "SET_COMMIT" ),
         MODE_SET_COMMIT );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_FREE" ), MODE_SET_FREE );
-    Enum_seAddPairToSlist( "agentMode", strdup( "SET_UNDO" ), MODE_SET_UNDO );
+    MapList_addPair( "agentMode", strdup( "SET_FREE" ), MODE_SET_FREE );
+    MapList_addPair( "agentMode", strdup( "SET_UNDO" ), MODE_SET_UNDO );
 
-    Enum_seAddPairToSlist( "babystepMode", strdup( "pre-request" ),
+    MapList_addPair( "babystepMode", strdup( "pre-request" ),
         MODE_BSTEP_PRE_REQUEST );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "object_lookup" ),
+    MapList_addPair( "babystepMode", strdup( "object_lookup" ),
         MODE_BSTEP_OBJECT_LOOKUP );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "check_value" ),
+    MapList_addPair( "babystepMode", strdup( "check_value" ),
         MODE_BSTEP_CHECK_VALUE );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "row_create" ),
+    MapList_addPair( "babystepMode", strdup( "row_create" ),
         MODE_BSTEP_ROW_CREATE );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_setup" ),
+    MapList_addPair( "babystepMode", strdup( "undo_setup" ),
         MODE_BSTEP_UNDO_SETUP );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "set_value" ),
+    MapList_addPair( "babystepMode", strdup( "set_value" ),
         MODE_BSTEP_SET_VALUE );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "check_consistency" ),
+    MapList_addPair( "babystepMode", strdup( "check_consistency" ),
         MODE_BSTEP_CHECK_CONSISTENCY );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_set" ),
+    MapList_addPair( "babystepMode", strdup( "undo_set" ),
         MODE_BSTEP_UNDO_SET );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "commit" ),
+    MapList_addPair( "babystepMode", strdup( "commit" ),
         MODE_BSTEP_COMMIT );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_commit" ),
+    MapList_addPair( "babystepMode", strdup( "undo_commit" ),
         MODE_BSTEP_UNDO_COMMIT );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "irreversible_commit" ),
+    MapList_addPair( "babystepMode", strdup( "irreversible_commit" ),
         MODE_BSTEP_IRREVERSIBLE_COMMIT );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "undo_cleanup" ),
+    MapList_addPair( "babystepMode", strdup( "undo_cleanup" ),
         MODE_BSTEP_UNDO_CLEANUP );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "post_request" ),
+    MapList_addPair( "babystepMode", strdup( "post_request" ),
         MODE_BSTEP_POST_REQUEST );
-    Enum_seAddPairToSlist( "babystepMode", strdup( "original" ), 0xffff );
+    MapList_addPair( "babystepMode", strdup( "original" ), 0xffff );
     /*
      * xxx-rks: hmmm.. will this work for modes which are or'd together?
      *          I'm betting not...
      */
-    Enum_seAddPairToSlist( "handlerCanMode",
+    MapList_addPair( "handlerCanMode",
         strdup( "GET/GETNEXT" ),
         HANDLER_CAN_GETANDGETNEXT );
 
-    Enum_seAddPairToSlist( "handlerCanMode", strdup( "SET" ),
+    MapList_addPair( "handlerCanMode", strdup( "SET" ),
         HANDLER_CAN_SET );
-    Enum_seAddPairToSlist( "handlerCanMode", strdup( "GETBULK" ),
+    MapList_addPair( "handlerCanMode", strdup( "GETBULK" ),
         HANDLER_CAN_GETBULK );
-    Enum_seAddPairToSlist( "handlerCanMode", strdup( "BABY_STEP" ),
+    MapList_addPair( "handlerCanMode", strdup( "BABY_STEP" ),
         HANDLER_CAN_BABY_STEP );
 }

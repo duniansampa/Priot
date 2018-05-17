@@ -17,7 +17,7 @@ void            file_free_config(void);
 void            file_parse_config(const char *, char *);
 extern FindVarMethodFT var_file_table;
 
-#define FILE_NAME_MAX TOOLS_MAXPATH
+#define FILE_NAME_MAX UTILITIES_MAX_PATH
 
 struct filestat {
     char            name[FILE_NAME_MAX];

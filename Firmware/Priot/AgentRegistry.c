@@ -1,7 +1,7 @@
 #include "AgentRegistry.h"
 #include "PriotSettings.h"
-#include "Debug.h"
-#include "Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Assert.h"
 #include "DefaultStore.h"
 #include "AgentCallbacks.h"
 #include "Vacm.h"
@@ -90,7 +90,7 @@ _AgentRegistry_getContextLookupCache(const char *context) {
     }
     if (!ptr) {
         if (AgentRegistry_subtreeFindFirst(context)) {
-            ptr = TOOLS_MALLOC_TYPEDEF(LookupCacheContext);
+            ptr = MEMORY_MALLOC_TYPEDEF(LookupCacheContext);
             ptr->next = _agentRegistry_thecontextcache;
             ptr->context = strdup(context);
             _agentRegistry_thecontextcache = ptr;
@@ -205,8 +205,8 @@ AgentRegistry_clearLookupCache(void) {
     ptr = _agentRegistry_thecontextcache;
     while (ptr) {
     next = ptr->next;
-    TOOLS_FREE(ptr->context);
-    TOOLS_FREE(ptr);
+    MEMORY_FREE(ptr->context);
+    MEMORY_FREE(ptr);
     ptr = next;
     }
     _agentRegistry_thecontextcache = NULL; /* !!! */
@@ -275,7 +275,7 @@ AgentRegistry_subtreeFindFirst(const char *context_name)
 Subtree *
 AgentRegistry_addSubtree(Subtree *new_tree, const char *context_name)
 {
-    SubtreeContextCache *ptr = TOOLS_MALLOC_TYPEDEF(SubtreeContextCache);
+    SubtreeContextCache *ptr = MEMORY_MALLOC_TYPEDEF(SubtreeContextCache);
 
     if (!context_name) {
         context_name = "";
@@ -367,8 +367,8 @@ AgentRegistry_clearContext(void) {
         AgentRegistry_clearSubtree(t);
     }
 
-        free(TOOLS_REMOVE_CONST(char*, ptr->context_name));
-        TOOLS_FREE(ptr);
+        free(UTILITIES_REMOVE_CONST(char*, ptr->context_name));
+        MEMORY_FREE(ptr);
 
     ptr = next;
     }
@@ -402,18 +402,18 @@ AgentRegistry_subtreeFree(Subtree *a)
   if (a != NULL) {
     if (a->variables != NULL && Api_oidEquals(a->name_a, a->namelen,
                          a->start_a, a->start_len) == 0) {
-      TOOLS_FREE(a->variables);
+      MEMORY_FREE(a->variables);
     }
-    TOOLS_FREE(a->name_a);
+    MEMORY_FREE(a->name_a);
     a->namelen = 0;
-    TOOLS_FREE(a->start_a);
+    MEMORY_FREE(a->start_a);
     a->start_len = 0;
-    TOOLS_FREE(a->end_a);
+    MEMORY_FREE(a->end_a);
     a->end_len = 0;
-    TOOLS_FREE(a->label_a);
+    MEMORY_FREE(a->label_a);
     AgentHandler_handlerRegistrationFree(a->reginfo);
     a->reginfo = NULL;
-    TOOLS_FREE(a);
+    MEMORY_FREE(a);
   }
 }
 
@@ -532,7 +532,7 @@ AgentRegistry_subtreeJoin(Subtree *root)
             DEBUG_MSGTL(("subtree", "  JOINING to "));
             DEBUG_MSGOID(("subtree", s->start_a, s->start_len));
 
-        TOOLS_FREE(root->end_a);
+        MEMORY_FREE(root->end_a);
         root->end_a   = s->end_a;
             root->end_len = s->end_len;
         s->end_a      = NULL;
@@ -602,15 +602,15 @@ AgentRegistry_subtreeSplit(Subtree *current, oid name[], int name_len)
     tmp_b = Api_duplicateObjid(name, name_len);
     if (tmp_b == NULL) {
     AgentRegistry_subtreeFree(new_sub);
-    TOOLS_FREE(tmp_a);
+    MEMORY_FREE(tmp_a);
     return NULL;
     }
 
-    TOOLS_FREE(current->end_a);
+    MEMORY_FREE(current->end_a);
     current->end_a = tmp_a;
     current->end_len = name_len;
     if (new_sub->start_a != NULL) {
-    TOOLS_FREE(new_sub->start_a);
+    MEMORY_FREE(new_sub->start_a);
     }
     new_sub->start_a = tmp_b;
     new_sub->start_len = name_len;
@@ -1076,7 +1076,7 @@ AgentRegistry_registerMib2(const char *moduleName,
     DEBUG_MSGOIDRANGE(("AgentRegistry_registerMib", mibloc, mibloclen, range_subid,
                       range_ubound));
     DEBUG_MSG(("AgentRegistry_registerMib", " with context \"%s\"\n",
-              TOOLS_STRORNULL(context)));
+              UTILITIES_STRING_OR_NULL(context)));
 
     /*
      * verify that the passed context is equal to the context
@@ -1933,7 +1933,7 @@ AgentRegistry_unregisterMibsBySession(Types_Session * ss)
 
                     Callback_callCallbacks(CALLBACK_APPLICATION,
                                         PriotdCallback_UNREGISTER_OID, &rp);
-            TOOLS_FREE(rp.name);
+            MEMORY_FREE(rp.name);
                 } else {
                     prev = child;
                 }
@@ -2210,9 +2210,9 @@ AgentRegistry_dumpRegistry(void)
         }
     }
 
-    TOOLS_FREE(s);
-    TOOLS_FREE(e);
-    TOOLS_FREE(v);
+    MEMORY_FREE(s);
+    MEMORY_FREE(e);
+    MEMORY_FREE(v);
 
     AgentIndex_dumpIdxRegistry();
 }

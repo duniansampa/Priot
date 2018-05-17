@@ -14,7 +14,7 @@
 
 #include "siglog/data_access/route.h"
 #include <netinet/in.h>
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
 
     /*
@@ -51,7 +51,7 @@
     /*
      * TODO:101:o: |-> Review ipCidrRouteTable registration context.
      */
-    typedef DataList_DataList ipCidrRouteTable_registration;
+    typedef Map ipCidrRouteTable_registration;
 
 /**********************************************************************/
     /*
@@ -140,7 +140,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ipCidrRouteTable_data_list;
+        Map *ipCidrRouteTable_data_list;
 
     } ipCidrRouteTable_rowreq_ctx;
 

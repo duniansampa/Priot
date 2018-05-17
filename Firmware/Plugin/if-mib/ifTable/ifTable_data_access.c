@@ -14,10 +14,10 @@
 
 #include "ifTable_data_access.h"
 #include "AgentReadConfig.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Trap.h"
 #include "ifTable_defs.h"
 #include "ifTable_interface.h"

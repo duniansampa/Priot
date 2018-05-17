@@ -1,29 +1,28 @@
 #include "Api.h"
 #include "Agentx/Protocol.h"
 #include "Alarm.h"
-#include "Assert.h"
 #include "Auth.h"
 #include "Callback.h"
 #include "Callback.h"
 #include "Client.h"
-#include "Container.h"
-#include "Debug.h"
 #include "DefaultStore.h"
-#include "Enum.h"
 #include "Impl.h"
 #include "Int64.h"
 #include "LargeFdSet.h"
-#include "Logger.h"
 #include "Mib.h"
-#include "MtSupport.h"
-#include "MtSupport.h"
 #include "Parse.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
 #include "Service.h"
 #include "Session.h"
-#include "Strlcpy.h"
+#include "System/Containers/Container.h"
+#include "System/Containers/MapList.h"
+#include "System/String.h"
+#include "System/Task/Mutex.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Usm.h"
 #include "V3.h"
 #include "Vacm.h"
@@ -268,7 +267,7 @@ Api_pduType( int type )
 long Api_getNextReqid( void )
 {
     long retVal;
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_REQUESTID );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_REQUESTID );
     retVal = 1 + _api_reqid; /*MTCRITICAL_RESOURCE */
     if ( !retVal )
         retVal = 2;
@@ -281,14 +280,14 @@ long Api_getNextReqid( void )
     if ( !retVal ) {
         _api_reqid = retVal = 2;
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_REQUESTID );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_REQUESTID );
     return retVal;
 }
 
 long Api_getNextMsgid( void )
 {
     long retVal;
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_MESSAGEID );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_MESSAGEID );
     retVal = 1 + _api_msgid; /*MTCRITICAL_RESOURCE */
     if ( !retVal )
         retVal = 2;
@@ -301,14 +300,14 @@ long Api_getNextMsgid( void )
     if ( !retVal ) {
         _api_msgid = retVal = 2;
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_MESSAGEID );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_MESSAGEID );
     return retVal;
 }
 
 long Api_getNextSessid( void )
 {
     long retVal;
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MT_LIB_SESSIONID );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MT_LIB_SESSIONID );
     retVal = 1 + _api_sessid; /*MTCRITICAL_RESOURCE */
     if ( !retVal )
         retVal = 2;
@@ -321,14 +320,14 @@ long Api_getNextSessid( void )
     if ( !retVal ) {
         _api_sessid = retVal = 2;
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MT_LIB_SESSIONID );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MT_LIB_SESSIONID );
     return retVal;
 }
 
 long Api_getNextTransid( void )
 {
     long retVal;
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MT_LIB_TRANSID );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MT_LIB_TRANSID );
     retVal = 1 + _api_transid; /*MTCRITICAL_RESOURCE */
     if ( !retVal )
         retVal = 2;
@@ -341,7 +340,7 @@ long Api_getNextTransid( void )
     if ( !retVal ) {
         _api_transid = retVal = 2;
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MT_LIB_TRANSID );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MT_LIB_TRANSID );
     return retVal;
 }
 
@@ -357,7 +356,7 @@ void Api_perror( const char* prog_string )
 void Api_setDetail( const char* detail_string )
 {
     if ( detail_string != NULL ) {
-        Strlcpy_strlcpy( ( char* )_api_detail, detail_string, sizeof( _api_detail ) );
+        String_copyTruncate( ( char* )_api_detail, detail_string, sizeof( _api_detail ) );
         _api_detailF = 1;
     }
 }
@@ -387,7 +386,7 @@ Api_errstring( int snmp_errnumber )
         msg_buf[ sizeof( msg_buf ) - 1 ] = '\0';
         _api_detailF = 0;
     } else {
-        Strlcpy_strlcpy( msg_buf, msg, sizeof( msg_buf ) );
+        String_copyTruncate( msg_buf, msg, sizeof( msg_buf ) );
     }
 
     return ( msg_buf );
@@ -420,7 +419,7 @@ void Api_error( Types_Session* psess,
             buf[ sizeof( buf ) - 1 ] = '\0';
             _api_detailF = 0;
         } else
-            Strlcpy_strlcpy( buf, _api_errors[ -snmp_errnumber ], sizeof( buf ) );
+            String_copyTruncate( buf, _api_errors[ -snmp_errnumber ], sizeof( buf ) );
     } else {
         if ( snmp_errnumber ) {
             snprintf( buf, sizeof( buf ), "Unknown Error %d", snmp_errnumber );
@@ -462,7 +461,7 @@ void Api_sessLogError( int priority,
     char* err;
     Api_error( ss, NULL, NULL, &err );
     Logger_log( priority, "%s: %s\n", prog_string, err );
-    TOOLS_FREE( err );
+    MEMORY_FREE( err );
 }
 
 /*
@@ -497,7 +496,7 @@ _Api_init( void )
     _api_initPriotInitDone2 = 1;
     _api_reqid = 1;
 
-    MtSupport_resInit(); /* initialize the mt locking structures */
+    Mutex_Init(); /* initialize the mt locking structures */
     Parse_initMibInternals();
     Transport_tdomainInit();
 
@@ -668,7 +667,7 @@ void Api_init( const char* type )
     Transport_initTransport();
     V3_initV3( type );
     Alarm_initAlarm();
-    Enum_initEnum( type );
+    //Enum_initEnum( type );
     Vacm_initVacm();
 
     ReadConfig_readPremibConfigs();
@@ -726,7 +725,7 @@ void Api_shutdown( const char* type )
     ReadConfig_unregisterAllConfigHandlers();
     Container_freeList();
     Secmod_clear();
-    Enum_clearEnum();
+    MapList_clear();
     Transport_clearTdomainList();
     Callback_clearCallback();
     DefaultStore_shutdown();
@@ -754,10 +753,10 @@ Api_open( Types_Session* session )
         return NULL;
     }
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     slp->next = api_sessions;
     api_sessions = slp;
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 
     return ( slp->session );
 }
@@ -787,10 +786,10 @@ Api_openEx( Types_Session* session,
     slp->internal->hook_realloc_build = frbuild;
     slp->internal->check_packet = fcheck;
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     slp->next = api_sessions;
     api_sessions = slp;
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 
     return ( slp->session );
 }
@@ -1045,7 +1044,7 @@ int Api_v3ProbeContextEngineIDRfc5343( void* slp, Types_Session* session )
     }
     pdu->securityLevel = PRIOT_SEC_LEVEL_NOAUTH;
     pdu->securityModel = session->securityModel;
-    pdu->contextEngineID = ( u_char* )Tools_memdup( probeEngineID, probeEngineID_len );
+    pdu->contextEngineID = ( u_char* )Memory_memdup( probeEngineID, probeEngineID_len );
     if ( !pdu->contextEngineID ) {
         Logger_log( LOGGER_PRIORITY_ERR, "failed to clone memory for rfc5343 probe\n" );
         Api_freePdu( pdu );
@@ -1066,7 +1065,7 @@ int Api_v3ProbeContextEngineIDRfc5343( void* slp, Types_Session* session )
 
     /* check that the response makes sense */
     if ( NULL != response->variables && NULL != response->variables->name && Api_oidCompare( response->variables->name, response->variables->nameLength, snmpEngineIDoid, snmpEngineIDoid_len ) == 0 && ASN01_OCTET_STR == response->variables->type && NULL != response->variables->val.string && response->variables->valLen > 0 ) {
-        session->contextEngineID = ( u_char* )Tools_memdup( response->variables->val.string,
+        session->contextEngineID = ( u_char* )Memory_memdup( response->variables->val.string,
             response->variables->valLen );
         if ( !session->contextEngineID ) {
             Logger_log( LOGGER_PRIORITY_ERR, "failed rfc5343 contextEngineID probing: memory allocation failed\n" );
@@ -1075,7 +1074,7 @@ int Api_v3ProbeContextEngineIDRfc5343( void* slp, Types_Session* session )
 
         /* technically there likely isn't a securityEngineID but just
            in case anyone goes looking we might as well have one */
-        session->securityEngineID = ( u_char* )Tools_memdup( response->variables->val.string,
+        session->securityEngineID = ( u_char* )Memory_memdup( response->variables->val.string,
             response->variables->valLen );
         if ( !session->securityEngineID ) {
             Logger_log( LOGGER_PRIORITY_ERR, "failed rfc5343 securityEngineID probing: memory allocation failed\n" );
@@ -1378,10 +1377,10 @@ Api_add( Types_Session* in_session,
         return NULL;
     }
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     slp->next = api_sessions;
     api_sessions = slp;
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 
     return ( slp->session );
 }
@@ -1415,10 +1414,10 @@ Api_addFull( Types_Session* in_session,
         return NULL;
     }
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     slp->next = api_sessions;
     api_sessions = slp;
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 
     return ( slp->session );
 }
@@ -1536,16 +1535,16 @@ static void
 _Api_freeSession( Types_Session* s )
 {
     if ( s ) {
-        TOOLS_FREE( s->localname );
-        TOOLS_FREE( s->peername );
-        TOOLS_FREE( s->community );
-        TOOLS_FREE( s->contextEngineID );
-        TOOLS_FREE( s->contextName );
-        TOOLS_FREE( s->securityEngineID );
-        TOOLS_FREE( s->securityName );
-        TOOLS_FREE( s->securityAuthProto );
-        TOOLS_FREE( s->securityPrivProto );
-        TOOLS_FREE( s->paramName );
+        MEMORY_FREE( s->localname );
+        MEMORY_FREE( s->peername );
+        MEMORY_FREE( s->community );
+        MEMORY_FREE( s->contextEngineID );
+        MEMORY_FREE( s->contextName );
+        MEMORY_FREE( s->securityEngineID );
+        MEMORY_FREE( s->securityName );
+        MEMORY_FREE( s->securityAuthProto );
+        MEMORY_FREE( s->securityPrivProto );
+        MEMORY_FREE( s->paramName );
 
         /*
          * clear session from any callbacks
@@ -1583,7 +1582,7 @@ int Api_sessClose( void* sessp )
     if ( isp ) {
         Api_RequestList *rp, *orp;
 
-        TOOLS_FREE( isp->packet );
+        MEMORY_FREE( isp->packet );
 
         /*
          * Free each element in the input request list.
@@ -1644,7 +1643,7 @@ int Api_close( Types_Session* session )
     struct Api_SessionList_s *slp = NULL, *oslp = NULL;
 
     { /*MTCRITICAL_RESOURCE */
-        MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+        Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
         if ( api_sessions && api_sessions->session == session ) { /* If first entry */
             slp = api_sessions;
             api_sessions = slp->next;
@@ -1658,7 +1657,7 @@ int Api_close( Types_Session* session )
                 oslp = slp;
             }
         }
-        MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+        Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     } /*END MTCRITICAL_RESOURCE */
     if ( slp == NULL ) {
         return 0;
@@ -1670,13 +1669,13 @@ int Api_closeSessions( void )
 {
     struct Api_SessionList_s* slp;
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     while ( api_sessions ) {
         slp = api_sessions;
         api_sessions = api_sessions->next;
         Api_sessClose( ( void* )slp );
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     return 1;
 }
 
@@ -1833,7 +1832,7 @@ _Api_v3Build( u_char** pkt, size_t* pkt_len, size_t* offset,
     if ( pdu->securityModel == API_DEFAULT_SECMODEL ) {
         pdu->securityModel = session->securityModel;
         if ( pdu->securityModel == API_DEFAULT_SECMODEL ) {
-            pdu->securityModel = Enum_seFindValueInSlist( "priotSecmods", DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_SECMODEL ) );
+            pdu->securityModel = MapList_findValue( "priotSecmods", DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_SECMODEL ) );
 
             if ( pdu->securityModel <= 0 ) {
                 pdu->securityModel = PRIOT_SEC_MODEL_USM;
@@ -2213,7 +2212,7 @@ int Api_v3PacketReallocRbuild( u_char** pkt, size_t* pkt_len,
     rc = Api_v3HeaderReallocRbuild( &hdrbuf, &hdrbuf_len, &hdr_offset,
         session, pdu );
     if ( rc == 0 ) {
-        TOOLS_FREE( hdrbuf );
+        MEMORY_FREE( hdrbuf );
         return -1;
     }
     hdr = hdrbuf + hdrbuf_len - hdr_offset;
@@ -2263,7 +2262,7 @@ int Api_v3PacketReallocRbuild( u_char** pkt, size_t* pkt_len,
     }
 
     DEBUG_INDENTLESS();
-    TOOLS_FREE( hdrbuf );
+    MEMORY_FREE( hdrbuf );
     return rc;
 } /* end Api_v3PacketReallocRbuild() */
 
@@ -3189,7 +3188,7 @@ int Api_v3Parse( Types_Pdu* pdu,
         parms.msg_flags = msg_flags;
         ret_val = ( *sptr->decode )( &parms );
     } else {
-        TOOLS_FREE( mallocbuf );
+        MEMORY_FREE( mallocbuf );
         DEBUG_INDENTLESS();
         Logger_log( LOGGER_PRIORITY_WARNING, "security service %ld can't decode packets\n",
             msg_sec_model );
@@ -3212,7 +3211,7 @@ int Api_v3Parse( Types_Pdu* pdu,
             DEBUG_INDENTADD( -4 );
         }
 
-        TOOLS_FREE( mallocbuf );
+        MEMORY_FREE( mallocbuf );
         return ret_val;
     }
 
@@ -3225,7 +3224,7 @@ int Api_v3Parse( Types_Pdu* pdu,
     if ( data == NULL ) {
         Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
         DEBUG_INDENTADD( -4 );
-        TOOLS_FREE( mallocbuf );
+        MEMORY_FREE( mallocbuf );
         return ErrorCode_ASN_PARSE_ERR;
     }
 
@@ -3248,11 +3247,11 @@ int Api_v3Parse( Types_Pdu* pdu,
     if ( ret != ErrorCode_SUCCESS ) {
         IMPL_ERROR_MSG( "error parsing PDU" );
         Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
-        TOOLS_FREE( mallocbuf );
+        MEMORY_FREE( mallocbuf );
         return ErrorCode_ASN_PARSE_ERR;
     }
 
-    TOOLS_FREE( mallocbuf );
+    MEMORY_FREE( mallocbuf );
     return ErrorCode_SUCCESS;
 } /* end Api_v3Parse() */
 
@@ -3311,14 +3310,14 @@ int Api_v3MakeReport( Types_Pdu* pdu, int error )
     Api_freeVarbind( pdu->variables ); /* free the current varbind */
 
     pdu->variables = NULL;
-    TOOLS_FREE( pdu->securityEngineID );
+    MEMORY_FREE( pdu->securityEngineID );
     pdu->securityEngineID = V3_generateEngineID( &pdu->securityEngineIDLen );
-    TOOLS_FREE( pdu->contextEngineID );
+    MEMORY_FREE( pdu->contextEngineID );
     pdu->contextEngineID = V3_generateEngineID( &pdu->contextEngineIDLen );
     pdu->command = PRIOT_MSG_REPORT;
     pdu->errstat = 0;
     pdu->errindex = 0;
-    TOOLS_FREE( pdu->contextName );
+    MEMORY_FREE( pdu->contextName );
     pdu->contextName = strdup( "" );
     pdu->contextNameLen = strlen( pdu->contextName );
 
@@ -4167,7 +4166,7 @@ _Api_sessAsyncSend( void* sessp,
 
     if ( result < 0 ) {
         DEBUG_MSGTL( ( "sessAsyncSend", "encoding failure\n" ) );
-        TOOLS_FREE( pktbuf );
+        MEMORY_FREE( pktbuf );
         return 0;
     }
 
@@ -4181,7 +4180,7 @@ _Api_sessAsyncSend( void* sessp,
             "length of packet (%lu) exceeds session maximum (%lu)\n",
             ( unsigned long )length, ( unsigned long )session->sndMsgMaxSize ) );
         session->s_snmp_errno = ErrorCode_TOO_LONG;
-        TOOLS_FREE( pktbuf );
+        MEMORY_FREE( pktbuf );
         return 0;
     }
 
@@ -4195,7 +4194,7 @@ _Api_sessAsyncSend( void* sessp,
             "length of packet (%lu) exceeds transport maximum (%lu)\n",
             ( unsigned long )length, ( unsigned long )transport->msgMaxSize ) );
         session->s_snmp_errno = ErrorCode_TOO_LONG;
-        TOOLS_FREE( pktbuf );
+        MEMORY_FREE( pktbuf );
         return 0;
     }
 
@@ -4211,7 +4210,7 @@ _Api_sessAsyncSend( void* sessp,
         &( pdu->transportData ),
         &( pdu->transportDataLength ) );
 
-    TOOLS_FREE( pktbuf );
+    MEMORY_FREE( pktbuf );
 
     if ( result < 0 ) {
         session->s_snmp_errno = ErrorCode_BAD_SENDTO;
@@ -4256,7 +4255,7 @@ _Api_sessAsyncSend( void* sessp,
         /*
          * XX lock should be per session !
          */
-        MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+        Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
         if ( isp->requestsEnd ) {
             rp->next_request = isp->requestsEnd->next_request;
             isp->requestsEnd->next_request = rp;
@@ -4266,7 +4265,7 @@ _Api_sessAsyncSend( void* sessp,
             isp->requests = rp;
             isp->requestsEnd = rp;
         }
-        MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+        Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     } else {
         /*
          * No response expected...
@@ -4315,15 +4314,15 @@ void Api_freeVarInternals( Types_VariableList* var )
         return;
 
     if ( var->name != var->nameLoc )
-        TOOLS_FREE( var->name );
+        MEMORY_FREE( var->name );
     if ( var->val.string != var->buf )
-        TOOLS_FREE( var->val.string );
+        MEMORY_FREE( var->val.string );
     if ( var->data ) {
         if ( var->dataFreeHook ) {
             var->dataFreeHook( var->data );
             var->data = NULL;
         } else {
-            TOOLS_FREE( var->data );
+            MEMORY_FREE( var->data );
         }
     }
 }
@@ -4378,13 +4377,13 @@ void Api_freePdu( Types_Pdu* pdu )
         ( *sptr->pdu_free )( pdu );
     }
     Api_freeVarbind( pdu->variables );
-    TOOLS_FREE( pdu->enterprise );
-    TOOLS_FREE( pdu->community );
-    TOOLS_FREE( pdu->contextEngineID );
-    TOOLS_FREE( pdu->securityEngineID );
-    TOOLS_FREE( pdu->contextName );
-    TOOLS_FREE( pdu->securityName );
-    TOOLS_FREE( pdu->transportData );
+    MEMORY_FREE( pdu->enterprise );
+    MEMORY_FREE( pdu->community );
+    MEMORY_FREE( pdu->contextEngineID );
+    MEMORY_FREE( pdu->securityEngineID );
+    MEMORY_FREE( pdu->contextName );
+    MEMORY_FREE( pdu->securityName );
+    MEMORY_FREE( pdu->transportData );
     memset( pdu, 0, sizeof( Types_Pdu ) );
     free( ( char* )pdu );
 }
@@ -4439,7 +4438,7 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
         char* addrtxt = Transport_peerString( transport, opaque, olength );
         Logger_log( LOGGER_PRIORITY_DEBUG, "\nReceived %d byte packet from %s\n",
             length, addrtxt );
-        TOOLS_FREE( addrtxt );
+        MEMORY_FREE( addrtxt );
         Priot_xdump( packetptr, length, "" );
     }
 
@@ -4450,7 +4449,7 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
     if ( isp->hook_pre ) {
         if ( isp->hook_pre( sp, transport, opaque, olength ) == 0 ) {
             DEBUG_MSGTL( ( "sessProcessPacket", "pre-parse fail\n" ) );
-            TOOLS_FREE( opaque );
+            MEMORY_FREE( opaque );
             return -1;
         }
     }
@@ -4463,7 +4462,7 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
 
     if ( pdu == NULL ) {
         Logger_log( LOGGER_PRIORITY_ERR, "pdu failed to be created\n" );
-        TOOLS_FREE( opaque );
+        MEMORY_FREE( opaque );
         return -1;
     }
 
@@ -4726,11 +4725,11 @@ void Api_read( fd_set* fdset )
 void Api_read2( Types_LargeFdSet* fdset )
 {
     struct Api_SessionList_s* slp;
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     for ( slp = api_sessions; slp; slp = slp->next ) {
         Api_sessRead2( ( void* )slp, fdset );
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 }
 
 /*
@@ -4908,8 +4907,8 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
         sp->s_snmp_errno = ErrorCode_BAD_RECVFROM;
         sp->s_errno = errno;
         Api_setDetail( strerror( errno ) );
-        TOOLS_FREE( rxbuf );
-        TOOLS_FREE( opaque );
+        MEMORY_FREE( rxbuf );
+        MEMORY_FREE( opaque );
         return -1;
     }
 
@@ -4942,8 +4941,8 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
          */
         DEBUG_MSGTL( ( "sessRead", "fd %d closed\n", transport->sock ) );
         transport->f_close( transport );
-        TOOLS_FREE( isp->packet );
-        TOOLS_FREE( opaque );
+        MEMORY_FREE( isp->packet );
+        MEMORY_FREE( opaque );
         return -1;
     }
 
@@ -4987,8 +4986,8 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
                 }
                 DEBUG_MSGTL( ( "sessRead", "fd %d closed\n", transport->sock ) );
                 transport->f_close( transport );
-                TOOLS_FREE( opaque );
-                /** XXX-rks: why no TOOLS_FREE(isp->packet); ?? */
+                MEMORY_FREE( opaque );
+                /** XXX-rks: why no MEMORY_FREE(isp->packet); ?? */
                 return -1;
             }
 
@@ -5011,7 +5010,7 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
                 if ( pptr != isp->packet )
                     break; /* opaque freed for us outside of loop. */
 
-                TOOLS_FREE( opaque );
+                MEMORY_FREE( opaque );
                 return 0;
             }
 
@@ -5060,7 +5059,7 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
         of the opaque pointer, so we still need to free() the opaque
         pointer itself.  */
 
-        TOOLS_FREE( opaque );
+        MEMORY_FREE( opaque );
 
         if ( isp->packet_len >= MAXIMUM_PACKET_SIZE ) {
             /*
@@ -5072,7 +5071,7 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
                 "u, dropping connection %d\n",
                 isp->packet_len, transport->sock );
             transport->f_close( transport );
-            /** XXX-rks: why no TOOLS_FREE(isp->packet); ?? */
+            /** XXX-rks: why no MEMORY_FREE(isp->packet); ?? */
             return -1;
         } else if ( isp->packet_len == 0 ) {
             /*
@@ -5081,7 +5080,7 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
              * time.  We can free() the buffer now to keep the memory
              * footprint down.
              */
-            TOOLS_FREE( isp->packet );
+            MEMORY_FREE( isp->packet );
             isp->packet_size = 0;
             isp->packet_len = 0;
             return rc;
@@ -5119,7 +5118,7 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
     } else {
         rc = _Api_sessProcessPacket( sessp, sp, isp, transport, opaque,
             olength, rxbuf, length );
-        TOOLS_FREE( rxbuf );
+        MEMORY_FREE( rxbuf );
         return rc;
     }
 }
@@ -5363,7 +5362,7 @@ int Api_sessSelectInfo2Flags( void* sessp, int* numfds,
     if ( next_alarm && ( !timerisset( &earliest ) || timercmp( &alarm_tm, &earliest, < ) ) )
         earliest = alarm_tm;
 
-    TOOLS_TIMERSUB( &earliest, &now, &earliest );
+    TIME_SUB_TIME( &earliest, &now, &earliest );
     if ( earliest.tv_sec < 0 ) {
         time_t overdue_ms = -( earliest.tv_sec * 1000 + earliest.tv_usec / 1000 );
         if ( overdue_ms >= 10 )
@@ -5400,11 +5399,11 @@ int Api_sessSelectInfo2Flags( void* sessp, int* numfds,
 void Api_timeout( void )
 {
     struct Api_SessionList_s* slp;
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     for ( slp = api_sessions; slp; slp = slp->next ) {
         Api_sessTimeout( ( void* )slp );
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 }
 
 static int
@@ -5471,7 +5470,7 @@ _Api_resendRequest( struct Api_SessionList_s* slp, Api_RequestList* rp,
          * This should never happen.
          */
         DEBUG_MSGTL( ( "sessResend", "encoding failure\n" ) );
-        TOOLS_FREE( pktbuf );
+        MEMORY_FREE( pktbuf );
         return -1;
     }
 
@@ -5490,7 +5489,7 @@ _Api_resendRequest( struct Api_SessionList_s* slp, Api_RequestList* rp,
      */
 
     if ( pktbuf != NULL ) {
-        TOOLS_FREE( pktbuf );
+        MEMORY_FREE( pktbuf );
         packet = NULL;
     }
 
@@ -5862,7 +5861,7 @@ int Api_oidFindPrefix( const oid* in_name1, size_t len1,
 
     if ( in_name1[ 0 ] != in_name2[ 0 ] )
         return 0; /* No match */
-    min_size = TOOLS_MIN( len1, len2 );
+    min_size = UTILITIES_MIN_VALUE( len1, len2 );
     for ( i = 0; i < ( int )min_size; i++ ) {
         if ( in_name1[ i ] != in_name2[ i ] )
             return i; /* '�' is the first differing subidentifier
@@ -5947,7 +5946,7 @@ Api_varlistAddVariable( Types_VariableList** varlist,
     if ( varlist == NULL )
         return NULL;
 
-    vars = TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+    vars = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
     if ( vars == NULL )
         return NULL;
 
@@ -6206,19 +6205,19 @@ int Api_addVar( Types_Pdu* pdu,
                 Api_pduAddVariable( pdu, name, name_length, ASN01_OCTET_STR,
                     hintptr, itmp );
             }
-            TOOLS_FREE( hintptr );
+            MEMORY_FREE( hintptr );
             hintptr = buf;
             break;
         }
         if ( type == 'd' ) {
-            if ( !Tools_decimalToBinary( &buf, &buf_len, &value_len, 1, value ) ) {
+            if ( !Convert_integerStringToBinaryString( &buf, &buf_len, &value_len, 1, value ) ) {
                 result = ErrorCode_VALUE;
                 Api_setDetail( value );
                 break;
             }
             buf_ptr = buf;
         } else if ( type == 'x' ) {
-            if ( !Tools_hexToBinary1( &buf, &buf_len, &value_len, 1, value ) ) {
+            if ( !Convert_hexStringToBinaryStringWrapper( &buf, &buf_len, &value_len, 1, value ) ) {
                 result = ErrorCode_VALUE;
                 Api_setDetail( value );
                 break;
@@ -6277,8 +6276,8 @@ int Api_addVar( Types_Pdu* pdu,
                 } else {
                     result = ErrorCode_RANGE; /* ?? or ErrorCode_VALUE; */
                     Api_setDetail( cp );
-                    TOOLS_FREE( buf );
-                    TOOLS_FREE( vp );
+                    MEMORY_FREE( buf );
+                    MEMORY_FREE( vp );
                     goto out;
                 }
             }
@@ -6287,14 +6286,14 @@ int Api_addVar( Types_Pdu* pdu,
             if ( ix >= ( int )tint ) {
                 tint = ix + 1;
             }
-            if ( ix >= ( int )buf_len && !Tools_realloc2( &buf, &buf_len ) ) {
+            if ( ix >= ( int )buf_len && !Memory_reallocIncrease( &buf, &buf_len ) ) {
                 result = ErrorCode_MALLOC;
                 break;
             }
             bit = 0x80 >> ltmp % 8;
             buf[ ix ] |= bit;
         }
-        TOOLS_FREE( vp );
+        MEMORY_FREE( vp );
         Api_pduAddVariable( pdu, name, name_length, ASN01_OCTET_STR,
             buf, tint );
         break;
@@ -6341,7 +6340,7 @@ int Api_addVar( Types_Pdu* pdu,
         break;
     }
 
-    TOOLS_FREE( buf );
+    MEMORY_FREE( buf );
     API_SET_PRIOT_ERROR( result );
     return result;
 
@@ -6426,13 +6425,13 @@ void* Api_sessPointer( Types_Session* session )
 {
     struct Api_SessionList_s* slp;
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     for ( slp = api_sessions; slp; slp = slp->next ) {
         if ( slp->session == session ) {
             break;
         }
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 
     if ( slp == NULL ) {
         api_priotErrno = ErrorCode_BAD_SESSION; /*MTCRITICAL_RESOURCE */
@@ -6468,13 +6467,13 @@ Api_sessSessionLookup( void* sessp )
 {
     struct Api_SessionList_s* slp;
 
-    MtSupport_resLock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
     for ( slp = api_sessions; slp; slp = slp->next ) {
         if ( slp == sessp ) {
             break;
         }
     }
-    MtSupport_resUnlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
+    Mutex_unlock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
 
     return ( Types_Session* )slp;
 }

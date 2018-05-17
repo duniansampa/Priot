@@ -12,10 +12,10 @@
  */
 
 #include "ifXTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Tc.h"
 #include "if-mib/ifTable/ifTable_defs.h"
 #include "if-mib/ifTable/ifTable_interface.h"
@@ -79,7 +79,7 @@ void initialize_table_ifXTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    ifXTable_user_context_p = DataList_create( "ifXTable", NULL, NULL );
+    ifXTable_user_context_p = Map_newElement( "ifXTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -103,7 +103,7 @@ void initialize_table_ifXTable( void )
 
 void shutdown_ifXTable( void )
 {
-    DataList_freeAll( ifXTable_user_context_p );
+    Map_clear( ifXTable_user_context_p );
     ifXTable_user_context_p = NULL;
 }
 

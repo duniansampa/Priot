@@ -1,13 +1,13 @@
 #include "VacmConf.h"
 #include "PriotSettings.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "AgentReadConfig.h"
 #include "Vacm.h"
 #include "AgentCallbacks.h"
 #include "ReadConfig.h"
 #include "Priot.h"
-#include "Enum.h"
-#include "Strlcpy.h"
+#include "System/Containers/MapList.h"
+#include "System/String.h"
 #include "Mib.h"
 #include "Impl.h"
 #include "Transports/UDPDomain.h"
@@ -16,7 +16,7 @@
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "AgentRegistry.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Secmod.h"
 
 
@@ -145,8 +145,8 @@ VacmConf_parseGroup(const char *token, char *param)
             ("bad security model \"any\" should be: v1, v2c, usm or a registered security plugin name - installing anyway");
         imodel = PRIOT_SEC_MODEL_ANY;
     } else {
-        if ((imodel = Enum_seFindValueInSlist("priotSecmods", model)) ==
-            ENUM_SE_DNE) {
+        if ((imodel = MapList_findValue("priotSecmods", model)) ==
+            MapListErrorCode_NULL) {
             ReadConfig_configPerror
                 ("bad security model, should be: v1, v2c or usm or a registered security plugin name");
             return;
@@ -161,7 +161,7 @@ VacmConf_parseGroup(const char *token, char *param)
         ReadConfig_configPerror("failed to create group entry");
         return;
     }
-    Strlcpy_strlcpy(gp->groupName, group, sizeof(gp->groupName));
+    String_copyTruncate(gp->groupName, group, sizeof(gp->groupName));
     gp->storageType = PRIOT_STORAGE_PERMANENT;
     gp->status = PRIOT_ROW_ACTIVE;
     free(gp->reserved);
@@ -220,8 +220,8 @@ _VacmConf_parseAccessCommon(const char *token, char *param, char **st,
     else if (strcasecmp(model, "v2c") == 0)
         *imodel = PRIOT_SEC_MODEL_SNMPv2c;
     else {
-        if ((*imodel = Enum_seFindValueInSlist("priotSecmods", model))
-            == ENUM_SE_DNE) {
+        if ((*imodel = MapList_findValue("priotSecmods", model))
+            == MapListErrorCode_NULL) {
             ReadConfig_configPerror
                 ("bad security model, should be: v1, v2c or usm or a registered security plugin name");
             return PARSE_FAIL;
@@ -270,7 +270,7 @@ _VacmConf_parseAccessCommon(const char *token, char *param, char **st,
 int
 VacmConf_parseAuthtokens(const char *token, char **confline)
 {
-    char authspec[TOOLS_MAXBUF_MEDIUM];
+    char authspec[UTILITIES_MAX_BUFFER_MEDIUM];
     char *strtok_state;
     char *type;
     int viewtype, viewtypes = 0;
@@ -285,7 +285,7 @@ VacmConf_parseAuthtokens(const char *token, char **confline)
 
     type = strtok_r(authspec, ",|:", &strtok_state);
     while(type && *type != '\0') {
-        viewtype = Enum_seFindValueInSlist(VACM_VIEW_ENUM_NAME, type);
+        viewtype = MapList_findValue(VACM_VIEW_ENUM_NAME, type);
         if (viewtype < 0 || viewtype >= VACM_MAX_VIEWS) {
             ReadConfig_configPerror("Illegal view name");
         } else {
@@ -352,8 +352,8 @@ VacmConf_parseAuthaccess(const char *token, char *confline)
             else if (strcasecmp(tmp, "v2c") == 0)
                 model = PRIOT_SEC_MODEL_SNMPv2c;
             else {
-                model = Enum_seFindValueInSlist("priotSecmods", tmp);
-                if (model == ENUM_SE_DNE) {
+                model = MapList_findValue("priotSecmods", tmp);
+                if (model == MapListErrorCode_NULL) {
                     ReadConfig_configPerror
                         ("bad security model, should be: v1, v2c or usm or a registered security plugin name");
                     return;
@@ -482,7 +482,7 @@ VacmConf_parseSetaccess(const char *token, char *param)
         return;
     }
 
-    viewnum = Enum_seFindValueInSlist(VACM_VIEW_ENUM_NAME, viewname);
+    viewnum = MapList_findValue(VACM_VIEW_ENUM_NAME, viewname);
     if (viewnum < 0 || viewnum >= VACM_MAX_VIEWS) {
         ReadConfig_configPerror("Illegal view name");
         return;
@@ -870,9 +870,9 @@ VacmConf_createSimple(const char *token, char *confline,
             sprintf(viewname,"viewUSM%d",commcount);
         }
         if ( strcmp( token, "authgroup" ) == 0 ) {
-            Strlcpy_strlcpy(grpname, community, sizeof(grpname));
+            String_copyTruncate(grpname, community, sizeof(grpname));
         } else {
-            Strlcpy_strlcpy(secname, community, sizeof(secname));
+            String_copyTruncate(secname, community, sizeof(secname));
 
             /*
              * sec->group mapping
@@ -942,7 +942,7 @@ VacmConf_createSimple(const char *token, char *confline,
                          grpname, context[0] ? context : "\"\"",
                          model, authlevel,
                         (ctxprefix ? "prefix" : "exact"),
-                         Enum_seFindLabelInSlist(VACM_VIEW_ENUM_NAME, i),
+                         MapList_findLabel(VACM_VIEW_ENUM_NAME, i),
                          viewname);
                 line[ sizeof(line)-1 ] = 0;
                 DEBUG_MSGTL((token, "passing: %s %s\n", "setaccess", line));

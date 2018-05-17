@@ -32,13 +32,13 @@
 
 #include "ifTable_interface.h"
 #include "AgentHandler.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "CheckVarbind.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Priot.h"
 #include "RowMerge.h"
@@ -485,7 +485,7 @@ int ifTable_index_from_oid( Types_Index* oid_idx,
 ifTable_data*
 ifTable_allocate_data( void )
 {
-    ifTable_data* rtn = TOOLS_MALLOC_TYPEDEF( ifTable_data );
+    ifTable_data* rtn = MEMORY_MALLOC_TYPEDEF( ifTable_data );
 
     DEBUG_MSGTL( ( "verbose:ifTable:ifTable_allocate_data", "called\n" ) );
 
@@ -517,7 +517,7 @@ void ifTable_release_data( ifTable_data* data )
 ifTable_rowreq_ctx*
 ifTable_allocate_rowreq_ctx( void* user_init_ctx )
 {
-    ifTable_rowreq_ctx* rowreq_ctx = TOOLS_MALLOC_TYPEDEF( ifTable_rowreq_ctx );
+    ifTable_rowreq_ctx* rowreq_ctx = MEMORY_MALLOC_TYPEDEF( ifTable_rowreq_ctx );
 
     DEBUG_MSGTL( ( "internal:ifTable:ifTable_allocate_rowreq_ctx",
         "called\n" ) );
@@ -569,7 +569,7 @@ void ifTable_release_rowreq_ctx( ifTable_rowreq_ctx* rowreq_ctx )
     if ( rowreq_ctx->oid_idx.oids != rowreq_ctx->oid_tmp )
         free( rowreq_ctx->oid_idx.oids );
 
-    TOOLS_FREE( rowreq_ctx );
+    MEMORY_FREE( rowreq_ctx );
 } /* ifTable_release_rowreq_ctx */
 
 /**

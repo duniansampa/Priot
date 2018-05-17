@@ -5,10 +5,10 @@
  */
 
 #include "interface_ioctl.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include "if-mib/ifTable/ifTable_constants.h"
 #include "ip-mib/data_access/ipaddress_ioctl.h"
 #include <net/if.h>
@@ -56,7 +56,7 @@ _ioctl_get( int fd, int which, struct ifreq* ifrq, const char* name )
         }
     }
 
-    Strlcpy_strlcpy( ifrq->ifr_name, name, sizeof( ifrq->ifr_name ) );
+    String_copyTruncate( ifrq->ifr_name, name, sizeof( ifrq->ifr_name ) );
     rc = ioctl( fd, which, ifrq );
     if ( rc < 0 ) {
         Logger_log( LOGGER_PRIORITY_ERR, "ioctl %d returned %d\n", which, rc );
@@ -90,7 +90,7 @@ int netsnmp_access_interface_ioctl_physaddr_get( int fd,
     DEBUG_MSGTL( ( "access:interface:ioctl", "physaddr_get\n" ) );
 
     if ( ( NULL != ifentry->paddr ) && ( ifentry->paddr_len != IFHWADDRLEN ) ) {
-        TOOLS_FREE( ifentry->paddr );
+        MEMORY_FREE( ifentry->paddr );
     }
     if ( NULL == ifentry->paddr )
         ifentry->paddr = ( char* )malloc( IFHWADDRLEN );
@@ -283,7 +283,7 @@ int netsnmp_access_interface_ioctl_flags_set( int fd,
         }
     }
 
-    Strlcpy_strlcpy( ifrq.ifr_name, ifentry->name, sizeof( ifrq.ifr_name ) );
+    String_copyTruncate( ifrq.ifr_name, ifentry->name, sizeof( ifrq.ifr_name ) );
     rc = ioctl( fd, SIOCGIFFLAGS, &ifrq );
     if ( rc < 0 ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error getting flags\n" );

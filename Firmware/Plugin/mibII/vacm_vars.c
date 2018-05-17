@@ -1008,8 +1008,8 @@ access_parse_accessEntry( oid* name, size_t name_len )
      * Now see if a user exists with these index values 
      */
     aptr = Vacm_getAccessEntry( newGroupName, newContextPrefix, model, level );
-    TOOLS_FREE( newContextPrefix );
-    TOOLS_FREE( newGroupName );
+    MEMORY_FREE( newContextPrefix );
+    MEMORY_FREE( newGroupName );
 
     return aptr;
 

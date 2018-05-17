@@ -1,12 +1,12 @@
 #include "Parse.h"
 #include "DefaultStore.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Tools.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 #include "Mib.h"
 #include <regex.h>
-#include "Strlcat.h"
-#include "Strlcpy.h"
+#include "System/String.h"
+#include "System/String.h"
 #include "ReadConfig.h"
 
 
@@ -767,13 +767,13 @@ static void _Parse_freePartialTree(struct Parse_Tree_s *tp, int keep_label)
     _Parse_freeIndexes(&tp->indexes);
     _Parse_freeVarbinds(&tp->varbinds);
     if (!keep_label)
-        TOOLS_FREE(tp->label);
-    TOOLS_FREE(tp->hint);
-    TOOLS_FREE(tp->units);
-    TOOLS_FREE(tp->description);
-    TOOLS_FREE(tp->reference);
-    TOOLS_FREE(tp->augments);
-    TOOLS_FREE(tp->defaultValue);
+        MEMORY_FREE(tp->label);
+    MEMORY_FREE(tp->hint);
+    MEMORY_FREE(tp->units);
+    MEMORY_FREE(tp->description);
+    MEMORY_FREE(tp->reference);
+    MEMORY_FREE(tp->augments);
+    MEMORY_FREE(tp->defaultValue);
 }
 
 /*
@@ -1791,16 +1791,16 @@ _Parse_objectid(FILE * fp, char *name)
                  */
                 np->label = strdup(name);
                 if (np->label == NULL) {
-                    TOOLS_FREE(np->parent);
-                    TOOLS_FREE(np);
+                    MEMORY_FREE(np->parent);
+                    MEMORY_FREE(np);
                     return (NULL);
                 }
             } else {
                 if (!nop->label) {
                     nop->label = (char *) malloc(20 + PARSE_ANON_LEN);
                     if (nop->label == NULL) {
-                        TOOLS_FREE(np->parent);
-                        TOOLS_FREE(np);
+                        MEMORY_FREE(np->parent);
+                        MEMORY_FREE(np);
                         return (NULL);
                     }
                     sprintf(nop->label, "%s%d", PARSE_ANON, _parse_anonymous++);
@@ -2173,7 +2173,7 @@ _Parse_parseAsntype(FILE * fp, char *name, int *ntype, char *ntoken)
                 type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
                 if (type != PARSE_IDENTIFIER) {
                     _Parse_printError("Expected IDENTIFIER", token, type);
-                    TOOLS_FREE(hint);
+                    MEMORY_FREE(hint);
                     return NULL;
                 }
                 type = PARSE_OBJID;
@@ -2201,13 +2201,13 @@ _Parse_parseAsntype(FILE * fp, char *name, int *ntype, char *ntoken)
 
         if (i == PARSE_MAXTC) {
             _Parse_printError("Too many textual conventions", token, type);
-            TOOLS_FREE(hint);
+            MEMORY_FREE(hint);
             return NULL;
         }
         if (!(type & PARSE_SYNTAX_MASK)) {
             _Parse_printError("Textual convention doesn't map to real type",
                         token, type);
-            TOOLS_FREE(hint);
+            MEMORY_FREE(hint);
             return NULL;
         }
         tcp = &parse_tclist[i];
@@ -2466,11 +2466,11 @@ _Parse_parseObjecttype(FILE * fp, char *name)
                     else if (type == PARSE_LEFTBRACKET)
                         level++;
                     if (type == PARSE_QUOTESTRING)
-                        Strlcat_strlcat(defbuf, "\\\"", sizeof(defbuf));
-                    Strlcat_strlcat(defbuf, quoted_string_buffer, sizeof(defbuf));
+                        String_appendTruncate(defbuf, "\\\"", sizeof(defbuf));
+                    String_appendTruncate(defbuf, quoted_string_buffer, sizeof(defbuf));
                     if (type == PARSE_QUOTESTRING)
-                        Strlcat_strlcat(defbuf, "\\\"", sizeof(defbuf));
-                    Strlcat_strlcat(defbuf, " ", sizeof(defbuf));
+                        String_appendTruncate(defbuf, "\\\"", sizeof(defbuf));
+                    String_appendTruncate(defbuf, " ", sizeof(defbuf));
                 }
 
                 if (type != PARSE_RIGHTBRACKET) {
@@ -3898,9 +3898,9 @@ void Parse_unloadAllMibs(void)
         if (mcp == _parse_moduleMap)
             break;
         _parse_moduleMapHead = mcp->next;
-        if (mcp->tag) free(TOOLS_REMOVE_CONST(char *, mcp->tag));
-        free(TOOLS_REMOVE_CONST(char *, mcp->old_module));
-        free(TOOLS_REMOVE_CONST(char *, mcp->new_module));
+        if (mcp->tag) free(UTILITIES_REMOVE_CONST(char *, mcp->tag));
+        free(UTILITIES_REMOVE_CONST(char *, mcp->old_module));
+        free(UTILITIES_REMOVE_CONST(char *, mcp->new_module));
         free(mcp);
     }
 
@@ -3908,7 +3908,7 @@ void Parse_unloadAllMibs(void)
         struct Parse_ModuleImport_s *mi = mp->imports;
         if (mi) {
             for (i = 0; i < (unsigned int)mp->no_imports; ++i) {
-                TOOLS_FREE((mi + i)->label);
+                MEMORY_FREE((mi + i)->label);
             }
             mp->no_imports = 0;
             if (mi == _parse_rootImports)
@@ -3946,13 +3946,13 @@ void Parse_unloadAllMibs(void)
     memset(_parse_tbuckets, 0, sizeof(_parse_tbuckets));
 
     for (i = 0; i < sizeof(_parse_rootImports) / sizeof(_parse_rootImports[0]); i++) {
-        TOOLS_FREE(_parse_rootImports[i].label);
+        MEMORY_FREE(_parse_rootImports[i].label);
     }
 
     _parse_maxModule = 0;
     _parse_currentModule = 0;
     _parse_moduleMapHead = NULL;
-    TOOLS_FREE(_parse_lastErrModule);
+    MEMORY_FREE(_parse_lastErrModule);
 }
 
 static void
@@ -4132,7 +4132,7 @@ _Parse_parse(FILE * fp, struct Parse_Node_s *root)
         case PARSE_ENDOFFILE:
             continue;
         default:
-            Strlcpy_strlcpy(name, token, sizeof(name));
+            String_copyTruncate(name, token, sizeof(name));
             type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
             nnp = NULL;
             if (type == PARSE_MACRO) {
@@ -4150,7 +4150,7 @@ _Parse_parse(FILE * fp, struct Parse_Node_s *root)
                 _Parse_printError(name, "is a reserved word", lasttype);
             continue;           /* see if we can parse the rest of the file */
         }
-        Strlcpy_strlcpy(name, token, sizeof(name));
+        String_copyTruncate(name, token, sizeof(name));
         type = Parse_getToken(fp, token, PARSE_MAXTOKEN);
         nnp = NULL;
 
@@ -4743,7 +4743,7 @@ struct Parse_Tree_s * Parse_readAllMibs(void)
     if (parse_gLoop == 1) {
         parse_gLoop = 0;
         if (parse_gpMibErrorString != NULL) {
-            TOOLS_FREE(parse_gpMibErrorString);
+            MEMORY_FREE(parse_gpMibErrorString);
         }
         parse_gpMibErrorString = (char *) calloc(1, PARSE_MAXQUOTESTR);
         if (parse_gpMibErrorString == NULL) {

@@ -18,7 +18,7 @@
 #include "AgentRegistry.h"
 #include "Impl.h"
 #include "ReadConfig.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "host_res.h"
 #include <linux/hdreg.h>
 #include <regex.h>
@@ -193,7 +193,7 @@ parse_disk_config( const char* token, char* cptr )
     }
     di_curr = ( conf_disk_item* )malloc( sizeof( conf_disk_item ) );
     if ( !di_curr ) {
-        TOOLS_FREE( d_new );
+        MEMORY_FREE( d_new );
         ReadConfig_configPerror( "Out of memory" );
         return;
     }
@@ -213,10 +213,10 @@ parse_disk_config( const char* token, char* cptr )
             d_set = ( details_set* )calloc( sizeof( details_set ), 1 );
             if ( !d_set ) {
                 ReadConfig_configPerror( "Out of memory" );
-                TOOLS_FREE( d_new );
-                TOOLS_FREE( di_curr );
-                TOOLS_FREE( d_set );
-                TOOLS_FREE( d_str );
+                MEMORY_FREE( d_new );
+                MEMORY_FREE( di_curr );
+                MEMORY_FREE( d_set );
+                MEMORY_FREE( d_str );
                 return;
             }
             name++;
@@ -239,10 +239,10 @@ parse_disk_config( const char* token, char* cptr )
             }
             if ( *name != ']' ) {
                 ReadConfig_configPerror( "Syntax error in NAME: invalid set specified" );
-                TOOLS_FREE( d_new );
-                TOOLS_FREE( di_curr );
-                TOOLS_FREE( d_set );
-                TOOLS_FREE( d_str );
+                MEMORY_FREE( d_new );
+                MEMORY_FREE( di_curr );
+                MEMORY_FREE( d_set );
+                MEMORY_FREE( d_str );
                 return;
             }
             if ( neg ) {
@@ -260,10 +260,10 @@ parse_disk_config( const char* token, char* cptr )
             *p = '\0';
             d_str = ( char* )malloc( strlen( name ) + 1 );
             if ( !d_str ) {
-                TOOLS_FREE( d_new );
-                TOOLS_FREE( d_str );
-                TOOLS_FREE( di_curr );
-                TOOLS_FREE( d_set );
+                MEMORY_FREE( d_new );
+                MEMORY_FREE( d_str );
+                MEMORY_FREE( di_curr );
+                MEMORY_FREE( d_set );
                 ReadConfig_configPerror( "Out of memory" );
                 return;
             }
@@ -279,11 +279,11 @@ parse_disk_config( const char* token, char* cptr )
         }
         di_curr->item_next = ( conf_disk_item* )malloc( sizeof( conf_disk_item ) );
         if ( !di_curr->item_next ) {
-            TOOLS_FREE( di_curr->item_next );
-            TOOLS_FREE( d_new );
-            TOOLS_FREE( di_curr );
-            TOOLS_FREE( d_set );
-            TOOLS_FREE( d_str );
+            MEMORY_FREE( di_curr->item_next );
+            MEMORY_FREE( d_new );
+            MEMORY_FREE( di_curr );
+            MEMORY_FREE( d_set );
+            MEMORY_FREE( d_str );
             ReadConfig_configPerror( "Out of memory" );
             return;
         }
@@ -713,7 +713,7 @@ Save_HR_Disk_Specific( void )
 static void
 Save_HR_Disk_General( void )
 {
-    Strlcpy_strlcpy( HRD_savedModel, ( const char* )HRD_info.model,
+    String_copyTruncate( HRD_savedModel, ( const char* )HRD_info.model,
         sizeof( HRD_savedModel ) );
 }
 

@@ -1,9 +1,9 @@
 #include "TableContainer.h"
 #include "AgentRegistry.h"
 #include "Api.h"
-#include "Assert.h"
-#include "Enum.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 
 /*
@@ -155,7 +155,7 @@ TableContainer_createTable( const char* name,
 {
     ContainerTableData* table;
 
-    table = TOOLS_MALLOC_TYPEDEF( ContainerTableData );
+    table = MEMORY_MALLOC_TYPEDEF( ContainerTableData );
     if ( !table )
         return NULL;
     if ( container )
@@ -163,7 +163,7 @@ TableContainer_createTable( const char* name,
     else {
         table->table = Container_find( "tableContainer" );
         if ( !table->table ) {
-            TOOLS_FREE( table );
+            MEMORY_FREE( table );
             return NULL;
         }
     }
@@ -189,7 +189,7 @@ void TableContainer_deleteTable( ContainerTableData* table )
     if ( table->table )
         CONTAINER_FREE( table->table );
 
-    TOOLS_FREE( table );
+    MEMORY_FREE( table );
     return;
 }
 
@@ -262,14 +262,14 @@ TableContainer_handlerGet( TableRegistrationInfo* tabreg,
         return NULL;
     }
 
-    tad = TOOLS_MALLOC_TYPEDEF( ContainerTableData );
+    tad = MEMORY_MALLOC_TYPEDEF( ContainerTableData );
     handler = AgentHandler_createHandler( "tableContainer",
         _TableContainer_handler );
     if ( ( NULL == tad ) || ( NULL == handler ) ) {
         if ( tad )
-            free( tad ); /* TOOLS_FREE wasted on locals */
+            free( tad ); /* MEMORY_FREE wasted on locals */
         if ( handler )
-            free( handler ); /* TOOLS_FREE wasted on locals */
+            free( handler ); /* MEMORY_FREE wasted on locals */
         Logger_log( LOGGER_PRIORITY_ERR,
             "malloc failure in TableContainer_register\n" );
         return NULL;
@@ -409,7 +409,7 @@ void TableContainer_rowInsert( RequestInfo* request,
                  that_oid, that_oid_len )
             == 0 ) {
             AgentHandler_requestAddListData( req,
-                DataList_create( TABLE_CONTAINER_ROW, row, NULL ) );
+                Map_newElement( TABLE_CONTAINER_ROW, row, NULL ) );
         }
     }
 }
@@ -614,10 +614,10 @@ _TableContainer_dataLookup( HandlerRegistration* reginfo,
     if ( PRIOT_ENDOFMIBVIEW != request->requestvb->type ) {
         if ( NULL != row )
             AgentHandler_requestAddListData( request,
-                DataList_create( TABLE_CONTAINER_ROW,
+                Map_newElement( TABLE_CONTAINER_ROW,
                                                  row, NULL ) );
         AgentHandler_requestAddListData( request,
-            DataList_create( TABLE_CONTAINER_CONTAINER,
+            Map_newElement( TABLE_CONTAINER_CONTAINER,
                                              tad->table, NULL ) );
     }
 }
@@ -646,7 +646,7 @@ _TableContainer_handler( MibHandler* handler,
     Assert_assert( ( NULL != reginfo ) && ( NULL != agtreq_info ) );
 
     DEBUG_MSGTL( ( "tableContainer", "Mode %s, Got request:\n",
-        Enum_seFindLabelInSlist( "agentMode", agtreq_info->mode ) ) );
+        MapList_findLabel( "agentMode", agtreq_info->mode ) ) );
 
     /*
      * First off, get our pointer from the handler. This

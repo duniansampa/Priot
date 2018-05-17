@@ -1,17 +1,17 @@
 #include "Usm.h"
 #include "Api.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "Keytools.h"
 #include "LcdTime.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Scapi.h"
 #include "Secmod.h"
 #include "Tc.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "V3.h"
 
 /*
@@ -93,8 +93,8 @@ int Usm_calcOffsets( size_t globalDataLen,
         if ( ref == NULL )                                                        \
             return -1;                                                            \
         if ( ref->field != NULL ) {                                               \
-            TOOLS_ZERO( ref->field, ref->field_len );                             \
-            TOOLS_FREE( ref->field );                                             \
+            MEMORY_FILL_ZERO( ref->field, ref->field_len );                             \
+            MEMORY_FREE( ref->field );                                             \
         }                                                                         \
         ref->field_len = 0;                                                       \
         if ( len == 0 || item == NULL ) {                                         \
@@ -139,22 +139,22 @@ void Usm_freeUsmStateReference( void* old )
 
     if ( old_ref ) {
 
-        TOOLS_FREE( old_ref->usr_name );
-        TOOLS_FREE( old_ref->usr_engine_id );
-        TOOLS_FREE( old_ref->usr_auth_protocol );
-        TOOLS_FREE( old_ref->usr_priv_protocol );
+        MEMORY_FREE( old_ref->usr_name );
+        MEMORY_FREE( old_ref->usr_engine_id );
+        MEMORY_FREE( old_ref->usr_auth_protocol );
+        MEMORY_FREE( old_ref->usr_priv_protocol );
 
         if ( old_ref->usr_auth_key ) {
-            TOOLS_ZERO( old_ref->usr_auth_key, old_ref->usr_auth_key_length );
-            TOOLS_FREE( old_ref->usr_auth_key );
+            MEMORY_FILL_ZERO( old_ref->usr_auth_key, old_ref->usr_auth_key_length );
+            MEMORY_FREE( old_ref->usr_auth_key );
         }
         if ( old_ref->usr_priv_key ) {
-            TOOLS_ZERO( old_ref->usr_priv_key, old_ref->usr_priv_key_length );
-            TOOLS_FREE( old_ref->usr_priv_key );
+            MEMORY_FILL_ZERO( old_ref->usr_priv_key, old_ref->usr_priv_key_length );
+            MEMORY_FREE( old_ref->usr_priv_key );
         }
 
-        TOOLS_ZERO( old_ref, sizeof( *old_ref ) );
-        TOOLS_FREE( old_ref );
+        MEMORY_FILL_ZERO( old_ref, sizeof( *old_ref ) );
+        MEMORY_FREE( old_ref );
     }
 
 } /* end Usm_freeUsmStateReference() */
@@ -484,7 +484,7 @@ int Usm_calcOffsets( size_t globalDataLen, /* SNMPv3Message + HeaderData */
      *      occur *after* encryption has taken place.
      */
     if ( secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
-        scopedPduLen = TOOLS_ROUNDUP8( scopedPduLen );
+        scopedPduLen = UTILITIES_ROUND_UP8( scopedPduLen );
 
         if ( ( ret = Usm_asnPredictLength( ASN01_OCTET_STR, NULL, scopedPduLen ) ) == -1 ) {
             return -1;
@@ -530,7 +530,7 @@ int Usm_setSalt( u_char* iv,
     size_t* iv_length,
     u_char* priv_salt, size_t priv_salt_length, u_char* msgSalt )
 {
-    size_t propersize_salt = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+    size_t propersize_salt = UTILITIES_BYTE_SIZE( USM_DES_SALT_LENGTH );
     int net_boots;
     int net_salt_int;
     /*
@@ -916,20 +916,20 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
      */
     if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
         size_t encrypted_length = theTotalLength - dataOffset;
-        size_t salt_length = TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH );
-        u_char salt[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+        size_t salt_length = UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH );
+        u_char salt[ UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH ) ];
 
         /*
          * XXX  Hardwired to seek into a 1DES private key!
          */
-        if ( TOOLS_ISTRANSFORM( thePrivProtocol, aESPriv ) ) {
+        if ( UTILITIES_ISTRANSFORM( thePrivProtocol, aESPriv ) ) {
             if ( !thePrivKey || Usm_setAesIv( salt, &salt_length, htonl( boots_uint ), htonl( time_uint ), &ptr[ privParamsOffset ] ) == -1 ) {
                 DEBUG_MSGTL( ( "usm", "Can't set AES iv.\n" ) );
                 Usm_freeUsmStateReference( secStateRef );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
-        if ( TOOLS_ISTRANSFORM( thePrivProtocol, dESPriv ) ) {
+        if ( UTILITIES_ISTRANSFORM( thePrivProtocol, dESPriv ) ) {
             if ( !thePrivKey || ( Usm_setSalt( salt, &salt_length,
                                       thePrivKey + 8, thePrivKeyLength - 8,
                                       &ptr[ privParamsOffset ] )
@@ -1095,16 +1095,16 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
             /*
              * FIX temp_sig_len defined?!
              */
-            TOOLS_ZERO( temp_sig, temp_sig_len );
-            TOOLS_FREE( temp_sig );
+            MEMORY_FILL_ZERO( temp_sig, temp_sig_len );
+            MEMORY_FREE( temp_sig );
             DEBUG_MSGTL( ( "usm", "Signing failed.\n" ) );
             Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
         if ( temp_sig_len != msgAuthParmLen ) {
-            TOOLS_ZERO( temp_sig, temp_sig_len );
-            TOOLS_FREE( temp_sig );
+            MEMORY_FILL_ZERO( temp_sig, temp_sig_len );
+            MEMORY_FREE( temp_sig );
             DEBUG_MSGTL( ( "usm", "Signing lengths failed.\n" ) );
             Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
@@ -1112,8 +1112,8 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
 
         memcpy( &ptr[ authParamsOffset ], temp_sig, msgAuthParmLen );
 
-        TOOLS_ZERO( temp_sig, temp_sig_len );
-        TOOLS_FREE( temp_sig );
+        MEMORY_FILL_ZERO( temp_sig, temp_sig_len );
+        MEMORY_FREE( temp_sig );
     }
 
     /*
@@ -1218,9 +1218,9 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
     int theSecLevel = 0; /* No defined const for bad
                                          * value (other then err). */
     size_t salt_length = 0, save_salt_length = 0;
-    u_char salt[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+    u_char salt[ UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH ) ];
     u_char authParams[ USM_MAX_AUTHSIZE ];
-    u_char iv[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
+    u_char iv[ UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH ) ];
     size_t sp_offset = 0, mac_offset = 0;
     int rc = 0;
 
@@ -1358,19 +1358,19 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
         /*
          * XXX Hardwired to seek into a 1DES private key!
          */
-        if ( TOOLS_ISTRANSFORM( thePrivProtocol, aESPriv ) ) {
-            salt_length = TOOLS_BYTESIZE( USM_AES_SALT_LENGTH );
-            save_salt_length = TOOLS_BYTESIZE( USM_AES_SALT_LENGTH ) / 2;
+        if ( UTILITIES_ISTRANSFORM( thePrivProtocol, aESPriv ) ) {
+            salt_length = UTILITIES_BYTE_SIZE( USM_AES_SALT_LENGTH );
+            save_salt_length = UTILITIES_BYTE_SIZE( USM_AES_SALT_LENGTH ) / 2;
             if ( !thePrivKey || Usm_setAesIv( salt, &salt_length, htonl( boots_uint ), htonl( time_uint ), iv ) == -1 ) {
                 DEBUG_MSGTL( ( "usm", "Can't set AES iv.\n" ) );
                 Usm_freeUsmStateReference( secStateRef );
-                TOOLS_FREE( ciphertext );
+                MEMORY_FREE( ciphertext );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
-        if ( TOOLS_ISTRANSFORM( thePrivProtocol, dESPriv ) ) {
-            salt_length = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
-            save_salt_length = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+        if ( UTILITIES_ISTRANSFORM( thePrivProtocol, dESPriv ) ) {
+            salt_length = UTILITIES_BYTE_SIZE( USM_DES_SALT_LENGTH );
+            save_salt_length = UTILITIES_BYTE_SIZE( USM_DES_SALT_LENGTH );
             if ( !thePrivKey || ( Usm_setSalt( salt, &salt_length,
                                       thePrivKey + 8,
                                       thePrivKeyLength - 8,
@@ -1378,7 +1378,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
                                     == -1 ) ) {
                 DEBUG_MSGTL( ( "usm", "Can't set DES-CBC salt.\n" ) );
                 Usm_freeUsmStateReference( secStateRef );
-                TOOLS_FREE( ciphertext );
+                MEMORY_FREE( ciphertext );
                 return ErrorCode_USM_GENERICERROR;
             }
         }
@@ -1391,7 +1391,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
             != PRIOT_ERR_NOERROR ) {
             DEBUG_MSGTL( ( "usm", "encryption error.\n" ) );
             Usm_freeUsmStateReference( secStateRef );
-            TOOLS_FREE( ciphertext );
+            MEMORY_FREE( ciphertext );
             return ErrorCode_USM_ENCRYPTIONERROR;
         }
 
@@ -1406,12 +1406,12 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
         if ( rc == 0 ) {
             DEBUG_MSGTL( ( "usm", "Encryption failed.\n" ) );
             Usm_freeUsmStateReference( secStateRef );
-            TOOLS_FREE( ciphertext );
+            MEMORY_FREE( ciphertext );
             return ErrorCode_USM_ENCRYPTIONERROR;
         }
 
         DEBUG_MSGTL( ( "usm", "Encryption successful.\n" ) );
-        TOOLS_FREE( ciphertext );
+        MEMORY_FREE( ciphertext );
     } else {
         /*
          * theSecLevel != PRIOT_SEC_LEVEL_AUTHPRIV
@@ -1600,14 +1600,14 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
                  proto_msg, proto_msg_len,
                  temp_sig, &temp_sig_len )
             != PRIOT_ERR_NOERROR ) {
-            TOOLS_FREE( temp_sig );
+            MEMORY_FREE( temp_sig );
             DEBUG_MSGTL( ( "usm", "Signing failed.\n" ) );
             Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
         }
 
         if ( temp_sig_len != msgAuthParmLen ) {
-            TOOLS_FREE( temp_sig );
+            MEMORY_FREE( temp_sig );
             DEBUG_MSGTL( ( "usm", "Signing lengths failed.\n" ) );
             Usm_freeUsmStateReference( secStateRef );
             return ErrorCode_USM_AUTHENTICATIONFAILURE;
@@ -1615,7 +1615,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
 
         memcpy( *wholeMsg + *wholeMsgLen - mac_offset, temp_sig,
             msgAuthParmLen );
-        TOOLS_FREE( temp_sig );
+        MEMORY_FREE( temp_sig );
     }
     /*
      * endif -- create keyed hash
@@ -1765,7 +1765,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
 
     *time_uint = ( u_int )time_long;
 
-    if ( *boots_uint > TOOLS_ENGINEBOOT_MAX || *time_uint > TOOLS_ENGINETIME_MAX ) {
+    if ( *boots_uint > UTILITIES_ENGINEBOOT_MAX || *time_uint > UTILITIES_ENGINETIME_MAX ) {
         return -1;
     }
 
@@ -1928,7 +1928,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
         && memcmp( secEngineID, myID, myIDLength ) == 0 ) {
         u_int time_difference = myTime > time_uint ? myTime - time_uint : time_uint - myTime;
 
-        if ( boots_uint == TOOLS_ENGINEBOOT_MAX
+        if ( boots_uint == UTILITIES_ENGINEBOOT_MAX
             || boots_uint != myBoots
             || time_difference > USM_TIME_WINDOW ) {
             Api_incrementStatistic( API_STAT_USMSTATSNOTINTIMEWINDOWS );
@@ -1968,7 +1968,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
          * XXX  Contrary to the pseudocode:
          *      See if boots is invalid first.
          */
-        if ( theirBoots == TOOLS_ENGINEBOOT_MAX || theirBoots > boots_uint ) {
+        if ( theirBoots == UTILITIES_ENGINEBOOT_MAX || theirBoots > boots_uint ) {
             DEBUG_MSGTL( ( "usm", "%s\n", "Remote boot count invalid." ) );
 
             *error = ErrorCode_USM_NOTINTIMEWINDOW;
@@ -2085,12 +2085,12 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
     u_int boots_uint;
     u_int time_uint;
     u_int net_boots, net_time;
-    u_char signature[ TOOLS_BYTESIZE( USM_MAX_KEYEDHASH_LENGTH ) ];
-    size_t signature_length = TOOLS_BYTESIZE( USM_MAX_KEYEDHASH_LENGTH );
-    u_char salt[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
-    size_t salt_length = TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH );
-    u_char iv[ TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH ) ];
-    u_int iv_length = TOOLS_BYTESIZE( USM_MAX_SALT_LENGTH );
+    u_char signature[ UTILITIES_BYTE_SIZE( USM_MAX_KEYEDHASH_LENGTH ) ];
+    size_t signature_length = UTILITIES_BYTE_SIZE( USM_MAX_KEYEDHASH_LENGTH );
+    u_char salt[ UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH ) ];
+    size_t salt_length = UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH );
+    u_char iv[ UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH ) ];
+    u_int iv_length = UTILITIES_BYTE_SIZE( USM_MAX_SALT_LENGTH );
     u_char* data_ptr;
     u_char* value_ptr;
     u_char type_value;
@@ -2334,7 +2334,7 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
             return ErrorCode_USM_PARSEERROR;
         }
 
-        if ( TOOLS_ISTRANSFORM( user->privProtocol, dESPriv ) ) {
+        if ( UTILITIES_ISTRANSFORM( user->privProtocol, dESPriv ) ) {
             /*
              * From RFC2574:
              *
@@ -2368,12 +2368,12 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
              * XOR the salt with the last (iv_length) bytes
              * of the priv_key to obtain the IV.
              */
-            iv_length = TOOLS_BYTESIZE( USM_DES_SALT_LENGTH );
+            iv_length = UTILITIES_BYTE_SIZE( USM_DES_SALT_LENGTH );
             for ( i = 0; i < ( int )iv_length; i++ )
                 iv[ i ] = salt[ i ] ^ user->privKey[ iv_length + i ];
         }
-        if ( TOOLS_ISTRANSFORM( user->privProtocol, aESPriv ) ) {
-            iv_length = TOOLS_BYTESIZE( USM_AES_SALT_LENGTH );
+        if ( UTILITIES_ISTRANSFORM( user->privProtocol, aESPriv ) ) {
+            iv_length = UTILITIES_BYTE_SIZE( USM_AES_SALT_LENGTH );
             net_boots = ntohl( boots_uint );
             net_time = ntohl( time_uint );
             memcpy( iv, &net_boots, 4 );
@@ -2495,7 +2495,7 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
         u_char* tmpp = session->securityAuthKey;
         session->securityAuthKeyLen = 0;
         /* it will be a hex string */
-        if ( !Tools_hexToBinary1( &tmpp, &buflen,
+        if ( !Convert_hexStringToBinaryStringWrapper( &tmpp, &buflen,
                  &session->securityAuthKeyLen, 0, cp ) ) {
             Api_setDetail( "error parsing authentication master key" );
             return PRIOT_ERR_GENERR;
@@ -2522,7 +2522,7 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
         u_char* tmpp = session->securityPrivKey;
         session->securityPrivKeyLen = 0;
         /* it will be a hex string */
-        if ( !Tools_hexToBinary1( &tmpp, &buflen,
+        if ( !Convert_hexStringToBinaryStringWrapper( &tmpp, &buflen,
                  &session->securityPrivKeyLen, 0, cp ) ) {
             Api_setDetail( "error parsing encryption master key" );
             return PRIOT_ERR_GENERR;
@@ -2610,7 +2610,7 @@ int Usm_createUserFromSession( Types_Session* session )
         /*
          * copy in the engineID
          */
-        user->engineID = ( u_char* )Tools_memdup( session->securityEngineID,
+        user->engineID = ( u_char* )Memory_memdup( session->securityEngineID,
             session->securityEngineIDLen );
         if ( session->securityEngineID && !user->engineID ) {
             Usm_freeUser( user );
@@ -2625,7 +2625,7 @@ int Usm_createUserFromSession( Types_Session* session )
      * copy the auth protocol
      */
     if ( user->authProtocol == NULL && session->securityAuthProto != NULL ) {
-        TOOLS_FREE( user->authProtocol );
+        MEMORY_FREE( user->authProtocol );
         user->authProtocol = Api_duplicateObjid( session->securityAuthProto,
             session->securityAuthProtoLen );
         if ( user->authProtocol == NULL ) {
@@ -2639,7 +2639,7 @@ int Usm_createUserFromSession( Types_Session* session )
      * copy the priv protocol
      */
     if ( user->privProtocol == NULL && session->securityPrivProto != NULL ) {
-        TOOLS_FREE( user->privProtocol );
+        MEMORY_FREE( user->privProtocol );
         user->privProtocol = Api_duplicateObjid( session->securityPrivProto,
             session->securityPrivProtoLen );
         if ( user->privProtocol == NULL ) {
@@ -2656,8 +2656,8 @@ int Usm_createUserFromSession( Types_Session* session )
         if ( session->securityAuthLocalKey != NULL
             && session->securityAuthLocalKeyLen != 0 ) {
             /* already localized key passed in.  use it */
-            TOOLS_FREE( user->authKey );
-            user->authKey = ( u_char* )Tools_memdup( session->securityAuthLocalKey,
+            MEMORY_FREE( user->authKey );
+            user->authKey = ( u_char* )Memory_memdup( session->securityAuthLocalKey,
                 session->securityAuthLocalKeyLen );
             if ( !user->authKey ) {
                 Usm_freeUser( user );
@@ -2666,7 +2666,7 @@ int Usm_createUserFromSession( Types_Session* session )
             user->authKeyLen = session->securityAuthLocalKeyLen;
         } else if ( session->securityAuthKey != NULL
             && session->securityAuthKeyLen != 0 ) {
-            TOOLS_FREE( user->authKey );
+            MEMORY_FREE( user->authKey );
             user->authKey = ( u_char* )calloc( 1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK );
             if ( user->authKey == NULL ) {
                 Usm_freeUser( user );
@@ -2686,11 +2686,11 @@ int Usm_createUserFromSession( Types_Session* session )
         } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
                           DsStr_AUTHLOCALIZEDKEY ) ) ) {
             size_t buflen = USM_AUTH_KU_LEN;
-            TOOLS_FREE( user->authKey );
+            MEMORY_FREE( user->authKey );
             user->authKey = ( u_char* )malloc( buflen ); /* max length needed */
             user->authKeyLen = 0;
             /* it will be a hex string */
-            if ( !Tools_hexToBinary1( &user->authKey, &buflen, &user->authKeyLen,
+            if ( !Convert_hexStringToBinaryStringWrapper( &user->authKey, &buflen, &user->authKeyLen,
                      0, cp ) ) {
                 Usm_freeUser( user );
                 return ErrorCode_GENERR;
@@ -2705,8 +2705,8 @@ int Usm_createUserFromSession( Types_Session* session )
         if ( session->securityPrivLocalKey != NULL
             && session->securityPrivLocalKeyLen != 0 ) {
             /* already localized key passed in.  use it */
-            TOOLS_FREE( user->privKey );
-            user->privKey = ( u_char* )Tools_memdup( session->securityPrivLocalKey,
+            MEMORY_FREE( user->privKey );
+            user->privKey = ( u_char* )Memory_memdup( session->securityPrivLocalKey,
                 session->securityPrivLocalKeyLen );
             if ( !user->privKey ) {
                 Usm_freeUser( user );
@@ -2715,7 +2715,7 @@ int Usm_createUserFromSession( Types_Session* session )
             user->privKeyLen = session->securityPrivLocalKeyLen;
         } else if ( session->securityPrivKey != NULL
             && session->securityPrivKeyLen != 0 ) {
-            TOOLS_FREE( user->privKey );
+            MEMORY_FREE( user->privKey );
             user->privKey = ( u_char* )calloc( 1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK );
             if ( user->privKey == NULL ) {
                 Usm_freeUser( user );
@@ -2735,11 +2735,11 @@ int Usm_createUserFromSession( Types_Session* session )
         } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
                           DsStr_PRIVLOCALIZEDKEY ) ) ) {
             size_t buflen = USM_PRIV_KU_LEN;
-            TOOLS_FREE( user->privKey );
+            MEMORY_FREE( user->privKey );
             user->privKey = ( u_char* )malloc( buflen ); /* max length needed */
             user->privKeyLen = 0;
             /* it will be a hex string */
-            if ( !Tools_hexToBinary1( &user->privKey, &buflen, &user->privKeyLen,
+            if ( !Convert_hexStringToBinaryStringWrapper( &user->privKey, &buflen, &user->privKeyLen,
                      0, cp ) ) {
                 Usm_freeUser( user );
                 return ErrorCode_GENERR;
@@ -2894,7 +2894,7 @@ void Usm_initUsm( void )
     /*
      * register ourselves as a security service
      */
-    def = TOOLS_MALLOC_STRUCT( Secmod_Def_s );
+    def = MEMORY_MALLOC_STRUCT( Secmod_Def_s );
     if ( def == NULL )
         return;
     /*
@@ -2995,12 +2995,12 @@ int Usm_initUsmPostConfig( int majorid, int minorid, void* serverarg,
     }
 
     _usm_noNameUser = Usm_createInitialUser( "", usm_hMACMD5AuthProtocol,
-        TOOLS_USM_LENGTH_OID_TRANSFORM,
+        UTILITIES_USM_LENGTH_OID_TRANSFORM,
         usm_dESPrivProtocol,
-        TOOLS_USM_LENGTH_OID_TRANSFORM );
+        UTILITIES_USM_LENGTH_OID_TRANSFORM );
 
     if ( _usm_noNameUser ) {
-        TOOLS_FREE( _usm_noNameUser->engineID );
+        MEMORY_FREE( _usm_noNameUser->engineID );
         _usm_noNameUser->engineIDLen = 0;
     }
 
@@ -3375,22 +3375,22 @@ Usm_freeUser( struct Usm_User_s* user )
     if ( user == NULL )
         return NULL;
 
-    TOOLS_FREE( user->engineID );
-    TOOLS_FREE( user->name );
-    TOOLS_FREE( user->secName );
-    TOOLS_FREE( user->cloneFrom );
-    TOOLS_FREE( user->userPublicString );
-    TOOLS_FREE( user->authProtocol );
-    TOOLS_FREE( user->privProtocol );
+    MEMORY_FREE( user->engineID );
+    MEMORY_FREE( user->name );
+    MEMORY_FREE( user->secName );
+    MEMORY_FREE( user->cloneFrom );
+    MEMORY_FREE( user->userPublicString );
+    MEMORY_FREE( user->authProtocol );
+    MEMORY_FREE( user->privProtocol );
 
     if ( user->authKey != NULL ) {
-        TOOLS_ZERO( user->authKey, user->authKeyLen );
-        TOOLS_FREE( user->authKey );
+        MEMORY_FILL_ZERO( user->authKey, user->authKeyLen );
+        MEMORY_FREE( user->authKey );
     }
 
     if ( user->privKey != NULL ) {
-        TOOLS_ZERO( user->privKey, user->privKeyLen );
-        TOOLS_FREE( user->privKey );
+        MEMORY_FILL_ZERO( user->privKey, user->privKeyLen );
+        MEMORY_FREE( user->privKey );
     }
 
     /*
@@ -3407,8 +3407,8 @@ Usm_freeUser( struct Usm_User_s* user )
                 "Severe: Asked to free the head of a usmUser tree somewhere." ) );
     }
 
-    TOOLS_ZERO( user, sizeof( *user ) );
-    TOOLS_FREE( user );
+    MEMORY_FILL_ZERO( user, sizeof( *user ) );
+    MEMORY_FREE( user );
 
     return NULL; /* for convenience to returns from calling functions */
 
@@ -3423,7 +3423,7 @@ Usm_cloneFromUser( struct Usm_User_s* from, struct Usm_User_s* to )
     /*
      * copy the authProtocol oid row pointer
      */
-    TOOLS_FREE( to->authProtocol );
+    MEMORY_FREE( to->authProtocol );
 
     if ( ( to->authProtocol = Api_duplicateObjid( from->authProtocol,
                from->authProtocolLen ) )
@@ -3435,7 +3435,7 @@ Usm_cloneFromUser( struct Usm_User_s* from, struct Usm_User_s* to )
     /*
      * copy the authKey
      */
-    TOOLS_FREE( to->authKey );
+    MEMORY_FREE( to->authKey );
 
     if ( from->authKeyLen > 0 && ( to->authKey = ( u_char* )malloc( from->authKeyLen ) ) != NULL ) {
         to->authKeyLen = from->authKeyLen;
@@ -3448,7 +3448,7 @@ Usm_cloneFromUser( struct Usm_User_s* from, struct Usm_User_s* to )
     /*
      * copy the privProtocol oid row pointer
      */
-    TOOLS_FREE( to->privProtocol );
+    MEMORY_FREE( to->privProtocol );
 
     if ( ( to->privProtocol = Api_duplicateObjid( from->privProtocol,
                from->privProtocolLen ) )
@@ -3460,7 +3460,7 @@ Usm_cloneFromUser( struct Usm_User_s* from, struct Usm_User_s* to )
     /*
      * copy the privKey
      */
-    TOOLS_FREE( to->privKey );
+    MEMORY_FREE( to->privKey );
 
     if ( from->privKeyLen > 0 && ( to->privKey = ( u_char* )malloc( from->privKeyLen ) ) != NULL ) {
         to->privKeyLen = from->privKeyLen;
@@ -3542,7 +3542,7 @@ Usm_createInitialUser( const char* name,
     newUser->cloneFrom[ 1 ] = 0;
     newUser->cloneFromLen = 2;
 
-    TOOLS_FREE( newUser->privProtocol );
+    MEMORY_FREE( newUser->privProtocol );
     if ( ( newUser->privProtocol = Api_duplicateObjid( privProtocol,
                privProtocolLen ) )
         == NULL ) {
@@ -3550,7 +3550,7 @@ Usm_createInitialUser( const char* name,
     }
     newUser->privProtocolLen = privProtocolLen;
 
-    TOOLS_FREE( newUser->authProtocol );
+    MEMORY_FREE( newUser->authProtocol );
     if ( ( newUser->authProtocol = Api_duplicateObjid( authProtocol,
                authProtocolLen ) )
         == NULL ) {
@@ -3684,31 +3684,31 @@ Usm_readUser( const char* line )
         &len );
     line = ReadConfig_readOctetString( line, ( u_char** )&user->secName,
         &len );
-    TOOLS_FREE( user->cloneFrom );
+    MEMORY_FREE( user->cloneFrom );
     user->cloneFromLen = 0;
 
     line = ReadConfig_readObjidConst( line, &user->cloneFrom,
         &user->cloneFromLen );
 
-    TOOLS_FREE( user->authProtocol );
+    MEMORY_FREE( user->authProtocol );
     user->authProtocolLen = 0;
 
     line = ReadConfig_readObjidConst( line, &user->authProtocol,
         &user->authProtocolLen );
     line = ReadConfig_readOctetStringConst( line, &user->authKey,
         &user->authKeyLen );
-    TOOLS_FREE( user->privProtocol );
+    MEMORY_FREE( user->privProtocol );
     user->privProtocolLen = 0;
 
     line = ReadConfig_readObjidConst( line, &user->privProtocol,
         &user->privProtocolLen );
     line = ReadConfig_readOctetString( line, &user->privKey,
         &user->privKeyLen );
-    if ( TOOLS_ISTRANSFORM( user->privProtocol, dESPriv ) ) {
+    if ( UTILITIES_ISTRANSFORM( user->privProtocol, dESPriv ) ) {
         /* DES uses a 128 bit key, 64 bits of which is a salt */
         expected_privKeyLen = 16;
     }
-    if ( TOOLS_ISTRANSFORM( user->privProtocol, aESPriv ) ) {
+    if ( UTILITIES_ISTRANSFORM( user->privProtocol, aESPriv ) ) {
         expected_privKeyLen = 16;
     }
     /* For backwards compatibility */
@@ -3756,7 +3756,7 @@ void Usm_parseConfigUsmUser( const char* token, char* line )
 void Usm_setPassword( const char* token, char* line )
 {
     char* cp;
-    char nameBuf[ TOOLS_MAXBUF ];
+    char nameBuf[ UTILITIES_MAX_BUFFER ];
     u_char* engineID = NULL;
     size_t engineIDLen = 0;
     struct Usm_User_s* user;
@@ -3782,18 +3782,18 @@ void Usm_setPassword( const char* token, char* line )
         cp = ReadConfig_readOctetString( cp, &engineID, &engineIDLen );
         if ( cp == NULL ) {
             ReadConfig_configPerror( "invalid engineID specifier" );
-            TOOLS_FREE( engineID );
+            MEMORY_FREE( engineID );
             return;
         }
 
         user = Usm_getUser( engineID, engineIDLen, nameBuf );
         if ( user == NULL ) {
             ReadConfig_configPerror( "not a valid user/engineID pair" );
-            TOOLS_FREE( engineID );
+            MEMORY_FREE( engineID );
             return;
         }
         Usm_setUserPassword( user, token, cp );
-        TOOLS_FREE( engineID );
+        MEMORY_FREE( engineID );
     }
 }
 
@@ -3808,8 +3808,8 @@ void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line
 
     u_char** key;
     size_t* keyLen;
-    u_char userKey[ TOOLS_MAXBUF_SMALL ];
-    size_t userKeyLen = TOOLS_MAXBUF_SMALL;
+    u_char userKey[ UTILITIES_MAX_BUFFER_SMALL ];
+    size_t userKeyLen = UTILITIES_MAX_BUFFER_SMALL;
     u_char* userKeyP = userKey;
     int type, ret;
 
@@ -3854,7 +3854,7 @@ void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line
          * (destroy and) free the old key
          */
         memset( *key, 0, *keyLen );
-        TOOLS_FREE( *key );
+        MEMORY_FREE( *key );
     }
 
     if ( type == 0 ) {
@@ -3882,8 +3882,8 @@ void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line
     }
 
     if ( type < 2 ) {
-        *key = ( u_char* )malloc( TOOLS_MAXBUF_SMALL );
-        *keyLen = TOOLS_MAXBUF_SMALL;
+        *key = ( u_char* )malloc( UTILITIES_MAX_BUFFER_SMALL );
+        *keyLen = UTILITIES_MAX_BUFFER_SMALL;
         ret = Keytools_generateKul( user->authProtocol, user->authProtocolLen,
             engineID, engineIDLen,
             userKey, userKeyLen, *key, keyLen );
@@ -3913,10 +3913,10 @@ void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line
 void Usm_parseCreateUsmUser( const char* token, char* line )
 {
     char* cp;
-    char buf[ TOOLS_MAXBUF_MEDIUM ];
+    char buf[ UTILITIES_MAX_BUFFER_MEDIUM ];
     struct Usm_User_s* newuser;
-    u_char userKey[ TOOLS_MAXBUF_SMALL ], *tmpp;
-    size_t userKeyLen = TOOLS_MAXBUF_SMALL;
+    u_char userKey[ UTILITIES_MAX_BUFFER_SMALL ], *tmpp;
+    size_t userKeyLen = UTILITIES_MAX_BUFFER_SMALL;
     size_t privKeyLen = 0;
     size_t ret;
     int ret2;
@@ -3946,10 +3946,10 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
          * Get the specified engineid from the line.
          */
         cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
-        if ( !Tools_hexToBinary1( &ebuf, &ebuf_len, &eout_len, 1, buf ) ) {
+        if ( !Convert_hexStringToBinaryStringWrapper( &ebuf, &ebuf_len, &eout_len, 1, buf ) ) {
             ReadConfig_configPerror( "invalid EngineID argument to -e" );
             Usm_freeUser( newuser );
-            TOOLS_FREE( ebuf );
+            MEMORY_FREE( ebuf );
             return;
         }
 
@@ -4003,7 +4003,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
         ret = sizeof( userKey );
         tmpp = userKey;
         userKeyLen = 0;
-        if ( !Tools_hexToBinary1( &tmpp, &ret, &userKeyLen, 0, buf ) ) {
+        if ( !Convert_hexStringToBinaryStringWrapper( &tmpp, &ret, &userKeyLen, 0, buf ) ) {
             ReadConfig_configPerror( "invalid key value argument to -m" );
             Usm_freeUser( newuser );
             return;
@@ -4038,7 +4038,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
         cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
         newuser->authKeyLen = 0;
         ret = ret2;
-        if ( !Tools_hexToBinary1( &newuser->authKey, &ret,
+        if ( !Convert_hexStringToBinaryStringWrapper( &newuser->authKey, &ret,
                  &newuser->authKeyLen, 0, buf ) ) {
             ReadConfig_configPerror( "invalid key value argument to -l" );
             Usm_freeUser( newuser );
@@ -4099,7 +4099,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
         /*
          * assume the same as the authentication key
          */
-        newuser->privKey = ( u_char* )Tools_memdup( newuser->authKey,
+        newuser->privKey = ( u_char* )Memory_memdup( newuser->authKey,
             newuser->authKeyLen );
         newuser->privKeyLen = newuser->authKeyLen;
     } else {
@@ -4111,7 +4111,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
             ret = sizeof( userKey );
             tmpp = userKey;
             userKeyLen = 0;
-            if ( !Tools_hexToBinary1( &tmpp, &ret, &userKeyLen, 0, buf ) ) {
+            if ( !Convert_hexStringToBinaryStringWrapper( &tmpp, &ret, &userKeyLen, 0, buf ) ) {
                 ReadConfig_configPerror( "invalid key value argument to -m" );
                 Usm_freeUser( newuser );
                 return;
@@ -4147,7 +4147,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
             cp = ReadConfig_copyNword( cp, buf, sizeof( buf ) );
             ret = ret2;
             newuser->privKeyLen = 0;
-            if ( !Tools_hexToBinary1( &newuser->privKey, &ret,
+            if ( !Convert_hexStringToBinaryStringWrapper( &newuser->privKey, &ret,
                      &newuser->privKeyLen, 0, buf ) ) {
                 ReadConfig_configPerror( "invalid key value argument to -l" );
                 Usm_freeUser( newuser );
@@ -4191,7 +4191,7 @@ void Usm_v3AuthtypeConf( const char* word, char* cptr )
         _usm_defaultAuthType = usm_hMACSHA1AuthProtocol;
     else
         ReadConfig_configPerror( "Unknown authentication type" );
-    _usm_defaultAuthTypeLen = TOOLS_USM_LENGTH_OID_TRANSFORM;
+    _usm_defaultAuthTypeLen = UTILITIES_USM_LENGTH_OID_TRANSFORM;
     DEBUG_MSGTL( ( "snmpv3", "set default authentication type: %s\n", cptr ) );
 }
 
@@ -4233,7 +4233,7 @@ Usm_getDefaultPrivtype( size_t* len )
     if ( _usm_defaultPrivType == NULL ) {
         _usm_defaultPrivType = usm_dESPrivProtocol;
 
-        _usm_defaultPrivTypeLen = TOOLS_USM_LENGTH_OID_TRANSFORM;
+        _usm_defaultPrivTypeLen = UTILITIES_USM_LENGTH_OID_TRANSFORM;
     }
     if ( len )
         *len = _usm_defaultPrivTypeLen;

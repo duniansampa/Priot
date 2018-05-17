@@ -1,9 +1,9 @@
 #include "Watcher.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Instance.h"
 #include "Scalar.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
 
 /** @defgroup watcher watcher
@@ -43,7 +43,7 @@ WatcherInfo *
 Watcher_createWatcherInfo6(void *data, size_t size, u_char type,
                              int flags, size_t max_size, size_t* size_p)
 {
-    WatcherInfo *winfo = TOOLS_MALLOC_TYPEDEF(WatcherInfo);
+    WatcherInfo *winfo = MEMORY_MALLOC_TYPEDEF(WatcherInfo);
     if (winfo)
         Watcher_initWatcherInfo6(winfo, data, size, type, flags, max_size,
                                    size_p);
@@ -64,7 +64,7 @@ Watcher_initWatcherInfo(WatcherInfo *winfo,
 WatcherInfo *
 Watcher_createWatcherInfo(void *data, size_t size, u_char type, int flags)
 {
-    WatcherInfo *winfo = TOOLS_MALLOC_TYPEDEF(WatcherInfo);
+    WatcherInfo *winfo = MEMORY_MALLOC_TYPEDEF(WatcherInfo);
     if (winfo)
         Watcher_initWatcherInfo(winfo, data, size, type, flags);
     return winfo;
@@ -266,7 +266,7 @@ Watcher_helperHandler( MibHandler *handler,
             handler->flags |= MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE;
         } else
             AgentHandler_requestAddListData(requests,
-                                          DataList_create
+                                          Map_newElement
                                           ("watcher", old_data, &free));
         break;
 
@@ -327,7 +327,7 @@ Watcher_getWatchedTimestampHandler(void)
 int
 Watcher_watchedTimestampRegister(MibHandler *whandler,
                                    HandlerRegistration *reginfo,
-                                   markerT timestamp)
+                                   timeMarker timestamp)
 {
     whandler->myvoid = (void *)timestamp;
     AgentHandler_injectHandler(reginfo, whandler);
@@ -336,7 +336,7 @@ Watcher_watchedTimestampRegister(MibHandler *whandler,
 
 int
 Watcher_registerWatchedTimestamp(HandlerRegistration *reginfo,
-                                   markerT timestamp)
+                                   timeMarker timestamp)
 {
     MibHandler *whandler;
 
@@ -352,7 +352,7 @@ Watcher_timestampHandler( MibHandler *handler,
                           AgentRequestInfo *reqinfo,
                           RequestInfo *requests)
 {
-    markerT timestamp = (markerT) handler->myvoid;
+    timeMarker timestamp = (timeMarker) handler->myvoid;
     long     uptime;
 
     DEBUG_MSGTL(("helper:watcher:timestamp",

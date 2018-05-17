@@ -1,15 +1,14 @@
 #include "DefaultStore.h"
 #include "Api.h"
-#include "Debug.h"
-#include "Logger.h"
 #include "ReadConfig.h"
-#include "System/Numerics/Integer.h"
 #include "System/String.h"
-#include "Tools.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 #include <string.h>
 
 typedef struct DefaultStore_ReadConfig_s {
-    uchar type;
+    unsigned char type;
     char* token;
     char* storename;
     int storeid;
@@ -199,7 +198,7 @@ int DefaultStore_parseBoolean( char* line )
 void DefaultStore_handleConfig( const char* token, char* line )
 {
     DefaultStore_ReadConfig* drsp;
-    char buf[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ];
     char *value, *endptr;
     int itmp;
     char* st;
@@ -255,7 +254,7 @@ void DefaultStore_handleConfig( const char* token, char* line )
     }
 }
 
-int DefaultStore_registerConfig( uchar type, const char* storename, const char* token, int storeid, int which )
+int DefaultStore_registerConfig( unsigned char type, const char* storename, const char* token, int storeid, int which )
 {
     DefaultStore_ReadConfig* drsp;
 
@@ -264,14 +263,14 @@ int DefaultStore_registerConfig( uchar type, const char* storename, const char* 
     }
 
     if ( _defaultStore_configs == NULL ) {
-        _defaultStore_configs = TOOLS_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
+        _defaultStore_configs = MEMORY_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
         if ( _defaultStore_configs == NULL )
             return ErrorCode_GENERR;
         drsp = _defaultStore_configs;
     } else {
         for ( drsp = _defaultStore_configs; drsp->next != NULL; drsp = drsp->next )
             ;
-        drsp->next = TOOLS_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
+        drsp->next = MEMORY_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
         if ( drsp->next == NULL )
             return ErrorCode_GENERR;
         drsp = drsp->next;
@@ -302,7 +301,7 @@ int DefaultStore_registerConfig( uchar type, const char* storename, const char* 
     return ErrorCode_SUCCESS;
 }
 
-int DefaultStore_registerPremib( uchar type, const char* storename, const char* token, int storeid, int which )
+int DefaultStore_registerPremib( unsigned char type, const char* storename, const char* token, int storeid, int which )
 {
     DefaultStore_ReadConfig* drsp;
 
@@ -311,14 +310,14 @@ int DefaultStore_registerPremib( uchar type, const char* storename, const char* 
     }
 
     if ( _defaultStore_configs == NULL ) {
-        _defaultStore_configs = TOOLS_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
+        _defaultStore_configs = MEMORY_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
         if ( _defaultStore_configs == NULL )
             return ErrorCode_GENERR;
         drsp = _defaultStore_configs;
     } else {
         for ( drsp = _defaultStore_configs; drsp->next != NULL; drsp = drsp->next )
             ;
-        drsp->next = TOOLS_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
+        drsp->next = MEMORY_MALLOC_TYPEDEF( DefaultStore_ReadConfig );
         if ( drsp->next == NULL )
             return ErrorCode_GENERR;
         drsp = drsp->next;

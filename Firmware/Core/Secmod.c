@@ -1,11 +1,11 @@
 #include "Secmod.h"
 #include "Callback.h"
 #include "DefaultStore.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Api.h"
-#include "Enum.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Usm.h"
 
 extern void Usm_initUsm();
@@ -47,7 +47,7 @@ int Secmod_register(int secmod, const char *modname,
             return ErrorCode_GENERR;
         }
     }
-    sptr = TOOLS_MALLOC_STRUCT(Secmod_List_s);
+    sptr = MEMORY_MALLOC_STRUCT(Secmod_List_s);
     if (sptr == NULL)
         return ErrorCode_MALLOC;
     sptr->secDef = newdef;
@@ -55,15 +55,15 @@ int Secmod_register(int secmod, const char *modname,
     sptr->next = _secmod_registeredServices;
     _secmod_registeredServices = sptr;
     if ((result =
-         Enum_seAddPairToSlist("priotSecmods", strdup(modname), secmod))
-        != ENUM_SE_OK) {
+         MapList_addPair("priotSecmods", strdup(modname), secmod))
+        != MapListErrorCode_SUCCESS) {
         switch (result) {
-        case ENUM_SE_NOMEM:
+        case MapListErrorCode_NO_MEMORY:
             Logger_log(LOGGER_PRIORITY_CRIT, "priot_secmod: no memory\n");
             break;
 
-        case ENUM_SE_ALREADY_THERE:
-            othername = Enum_seFindLabelInSlist("priotSecmods", secmod);
+        case MapListErrorCode_ALREADY_EXIST:
+            othername = MapList_findLabel("priotSecmods", secmod);
             if (strcmp(othername, modname) != 0) {
                 Logger_log(LOGGER_PRIORITY_ERR,
                          "priot_secmod: two security modules %s and %s registered with the same security number\n",
@@ -92,8 +92,8 @@ int Secmod_unregister(int secmod)
                 lptr->next = sptr->next;
             else
                 _secmod_registeredServices = sptr->next;
-        TOOLS_FREE(sptr->secDef);
-            TOOLS_FREE(sptr);
+        MEMORY_FREE(sptr->secDef);
+            MEMORY_FREE(sptr);
             return ErrorCode_SUCCESS;
         }
     }
@@ -109,8 +109,8 @@ void Secmod_clear(void)
 
     while (tmp != NULL) {
         next = tmp->next;
-        TOOLS_FREE(tmp->secDef);
-        TOOLS_FREE(tmp);
+        MEMORY_FREE(tmp->secDef);
+        MEMORY_FREE(tmp);
         tmp = next;
     }
     _secmod_registeredServices = NULL;
@@ -148,8 +148,8 @@ static int _Secmod_setDefaultSecmod(int major, int minor, void *serverarg, void 
     if (sess->securityModel == API_DEFAULT_SECMODEL) {
         if ((cptr = DefaultStore_getString(DsStorage_LIBRARY_ID,
                       DsStr_SECMODEL)) != NULL) {
-            if ((model = Enum_seFindValueInSlist("priotSecmods", cptr))
-        != ENUM_SE_DNE) {
+            if ((model = MapList_findValue("priotSecmods", cptr))
+        != MapListErrorCode_NULL) {
                 sess->securityModel = model;
             } else {
                 Logger_log(LOGGER_PRIORITY_ERR,

@@ -15,9 +15,9 @@
  * include our parent header 
  */
 #include "ipAddressPrefixTable.h"
-#include "Assert.h"
-#include "DataList.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Containers/Map.h"
+#include "System/Util/Debug.h"
 #include "Vars.h"
 #include "ipAddressPrefixTable_constants.h"
 #include "ipAddressPrefixTable_interface.h"
@@ -85,7 +85,7 @@ void initialize_table_ipAddressPrefixTable( void )
      * string token is used to add, find or remove pointers.
      */
     ipAddressPrefixTable_user_context_p
-        = DataList_create( "ipAddressPrefixTable", NULL, NULL );
+        = Map_newElement( "ipAddressPrefixTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -108,7 +108,7 @@ void shutdown_table_ipAddressPrefixTable( void )
      * call interface shutdown code
      */
     _ipAddressPrefixTable_shutdown_interface( ipAddressPrefixTable_user_context_p );
-    DataList_freeAll( ipAddressPrefixTable_user_context_p );
+    Map_clear( ipAddressPrefixTable_user_context_p );
     ipAddressPrefixTable_user_context_p = NULL;
 }
 

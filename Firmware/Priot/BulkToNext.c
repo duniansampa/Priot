@@ -1,8 +1,8 @@
 #include "BulkToNext.h"
 #include "Client.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Api.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 /** @defgroup bulk_to_next bulk_to_next
  *  Convert GETBULK requests into GETNEXT requests for the handler.

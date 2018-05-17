@@ -8,17 +8,19 @@ CONFIG += ordered
 unix {
 
     SUBDIRS += core_proj \
-               plugin_proj \
                priot_proj \
-               daemon_proj
+               plugin_proj \
+               daemon_proj \
+               test_proj
 
     core_proj.subdir   = Core
-    plugin_proj.subdir = Plugin
     priot_proj.subdir  = Priot
+    plugin_proj.subdir = Plugin
     daemon_proj.subdir = Daemon
+    test_proj.subdir =  Test
 
 
-    daemon_proj.depends = core_proj plugin_proj priot_proj
+    daemon_proj.depends = core_proj  priot_proj plugin_proj
 
 }else:win32{
     message("Buildings for Windows")

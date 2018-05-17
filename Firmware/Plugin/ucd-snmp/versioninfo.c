@@ -5,8 +5,8 @@
 #include "AgentRegistry.h"
 #include "DefaultStore.h"
 #include "Impl.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include "VarStruct.h"
 #include "Version.h"
 #include "struct.h"
@@ -84,21 +84,21 @@ var_extensible_version( struct Variable_s* vp,
         long_ret = name[ 8 ];
         return ( ( u_char* )( &long_ret ) );
     case VERTAG:
-        Strlcpy_strlcpy( errmsg, Version_getVersion(), sizeof( errmsg ) );
+        String_copyTruncate( errmsg, Version_getVersion(), sizeof( errmsg ) );
         *var_len = strlen( errmsg );
         return ( ( u_char* )errmsg );
     case VERDATE:
-        Strlcpy_strlcpy( errmsg, "$Date$", sizeof( errmsg ) );
+        String_copyTruncate( errmsg, "$Date$", sizeof( errmsg ) );
         *var_len = strlen( errmsg );
         return ( ( u_char* )errmsg );
     case VERCDATE:
         curtime = time( NULL );
         cptr = ctime( &curtime );
-        Strlcpy_strlcpy( errmsg, cptr, sizeof( errmsg ) );
+        String_copyTruncate( errmsg, cptr, sizeof( errmsg ) );
         *var_len = strlen( errmsg ) - 1; /* - 1 to strip trailing newline */
         return ( ( u_char* )errmsg );
     case VERIDENT:
-        Strlcpy_strlcpy( errmsg, "$Id$", sizeof( errmsg ) );
+        String_copyTruncate( errmsg, "$Id$", sizeof( errmsg ) );
         *var_len = strlen( errmsg );
         return ( ( u_char* )errmsg );
     case VERCONFIG:

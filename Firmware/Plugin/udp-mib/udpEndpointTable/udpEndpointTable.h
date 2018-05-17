@@ -10,7 +10,7 @@
 
 
 #include "Types.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
     /*
      *********************************************************************
@@ -46,7 +46,7 @@
     /*
      * TODO:101:o: |-> Review udpEndpointTable registration context.
      */
-    typedef DataList_DataList udpEndpointTable_registration;
+    typedef Map udpEndpointTable_registration;
 
 /**********************************************************************/
     /*
@@ -161,7 +161,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *udpEndpointTable_data_list;
+        Map *udpEndpointTable_data_list;
 
     } udpEndpointTable_rowreq_ctx;
 

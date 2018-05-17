@@ -31,7 +31,7 @@ PERFORMANCE OF THIS SOFTWARE.
 ******************************************************************/
 /*
  * Portions of this file are copyrighted by:
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
@@ -48,10 +48,10 @@ PERFORMANCE OF THIS SOFTWARE.
 #define CACHE_TIME ( 120 ) /* Seconds */
 
 #include "var_route.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "PluginSettings.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "interfaces.h"
 #include "ip.h"
 #include "route_headers.h"
@@ -163,7 +163,7 @@ var_ipRouteEntry( struct Variable_s* vp,
          *  Save in the 'cache'
          */
         memcpy( ( char* )saveName, ( char* )name,
-            TOOLS_MIN( *length, ASN01_MAX_OID_LEN ) * sizeof( oid ) );
+            UTILITIES_MIN_VALUE( *length, ASN01_MAX_OID_LEN ) * sizeof( oid ) );
         saveName[ 9 ] = 0;
         saveNameLen = *length;
         saveExact = exact;
@@ -316,7 +316,7 @@ Route_Scan_Reload( void )
                       &( ( ( struct sockaddr_in* )&( rtent.rt_genmask ) )->sin_addr.s_addr ) ) )
             continue;
 
-        Strlcpy_strlcpy( name, rt->rt_dev, sizeof( name ) );
+        String_copyTruncate( name, rt->rt_dev, sizeof( name ) );
 
         rt->rt_flags = flags, rt->rt_refcnt = refcnt;
         rt->rt_use = use, rt->rt_metric = metric;

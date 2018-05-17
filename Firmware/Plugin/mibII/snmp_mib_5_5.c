@@ -2,7 +2,7 @@
 #include "AgentReadConfig.h"
 #include "Callback.h"
 #include "CheckVarbind.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "GetStatistic.h"
 #include "PluginSettings.h"
 #include "SysORTable.h"
@@ -22,10 +22,10 @@ netsnmp_create_update_handler_registration( const char* name, const oid* id, siz
 static int
 snmp_enableauthentraps_store( int a, int b, void* c, void* d )
 {
-    char line[ TOOLS_MAXBUF_SMALL ];
+    char line[ UTILITIES_MAX_BUFFER_SMALL ];
 
     if ( trap_enableauthentrapsset > 0 ) {
-        snprintf( line, TOOLS_MAXBUF_SMALL, "pauthtrapenable %ld",
+        snprintf( line, UTILITIES_MAX_BUFFER_SMALL, "pauthtrapenable %ld",
             trap_enableauthentraps );
         AgentReadConfig_priotdStoreConfig( line );
     }

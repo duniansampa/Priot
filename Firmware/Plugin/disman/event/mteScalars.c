@@ -2,8 +2,8 @@
 
 #include "mteScalars.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Scalar.h"
 #include "ScalarGroup.h"
 #include "mteTrigger.h"

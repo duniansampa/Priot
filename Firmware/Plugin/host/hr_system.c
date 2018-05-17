@@ -16,9 +16,9 @@
 
 #include "hr_system.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "System.h"
 #include "Tc.h"
 #include "host_res.h"

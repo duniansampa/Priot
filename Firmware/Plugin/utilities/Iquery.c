@@ -65,13 +65,13 @@ static int
 _Iquery_tweakDefaultIquerySession( int majorID, int minorID,
                               void *serverargs, void *clientarg)
 {
-    u_char eID[TOOLS_MAXBUF_SMALL];
+    u_char eID[UTILITIES_MAX_BUFFER_SMALL];
     size_t elen;
     Types_Session *s = Client_queryGetDefaultSessionUnchecked();
 
     if ( s && s->securityEngineIDLen == 0 ) {
         elen = V3_getEngineID(eID, sizeof(eID));
-        s->securityEngineID = (u_char *)Tools_memdup(eID, elen);
+        s->securityEngineID = (u_char *)Memory_memdup(eID, elen);
         s->securityEngineIDLen = elen;
     }
     return ErrorCode_SUCCESS;
@@ -136,7 +136,7 @@ Types_Session *Iquery_pduSession(Types_Pdu* pdu) {
 }
 
 Types_Session *Iquery_userSession(char* secName){
-    u_char eID[TOOLS_MAXBUF_SMALL];
+    u_char eID[UTILITIES_MAX_BUFFER_SMALL];
     size_t elen = V3_getEngineID(eID, sizeof(eID));
 
     return Iquery_session( secName,
@@ -146,7 +146,7 @@ Types_Session *Iquery_userSession(char* secName){
 }
 
 Types_Session *Iquery_communitySession( char* community, int version ) {
-    u_char eID[TOOLS_MAXBUF_SMALL];
+    u_char eID[UTILITIES_MAX_BUFFER_SMALL];
     size_t elen = V3_getEngineID(eID, sizeof(eID));
 
     return Iquery_session( community, version, version+1,
@@ -170,13 +170,13 @@ Types_Session *Iquery_session(char* secName,   int   version,
         ss->version       = version;
         ss->securityModel = secModel;
         ss->securityLevel = secLevel;
-        ss->securityEngineID = (u_char *)Tools_memdup(engineID, engIDLen);
+        ss->securityEngineID = (u_char *)Memory_memdup(engineID, engIDLen);
         ss->securityEngineIDLen = engIDLen;
         if ( version == PRIOT_VERSION_3 ) {
             ss->securityNameLen = strlen(secName);
-            ss->securityName = (char *)Tools_memdup(secName, ss->securityNameLen);
+            ss->securityName = (char *)Memory_memdup(secName, ss->securityNameLen);
         } else {
-            ss->community = (u_char *)Tools_memdup(secName, strlen(secName));
+            ss->community = (u_char *)Memory_memdup(secName, strlen(secName));
             ss->communityLen = strlen(secName);
         }
         ss->myvoid = (void *)Agent_checkOutstandingAgentRequests;

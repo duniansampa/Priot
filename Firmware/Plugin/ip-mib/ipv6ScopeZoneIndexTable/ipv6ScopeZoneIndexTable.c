@@ -15,8 +15,8 @@
  * include our parent header 
  */
 #include "ipv6ScopeZoneIndexTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "Vars.h"
 #include "ipv6ScopeZoneIndexTable_interface.h"
 #include "ipv6ScopeZoneIndexTable_oids.h"
@@ -82,7 +82,7 @@ void initialize_table_ipv6ScopeZoneIndexTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    ipv6ScopeZoneIndexTable_user_context_p = DataList_create( "ipv6ScopeZoneIndexTable", NULL, NULL );
+    ipv6ScopeZoneIndexTable_user_context_p = Map_newElement( "ipv6ScopeZoneIndexTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -105,7 +105,7 @@ void shutdown_table_ipv6ScopeZoneIndexTable( void )
      * call interface shutdown code
      */
     _ipv6ScopeZoneIndexTable_shutdown_interface( ipv6ScopeZoneIndexTable_user_context_p );
-    DataList_freeAll( ipv6ScopeZoneIndexTable_user_context_p );
+    Map_clear( ipv6ScopeZoneIndexTable_user_context_p );
     ipv6ScopeZoneIndexTable_user_context_p = NULL;
 }
 

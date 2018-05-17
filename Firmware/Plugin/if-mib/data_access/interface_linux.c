@@ -4,11 +4,11 @@
  * $Id$
  */
 
-#include "Assert.h"
-#include "Container.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Assert.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include "if-mib/ifTable/ifTable_constants.h"
 #include "interface_ioctl.h"
 #include <inttypes.h>
@@ -559,7 +559,7 @@ netsnmp_linux_interface_get_if_speed( int fd, const char* name,
     memset( &edata, 0, sizeof( edata ) );
     edata.cmd = ETHTOOL_GSET;
 
-    Strlcpy_strlcpy( ifr.ifr_name, name, sizeof( ifr.ifr_name ) );
+    String_copyTruncate( ifr.ifr_name, name, sizeof( ifr.ifr_name ) );
     ifr.ifr_data = ( char* )&edata;
 
     ret = ioctl( fd, SIOCETHTOOL, &ifr );
@@ -602,7 +602,7 @@ netsnmp_linux_interface_get_if_speed_mii( int fd, const char* name,
     const unsigned long long media_speeds[] = { 10000000, 10000000, 100000000, 100000000, 10000000, 0 };
     /* It corresponds to "10baseT", "10baseT-FD", "100baseTx", "100baseTx-FD", "100baseT4", "Flow-control", 0, */
 
-    Strlcpy_strlcpy( ifr.ifr_name, name, sizeof( ifr.ifr_name ) );
+    String_copyTruncate( ifr.ifr_name, name, sizeof( ifr.ifr_name ) );
     data[ 0 ] = 0;
 
     /*

@@ -4,8 +4,8 @@
  * $Id: ipv6scopezone_common.c 14170 2007-04-29 02:22:12Z varun_c $
  */
 
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "siglog/data_access/scopezone.h"
 /*
  * local static prototypes
@@ -107,7 +107,7 @@ void netsnmp_access_scopezone_container_free( Container_Container* container, u_
 netsnmp_v6scopezone_entry*
 netsnmp_access_scopezone_entry_create( void )
 {
-    netsnmp_v6scopezone_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_v6scopezone_entry );
+    netsnmp_v6scopezone_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_v6scopezone_entry );
 
     DEBUG_MSGTL( ( "access:scopezone:entry", "create\n" ) );
 

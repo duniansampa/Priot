@@ -10,11 +10,11 @@
 #include "snmpTargetAddrEntry.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "Mib.h"
 #include "ReadConfig.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "Tc.h"
 #include "utilities/header_generic.h"
 
@@ -91,12 +91,12 @@ void snmpTargetAddrTable_dispose( struct targetAddrTable_struct* reaped )
     if ( reaped->sess )
         Api_close( reaped->sess );
     else
-        TOOLS_FREE( reaped->tAddress );
-    TOOLS_FREE( reaped->nameData );
-    TOOLS_FREE( reaped->tagList );
-    TOOLS_FREE( reaped->params );
+        MEMORY_FREE( reaped->tAddress );
+    MEMORY_FREE( reaped->nameData );
+    MEMORY_FREE( reaped->tagList );
+    MEMORY_FREE( reaped->params );
 
-    TOOLS_FREE( reaped );
+    MEMORY_FREE( reaped );
 } /* snmpTargetAddrTable_dispose  */
 
 /*
@@ -370,7 +370,7 @@ int snmpTargetAddr_addTAddress( struct targetAddrTable_struct* entry,
          * return(0);
          * } 
          */
-        TOOLS_FREE( entry->tAddress );
+        MEMORY_FREE( entry->tAddress );
         entry->tAddress = ( u_char* )malloc( len );
         entry->tAddressLen = len;
         memcpy( entry->tAddress, cptr, len );
@@ -442,7 +442,7 @@ int snmpTargetAddr_addTagList( struct targetAddrTable_struct* entry, char* cptr 
                 "ERROR snmpTargetAddrEntry: tag list out of range in config string\n" ) );
             return ( 0 );
         }
-        TOOLS_FREE( entry->tagList );
+        MEMORY_FREE( entry->tagList );
         entry->tagList = strdup( cptr );
     }
     return ( 1 );
@@ -782,7 +782,7 @@ var_snmpTargetAddrEntry( struct Variable_s* vp,
 
     case SNMPTARGETADDRTAGLIST:
         if ( temp_struct->tagList != NULL ) {
-            Strlcpy_strlcpy( string, temp_struct->tagList, sizeof( string ) );
+            String_copyTruncate( string, temp_struct->tagList, sizeof( string ) );
             *var_len = strlen( string );
             return ( unsigned char* )string;
         } else {
@@ -792,7 +792,7 @@ var_snmpTargetAddrEntry( struct Variable_s* vp,
     case SNMPTARGETADDRPARAMS:
         if ( temp_struct->params == NULL )
             return NULL;
-        Strlcpy_strlcpy( string, temp_struct->params, sizeof( string ) );
+        String_copyTruncate( string, temp_struct->params, sizeof( string ) );
         *var_len = strlen( string );
         return ( unsigned char* )string;
 
@@ -954,7 +954,7 @@ int write_snmpTargetAddrTAddress( int action,
             }
         }
     } else if ( action == IMPL_COMMIT ) {
-        TOOLS_FREE( old_addr );
+        MEMORY_FREE( old_addr );
         old_addr = NULL;
         Api_storeNeeded( NULL );
     } else if ( action == IMPL_FREE || action == IMPL_UNDO ) {
@@ -968,7 +968,7 @@ int write_snmpTargetAddrTAddress( int action,
             != NULL ) {
             if ( target->storageType != PRIOT_STORAGE_READONLY
                 && target->rowStatus != PRIOT_ROW_ACTIVE ) {
-                TOOLS_FREE( target->tAddress );
+                MEMORY_FREE( target->tAddress );
                 target->tAddress = ( u_char* )old_addr;
                 target->tAddressLen = old_len;
                 if ( target->rowStatus == PRIOT_ROW_NOTINSERVICE && snmpTargetAddr_rowStatusCheck( target ) == 0 ) {
@@ -1187,7 +1187,7 @@ int write_snmpTargetAddrTagList( int action,
             target->tagList[ var_val_len ] = '\0';
         }
     } else if ( action == IMPL_COMMIT ) {
-        TOOLS_FREE( old_tlist );
+        MEMORY_FREE( old_tlist );
         old_tlist = NULL;
         Api_storeNeeded( NULL );
     } else if ( action == IMPL_FREE || action == IMPL_UNDO ) {
@@ -1197,7 +1197,7 @@ int write_snmpTargetAddrTagList( int action,
                    &name_len, 1 ) )
             != NULL ) {
             if ( target->storageType != PRIOT_STORAGE_READONLY ) {
-                TOOLS_FREE( target->tagList );
+                MEMORY_FREE( target->tagList );
                 target->tagList = old_tlist;
             }
         }
@@ -1260,7 +1260,7 @@ int write_snmpTargetAddrParams( int action,
             }
         }
     } else if ( action == IMPL_COMMIT ) {
-        TOOLS_FREE( old_params );
+        MEMORY_FREE( old_params );
         old_params = NULL;
         Api_storeNeeded( NULL );
     } else if ( action == IMPL_FREE || action == IMPL_UNDO ) {
@@ -1274,7 +1274,7 @@ int write_snmpTargetAddrParams( int action,
             != NULL ) {
             if ( target->storageType != PRIOT_STORAGE_READONLY
                 && target->rowStatus != PRIOT_ROW_ACTIVE ) {
-                TOOLS_FREE( target->params );
+                MEMORY_FREE( target->params );
                 target->params = old_params;
                 if ( target->rowStatus == PRIOT_ROW_NOTINSERVICE && snmpTargetAddr_rowStatusCheck( target ) == 0 ) {
                     target->rowStatus = PRIOT_ROW_NOTREADY;
@@ -1372,8 +1372,8 @@ int snmpTargetAddr_createNewRow( oid* name, size_t name_len )
             return PRIOT_ERR_GENERR;
         temp_struct->nameData = ( char* )malloc( newNameLen );
         if ( temp_struct->nameData == NULL ) {
-            TOOLS_FREE( temp_struct->tagList );
-            TOOLS_FREE( temp_struct );
+            MEMORY_FREE( temp_struct->tagList );
+            MEMORY_FREE( temp_struct );
             return 0;
         }
 

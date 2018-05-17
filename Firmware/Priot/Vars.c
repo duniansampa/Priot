@@ -5,11 +5,11 @@
 #include "Agentx/AgentxConfig.h"
 #include "Agentx/Subagent.h"
 #include "AllHelpers.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
-#include "Enum.h"
-#include "Logger.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Logger.h"
 #include "PriotSettings.h"
 #include "Secmod.h"
 #include "SysORTable.h"
@@ -201,7 +201,7 @@ void Vars_shutdownAgent( void )
     SysORTable_shutdownAgentSysORTable();
     Container_freeList();
     Secmod_clear();
-    Enum_clearEnum();
+    MapList_clear();
     Callback_clearCallback();
     Secmod_shutdown();
     Agent_addrcacheDestroy();

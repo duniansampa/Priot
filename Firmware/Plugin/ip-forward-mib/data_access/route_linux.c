@@ -5,11 +5,11 @@
  */
 
 #include "siglog/data_access/route.h"
-#include "Assert.h"
-#include "Container.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Strlcpy.h"
+#include "System/Util/Assert.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/String.h"
 #include "if-mib/data_access/interface_ioctl.h"
 #include "ip-forward-mib/data_access/route_ioctl.h"
 #include "ip-forward-mib/inetCidrRouteTable/inetCidrRouteTable_constants.h"
@@ -102,7 +102,7 @@ _load_ipv4( Container_Container* container, u_long* index )
         /*
          * temporary null terminated name
          */
-        Strlcpy_strlcpy( name, rtent_name, sizeof( name ) );
+        String_copyTruncate( name, rtent_name, sizeof( name ) );
 
         /*
          * don't bother to try and get the ifindex for routes with

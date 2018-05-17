@@ -1,10 +1,9 @@
 #ifndef INTEGER_H_
 #define INTEGER_H_
 
-#include "Generals.h"
 /*!
- * \brief     Integer class.
- * \details   A class to define Integer operations.
+ * \brief     Number class.
+ * \details   A class to define Number operations.
  * \author    Dunian Coutinho Sampa
  * \version   1.0
  * \date      2015-2016
@@ -14,54 +13,40 @@
  * \copyright DSPX LTDA.
  */
 
+#include "Generals.h"
 
-#include "../../Config.h"
-#include "../../Generals.h"
-#include "../String.h"
+#define INTEGER_INT8_MAXVALUE UCHAR_MAX
+#define INTEGER_INT8_MINVALUE 0
+#define INTEGER_INT8_SIZE sizeof( int8_t )
 
-#define  INTEGER_MAXVALUE    INT_MAX
-#define  INTEGER_MIN_VALUE   INT_MIN
-#define  INTEGER_SIZE        sizeof(int)
+#define INTEGER_INT16_MAXVALUE SHRT_MAX
+#define INTEGER_INT16_MIN_VALUE SHRT_MIN
+#define INTEGER_INT16_SIZE sizeof( int16_t )
 
+#define INTEGER_INT32_MAXVALUE INT_MAX
+#define INTEGER_INT32_MIN_VALUE INT_MIN
+#define INTEGER_INT32_SIZE sizeof( int32_t )
 
+#define INTEGER_INT64_MAXVALUE LLONG_MAX
+#define INTEGER_INT64_MINVALUE LLONG_MIN
+#define INTEGER_INT64_SIZE sizeof( int64_t )
 
-//Parses the string argument as a signed decimal integer.
-int	Integer_parse1(const char * s);
+/** Returns a int8_t whose value is equivalent to this int8_t with the designated bit cleared. */
+int8_t Integer_clearBitInt8( int8_t b, uint8_t n );
 
-//Parses the string argument as a signed integer in the base specified by the second argument.
-int	Integer_parseInt2(const  char * s, int base);
+/** Returns a int8_t whose value is equivalent to this int8_t with the designated bit set. */
+int8_t Integer_setBitInt8( int8_t b, uint8_t n );
 
-//Parses the string argument as signed integer in the base specified by the third argument.
-//sub is an object of type string, whose value is set by the function to the substring that starts to next character
-//in s after the numerical value.
-int	Integer_parseInt3(const  char * s,  char * sub, int base);
+/** Returns true if and only if the designated bit is set. */
+bool Integer_testBitInt8( int8_t b, uint8_t n );
 
+/** Returns a int32_t whose value is equivalent to this int32_t with the designated bit cleared. */
+int32_t Integer_clearBitInt32( int32_t value, uint8_t n );
 
-//Returns a string representation of the integer argument as an unsigned integer in base 2.
-char * Integer_toBinaryString(int i);
+/** Returns a int32_t whose value is equivalent to this int32_t with the designated bit set. */
+int32_t Integer_setBitInt32( int32_t value, uint8_t n );
 
-//Returns a string representation of the integer argument as an unsigned integer in base 16.
-char * Integer_toHexString(int i);
-
-//Returns a string representation of the integer argument as an unsigned integer in base 8.
-char * Integer_toOctalString(int i);
-
-
-//Returns a String object representing the specified integer.
-char * 	Integer_toString1(int i);
-
-// Returns a string representation of the first argument in the base specified by the second argument.
-char * 	Integer_toString2(unsigned int i, int base);
-
-
-// Returns a Integer whose value is equivalent to this Integer with the designated bit cleared.
-int Integer_clearBit(int value, int n);
-
-// Returns a Integer whose value is equivalent to this Integer with the designated bit set.
-int Integer_setBit(int value, int n);
-
-// Returns true if and only if the designated bit is set.
-bool Integer_testBit(int value, int n);
-
+/** Returns true if and only if the designated bit is set. */
+bool Integer_testBitInt32( int32_t value, uint8_t n );
 
 #endif /* INTEGER_H_ */

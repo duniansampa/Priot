@@ -5,8 +5,8 @@
  */
 
 #include "siglog/data_access/systemstats.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 
 /**---------------------------------------------------------------------*/
 /*
@@ -163,7 +163,7 @@ netsnmp_systemstats_entry*
 netsnmp_access_systemstats_entry_create( int version, int if_index,
     const char* tableName )
 {
-    netsnmp_systemstats_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_systemstats_entry );
+    netsnmp_systemstats_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_systemstats_entry );
 
     DEBUG_MSGTL( ( "access:systemstats:entry", "create\n" ) );
 
@@ -188,7 +188,7 @@ void netsnmp_access_systemstats_entry_free( netsnmp_systemstats_entry* entry )
         return;
 
     /*
-     * TOOLS_FREE not needed, for any of these, 
+     * MEMORY_FREE not needed, for any of these, 
      * since the whole entry is about to be freed
      */
 
@@ -299,7 +299,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
         /*
          * if we don't have old stats, they can't have wrapped, so just copy
          */
-        prev_vals->old_stats = TOOLS_MALLOC_TYPEDEF( netsnmp_ipstats );
+        prev_vals->old_stats = MEMORY_MALLOC_TYPEDEF( netsnmp_ipstats );
         if ( NULL == prev_vals->old_stats ) {
             return -2;
         }
@@ -536,7 +536,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
      * if we've decided we no longer need to check wraps, free old stats
      */
     if ( 0 == need_wrap_check ) {
-        TOOLS_FREE( prev_vals->old_stats );
+        MEMORY_FREE( prev_vals->old_stats );
     } else {
         /*
          * update old stats from new stats.

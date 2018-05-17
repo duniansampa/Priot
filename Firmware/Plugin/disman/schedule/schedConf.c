@@ -6,7 +6,7 @@
 #include "schedConf.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "ReadConfig.h"
 #include "Tc.h"
@@ -65,7 +65,7 @@ void parse_sched_periodic( const char* token, char* line )
      *  Parse the configure directive line
      */
     line = ReadConfig_copyNword( line, tmpbuf, sizeof( tmpbuf ) );
-    frequency = Tools_stringTimeToSecs( tmpbuf );
+    frequency = Convert_stringTimeToSeconds( tmpbuf );
     if ( frequency == -1 ) {
         ReadConfig_configPerror( "Illegal frequency specified" );
         return;
@@ -367,7 +367,7 @@ void parse_schedTable( const char* token, char* line )
  */
 int store_schedTable( int majorID, int minorID, void* serverarg, void* clientarg )
 {
-    char line[ TOOLS_MAXBUF ];
+    char line[ UTILITIES_MAX_BUFFER ];
     char time_bits[ 22 ]; /* schedWeekDay..schedMinute */
     char *cptr, *cp;
     void* vp;

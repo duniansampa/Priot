@@ -6,7 +6,7 @@
  */
 /*
  * Portions of this file are copyrighted by:
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
@@ -14,9 +14,9 @@
 #include "override.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Instance.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 
@@ -60,7 +60,7 @@ int override_handler( MibHandler* handler,
         break;
 
     case MODE_SET_RESERVE2:
-        data->set_space = Tools_memdup( requests->requestvb->val.string,
+        data->set_space = Memory_memdup( requests->requestvb->val.string,
             requests->requestvb->valLen );
         if ( !data->set_space )
             Agent_setRequestError( reqinfo, requests,
@@ -68,7 +68,7 @@ int override_handler( MibHandler* handler,
         break;
 
     case MODE_SET_FREE:
-        TOOLS_FREE( data->set_space );
+        MEMORY_FREE( data->set_space );
         break;
 
     case MODE_SET_ACTION:
@@ -83,13 +83,13 @@ int override_handler( MibHandler* handler,
         break;
 
     case MODE_SET_UNDO:
-        TOOLS_FREE( data->value );
+        MEMORY_FREE( data->value );
         data->value = data->set_space;
         data->value_len = data->set_len;
         break;
 
     case MODE_SET_COMMIT:
-        TOOLS_FREE( data->set_space );
+        MEMORY_FREE( data->set_space );
         break;
 
     default:
@@ -112,7 +112,7 @@ int override_handler( MibHandler* handler,
 void netsnmp_parse_override( const char* token, char* line )
 {
     char* cp;
-    char buf[ TOOLS_MAXBUF ], namebuf[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ], namebuf[ UTILITIES_MAX_BUFFER ];
     int readwrite = 0;
     oid oidbuf[ ASN01_MAX_OID_LEN ];
     size_t oidbuf_len = ASN01_MAX_OID_LEN;
@@ -182,7 +182,7 @@ void netsnmp_parse_override( const char* token, char* line )
     else
         buf[ 0 ] = 0;
 
-    thedata = TOOLS_MALLOC_TYPEDEF( override_data );
+    thedata = MEMORY_MALLOC_TYPEDEF( override_data );
     if ( !thedata ) {
         ReadConfig_configPerror( "memory allocation failure" );
         return;
@@ -208,7 +208,7 @@ void netsnmp_parse_override( const char* token, char* line )
             /*
              * hex 
              */
-            thedata->value_len = Tools_hexToBinary2( ( u_char* )( buf + 2 ), strlen( buf ) - 2,
+            thedata->value_len = Convert_hexStringToBinaryString2( ( u_char* )( buf + 2 ), strlen( buf ) - 2,
                 ( char** )&thedata->value );
         } else {
             thedata->value = strdup( buf );
@@ -228,7 +228,7 @@ void netsnmp_parse_override( const char* token, char* line )
         break;
 
     default:
-        TOOLS_FREE( thedata );
+        MEMORY_FREE( thedata );
         ReadConfig_configPerror( "illegal/unsupported type specified" );
         return;
     }
@@ -239,7 +239,7 @@ void netsnmp_parse_override( const char* token, char* line )
         return;
     }
 
-    the_reg = TOOLS_MALLOC_TYPEDEF( HandlerRegistration );
+    the_reg = MEMORY_MALLOC_TYPEDEF( HandlerRegistration );
     if ( !the_reg ) {
         ReadConfig_configPerror( "memory allocation failure" );
         free( thedata );
@@ -254,10 +254,10 @@ void netsnmp_parse_override( const char* token, char* line )
     the_reg->rootoid_len = oidbuf_len;
     if ( !the_reg->rootoid || !the_reg->handler || !the_reg->handlerName ) {
         if ( the_reg->handler )
-            TOOLS_FREE( the_reg->handler->handler_name );
-        TOOLS_FREE( the_reg->handler );
-        TOOLS_FREE( the_reg->handlerName );
-        TOOLS_FREE( the_reg );
+            MEMORY_FREE( the_reg->handler->handler_name );
+        MEMORY_FREE( the_reg->handler );
+        MEMORY_FREE( the_reg->handlerName );
+        MEMORY_FREE( the_reg );
         ReadConfig_configPerror( "memory allocation failure" );
         free( thedata );
         return;
@@ -266,7 +266,7 @@ void netsnmp_parse_override( const char* token, char* line )
 
     if ( Instance_registerInstance( the_reg ) ) {
         ReadConfig_configPerror( "oid registration failed within the agent" );
-        TOOLS_FREE( thedata->value );
+        MEMORY_FREE( thedata->value );
         free( thedata );
         return;
     }

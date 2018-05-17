@@ -52,7 +52,7 @@ ModeEndCall_addModeCallback( ModeHandlerList* endlist,
                              MibHandler*      callbackh ) {
 
     ModeHandlerList *ptr, *ptr2;
-    ptr = TOOLS_MALLOC_TYPEDEF(ModeHandlerList);
+    ptr = MEMORY_MALLOC_TYPEDEF(ModeHandlerList);
     if (!ptr)
         return NULL;
 

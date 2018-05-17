@@ -2,8 +2,8 @@
 
 #include "siglog/agent/hardware/memory.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "System.h"
 
 /*

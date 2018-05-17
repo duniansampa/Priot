@@ -2,12 +2,12 @@
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
 #include "Alarm.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
-#include "Strlcat.h"
-#include "Strlcpy.h"
+#include "System/String.h"
+#include "System/String.h"
 #include "pass_common.h"
 #include "util_funcs.h"
 #include <sys/wait.h>
@@ -129,7 +129,7 @@ void pass_persist_parse_config( const char* token, char* cptr )
             ;
         sprintf( ( *ppass )->command, "%.*s", ( int )( tcptr - cptr ), cptr );
     }
-    Strlcpy_strlcpy( ( *ppass )->name, ( *ppass )->command, sizeof( ( *ppass )->name ) );
+    String_copyTruncate( ( *ppass )->name, ( *ppass )->command, sizeof( ( *ppass )->name ) );
     ( *ppass )->next = NULL;
 
     AgentRegistry_registerMibPriority( "pass_persist",
@@ -191,8 +191,8 @@ var_extensible_pass_persist( struct Variable_s* vp,
 {
     oid newname[ ASN01_MAX_OID_LEN ];
     int i, rtest, newlen;
-    char buf[ TOOLS_MAXBUF ];
-    static char buf2[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ];
+    static char buf2[ UTILITIES_MAX_BUFFER ];
     struct extensible* persistpassthru;
     FILE* file;
 
@@ -303,7 +303,7 @@ int setPassPersist( int action,
     int i, rtest;
     struct extensible* persistpassthru;
 
-    char buf[ TOOLS_MAXBUF ], buf2[ TOOLS_MAXBUF ];
+    char buf[ UTILITIES_MAX_BUFFER ], buf2[ UTILITIES_MAX_BUFFER ];
 
     /*
      * Make sure that our basic pipe structure is malloced 
@@ -330,7 +330,7 @@ int setPassPersist( int action,
                 sizeof( persistpassthru->command ), "set\n%s\n", buf );
             persistpassthru->command[ sizeof( persistpassthru->command ) - 1 ] = 0;
             netsnmp_internal_pass_set_format( buf, var_val, var_val_type, var_val_len );
-            Strlcat_strlcat( persistpassthru->command, buf,
+            String_appendTruncate( persistpassthru->command, buf,
                 sizeof( persistpassthru->command ) );
             persistpassthru->command[ sizeof( persistpassthru->command ) - 2 ] = '\n';
             persistpassthru->command[ sizeof( persistpassthru->command ) - 1 ] = 0;
@@ -508,7 +508,7 @@ open_persist_pipe( int iindex, char* command )
      * Send test packet always so we can self-catch 
      */
     {
-        char buf[ TOOLS_MAXBUF ];
+        char buf[ UTILITIES_MAX_BUFFER ];
         /*
          * Should catch SIGPIPE around this call! 
          */

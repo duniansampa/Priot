@@ -2,8 +2,8 @@
 
 #include "notification_log.h"
 #include "Alarm.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "Instance.h"
@@ -471,7 +471,7 @@ void init_notification_log( void )
         DsAgentString_NOTIF_LOG_CTX );
 
     DEBUG_MSGTL( ( "notification_log", "registering with '%s' context\n",
-        TOOLS_STRORNULL( context ) ) );
+        UTILITIES_STRING_OR_NULL( context ) ) );
 
     /*
      * static variables

@@ -2,10 +2,10 @@
 #include "Mib.h"
 #include "Client.h"
 #include "Api.h"
-#include "Logger.h"
-#include "Debug.h"
-#include "Container.h"
-#include "Assert.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Assert.h"
 #include "TableContainer.h"
 
 /** @defgroup tdata tdata
@@ -43,7 +43,7 @@ TableTdata_generateIndexOid(TdataRow *row)
 Tdata *
 TableTdata_createTable(const char *name, long flags)
 {
-    Tdata *table = TOOLS_MALLOC_TYPEDEF(Tdata);
+    Tdata *table = MEMORY_MALLOC_TYPEDEF(Tdata);
     if ( !table )
         return NULL;
 
@@ -73,7 +73,7 @@ TableTdata_deleteTable(Tdata *table)
     if (table->container)
        CONTAINER_FREE(table->container);
 
-    TOOLS_FREE(table);
+    MEMORY_FREE(table);
     return;
 }
 
@@ -81,7 +81,7 @@ TableTdata_deleteTable(Tdata *table)
 TdataRow *
 TableTdata_createRow(void)
 {
-    TdataRow *row = TOOLS_MALLOC_TYPEDEF(TdataRow);
+    TdataRow *row = MEMORY_MALLOC_TYPEDEF(TdataRow);
     return row;
 }
 
@@ -93,14 +93,14 @@ TableTdata_cloneRow(TdataRow *row)
     if (!row)
         return NULL;
 
-    newrow = (TdataRow *)Tools_memdup(row, sizeof(TdataRow));
+    newrow = (TdataRow *)Memory_memdup(row, sizeof(TdataRow));
     if (!newrow)
         return NULL;
 
     if (row->indexes) {
         newrow->indexes = Client_cloneVarbind(newrow->indexes);
         if (!newrow->indexes) {
-            TOOLS_FREE(newrow);
+            MEMORY_FREE(newrow);
             return NULL;
         }
     }
@@ -111,7 +111,7 @@ TableTdata_cloneRow(TdataRow *row)
         if (!newrow->oid_index.oids) {
             if (newrow->indexes)
                 Api_freeVarbind(newrow->indexes);
-            TOOLS_FREE(newrow);
+            MEMORY_FREE(newrow);
             return NULL;
         }
     }
@@ -159,7 +159,7 @@ TableTdata_deleteRow(TdataRow *row)
      */
     if (row->indexes)
         Api_freeVarbind(row->indexes);
-    TOOLS_FREE(row->oid_index.oids);
+    MEMORY_FREE(row->oid_index.oids);
     data = row->data;
     free(row);
 
@@ -339,10 +339,10 @@ TableTdata_helperHandler(MibHandler *handler,
             }
             ++need_processing;
             AgentHandler_requestAddListData(request,
-                                      DataList_create(
+                                      Map_newElement(
                                           TABLE_TDATA_TABLE, table, NULL));
             AgentHandler_requestAddListData(request,
-                                      DataList_create(
+                                      Map_newElement(
                                           TABLE_TDATA_ROW,   row,   NULL));
         }
         /** skip next handler if processing not needed */

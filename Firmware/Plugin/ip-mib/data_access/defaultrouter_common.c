@@ -5,9 +5,9 @@
  */
 
 #include "siglog/data_access/defaultrouter.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "ip-mib/ipDefaultRouterTable/ipDefaultRouterTable_enums.h"
 
@@ -146,7 +146,7 @@ netsnmp_defaultrouter_entry*
 netsnmp_access_defaultrouter_entry_create( void )
 {
     int rc = 0;
-    netsnmp_defaultrouter_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_defaultrouter_entry );
+    netsnmp_defaultrouter_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_defaultrouter_entry );
 
     DEBUG_MSGTL( ( "access:defaultrouter:entry", "create\n" ) );
 

@@ -1,12 +1,12 @@
 #include "Instance.h"
-#include "Tools.h"
-#include "Debug.h"
-#include "Assert.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Assert.h"
 #include "AgentHandler.h"
 #include "Watcher.h"
 #include "AgentRegistry.h"
 #include "Client.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 #include "Client.h"
 #include "Serialize.h"
 #include "ReadOnly.h"
@@ -444,12 +444,12 @@ Instance_registerNumFileInstance(const char *name,
         return MIB_REGISTRATION_FAILED;
     }
 
-    nfi = TOOLS_MALLOC_TYPEDEF(NumFileInstance);
+    nfi = MEMORY_MALLOC_TYPEDEF(NumFileInstance);
     if ((NULL == nfi) ||
         (NULL == (nfi->file_name = strdup(file_name)))) {
         Logger_log(LOGGER_PRIORITY_ERR, "could not not allocate memory\n");
         if (NULL != nfi)
-            free(nfi); /* TOOLS_FREE overkill on local var */
+            free(nfi); /* MEMORY_FREE overkill on local var */
         return MIB_REGISTRATION_FAILED;
     }
 
@@ -578,14 +578,14 @@ Instance_numFileHandler(MibHandler *handler,
             return PRIOT_ERR_NOERROR;
         }
 
-        it_save = (u_long *)Tools_memdup(&it, sizeof(u_long));
+        it_save = (u_long *)Memory_memdup(&it, sizeof(u_long));
         if (it_save == NULL) {
             Agent_setRequestError(reqinfo, requests,
                                       PRIOT_ERR_RESOURCEUNAVAILABLE);
             return PRIOT_ERR_NOERROR;
         }
         AgentHandler_requestAddListData(requests,
-                                      DataList_create
+                                      Map_newElement
                                       (INSTANCE_HANDLER_NAME, it_save,
                                        &free_wrapper));
         break;

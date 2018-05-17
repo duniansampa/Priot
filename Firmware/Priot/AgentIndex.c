@@ -1,16 +1,16 @@
 #include "AgentIndex.h"
 
 #include "DefaultStore.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Client.h"
 #include "Priot.h"
 #include "Api.h"
 #include "Mib.h"
 #include "PriotSettings.h"
 #include "DsAgent.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Agentx/XClient.h"
 
 /*
@@ -201,7 +201,7 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
                          *idxptr2->varbind->val.integer);
                     break;
                 case ASN01_OCTET_STR:
-                    i = TOOLS_MIN(varbind->valLen,
+                    i = UTILITIES_MIN_VALUE(varbind->valLen,
                                  idxptr2->varbind->valLen);
                     res2 =
                         memcmp(varbind->val.string,
@@ -503,7 +503,7 @@ AgentIndex_unregisterIndex( Types_VariableList* varbind,
                  *idxptr2->varbind->val.integer);
             break;
         case ASN01_OCTET_STR:
-            i = TOOLS_MIN(varbind->valLen,
+            i = UTILITIES_MIN_VALUE(varbind->valLen,
                          idxptr2->varbind->valLen);
             res2 =
                 memcmp(varbind->val.string,

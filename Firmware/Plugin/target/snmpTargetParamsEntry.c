@@ -10,7 +10,7 @@
 #include "snmpTargetParamsEntry.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
@@ -1099,7 +1099,7 @@ int write_snmpTargetParamsSecName( int action,
                    1 ) )
             != NULL ) {
             update_timestamp( params );
-            TOOLS_FREE( old_name );
+            MEMORY_FREE( old_name );
             old_name = NULL;
         }
     } else if ( action == IMPL_FREE || action == IMPL_UNDO ) {
@@ -1114,7 +1114,7 @@ int write_snmpTargetParamsSecName( int action,
             != NULL ) {
             if ( params->storageType != PRIOT_STORAGE_READONLY
                 && params->rowStatus != PRIOT_ROW_ACTIVE ) {
-                TOOLS_FREE( params->secName );
+                MEMORY_FREE( params->secName );
                 params->secName = old_name;
                 if ( params->rowStatus == PRIOT_ROW_NOTINSERVICE && !snmpTargetParams_rowStatusCheck( params ) ) {
                     params->rowStatus = PRIOT_ROW_NOTREADY;

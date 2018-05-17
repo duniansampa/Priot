@@ -1,11 +1,11 @@
 #include "Table.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Enum.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
 #include "Mib.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 static void _Table_helperCleanup( AgentRequestInfo* reqinfo,
     RequestInfo* request,
@@ -119,7 +119,7 @@ int Table_registerTable( HandlerRegistration* reginfo,
 int Table_unregisterTable( HandlerRegistration* reginfo )
 {
     /* Locate "this" reginfo */
-    /* TOOLS_FREE(reginfo->myvoid); */
+    /* MEMORY_FREE(reginfo->myvoid); */
     return AgentHandler_unregisterHandler( reginfo );
 }
 
@@ -189,7 +189,7 @@ int Table_helperHandler( MibHandler* handler,
     {
         DEBUG_MSGTL( ( "helper:table:req",
             "Got %s (%d) mode request for handler %s: base oid:",
-            Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ),
+            MapList_findLabel( "agentMode", reqinfo->mode ),
             reqinfo->mode, handler->handler_name ) );
         DEBUG_MSGOID( ( "helper:table:req", reginfo->rootoid,
             reginfo->rootoid_len ) );
@@ -309,7 +309,7 @@ int Table_helperHandler( MibHandler* handler,
                 > 0 ) {
                 if ( reqinfo->mode == MODE_GETNEXT ) {
                     if ( var->name != var->nameLoc )
-                        TOOLS_FREE( var->name );
+                        MEMORY_FREE( var->name );
                     Client_setVarObjid( var, reginfo->rootoid,
                         reginfo->rootoid_len );
                 } else {
@@ -359,7 +359,7 @@ int Table_helperHandler( MibHandler* handler,
             incomplete = 0;
             tbl_req_info = Table_extractTableInfo( request );
             if ( NULL == tbl_req_info ) {
-                tbl_req_info = TOOLS_MALLOC_TYPEDEF( TableRequestInfo );
+                tbl_req_info = MEMORY_MALLOC_TYPEDEF( TableRequestInfo );
                 if ( tbl_req_info == NULL ) {
                     _Table_helperCleanup( reqinfo, request,
                         PRIOT_ERR_GENERR );
@@ -369,7 +369,7 @@ int Table_helperHandler( MibHandler* handler,
                 tbl_req_info->indexes = Client_cloneVarbind( tbl_info->indexes );
                 tbl_req_info->number_indexes = 0; /* none yet */
                 AgentHandler_requestAddListData( request,
-                    DataList_create( TABLE_HANDLER_NAME,
+                    Map_newElement( TABLE_HANDLER_NAME,
                                                      ( void* )tbl_req_info,
                                                      _Table_dataFreeFunc ) );
             } else {
@@ -1127,13 +1127,13 @@ Table_getOrCreateRowStash( AgentRequestInfo* reqinfo,
         /*
          * hasn't be created yet.  we create it here.
          */
-        stashp = TOOLS_MALLOC_TYPEDEF( OidStash_Node* );
+        stashp = MEMORY_MALLOC_TYPEDEF( OidStash_Node* );
 
         if ( !stashp )
             return NULL; /* ack. out of mem */
 
         Agent_addListData( reqinfo,
-            DataList_create( ( const char* )storage_name,
+            Map_newElement( ( const char* )storage_name,
                                stashp,
                                _Table_rowStashDataListFree ) );
     }

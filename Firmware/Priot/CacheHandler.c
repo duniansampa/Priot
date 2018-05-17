@@ -1,14 +1,14 @@
 #include "CacheHandler.h"
 #include "Api.h"
-#include "Debug.h"
-#include "Tools.h"
-#include "Logger.h"
-#include "Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Assert.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "Mib.h"
 #include "Alarm.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
 static Cache*   _cacheHandler_head = NULL;
 static int      _cacheHandler_outstandingValid = 0;
@@ -157,7 +157,7 @@ CacheHandler_create(int timeout, CacheLoadFT * load_hook,
 {
     Cache  *cache = NULL;
 
-    cache = TOOLS_MALLOC_TYPEDEF(Cache);
+    cache = MEMORY_MALLOC_TYPEDEF(Cache);
     if (NULL == cache) {
         Logger_log(LOGGER_PRIORITY_ERR,"malloc error in CacheHandler_create\n");
         return NULL;
@@ -458,10 +458,10 @@ CacheHandler_reqinfoInsert(Cache* cache,
         DEBUG_MSGTL(("verbose:helper:cache_handler", " adding '%s' to %p\n",
                     cache_name, reqinfo));
         Agent_addListData(reqinfo,
-                                    DataList_create(cache_name,
+                                    Map_newElement(cache_name,
                                                              cache, NULL));
     }
-    TOOLS_FREE(cache_name);
+    MEMORY_FREE(cache_name);
 }
 
 /** Extract the cache information for a given request (PDU) */
@@ -472,7 +472,7 @@ CacheHandler_reqinfoExtract(AgentRequestInfo * reqinfo,
     Cache  *result;
     char *cache_name = _CacheHandler_buildCacheName(name);
     result = (Cache*)Agent_getListData(reqinfo, cache_name);
-    TOOLS_FREE(cache_name);
+    MEMORY_FREE(cache_name);
     return result;
 }
 

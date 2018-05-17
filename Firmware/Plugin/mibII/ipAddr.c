@@ -9,13 +9,13 @@
  */
 /*
  * Portions of this file are copyrighted by:
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
 
 #include "ipAddr.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "PluginSettings.h"
 #include "Vars.h"
 #include "interfaces.h"
@@ -124,7 +124,7 @@ var_ipAddrEntry( struct Variable_s* vp,
         }
     }
 
-    TOOLS_FREE( ifc.ifc_buf );
+    MEMORY_FREE( ifc.ifc_buf );
 
     if ( !lowinterface )
         return ( NULL );
@@ -174,7 +174,7 @@ Address_Scan_Init( void )
     /* get info about all interfaces */
 
     ifc.ifc_len = 0;
-    TOOLS_FREE( ifc.ifc_buf );
+    MEMORY_FREE( ifc.ifc_buf );
     ifr_counter = 0;
 
     do {

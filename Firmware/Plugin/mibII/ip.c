@@ -7,10 +7,10 @@
 #include "AgentRegistry.h"
 #include "Api.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Enum.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "PluginSettings.h"
 #include "ScalarGroup.h"
 #include "SysORTable.h"
@@ -197,7 +197,7 @@ int ip_handler( MibHandler* handler,
      *
      */
     DEBUG_MSGTL( ( "mibII/ip", "Handler - mode %s\n",
-        Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
+        MapList_findLabel( "agentMode", reqinfo->mode ) ) );
     switch ( reqinfo->mode ) {
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {

@@ -8,8 +8,8 @@
 #define SNMPNOTIFYFILTERTABLE_DATA_ACCESS_H
 
 #include "snmpNotifyFilterTable.h"
-#include "Container.h"
-#include "Assert.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Assert.h"
     /*
      *********************************************************************
      * function declarations
@@ -33,23 +33,7 @@
      */
 
 
-    int
-     
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        snmpNotifyFilterTable_init_data(snmpNotifyFilterTable_registration
+    int snmpNotifyFilterTable_init_data(snmpNotifyFilterTable_registration
                                         * snmpNotifyFilterTable_reg);
 
 

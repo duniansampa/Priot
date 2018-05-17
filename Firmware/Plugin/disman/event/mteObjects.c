@@ -5,8 +5,8 @@
 
 #include "mteObjects.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 
@@ -112,13 +112,13 @@ mteObjects_createEntry( const char* owner, const char* oname, int index, int fla
      * Create the mteObjects entry, and the
      * (table-independent) row wrapper structure...
      */
-    entry = TOOLS_MALLOC_TYPEDEF( struct mteObject );
+    entry = MEMORY_MALLOC_TYPEDEF( struct mteObject );
     if ( !entry )
         return NULL;
 
     row = TableTdata_createRow();
     if ( !row ) {
-        TOOLS_FREE( entry );
+        MEMORY_FREE( entry );
         return NULL;
     }
     row->data = entry;
@@ -168,7 +168,7 @@ mteObjects_createEntry( const char* owner, const char* oname, int index, int fla
              *     Tidy up, and return failure.
              */
             TableTdata_deleteRow( row );
-            TOOLS_FREE( entry );
+            MEMORY_FREE( entry );
             return NULL;
         }
     }
@@ -223,7 +223,7 @@ void mteObjects_removeEntry( TdataRow* row )
         return; /* Nothing to remove */
     entry = ( struct mteObject* )
         TableTdata_removeAndDeleteRow( objects_table_data, row );
-    TOOLS_FREE( entry );
+    MEMORY_FREE( entry );
 }
 
 /*

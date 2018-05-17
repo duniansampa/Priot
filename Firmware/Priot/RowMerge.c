@@ -1,8 +1,8 @@
 #include "RowMerge.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "DataList.h"
-#include "Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Containers/Map.h"
+#include "System/Util/Assert.h"
 
 /** @defgroup row_merge row_merge
  *  Calls sub handlers with request for one row at a time.
@@ -77,14 +77,14 @@ RowMerge_statusGet(HandlerRegistration *reginfo,
 
     rm_status = (RowMergeStatus*)Agent_getListData(reqinfo, buf);
     if ((NULL == rm_status) && create_missing) {
-        DataList_DataList *data_list;
+        Map *data_list;
 
-        rm_status = TOOLS_MALLOC_TYPEDEF(RowMergeStatus);
+        rm_status = MEMORY_MALLOC_TYPEDEF(RowMergeStatus);
         if (NULL == rm_status) {
             Logger_log(LOGGER_PRIORITY_ERR,"error allocating memory\n");
             return NULL;
         }
-        data_list = DataList_create(buf, rm_status,
+        data_list = Map_newElement(buf, rm_status,
                                              _RowMerge_rmStatusFree);
         if (NULL == data_list) {
             free(rm_status);
@@ -216,8 +216,8 @@ RowMerge_helperHandler( MibHandler*          handler,
         }
         DEBUG_MSGTL(("helper:row_merge", "count changed! do over...\n"));
 
-        TOOLS_FREE(rm_status->saved_requests);
-        TOOLS_FREE(rm_status->saved_status);
+        MEMORY_FREE(rm_status->saved_requests);
+        MEMORY_FREE(rm_status->saved_status);
 
         rm_status->count = 0;
         rm_status->rows = 0;

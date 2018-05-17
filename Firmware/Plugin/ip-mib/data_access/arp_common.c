@@ -6,7 +6,7 @@
 
 #include "siglog/data_access/arp.h"
 #include "Agent.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 /**---------------------------------------------------------------------*/
 /*
@@ -17,7 +17,7 @@
 netsnmp_arp_entry*
 netsnmp_access_arp_entry_create( void )
 {
-    netsnmp_arp_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_arp_entry );
+    netsnmp_arp_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_arp_entry );
 
     if ( NULL == entry )
         return NULL;

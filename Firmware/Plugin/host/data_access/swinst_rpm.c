@@ -4,8 +4,8 @@
  */
 
 #include "swinst.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Tc.h"
 #include "siglog/data_access/swinst.h"
 #include <fcntl.h>
@@ -23,7 +23,7 @@
     *    - detecting when the cached contents are out of date.
     */
 
-char pkg_directory[ TOOLS_MAXPATH ];
+char pkg_directory[ UTILITIES_MAX_PATH ];
 
 /* ---------------------------------------------------------------------
  */
@@ -37,8 +37,8 @@ void netsnmp_swinst_arch_init( void )
     rpmdbpath = rpmGetPath( "%{_dbpath}", NULL );
     dbpath = rpmdbpath;
 
-    snprintf( pkg_directory, TOOLS_MAXPATH, "%s/Packages", dbpath );
-    TOOLS_FREE( rpmdbpath );
+    snprintf( pkg_directory, UTILITIES_MAX_PATH, "%s/Packages", dbpath );
+    MEMORY_FREE( rpmdbpath );
     dbpath = NULL;
     if ( -1 == stat( pkg_directory, &stat_buf ) ) {
         Logger_log( LOGGER_PRIORITY_ERR, "Can't find directory of RPM packages" );

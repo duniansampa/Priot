@@ -161,7 +161,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *tcpConnectionTable_data_list;
+        Map *tcpConnectionTable_data_list;
 
     } tcpConnectionTable_rowreq_ctx;
 

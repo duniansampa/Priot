@@ -1,9 +1,9 @@
 #ifndef API_H
 #define API_H
 
-#include "Container.h"
 #include "Generals.h"
-#include "Tools.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Utilities.h"
 #include "Transport.h"
 
 /*
@@ -39,10 +39,10 @@
 #define API_DEFAULT_CONTEXT ""
 #define API_DEFAULT_AUTH_PROTO usm_hMACMD5AuthProtocol
 
-#define API_DEFAULT_AUTH_PROTOLEN TOOLS_USM_LENGTH_OID_TRANSFORM
+#define API_DEFAULT_AUTH_PROTOLEN UTILITIES_USM_LENGTH_OID_TRANSFORM
 #define API_DEFAULT_PRIV_PROTO usm_dESPrivProtocol
 
-#define API_DEFAULT_PRIV_PROTOLEN TOOLS_USM_LENGTH_OID_TRANSFORM
+#define API_DEFAULT_PRIV_PROTOLEN UTILITIES_USM_LENGTH_OID_TRANSFORM
 
 #define API_MAX_MSG_SIZE 1472 /* ethernet MTU minus IP/UDP header */
 #define API_MAX_MSG_V3_HDRS ( 4 + 3 + 4 + 7 + 7 + 3 + 7 + 16 ) /* fudge factor=16 */

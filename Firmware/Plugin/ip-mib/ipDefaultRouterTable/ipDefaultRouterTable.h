@@ -14,7 +14,7 @@
  * @{
  */
 #include "siglog/data_access/defaultrouter.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
 
 
@@ -60,7 +60,7 @@
     /*
      * TODO:101:o: |-> Review ipDefaultRouterTable registration context.
      */
-    typedef DataList_DataList ipDefaultRouterTable_registration;
+    typedef Map ipDefaultRouterTable_registration;
 
 /**********************************************************************/
     /*
@@ -137,7 +137,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ipDefaultRouterTable_data_list;
+        Map *ipDefaultRouterTable_data_list;
 
     } ipDefaultRouterTable_rowreq_ctx;
 

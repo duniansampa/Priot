@@ -5,9 +5,9 @@
  */
 
 #include "siglog/data_access/swrun.h"
-#include "Container.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include <unistd.h>
 
 static long pagesize;

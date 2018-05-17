@@ -1,5 +1,5 @@
 #include "pass_common.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "util_funcs.h"
 
 static int
@@ -24,7 +24,7 @@ static int
 netsnmp_internal_bin2asc( char* p, size_t n )
 {
     int i, flag = 0;
-    char buffer[ TOOLS_MAXBUF ];
+    char buffer[ UTILITIES_MAX_BUFFER ];
 
     /* prevent buffer overflow */
     if ( ( int )n > ( sizeof( buffer ) - 1 ) )
@@ -188,7 +188,7 @@ void netsnmp_internal_pass_set_format( char* buf,
     u_char var_val_type,
     size_t var_val_len )
 {
-    char buf2[ TOOLS_MAXBUF ];
+    char buf2[ UTILITIES_MAX_BUFFER ];
     long tmp;
     unsigned long utmp;
 
@@ -227,15 +227,15 @@ void netsnmp_internal_pass_set_format( char* buf,
         if ( var_val_len == 0 )
             sprintf( buf, "string \"\"\n" );
         else if ( netsnmp_internal_bin2asc( buf2, var_val_len ) == ( int )var_val_len )
-            snprintf( buf, TOOLS_MAXBUF, "string \"%s\"\n", buf2 );
+            snprintf( buf, UTILITIES_MAX_BUFFER, "string \"%s\"\n", buf2 );
         else
-            snprintf( buf, TOOLS_MAXBUF, "octet \"%s\"\n", buf2 );
-        buf[ TOOLS_MAXBUF - 1 ] = 0;
+            snprintf( buf, UTILITIES_MAX_BUFFER, "octet \"%s\"\n", buf2 );
+        buf[ UTILITIES_MAX_BUFFER - 1 ] = 0;
         break;
     case ASN01_OBJECT_ID:
         sprint_mib_oid( buf2, ( const oid* )var_val, var_val_len / sizeof( oid ) );
-        snprintf( buf, TOOLS_MAXBUF, "objectid \"%s\"\n", buf2 );
-        buf[ TOOLS_MAXBUF - 1 ] = 0;
+        snprintf( buf, UTILITIES_MAX_BUFFER, "objectid \"%s\"\n", buf2 );
+        buf[ UTILITIES_MAX_BUFFER - 1 ] = 0;
         break;
     }
 }

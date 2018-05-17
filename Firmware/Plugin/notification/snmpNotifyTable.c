@@ -11,12 +11,12 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Callback.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "SysORTable.h"
 #include "Tc.h"
@@ -255,7 +255,7 @@ int notifyTable_register_notifications( int major, int minor,
     struct targetParamTable_struct* pptr;
     struct snmpNotifyTable_data* nptr;
     int confirm, i, bufLen;
-    char buf[ TOOLS_MAXBUF_SMALL ];
+    char buf[ UTILITIES_MAX_BUFFER_SMALL ];
     Transport_Transport* t = NULL;
     struct AgentAddTrapArgs_s* args = ( struct AgentAddTrapArgs_s* )serverarg;
     Types_Session* ss;
@@ -293,7 +293,7 @@ int notifyTable_register_notifications( int major, int minor,
         return 0;
     }
     ptr = snmpTargetAddrTable_create();
-    ptr->nameData = ( char* )Tools_memdup( buf, bufLen );
+    ptr->nameData = ( char* )Memory_memdup( buf, bufLen );
     ptr->nameLen = bufLen;
     memcpy( ptr->tDomain, t->domain, t->domain_length * sizeof( oid ) );
     ptr->tDomainLen = t->domain_length;
@@ -302,7 +302,7 @@ int notifyTable_register_notifications( int major, int minor,
 
     ptr->timeout = ss->timeout / 10000;
     ptr->retryCount = ss->retries;
-    TOOLS_FREE( ptr->tagList );
+    MEMORY_FREE( ptr->tagList );
     ptr->tagList = strdup( buf ); /* strdup ok since buf contains 'internal%d' */
     ptr->params = strdup( buf );
     ptr->storageType = TC_ST_READONLY;
@@ -340,7 +340,7 @@ int notifyTable_register_notifications( int major, int minor,
     /*
      * notify table
      */
-    nptr = TOOLS_MALLOC_STRUCT( snmpNotifyTable_data );
+    nptr = MEMORY_MALLOC_STRUCT( snmpNotifyTable_data );
     if ( nptr == NULL )
         return 0;
     nptr->snmpNotifyName = strdup( buf );
@@ -490,7 +490,7 @@ int snmpNotifyTable_add( struct snmpNotifyTable_data* thedata )
 void parse_snmpNotifyTable( const char* token, char* line )
 {
     size_t tmpint;
-    struct snmpNotifyTable_data* StorageTmp = TOOLS_MALLOC_STRUCT( snmpNotifyTable_data );
+    struct snmpNotifyTable_data* StorageTmp = MEMORY_MALLOC_STRUCT( snmpNotifyTable_data );
 
     DEBUG_MSGTL( ( "snmpNotifyTable", "parsing config...  " ) );
 
@@ -504,7 +504,7 @@ void parse_snmpNotifyTable( const char* token, char* line )
         &StorageTmp->snmpNotifyNameLen );
     if ( StorageTmp->snmpNotifyName == NULL ) {
         ReadConfig_configPerror( "invalid specification for snmpNotifyName" );
-        TOOLS_FREE( StorageTmp );
+        MEMORY_FREE( StorageTmp );
         return;
     }
 
@@ -513,7 +513,7 @@ void parse_snmpNotifyTable( const char* token, char* line )
         &StorageTmp->snmpNotifyTagLen );
     if ( StorageTmp->snmpNotifyTag == NULL ) {
         ReadConfig_configPerror( "invalid specification for snmpNotifyTag" );
-        TOOLS_FREE( StorageTmp );
+        MEMORY_FREE( StorageTmp );
         return;
     }
 
@@ -531,9 +531,9 @@ void parse_snmpNotifyTable( const char* token, char* line )
         StorageTmp->snmpNotifyRowStatus = TC_RS_ACTIVE;
 
     if ( snmpNotifyTable_add( StorageTmp ) != ErrorCode_SUCCESS ) {
-        TOOLS_FREE( StorageTmp->snmpNotifyName );
-        TOOLS_FREE( StorageTmp->snmpNotifyTag );
-        TOOLS_FREE( StorageTmp );
+        MEMORY_FREE( StorageTmp->snmpNotifyName );
+        MEMORY_FREE( StorageTmp->snmpNotifyTag );
+        MEMORY_FREE( StorageTmp );
     }
 
     DEBUG_MSGTL( ( "snmpNotifyTable", "done.\n" ) );
@@ -546,7 +546,7 @@ void parse_snmpNotifyTable( const char* token, char* line )
 int store_snmpNotifyTable( int majorID, int minorID, void* serverarg,
     void* clientarg )
 {
-    char line[ TOOLS_MAXBUF ];
+    char line[ UTILITIES_MAX_BUFFER ];
     char* cptr;
     size_t tmpint;
     struct snmpNotifyTable_data* StorageTmp;
@@ -744,7 +744,7 @@ int write_snmpNotifyTag( int action,
         /*
          * Back out any changes made in the IMPL_ACTION case
          */
-        TOOLS_FREE( StorageTmp->snmpNotifyTag );
+        MEMORY_FREE( StorageTmp->snmpNotifyTag );
         StorageTmp->snmpNotifyTag = tmpvar;
         StorageTmp->snmpNotifyTagLen = tmplen;
         tmpvar = NULL;
@@ -755,7 +755,7 @@ int write_snmpNotifyTag( int action,
          * Things are working well, so it's now safe to make the change
          * permanently.  Make sure that anything done here can't fail!
          */
-        TOOLS_FREE( tmpvar );
+        MEMORY_FREE( tmpvar );
         Api_storeNeeded( NULL );
         break;
     }
@@ -939,7 +939,7 @@ int write_snmpNotifyRowStatus( int action,
             }
             vp = vars;
 
-            StorageNew = TOOLS_MALLOC_STRUCT( snmpNotifyTable_data );
+            StorageNew = MEMORY_MALLOC_STRUCT( snmpNotifyTable_data );
             if ( StorageNew == NULL ) {
                 return PRIOT_ERR_RESOURCEUNAVAILABLE;
             }
@@ -972,8 +972,8 @@ int write_snmpNotifyRowStatus( int action,
 
     case IMPL_FREE:
         if ( StorageNew != NULL ) {
-            TOOLS_FREE( StorageNew->snmpNotifyTag );
-            TOOLS_FREE( StorageNew->snmpNotifyName );
+            MEMORY_FREE( StorageNew->snmpNotifyTag );
+            MEMORY_FREE( StorageNew->snmpNotifyName );
             free( StorageNew );
             StorageNew = NULL;
         }
@@ -1040,8 +1040,8 @@ int write_snmpNotifyRowStatus( int action,
 
     case IMPL_COMMIT:
         if ( StorageDel != NULL ) {
-            TOOLS_FREE( StorageDel->snmpNotifyTag );
-            TOOLS_FREE( StorageDel->snmpNotifyName );
+            MEMORY_FREE( StorageDel->snmpNotifyTag );
+            MEMORY_FREE( StorageDel->snmpNotifyName );
             free( StorageDel );
             StorageDel = NULL;
         }

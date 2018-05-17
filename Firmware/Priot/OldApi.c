@@ -2,11 +2,11 @@
 #include "Impl.h"
 #include "AgentRegistry.h"
 #include "Api.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "AgentCallbacks.h"
 #include "Client.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
 #define MIB_CLIENTS_ARE_EVIL 1
 
@@ -81,7 +81,7 @@ OldApi_registerOldApi(const char *moduleName,
     for (i = 0; i < numvars; i++) {
         struct Variable_s *vp;
         HandlerRegistration *reginfo =
-            TOOLS_MALLOC_TYPEDEF(HandlerRegistration);
+            MEMORY_MALLOC_TYPEDEF(HandlerRegistration);
         if (reginfo == NULL)
             return PRIOT_ERR_GENERR;
 
@@ -94,9 +94,9 @@ OldApi_registerOldApi(const char *moduleName,
         reginfo->rootoid =
             (oid *) malloc(reginfo->rootoid_len * sizeof(oid));
         if (reginfo->rootoid == NULL) {
-            TOOLS_FREE(vp);
-            TOOLS_FREE(reginfo->handlerName);
-            TOOLS_FREE(reginfo);
+            MEMORY_FREE(vp);
+            MEMORY_FREE(reginfo->handlerName);
+            MEMORY_FREE(reginfo);
             return PRIOT_ERR_GENERR;
         }
 
@@ -122,7 +122,7 @@ OldApi_registerOldApi(const char *moduleName,
          */
         if (AgentHandler_registerHandler(reginfo) != MIB_REGISTERED_OK) {
             /** AgentHandler_handlerRegistrationFree(reginfo); already freed */
-            /* TOOLS_FREE(vp); already freed */
+            /* MEMORY_FREE(vp); already freed */
         }
     }
     return ErrorCode_SUCCESS;
@@ -153,7 +153,7 @@ OldApi_registerMibTableRow(const char *moduleName,
         if ( var_subid > (int)mibloclen ) {
             break;    /* doesn't make sense */
         }
-        r = TOOLS_MALLOC_TYPEDEF(HandlerRegistration);
+        r = MEMORY_MALLOC_TYPEDEF(HandlerRegistration);
 
         if (r == NULL) {
             /*
@@ -351,7 +351,7 @@ OldApi_helper(MibHandler *handler,
             if (reqinfo->mode != MODE_SET_RESERVE1)
                 break;
 
-            cacheptr = TOOLS_MALLOC_TYPEDEF(OldApiCache);
+            cacheptr = MEMORY_MALLOC_TYPEDEF(OldApiCache);
             if (!cacheptr)
                 return Agent_setRequestError(reqinfo, requests,
                                                  PRIOT_ERR_RESOURCEUNAVAILABLE);
@@ -359,7 +359,7 @@ OldApi_helper(MibHandler *handler,
             cacheptr->write_method = write_method;
             write_method = NULL;
             AgentHandler_requestAddListData(requests,
-                                          DataList_create
+                                          Map_newElement
                                           (OLD_API_NAME, cacheptr,
                                            &free));
             /*

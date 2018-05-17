@@ -1,14 +1,14 @@
 #include "ScalarGroup.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Instance.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Client.h"
 #include "Serialize.h"
 
 static ScalarGroup*
 _ScalarGroup_cloneScalarGroup(ScalarGroup* src)
 {
-  ScalarGroup *t = TOOLS_MALLOC_TYPEDEF(ScalarGroup);
+  ScalarGroup *t = MEMORY_MALLOC_TYPEDEF(ScalarGroup);
   if(t != NULL) {
     t->lbound = src->lbound;
     t->ubound = src->ubound;
@@ -30,7 +30,7 @@ ScalarGroup_getScalarGroupHandler(oid first, oid last)
     ret = AgentHandler_createHandler("scalarGroup",
                                   ScalarGroup_helperHandler);
     if (ret) {
-        sgroup = TOOLS_MALLOC_TYPEDEF(ScalarGroup);
+        sgroup = MEMORY_MALLOC_TYPEDEF(ScalarGroup);
         if (NULL == sgroup) {
             AgentHandler_handlerFree(ret);
             ret = NULL;
@@ -70,7 +70,7 @@ ScalarGroup_helperHandler(MibHandler *handler,
     oid             subid, root_tmp[ASN01_MAX_OID_LEN], *root_save;
 
     DEBUG_MSGTL(("helper:scalar_group", "Got request:\n"));
-    namelen = TOOLS_MIN(requests->requestvb->nameLength,
+    namelen = UTILITIES_MIN_VALUE(requests->requestvb->nameLength,
                        reginfo->rootoid_len);
     cmp = Api_oidCompare(requests->requestvb->name, namelen,
                            reginfo->rootoid, reginfo->rootoid_len);

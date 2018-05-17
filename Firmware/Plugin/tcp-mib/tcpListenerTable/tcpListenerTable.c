@@ -12,9 +12,9 @@
  */
 
 #include "tcpListenerTable.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Vars.h"
 #include "siglog/agent/mfd.h"
 #include "tcpListenerTable_constants.h"
@@ -218,7 +218,7 @@ tcpListenerTable_allocate_data( void )
     /*
      * TODO:201:r: |-> allocate memory for the tcpListenerTable data context.
      */
-    tcpListenerTable_data* rtn = TOOLS_MALLOC_TYPEDEF( tcpListenerTable_data );
+    tcpListenerTable_data* rtn = MEMORY_MALLOC_TYPEDEF( tcpListenerTable_data );
 
     DEBUG_MSGTL( ( "verbose:tcpListenerTable:tcpListenerTable_allocate_data",
         "called\n" ) );

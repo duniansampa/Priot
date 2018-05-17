@@ -4,8 +4,8 @@
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
-#include "Debug.h"
-#include "Strlcpy.h"
+#include "System/Util/Debug.h"
+#include "System/String.h"
 #include "Callback.h"
 #include "AgentCallbacks.h"
 #include "AgentHandler.h"
@@ -87,7 +87,7 @@ AgentReadConfig_priotdSetAgentAddress(const char *token, char *cptr)
         snprintf(buf, sizeof(buf), "%s,%s", ptr, cptr);
     buf[sizeof(buf) - 1] = '\0';
     } else {
-        Strlcpy_strlcpy(buf, cptr, sizeof(buf));
+        String_copyTruncate(buf, cptr, sizeof(buf));
     }
 
     DEBUG_MSGTL(("snmpd_ports", "port spec: %s\n", buf));

@@ -70,11 +70,11 @@ int Watcher_registerWatchedScalar2(  HandlerRegistration *reginfo,
                                        WatcherInfo         *winfo);
 
 int Watcher_registerWatchedTimestamp(HandlerRegistration *reginfo,
-                                       markerT timestamp);
+                                       timeMarker timestamp);
 
 int Watcher_timestampRegister(MibHandler *whandler,
                                        HandlerRegistration *reginfo,
-                                       markerT timestamp);
+                                       timeMarker timestamp);
 
 int Watcher_registerWatchedSpinlock(HandlerRegistration *reginfo,
                                       int *spinlock);

@@ -1,9 +1,9 @@
 #include "AgentxConfig.h"
 #include "PriotSettings.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "System.h"
 #include "Service.h"
@@ -105,7 +105,7 @@ AgentxConfig_parseAgentxPerms(const char *token, char *cptr)
 void
 AgentxConfig_parseAgentxTimeout(const char *token, char *cptr)
 {
-    int x = Tools_stringTimeToSecs(cptr);
+    int x = Convert_stringTimeToSeconds(cptr);
     DEBUG_MSGTL(("agentx/config/timeout", "%s\n", cptr));
     if (x == -1) {
         ReadConfig_configPerror("Invalid timeout value");

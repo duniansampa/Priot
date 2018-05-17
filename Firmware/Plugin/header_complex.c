@@ -3,8 +3,8 @@
  */
 
 #include "header_complex.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 
 int header_complex_generate_varoid( Types_VariableList* var )
 {
@@ -363,7 +363,7 @@ _header_complex_add_between( struct header_complex_index** thedata,
      * create ourselves 
      */
     ourself = ( struct header_complex_index* )
-        TOOLS_MALLOC_STRUCT( header_complex_index );
+        MEMORY_MALLOC_STRUCT( header_complex_index );
     if ( ourself == NULL )
         return NULL;
 

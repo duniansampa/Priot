@@ -1,10 +1,10 @@
 #include "TextUtils.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
-#include "Logger.h"
-#include "Tools.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 /*------------------------------------------------------------------
  *
  * Prototypes
@@ -40,7 +40,7 @@ int TextUtils_processLineTvi(TextUtils_LineInfo *line_info, void *mem,
  * process text file, reading into extras
  */
 Container_Container *
-TextUtils_fileTextParse(FileUtils_File *f, Container_Container *cin,
+TextUtils_fileTextParse(File *f, Container_Container *cin,
                         int parse_mode, u_int flags, void *context)
 {
     Container_Container *c = cin;
@@ -56,7 +56,7 @@ TextUtils_fileTextParse(FileUtils_File *f, Container_Container *cin,
             return NULL;
     }
 
-    rc = FileUtils_open(f);
+    rc = File_open(f);
     if (rc < 0) { /** error already logged */
         if ((NULL !=c) && (c != cin))
             CONTAINER_FREE(c);
@@ -67,10 +67,10 @@ TextUtils_fileTextParse(FileUtils_File *f, Container_Container *cin,
      * get a stream from the file descriptor. This DOES NOT rewind the
      * file (if fd was previously opened).
      */
-    fin = fdopen(f->fd, "r");
+    fin = fdopen(f->fileDescriptor, "r");
     if (NULL == fin) {
-        if (FILEUTILS_NS_FI_AUTOCLOSE(f->nsFlags))
-            close(f->fd);
+        if (FILE_IS_AUTOCLOSE(f->priotFlags))
+            close(f->fileDescriptor);
         if ((NULL !=c) && (c != cin))
             CONTAINER_FREE(c);
         return NULL;
@@ -103,7 +103,7 @@ TextUtils_fileTextParse(FileUtils_File *f, Container_Container *cin,
      * the file descriptor, so we need to reset it.
      */
     fclose(fin);
-    f->fd = -1;
+    f->fileDescriptor = -1;
 
     return c;
 }
@@ -114,7 +114,7 @@ TextUtils_textTokenContainerFromFile(const char *file, u_int flags,
 {
     TextUtils_LineProcessInfo  lpi;
     Container_Container         *c = cin, *c_rc;
-    FileUtils_File              *fp;
+    File              *fp;
 
     if (NULL == file)
         return NULL;
@@ -122,7 +122,7 @@ TextUtils_textTokenContainerFromFile(const char *file, u_int flags,
     /*
      * allocate file resources
      */
-    fp = FileUtils_fill(NULL, file, O_RDONLY, 0, 0);
+    fp = File_fill(NULL, file, O_RDONLY, 0, 0);
     if (NULL == fp) /** msg already logged */
         return NULL;
 
@@ -135,7 +135,7 @@ TextUtils_textTokenContainerFromFile(const char *file, u_int flags,
         c = Container_find("string:binaryArray");
         if (NULL == c) {
             Logger_log(LOGGER_PRIORITY_ERR,"malloc failed\n");
-            FileUtils_release(fp);
+            File_release(fp);
             return NULL;
         }
     }
@@ -156,7 +156,7 @@ TextUtils_textTokenContainerFromFile(const char *file, u_int flags,
     /*
      * release file resources
      */
-    FileUtils_release(fp);
+    File_release(fp);
 
     return c;
 }
@@ -237,7 +237,7 @@ TextUtils_pmSaveIndexStringString(FILE *f, Container_Container *cin,
                 continue;
         }
 
-        tvi = TOOLS_MALLOC_TYPEDEF(TextUtils_TokenValueIndex);
+        tvi = MEMORY_MALLOC_TYPEDEF(TextUtils_TokenValueIndex);
         if (NULL == tvi) {
             Logger_log(LOGGER_PRIORITY_ERR,"malloc failed\n");
             break;
@@ -371,7 +371,7 @@ TextUtils_pmUserFunction(FILE *f, Container_Container *cin,
              * to release it. leave mem, we can re-use it (its a fixed size).
              */
             if (lpi->flags & TEXTUTILS_PMLP_FLAG_STRDUP_LINE)
-                free(li.start); /* no point in TOOLS_FREE */
+                free(li.start); /* no point in MEMORY_FREE */
         }
         else {
             if (TEXTUTILS_PMLP_RC_STOP_PROCESSING != rc )
@@ -379,7 +379,7 @@ TextUtils_pmUserFunction(FILE *f, Container_Container *cin,
             break;
         }
     }
-    TOOLS_FREE(mem);
+    MEMORY_FREE(mem);
 }
 
 /*------------------------------------------------------------------

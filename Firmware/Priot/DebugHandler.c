@@ -1,7 +1,7 @@
 #include "DebugHandler.h"
-#include "Tools.h"
-#include "Debug.h"
-#include "Enum.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
 
 
 /** @defgroup debug debug
@@ -56,10 +56,10 @@ _DebugHandler_printRequests(RequestInfo *requests)
             DEBUG_MSGTL(("helper:debug", "        [status = %d]\n",
                         request->status));
         if (request->parent_data) {
-            DataList_DataList *lst;
+            Map *lst;
             DEBUG_MSGTL(("helper:debug", "        [parent data ="));
             for (lst = request->parent_data; lst; lst = lst->next) {
-                DEBUG_MSG(("helper:debug", " %s", lst->name));
+                DEBUG_MSG(("helper:debug", " %s", lst->key));
             }
             DEBUG_MSG(("helper:debug", "]\n"));
         }
@@ -85,7 +85,7 @@ DebugHandler_debugHelper( MibHandler*          handler,
         DEBUG_MSGTL(("helper:debug", "    Name:        %s\n",
                     reginfo->handlerName));
         DEBUG_MSGTL(("helper:debug", "    Context:     %s\n",
-                    TOOLS_STRORNULL(reginfo->contextName)));
+                    UTILITIES_STRING_OR_NULL(reginfo->contextName)));
         DEBUG_MSGTL(("helper:debug", "    Base OID:    "));
         DEBUG_MSGOID(("helper:debug", reginfo->rootoid, reginfo->rootoid_len));
         DEBUG_MSG(("helper:debug", "\n"));
@@ -94,9 +94,9 @@ DebugHandler_debugHelper( MibHandler*          handler,
                     reginfo->modes));
         for (count = 0, i = reginfo->modes; i; i = i >> 1, count++) {
             if (i & 0x01) {
-                cp = Enum_seFindLabelInSlist("handlerCanMode",
+                cp = MapList_findLabel("handlerCanMode",
                                             0x01 << count);
-                DEBUG_MSG(("helper:debug", "%s | ", TOOLS_STRORNULL(cp)));
+                DEBUG_MSG(("helper:debug", "%s | ", UTILITIES_STRING_OR_NULL(cp)));
             }
         }
         DEBUG_MSG(("helper:debug", "\n"));
@@ -115,7 +115,7 @@ DebugHandler_debugHelper( MibHandler*          handler,
 
         DEBUG_MSGTL(("helper:debug", "  Request information:\n"));
         DEBUG_MSGTL(("helper:debug", "    Mode:        %s (%d = 0x%x)\n",
-                     Enum_seFindLabelInSlist("agentMode", reqinfo->mode),
+                     MapList_findLabel("agentMode", reqinfo->mode),
                     reqinfo->mode, reqinfo->mode));
         DEBUG_MSGTL(("helper:debug", "    Request Variables:\n"));
         _DebugHandler_printRequests(requests);

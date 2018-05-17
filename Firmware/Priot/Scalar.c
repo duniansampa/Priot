@@ -1,5 +1,5 @@
 #include "Scalar.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "ReadOnly.h"
 #include "Instance.h"
 #include "Serialize.h"
@@ -109,7 +109,7 @@ Scalar_helperHandler(MibHandler *handler,
     int             namelen;
 
     DEBUG_MSGTL(("helper:scalar", "Got request:\n"));
-    namelen = TOOLS_MIN(requests->requestvb->nameLength,
+    namelen = UTILITIES_MIN_VALUE(requests->requestvb->nameLength,
                        reginfo->rootoid_len);
     cmp = Api_oidCompare(requests->requestvb->name, namelen,
                            reginfo->rootoid, reginfo->rootoid_len);

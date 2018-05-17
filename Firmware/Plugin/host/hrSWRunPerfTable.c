@@ -15,7 +15,7 @@
 
 #include "hrSWRunPerfTable.h"
 #include "Client.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Table.h"
 #include "TableContainer.h"
 #include "data_access/swrun.h"
@@ -59,7 +59,7 @@ void initialize_table_hrSWRunPerfTable( void )
         goto bail;
     }
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( NULL == table_info ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error allocating table registration for " MYTABLE "\n" );
         goto bail;

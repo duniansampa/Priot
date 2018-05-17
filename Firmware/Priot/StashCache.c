@@ -1,8 +1,8 @@
 #include "StashCache.h"
 #include "PriotSettings.h"
 #include "CacheHandler.h"
-#include "Tools.h"
-#include "Debug.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Debug.h"
 #include "Client.h"
 #include "StashToNext.h"
 
@@ -25,7 +25,7 @@ StashCache_getNewStashCache(void)
 {
     StashCacheInfo *cinfo;
 
-    cinfo = TOOLS_MALLOC_TYPEDEF(StashCacheInfo);
+    cinfo = MEMORY_MALLOC_TYPEDEF(StashCacheInfo);
     if (cinfo != NULL)
         cinfo->cache_length = 30;
     return cinfo;
@@ -205,7 +205,7 @@ StashCache_load( Cache *cache, void *magic )
     old_mode = reqinfo->mode;
     reqinfo->mode = MODE_GET_STASH;
     Agent_addListData(reqinfo,
-                                DataList_create(STASH_CACHE_NAME,
+                                Map_newElement(STASH_CACHE_NAME,
                                                          &cinfo->cache, NULL));
 
     /* have the next handler fill stuff in and switch modes back */

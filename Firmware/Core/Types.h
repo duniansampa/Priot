@@ -353,7 +353,7 @@ typedef union {
     uint ul;
     uint ui;
     ushort us;
-    uchar uc;
+    unsigned char uc;
     long sl;
     int si;
     short ss;

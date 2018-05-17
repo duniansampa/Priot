@@ -6,8 +6,8 @@
 #include "mteTrigger.h"
 #include "Alarm.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "TableData.h"
 #include "mteEvent.h"
 
@@ -89,13 +89,13 @@ mteTrigger_createEntry( const char* mteOwner, char* mteTName, int fixed )
      * Create the mteTrigger entry, and the
      * (table-independent) row wrapper structure...
      */
-    entry = TOOLS_MALLOC_TYPEDEF( struct mteTrigger );
+    entry = MEMORY_MALLOC_TYPEDEF( struct mteTrigger );
     if ( !entry )
         return NULL;
 
     row = TableTdata_createRow();
     if ( !row ) {
-        TOOLS_FREE( entry );
+        MEMORY_FREE( entry );
         return NULL;
     }
     row->data = entry;
@@ -151,7 +151,7 @@ void mteTrigger_removeEntry( TdataRow* row )
         TableTdata_removeAndDeleteRow( trigger_table_data, row );
     if ( entry ) {
         mteTrigger_disable( entry );
-        TOOLS_FREE( entry );
+        MEMORY_FREE( entry );
     }
 }
 
@@ -222,7 +222,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
      * Retrieve the requested MIB value(s)...
      */
     DEBUG_MSGTL( ( "disman:event:trigger:monitor", "Running trigger (%s)\n", entry->mteTName ) );
-    var = ( Types_VariableList* )TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+    var = ( Types_VariableList* )MEMORY_MALLOC_TYPEDEF( Types_VariableList );
     if ( !var ) {
         _mteTrigger_failure( "failed to create mteTrigger query varbind" );
         return;
@@ -281,7 +281,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *
                  * XXX - check how this is best done.
                  */
-                vtmp = TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+                vtmp = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
                 if ( !vtmp ) {
                     _mteTrigger_failure(
                         "failed to create mteTrigger temp varbind" );
@@ -318,7 +318,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *
                  */
                 if ( vp2->type != ASN01_NULL ) {
-                    vtmp = TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+                    vtmp = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
                     if ( !vtmp ) {
                         _mteTrigger_failure(
                             "failed to create mteTrigger temp varbind" );
@@ -360,7 +360,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              *   (and we need to create dummy 'old' entries for them)
              */
             if ( vp2_prev ) {
-                vtmp = TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+                vtmp = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
                 if ( !vtmp ) {
                     _mteTrigger_failure(
                         "failed to create mteTrigger temp varbind" );
@@ -588,7 +588,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                     ( entry->flags & MTE_TRIGGER_FLAG_DWILD ? " (wild)" : "" ) ) );
 
                 dvar = ( Types_VariableList* )
-                    TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+                    MEMORY_MALLOC_TYPEDEF( Types_VariableList );
                 if ( !dvar ) {
                     _mteTrigger_failure(
                         "failed to create mteTrigger delta query varbind" );
@@ -685,7 +685,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                          *   fail, but this simplifies the later code.
                          */
                         vtmp = ( Types_VariableList* )
-                            TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+                            MEMORY_MALLOC_TYPEDEF( Types_VariableList );
                         if ( !vtmp ) {
                             _mteTrigger_failure(
                                 "failed to create mteTrigger discontinuity varbind" );

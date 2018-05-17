@@ -1,5 +1,5 @@
 #include "XClient.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Client.h"
 #include "../Plugin/Agentx/Subagent.h"
 #include "../Plugin/Agentx/Protocol.h"
@@ -7,7 +7,7 @@
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "VarStruct.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "AgentIndex.h"
 
 /*

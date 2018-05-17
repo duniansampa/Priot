@@ -41,7 +41,7 @@
  * Compile-time includes
  */
 
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 /*
  * Compile-time declarations of MD5 ``magic constants''.
@@ -413,7 +413,7 @@ int Md5_sign(const u_char * data, size_t len, u_char * mac, size_t maclen,
          * this relies on the ability to use integer math and thus we
          * must rely on data that aligns on 32-bit-word-boundries
          */
-        newdata = (u_char *)Tools_memdup(data, len);
+        newdata = (u_char *)Memory_memdup(data, len);
         cp = newdata;
     } else {
         cp = data;

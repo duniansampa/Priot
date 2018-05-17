@@ -6,7 +6,7 @@
 #include "schedCore.h"
 #include "Alarm.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 Tdata* schedule_table;
 
@@ -425,13 +425,13 @@ schedTable_createEntry( const char* schedOwner, const char* schedName )
 
     DEBUG_MSGTL( ( "disman:schedule:entry", "creating entry (%s, %s)\n",
         schedOwner, schedName ) );
-    entry = TOOLS_MALLOC_TYPEDEF( struct schedTable_entry );
+    entry = MEMORY_MALLOC_TYPEDEF( struct schedTable_entry );
     if ( !entry )
         return NULL;
 
     row = TableTdata_createRow();
     if ( !row ) {
-        TOOLS_FREE( entry );
+        MEMORY_FREE( entry );
         return NULL;
     }
     row->data = entry;
@@ -475,6 +475,6 @@ void schedTable_removeEntry( TdataRow* row )
     if ( entry ) {
         DEBUG_MSGTL( ( "disman:schedule:entry", "remove entry (%s, %s)\n",
             entry->schedOwner, entry->schedName ) );
-        TOOLS_FREE( entry );
+        MEMORY_FREE( entry );
     }
 }

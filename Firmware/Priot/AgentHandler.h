@@ -245,7 +245,7 @@ AgentHandler_clearHandlerList( void );
 
 void
 AgentHandler_requestAddListData( RequestInfo*       request,
-                                 DataList_DataList* node );
+                                 Map* node );
 
 int
 AgentHandler_requestRemoveListData( RequestInfo* request,

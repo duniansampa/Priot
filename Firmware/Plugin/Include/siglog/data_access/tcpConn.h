@@ -9,8 +9,8 @@
 /** need def of NETSNMP_ACCESS_IPADDRESS_BUF_SIZE */
 
 #include "siglog/data_access/ipaddress.h"
-#include "Container.h"
-#include "DataList.h"
+#include "System/Containers/Container.h"
+#include "System/Containers/Map.h"
 
 /**---------------------------------------------------------------------*/
 /*
@@ -49,7 +49,7 @@
 
         u_int           pid;
    
-        DataList_DataList *arch_data;      /* arch specific data */
+        Map *arch_data;      /* arch specific data */
    
     } netsnmp_tcpconn_entry;
 

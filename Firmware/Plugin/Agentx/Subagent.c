@@ -5,14 +5,14 @@
 #include "Agentx/XClient.h"
 #include "Alarm.h"
 #include "Api.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Callback.h"
 #include "Callback.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "PriotSettings.h"
 #include "Protocol.h"
@@ -357,7 +357,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         break;
 
     case AGENTX_MSG_RESPONSE:
-        TOOLS_FREE( smagic );
+        MEMORY_FREE( smagic );
         DEBUG_MSGTL( ( "agentx/subagent", "  -> response\n" ) );
         return 1;
 
@@ -368,7 +368,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         DEBUG_MSGTL( ( "agentx/subagent", "  -> testset\n" ) );
         asi = Subagent_saveSetVars( session, pdu );
         if ( asi == NULL ) {
-            TOOLS_FREE( smagic );
+            MEMORY_FREE( smagic );
             Logger_log( LOGGER_PRIORITY_WARNING, "Subagent_saveSetVars() failed\n" );
             _Subagent_sendAgentxError( session, pdu, AGENTX_ERR_PARSE_FAILED, 0 );
             return 1;
@@ -382,13 +382,13 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         DEBUG_MSGTL( ( "agentx/subagent", "  -> commitset\n" ) );
         asi = Subagent_restoreSetVars( session, pdu );
         if ( asi == NULL ) {
-            TOOLS_FREE( smagic );
+            MEMORY_FREE( smagic );
             Logger_log( LOGGER_PRIORITY_WARNING, "Subagent_restoreSetVars() failed\n" );
             _Subagent_sendAgentxError( session, pdu, AGENTX_ERR_PROCESSING_ERROR, 0 );
             return 1;
         }
         if ( asi->mode != PRIOT_MSG_INTERNAL_SET_RESERVE2 ) {
-            TOOLS_FREE( smagic );
+            MEMORY_FREE( smagic );
             Logger_log( LOGGER_PRIORITY_WARNING,
                 "dropping bad AgentX request (wrong mode %d)\n",
                 asi->mode );
@@ -404,7 +404,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         DEBUG_MSGTL( ( "agentx/subagent", "  -> cleanupset\n" ) );
         asi = Subagent_restoreSetVars( session, pdu );
         if ( asi == NULL ) {
-            TOOLS_FREE( smagic );
+            MEMORY_FREE( smagic );
             Logger_log( LOGGER_PRIORITY_WARNING, "Subagent_restoreSetVars() failed\n" );
             _Subagent_sendAgentxError( session, pdu, AGENTX_ERR_PROCESSING_ERROR, 0 );
             return 1;
@@ -417,7 +417,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
             Logger_log( LOGGER_PRIORITY_WARNING,
                 "dropping bad AgentX request (wrong mode %d)\n",
                 asi->mode );
-            TOOLS_FREE( retmagic );
+            MEMORY_FREE( retmagic );
             return 1;
         }
         mycallback = Subagent_handleSubagentSetResponse;
@@ -428,7 +428,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         DEBUG_MSGTL( ( "agentx/subagent", "  -> undoset\n" ) );
         asi = Subagent_restoreSetVars( session, pdu );
         if ( asi == NULL ) {
-            TOOLS_FREE( smagic );
+            MEMORY_FREE( smagic );
             Logger_log( LOGGER_PRIORITY_WARNING, "Subagent_restoreSetVars() failed\n" );
             _Subagent_sendAgentxError( session, pdu, AGENTX_ERR_PROCESSING_ERROR, 0 );
             return 1;
@@ -439,7 +439,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         break;
 
     default:
-        TOOLS_FREE( smagic );
+        MEMORY_FREE( smagic );
         DEBUG_MSGTL( ( "agentx/subagent", "  -> unknown command %d (%02x)\n",
             pdu->command, pdu->command ) );
         return 0;
@@ -701,7 +701,7 @@ void Subagent_registerCallbacks( Types_Session* s )
 
     DEBUG_MSGTL( ( "agentx/subagent",
         "registering callbacks for session %p\n", s ) );
-    sess_p = ( Types_Session* )Tools_memdup( &s, sizeof( s ) );
+    sess_p = ( Types_Session* )Memory_memdup( &s, sizeof( s ) );
     Assert_assert( sess_p );
     s->myvoid = sess_p;
     if ( !sess_p )
@@ -744,7 +744,7 @@ void Subagent_unregisterCallbacks( Types_Session* ss )
     Callback_unregisterCallback( CALLBACK_APPLICATION,
         PriotdCallback_UNREG_SYSOR,
         Subagent_sysORCallback, ss->myvoid, 1 );
-    TOOLS_FREE( ss->myvoid );
+    MEMORY_FREE( ss->myvoid );
 }
 
 /*

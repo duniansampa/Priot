@@ -9,10 +9,10 @@
  */
 
 #include "udpEndpointTable_data_access.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "siglog/agent/mfd.h"
 #include "siglog/data_access/udp_endpoint.h"
 #include "udpEndpointTable_constants.h"

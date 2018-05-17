@@ -2,10 +2,10 @@
 #include "../Plugin/Agentx/MasterAdmin.h"
 #include "BulkToNext.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "PriotSettings.h"
 #include "Protocol.h"
 #include "Session.h"
@@ -131,7 +131,7 @@ void Master_realInitMaster( void )
 
     UnixDomain_dontCreatePath();
 
-    TOOLS_FREE( agentx_sockets );
+    MEMORY_FREE( agentx_sockets );
 
     DEBUG_MSGTL( ( "agentx/master", "initializing...   DONE\n" ) );
 }

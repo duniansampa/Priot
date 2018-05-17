@@ -4,7 +4,7 @@
  * $Id$
  */
 
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Instance.h"
 #include "Priot.h"
 

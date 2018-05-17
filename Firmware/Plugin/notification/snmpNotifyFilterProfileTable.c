@@ -9,7 +9,7 @@
 #include "snmpNotifyFilterProfileTable.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "ReadConfig.h"
 #include "Tc.h"
@@ -129,7 +129,7 @@ int snmpNotifyFilterProfileTable_add( struct snmpNotifyFilterProfileTable_data* 
 void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
 {
     size_t tmpint;
-    struct snmpNotifyFilterProfileTable_data* StorageTmp = TOOLS_MALLOC_STRUCT( snmpNotifyFilterProfileTable_data );
+    struct snmpNotifyFilterProfileTable_data* StorageTmp = MEMORY_MALLOC_STRUCT( snmpNotifyFilterProfileTable_data );
 
     DEBUG_MSGTL( ( "snmpNotifyFilterProfileTable", "parsing config...  " ) );
 
@@ -151,7 +151,7 @@ void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
         &StorageTmp->snmpNotifyFilterProfileNameLen );
     if ( StorageTmp->snmpNotifyFilterProfileName == NULL ) {
         ReadConfig_configPerror( "invalid specification for snmpNotifyFilterProfileName" );
-        TOOLS_FREE( StorageTmp );
+        MEMORY_FREE( StorageTmp );
         return;
     }
 
@@ -163,9 +163,9 @@ void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
         &StorageTmp->snmpNotifyFilterProfileRowStatus, &tmpint );
 
     if ( snmpNotifyFilterProfileTable_add( StorageTmp ) != ErrorCode_SUCCESS ) {
-        TOOLS_FREE( StorageTmp->snmpTargetParamsName );
-        TOOLS_FREE( StorageTmp->snmpNotifyFilterProfileName );
-        TOOLS_FREE( StorageTmp );
+        MEMORY_FREE( StorageTmp->snmpTargetParamsName );
+        MEMORY_FREE( StorageTmp->snmpNotifyFilterProfileName );
+        MEMORY_FREE( StorageTmp );
     }
 
     DEBUG_MSGTL( ( "snmpNotifyFilterProfileTable", "done.\n" ) );
@@ -178,7 +178,7 @@ void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
 int store_snmpNotifyFilterProfileTable( int majorID, int minorID,
     void* serverarg, void* clientarg )
 {
-    char line[ TOOLS_MAXBUF ];
+    char line[ UTILITIES_MAX_BUFFER ];
     char* cptr;
     struct snmpNotifyFilterProfileTable_data* StorageTmp;
     struct header_complex_index* hcindex;
@@ -353,7 +353,7 @@ int write_snmpNotifyFilterProfileName( int action,
         /*
          * Back out any changes made in the IMPL_ACTION case
          */
-        TOOLS_FREE( StorageTmp->snmpNotifyFilterProfileName );
+        MEMORY_FREE( StorageTmp->snmpNotifyFilterProfileName );
         StorageTmp->snmpNotifyFilterProfileName = tmpvar;
         StorageTmp->snmpNotifyFilterProfileNameLen = tmplen;
         break;
@@ -363,7 +363,7 @@ int write_snmpNotifyFilterProfileName( int action,
          * Things are working well, so it's now safe to make the change
          * permanently.  Make sure that anything done here can't fail! 
          */
-        TOOLS_FREE( tmpvar );
+        MEMORY_FREE( tmpvar );
         Api_storeNeeded( NULL );
         break;
     }
@@ -536,11 +536,11 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
                 return PRIOT_ERR_INCONSISTENTNAME;
             }
 
-            StorageNew = TOOLS_MALLOC_STRUCT( snmpNotifyFilterProfileTable_data );
+            StorageNew = MEMORY_MALLOC_STRUCT( snmpNotifyFilterProfileTable_data );
             if ( StorageNew == NULL )
                 return PRIOT_ERR_GENERR;
             StorageNew->snmpTargetParamsName = ( char* )
-                Tools_memdup( vars->val.string, vars->valLen );
+                Memory_memdup( vars->val.string, vars->valLen );
             StorageNew->snmpTargetParamsNameLen = vars->valLen;
             StorageNew->snmpNotifyFilterProfileStorType = TC_ST_NONVOLATILE;
 
@@ -561,8 +561,8 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
          * Release any resources that have been allocated 
          */
         if ( StorageNew != NULL ) {
-            TOOLS_FREE( StorageNew->snmpTargetParamsName );
-            TOOLS_FREE( StorageNew->snmpNotifyFilterProfileName );
+            MEMORY_FREE( StorageNew->snmpTargetParamsName );
+            MEMORY_FREE( StorageNew->snmpNotifyFilterProfileName );
             free( StorageNew );
             StorageNew = NULL;
         }
@@ -641,8 +641,8 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
          * permanently.  Make sure that anything done here can't fail! 
          */
         if ( StorageDel != NULL ) {
-            TOOLS_FREE( StorageDel->snmpTargetParamsName );
-            TOOLS_FREE( StorageDel->snmpNotifyFilterProfileName );
+            MEMORY_FREE( StorageDel->snmpTargetParamsName );
+            MEMORY_FREE( StorageDel->snmpNotifyFilterProfileName );
             free( StorageDel );
             StorageDel = NULL;
         }

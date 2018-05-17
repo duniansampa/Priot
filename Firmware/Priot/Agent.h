@@ -2,9 +2,9 @@
 #define AGENT_H
 
 #include "Api.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 #include "Priot.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Transport.h"
 #include <stdint.h>
 
@@ -45,7 +45,7 @@ typedef struct RequestInfo_s {
    * can be used to pass information on a per-request basis from a
    * helper to the later handlers
    */
-    DataList_DataList* parent_data;
+    Map* parent_data;
 
     /*
    * pointer to the agent_request_info for this request
@@ -153,7 +153,7 @@ typedef struct AgentRequestInfo_s {
                                * can be used to pass information on a per-pdu basis from a
                                * helper to the later handlers
                                */
-    DataList_DataList* agent_data;
+    Map* agent_data;
 } AgentRequestInfo;
 
 typedef struct Cachemap_s {
@@ -224,11 +224,11 @@ int Agent_requestSetErrorAll( RequestInfo* requests, int error_value );
 int Agent_setRequestError( AgentRequestInfo* reqinfo, RequestInfo* request,
     int error_value );
 
-u_long Agent_markerUptime( markerT pm );
+u_long Agent_markerUptime( timeMarker pm );
 u_long Agent_timevalUptime( struct timeval* tv );
-constMarkerT Agent_getAgentStarttime( void );
+timeMarkerConst Agent_getAgentStarttime( void );
 uint64_t Agent_getAgentRuntime( void );
-void Agent_setAgentStarttime( markerT s );
+void Agent_setAgentStarttime( timeMarker s );
 u_long Agent_getAgentUptime( void );
 void Agent_setAgentUptime( u_long hsec );
 int Agent_checkTransactionId( int transaction_id );
@@ -247,7 +247,7 @@ int Agent_registerAgentNsap( Transport_Transport* t );
 
 void Agent_deregisterAgentNsap( int handle );
 
-void Agent_addListData( AgentRequestInfo* agent, DataList_DataList* node );
+void Agent_addListData( AgentRequestInfo* agent, Map* node );
 
 int Agent_removeListData( AgentRequestInfo* ari, const char* name );
 

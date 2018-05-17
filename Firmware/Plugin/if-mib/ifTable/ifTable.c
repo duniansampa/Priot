@@ -17,11 +17,11 @@
 
 #include "ifTable.h"
 #include "AgentHandler.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "Scalar.h"
 #include "Vars.h"
@@ -107,7 +107,7 @@ void initialize_table_ifTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    ifTable_user_context_p = DataList_create( "ifTable", NULL, NULL );
+    ifTable_user_context_p = Map_newElement( "ifTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -146,7 +146,7 @@ void shutdown_table_ifTable( void )
      * call interface shutdown code
      */
     _ifTable_shutdown_interface( ifTable_user_context_p );
-    DataList_freeAll( ifTable_user_context_p );
+    Map_clear( ifTable_user_context_p );
     ifTable_user_context_p = NULL;
 }
 

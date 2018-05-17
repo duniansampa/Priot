@@ -17,9 +17,9 @@
 #include "tcpTable.h"
 #include "Api.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Enum.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Logger.h"
 #include "siglog/system/generic.h"
 
 #define TCPTABLE_ENTRY_TYPE struct inpcb
@@ -58,7 +58,7 @@ void init_tcpTable( void )
     /*
      * Create the table data structure, and define the indexing....
      */
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !table_info ) {
         return;
     }
@@ -72,7 +72,7 @@ void init_tcpTable( void )
     /*
      * .... and iteration information ....
      */
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     if ( !iinfo ) {
         return;
     }
@@ -115,7 +115,7 @@ int tcpTable_handler( MibHandler* handler,
     long state;
 
     DEBUG_MSGTL( ( "mibII/tcpTable", "Handler - mode %s\n",
-        Enum_seFindLabelInSlist( "agentMode", reqinfo->mode ) ) );
+        MapList_findLabel( "agentMode", reqinfo->mode ) ) );
     switch ( reqinfo->mode ) {
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
@@ -319,7 +319,7 @@ int tcpTable_load( Cache* cache, void* vmagic )
             tcp_estab++;
         pcb.uid = uid;
 
-        nnew = TOOLS_MALLOC_TYPEDEF( struct inpcb );
+        nnew = MEMORY_MALLOC_TYPEDEF( struct inpcb );
         if ( nnew == NULL )
             break;
         memcpy( nnew, &pcb, sizeof( struct inpcb ) );

@@ -173,8 +173,8 @@ int DefaultStore_setVoid( int storeid, int which, void* value );
 void* DefaultStore_getVoid( int storeid, int which );
 int DefaultStore_parseBoolean( char* line );
 void DefaultStore_handleConfig( const char* token, char* line );
-int DefaultStore_registerConfig( uchar type, const char* storename, const char* token, int storeid, int which );
-int DefaultStore_registerPremib( uchar type, const char* storename, const char* token, int storeid, int which );
+int DefaultStore_registerConfig( unsigned char type, const char* storename, const char* token, int storeid, int which );
+int DefaultStore_registerPremib( unsigned char type, const char* storename, const char* token, int storeid, int which );
 void DefaultStore_shutdown( void );
 
 #endif // DEFAULT_STORE_H

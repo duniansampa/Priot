@@ -12,10 +12,10 @@
  * include our parent header 
  */
 #include "ipAddressPrefixTable_data_access.h"
-#include "Assert.h"
-#include "Container.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Containers/Container.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "ip-mib/ipAddressTable/ipAddressTable_interface.h"
 #include "ipAddressPrefixTable_constants.h"
 #include "ipAddressPrefixTable_interface.h"

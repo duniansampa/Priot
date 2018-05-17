@@ -9,10 +9,10 @@
  */
 
 #include "util_funcs.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "System.h"
 #include "utilities/ExecuteCmd.h"
@@ -375,7 +375,7 @@ struct internal_mib_table {
     int next_index; /* Index of the next free entry */
     int current_index; /* Index of the 'current' entry */
     int cache_timeout;
-    markerT cache_markerM;
+    timeMarker cache_markerM;
     RELOAD* reload; /* Routine to read in the data */
     COMPARE* compare; /* Routine to compare two entries */
     int data_size; /* Size of an individual entry */
@@ -543,7 +543,7 @@ prefix_cbx* net_snmp_create_prefix_info( unsigned long OnLinkFlag,
     unsigned long AutonomousFlag,
     char* in6ptr )
 {
-    prefix_cbx* node = TOOLS_MALLOC_TYPEDEF( prefix_cbx );
+    prefix_cbx* node = MEMORY_MALLOC_TYPEDEF( prefix_cbx );
     if ( !in6ptr ) {
         free( node );
         return NULL;

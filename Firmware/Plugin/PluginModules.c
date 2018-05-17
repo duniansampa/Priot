@@ -1,6 +1,6 @@
 #include "PluginModules.h"
 #include "Api.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Callback.h"
 #include "ModuleConfig.h"
 #include "ModuleIncludes.h"
@@ -31,8 +31,7 @@ void PluginModules_initModules( void )
 {
     static int once = 0;
 
-// Interface_accessInterfaceInit();
-
+    netsnmp_access_interface_init();
 #include "ModuleInits.h"
 
     _needShutdown = 1;

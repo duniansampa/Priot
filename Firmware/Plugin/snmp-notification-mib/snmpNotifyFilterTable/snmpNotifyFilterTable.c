@@ -12,8 +12,8 @@
  */
 
 #include "snmpNotifyFilterTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "Tc.h"
 #include "Vars.h"
@@ -82,7 +82,7 @@ void initialize_table_snmpNotifyFilterTable( void )
      * a netsnmp_data_list is a simple way to store void pointers. A simple
      * string token is used to add, find or remove pointers.
      */
-    snmpNotifyFilterTable_user_context_p = DataList_create( "snmpNotifyFilterTable", NULL, NULL );
+    snmpNotifyFilterTable_user_context_p = Map_newElement( "snmpNotifyFilterTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -105,7 +105,7 @@ void shutdown_table_snmpNotifyFilterTable( void )
      * call interface shutdown code
      */
     _snmpNotifyFilterTable_shutdown_interface( snmpNotifyFilterTable_user_context_p );
-    DataList_freeAll( snmpNotifyFilterTable_user_context_p );
+    Map_clear( snmpNotifyFilterTable_user_context_p );
     snmpNotifyFilterTable_user_context_p = NULL;
 }
 

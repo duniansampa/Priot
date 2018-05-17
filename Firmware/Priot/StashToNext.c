@@ -1,6 +1,6 @@
 #include "StashToNext.h"
 #include "OidStash.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "StashCache.h"
 #include "Client.h"
 #include "Api.h"
@@ -69,15 +69,15 @@ StashToNext_helper( MibHandler*          handler,
             return ret;
         }
         cinfo  = StashCache_extractStashCache( reqinfo );
-        reqtmp = TOOLS_MALLOC_TYPEDEF(RequestInfo);
-        vb = reqtmp->requestvb = TOOLS_MALLOC_TYPEDEF( Types_VariableList );
+        reqtmp = MEMORY_MALLOC_TYPEDEF(RequestInfo);
+        vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
         vb->type = ASN01_NULL;
         Client_setVarObjid( vb, reginfo->rootoid, reginfo->rootoid_len );
 
         reqinfo->mode = MODE_GETNEXT;
         while (!finished) {
             ret = AgentHandler_callNextHandler(handler, reginfo, reqinfo, reqtmp);
-            namelen = TOOLS_MIN(vb->nameLength, reginfo->rootoid_len);
+            namelen = UTILITIES_MIN_VALUE(vb->nameLength, reginfo->rootoid_len);
             if ( !Api_oidCompare( reginfo->rootoid, reginfo->rootoid_len,
                                    vb->name, namelen) &&
                  vb->type != ASN01_NULL && vb->type != PRIOT_ENDOFMIBVIEW ) {
@@ -91,7 +91,7 @@ StashToNext_helper( MibHandler*          handler,
                      * Tidy up the response structure,
                      *  ready for retrieving the next entry
                      */
-                DataList_freeAll(reqtmp->parent_data);
+                Map_clear(reqtmp->parent_data);
                 reqtmp->parent_data = NULL;
                 reqtmp->processed = 0;
                 vb->type = ASN01_NULL;

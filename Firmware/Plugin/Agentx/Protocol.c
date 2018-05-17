@@ -1,6 +1,6 @@
 #include "Protocol.h"
-#include "Debug.h"
-#include "Tools.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Utilities.h"
 #include "Priot.h"
 #include "Mib.h"
 #include "Client.h"
@@ -71,7 +71,7 @@ Protocol_reallocBuildInt(u_char ** buf, size_t * buf_len, size_t * out_len,
     size_t          ilen = *out_len;
 
     while ((*out_len + 4) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
             return 0;
         }
     }
@@ -118,7 +118,7 @@ Protocol_reallocBuildShort(u_char ** buf, size_t * buf_len,
 
 
     while ((*out_len + 2) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
             return 0;
         }
     }
@@ -173,7 +173,7 @@ Protocol_reallocBuildOid(u_char ** buf, size_t * buf_len, size_t * out_len,
     }
 
     while ((*out_len + 4 + (4 * name_len)) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
             return 0;
         }
     }
@@ -220,7 +220,7 @@ Protocol_reallocBuildString(u_char ** buf, size_t * buf_len,
     size_t          ilen = *out_len, i = 0;
 
     while ((*out_len + 4 + (4 * ((string_len + 3) / 4))) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
             return 0;
         }
     }
@@ -352,7 +352,7 @@ Protocol_reallocBuildVarbind(u_char ** buf, size_t * buf_len,
     }
 
     while ((*out_len + 2) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
             DEBUG_INDENTLESS();
             DEBUG_INDENTLESS();
             return 0;
@@ -515,7 +515,7 @@ Protocol_reallocBuildHeader(u_char ** buf, size_t * buf_len,
         pdu->flags & AGENTX_FLAGS_NETWORK_BYTE_ORDER;
 
     while ((*out_len + 4) >= *buf_len) {
-        if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+        if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
             return 0;
         }
     }
@@ -655,7 +655,7 @@ _Protocol_reallocBuild(u_char ** buf, size_t * buf_len, size_t * out_len,
          * Timeout
          */
         while ((*out_len + 4) >= *buf_len) {
-            if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
                 DEBUG_INDENTLESS();
                 return 0;
             }
@@ -698,7 +698,7 @@ _Protocol_reallocBuild(u_char ** buf, size_t * buf_len, size_t * out_len,
          * Reason
          */
         while ((*out_len + 4) >= *buf_len) {
-            if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
                 DEBUG_INDENTLESS();
                 return 0;
             }
@@ -719,7 +719,7 @@ _Protocol_reallocBuild(u_char ** buf, size_t * buf_len, size_t * out_len,
     case AGENTX_MSG_REGISTER:
     case AGENTX_MSG_UNREGISTER:
         while ((*out_len + 4) >= *buf_len) {
-            if (!(allow_realloc && Tools_realloc2(buf, buf_len))) {
+            if (!(allow_realloc && Memory_reallocIncrease(buf, buf_len))) {
                 DEBUG_INDENTLESS();
                 return 0;
             }

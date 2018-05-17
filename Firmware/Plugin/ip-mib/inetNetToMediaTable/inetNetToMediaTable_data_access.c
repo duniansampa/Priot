@@ -13,9 +13,9 @@
  */
 
 #include "inetNetToMediaTable_data_access.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "inetNetToMediaTable_constants.h"
 #include "siglog/agent/mfd.h"
 #include "siglog/data_access/arp.h"

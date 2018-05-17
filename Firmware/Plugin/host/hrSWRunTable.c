@@ -15,8 +15,8 @@
 
 #include "hrSWRunTable.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Table.h"
 #include "TableContainer.h"
 #include "Vars.h"
@@ -66,7 +66,7 @@ void initialize_table_hrSWRunTable( void )
     }
     reg->modes |= HANDLER_CAN_NOT_CREATE;
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( NULL == table_info ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error allocating table registration for " MYTABLE "\n" );
         goto bail;

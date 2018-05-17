@@ -1,21 +1,21 @@
 #include "Mib.h"
 #include "Api.h"
 #include "Asn01.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "Client.h"
-#include "Debug.h"
 #include "DefaultStore.h"
 #include "Impl.h"
 #include "Int64.h"
-#include "Logger.h"
 #include "Parse.h"
 #include "Parse.h"
 #include "Priot.h"
 #include "ReadConfig.h"
-#include "Strlcat.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "System.h"
-#include "Tools.h"
+#include "System/String.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 
 #define MIB_NAMLEN( dirent ) strlen( ( dirent )->d_name )
 
@@ -193,7 +193,7 @@ int Mib_sprintHexStringLine( u_char** buf, size_t* buf_len, size_t* out_len,
      * Make sure there's enough room for the hex output....
      */
     while ( ( *out_len + line_len * 3 + 1 ) >= *buf_len ) {
-        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
             return 0;
         }
     }
@@ -218,7 +218,7 @@ int Mib_sprintHexStringLine( u_char** buf, size_t* buf_len, size_t* out_len,
      */
     if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_HEX_TEXT ) ) {
         while ( ( *out_len + line_len + 5 ) >= *buf_len ) {
-            if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+            if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                 return 0;
             }
         }
@@ -283,24 +283,24 @@ int Mib_sprintReallocAsciiString( u_char** buf, size_t* buf_len,
     for ( i = 0; i < ( int )len; i++ ) {
         if ( isprint( *cp ) || isspace( *cp ) ) {
             if ( *cp == '\\' || *cp == '"' ) {
-                if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                if ( ( *out_len >= *buf_len ) && !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                     return 0;
                 }
                 *( *buf + ( *out_len )++ ) = '\\';
             }
-            if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+            if ( ( *out_len >= *buf_len ) && !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                 return 0;
             }
             *( *buf + ( *out_len )++ ) = *cp++;
         } else {
-            if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+            if ( ( *out_len >= *buf_len ) && !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                 return 0;
             }
             *( *buf + ( *out_len )++ ) = '.';
             cp++;
         }
     }
-    if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+    if ( ( *out_len >= *buf_len ) && !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
         return 0;
     }
     *( *buf + *out_len ) = '\0';
@@ -344,7 +344,7 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
     if ( var->type != ASN01_OCTET_STR ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             const char str[] = "Wrong Type (should be OCTET STRING): ";
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -361,7 +361,7 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
         u_char* ecp;
 
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "STRING: " ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "STRING: " ) ) {
                 return 0;
             }
         }
@@ -423,25 +423,25 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
                     } else {
                         sprintf( intbuf, "%lx", value );
                     }
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
                         return 0;
                     }
                     break;
                 case 'd':
                     sprintf( intbuf, "%ld", value );
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
                         return 0;
                     }
                     break;
                 case 'o':
                     sprintf( intbuf, "%lo", value );
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, intbuf ) ) {
                         return 0;
                     }
                     break;
                 case 't': /* new in rfc 3411 */
                 case 'a':
-                    cnt = TOOLS_MIN( width, ecp - cp );
+                    cnt = UTILITIES_MIN_VALUE( width, ecp - cp );
                     if ( !Mib_sprintReallocAsciiString( buf, buf_len, out_len,
                              allow_realloc, cp, cnt ) )
                         return 0;
@@ -449,11 +449,11 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
                     break;
                 default:
                     *out_len = saved_out_len;
-                    if ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                    if ( STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                              "(Bad hint ignored: " )
-                        && Tools_cstrcat( buf, buf_len, out_len,
+                        && STRING_appendRealloc( buf, buf_len, out_len,
                                allow_realloc, saved_hint )
-                        && Tools_cstrcat( buf, buf_len, out_len,
+                        && STRING_appendRealloc( buf, buf_len, out_len,
                                allow_realloc, ") " ) ) {
                         return Mib_sprintReallocOctetString( buf, buf_len,
                             out_len,
@@ -467,7 +467,7 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
 
                 if ( cp < ecp && separ ) {
                     while ( ( *out_len + 1 ) >= *buf_len ) {
-                        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                             return 0;
                         }
                     }
@@ -480,7 +480,7 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
 
             if ( term && cp < ecp ) {
                 while ( ( *out_len + 1 ) >= *buf_len ) {
-                    if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                    if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                         return 0;
                     }
                 }
@@ -491,10 +491,10 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
         }
 
         if ( units ) {
-            return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
-                && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
+            return ( STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " " )
+                && STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, units ) );
         }
-        if ( ( *out_len >= *buf_len ) && !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+        if ( ( *out_len >= *buf_len ) && !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
             return 0;
         }
         *( *buf + *out_len ) = '\0';
@@ -526,16 +526,16 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
     }
 
     if ( var->valLen == 0 ) {
-        return Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\"" );
+        return STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"\"" );
     }
 
     if ( hex ) {
         if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
                 return 0;
             }
         } else {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Hex-STRING: " ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Hex-STRING: " ) ) {
                 return 0;
             }
         }
@@ -546,32 +546,32 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
         }
 
         if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
                 return 0;
             }
         }
     } else {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "STRING: " ) ) {
                 return 0;
             }
         }
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
             return 0;
         }
         if ( !Mib_sprintReallocAsciiString( buf, buf_len, out_len, allow_realloc, var->val.string,
                  var->valLen ) ) {
             return 0;
         }
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"" ) ) {
             return 0;
         }
     }
 
     if ( units ) {
-        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
-            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
+        return ( STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " " )
+            && STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
@@ -607,14 +607,14 @@ int Mib_sprintReallocFloat( u_char** buf, size_t* buf_len,
     if ( var->type != ASN01_OPAQUE_FLOAT ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Float): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL );
     }
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Opaque: Float: " ) ) {
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Opaque: Float: " ) ) {
             return 0;
         }
     }
@@ -624,7 +624,7 @@ int Mib_sprintReallocFloat( u_char** buf, size_t* buf_len,
      */
 
     while ( ( *out_len + 128 + 1 ) >= *buf_len ) {
-        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
             return 0;
         }
     }
@@ -633,8 +633,8 @@ int Mib_sprintReallocFloat( u_char** buf, size_t* buf_len,
     *out_len += strlen( ( char* )( *buf + *out_len ) );
 
     if ( units ) {
-        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
-            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
+        return ( STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " " )
+            && STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
@@ -670,7 +670,7 @@ int Mib_sprintReallocDouble( u_char** buf, size_t* buf_len,
     if ( var->type != ASN01_OPAQUE_DOUBLE ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Double): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -679,7 +679,7 @@ int Mib_sprintReallocDouble( u_char** buf, size_t* buf_len,
     }
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Opaque: Float: " ) ) {
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Opaque: Float: " ) ) {
             return 0;
         }
     }
@@ -689,7 +689,7 @@ int Mib_sprintReallocDouble( u_char** buf, size_t* buf_len,
      */
 
     while ( ( *out_len + 128 + 1 ) >= *buf_len ) {
-        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
             return 0;
         }
     }
@@ -698,8 +698,8 @@ int Mib_sprintReallocDouble( u_char** buf, size_t* buf_len,
     *out_len += strlen( ( char* )( *buf + *out_len ) );
 
     if ( units ) {
-        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
-            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
+        return ( STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " " )
+            && STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
@@ -739,7 +739,7 @@ int Mib_sprintReallocCounter64( u_char** buf, size_t* buf_len, size_t* out_len,
         && var->type != ASN01_OPAQUE_I64 && var->type != ASN01_OPAQUE_U64 ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Counter64): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -749,42 +749,42 @@ int Mib_sprintReallocCounter64( u_char** buf, size_t* buf_len, size_t* out_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         if ( var->type != ASN01_COUNTER64 ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Opaque: " ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Opaque: " ) ) {
                 return 0;
             }
         }
         switch ( var->type ) {
         case ASN01_OPAQUE_U64:
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "UInt64: " ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "UInt64: " ) ) {
                 return 0;
             }
             break;
         case ASN01_OPAQUE_I64:
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Int64: " ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Int64: " ) ) {
                 return 0;
             }
             break;
         case ASN01_COUNTER64:
         case ASN01_OPAQUE_COUNTER64:
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "Counter64: " ) ) {
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Counter64: " ) ) {
                 return 0;
             }
         }
     }
     if ( var->type == ASN01_OPAQUE_I64 ) {
         Int64_printI64( a64buf, var->val.counter64 );
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
             return 0;
         }
     } else {
         Int64_printU64( a64buf, var->val.counter64 );
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
             return 0;
         }
     }
     if ( units ) {
-        return ( Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " " )
-            && Tools_cstrcat( buf, buf_len, out_len, allow_realloc, units ) );
+        return ( STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " " )
+            && STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, units ) );
     }
     return 1;
 }
@@ -822,7 +822,7 @@ int Mib_sprintReallocOpaque( u_char** buf, size_t* buf_len,
         && var->type != ASN01_OPAQUE_FLOAT && var->type != ASN01_OPAQUE_DOUBLE ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Opaque): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL );
@@ -847,7 +847,7 @@ int Mib_sprintReallocOpaque( u_char** buf, size_t* buf_len,
     case ASN01_OPAQUE:
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
             u_char str[] = "OPAQUE: ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
                 return 0;
             }
         }
@@ -857,9 +857,9 @@ int Mib_sprintReallocOpaque( u_char** buf, size_t* buf_len,
         }
     }
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -896,7 +896,7 @@ int Mib_sprintReallocObjectIdentifier( u_char** buf, size_t* buf_len,
     if ( var->type != ASN01_OBJECT_ID ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be OBJECT IDENTIFIER): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -906,7 +906,7 @@ int Mib_sprintReallocObjectIdentifier( u_char** buf, size_t* buf_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "OID: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
@@ -921,9 +921,9 @@ int Mib_sprintReallocObjectIdentifier( u_char** buf, size_t* buf_len,
     }
 
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -960,7 +960,7 @@ int Mib_sprintReallocTimeTicks( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_TIMETICKS ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Timeticks): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -971,7 +971,7 @@ int Mib_sprintReallocTimeTicks( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS ) ) {
         char str[ 32 ];
         sprintf( str, "%lu", *( u_long* )var->val.integer );
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
         return 1;
@@ -979,18 +979,18 @@ int Mib_sprintReallocTimeTicks( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         char str[ 32 ];
         sprintf( str, "Timeticks: (%lu) ", *( u_long* )var->val.integer );
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
     }
     _Mib_uptimeString( *( u_long* )( var->val.integer ), timebuf, sizeof( timebuf ) );
-    if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )timebuf ) ) {
+    if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )timebuf ) ) {
         return 0;
     }
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -1083,7 +1083,7 @@ int Mib_sprintReallocHintedInteger( u_char** buf, size_t* buf_len,
         }
         tmp[ 0 ] = '-';
     }
-    return Tools_strcat( buf, buf_len, out_len, allow_realloc, ( u_char* )tmp );
+    return String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( u_char* )tmp );
 }
 
 /**
@@ -1117,7 +1117,7 @@ int Mib_sprintReallocInteger( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_INTEGER ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be INTEGER): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1133,7 +1133,7 @@ int Mib_sprintReallocInteger( u_char** buf, size_t* buf_len, size_t* out_len,
     }
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                  ( const u_char* )"INTEGER: " ) ) {
             return 0;
         }
@@ -1150,32 +1150,32 @@ int Mib_sprintReallocInteger( u_char** buf, size_t* buf_len, size_t* out_len,
         } else {
             char str[ 32 ];
             sprintf( str, "%ld", *var->val.integer );
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )str ) ) {
                 return 0;
             }
         }
     } else if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                  ( const u_char* )enum_string ) ) {
             return 0;
         }
     } else {
         char str[ 32 ];
         sprintf( str, "(%ld)", *var->val.integer );
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                  ( const u_char* )enum_string ) ) {
             return 0;
         }
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
     }
 
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -1212,7 +1212,7 @@ int Mib_sprintReallocUinteger( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_UINTEGER ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be UInteger32): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1238,32 +1238,32 @@ int Mib_sprintReallocUinteger( u_char** buf, size_t* buf_len, size_t* out_len,
         } else {
             char str[ 32 ];
             sprintf( str, "%lu", *var->val.integer );
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )str ) ) {
                 return 0;
             }
         }
     } else if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                  ( const u_char* )enum_string ) ) {
             return 0;
         }
     } else {
         char str[ 32 ];
         sprintf( str, "(%lu)", *var->val.integer );
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                  ( const u_char* )enum_string ) ) {
             return 0;
         }
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )str ) ) {
             return 0;
         }
     }
 
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -1300,7 +1300,7 @@ int Mib_sprintReallocGauge( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_GAUGE ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Gauge32 or Unsigned32): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1310,7 +1310,7 @@ int Mib_sprintReallocGauge( u_char** buf, size_t* buf_len, size_t* out_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "Gauge32: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
@@ -1323,14 +1323,14 @@ int Mib_sprintReallocGauge( u_char** buf, size_t* buf_len, size_t* out_len,
         }
     } else {
         sprintf( tmp, "%u", ( unsigned int )( *var->val.integer & 0xffffffff ) );
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )tmp ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )tmp ) ) {
             return 0;
         }
     }
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -1367,7 +1367,7 @@ int Mib_sprintReallocCounter( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_COUNTER ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Counter32): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1377,18 +1377,18 @@ int Mib_sprintReallocCounter( u_char** buf, size_t* buf_len, size_t* out_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "Counter32: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
     sprintf( tmp, "%u", ( unsigned int )( *var->val.integer & 0xffffffff ) );
-    if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )tmp ) ) {
+    if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )tmp ) ) {
         return 0;
     }
     if ( units ) {
-        return ( Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return ( String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" " )
-            && Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            && String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )units ) );
     }
     return 1;
@@ -1425,7 +1425,7 @@ int Mib_sprintReallocNetworkAddress( u_char** buf, size_t* buf_len,
     if ( var->type != ASN01_IPADDRESS ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be NetworkAddress): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1435,13 +1435,13 @@ int Mib_sprintReallocNetworkAddress( u_char** buf, size_t* buf_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "Network Address: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
 
     while ( ( *out_len + ( var->valLen * 3 ) + 2 ) >= *buf_len ) {
-        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
             return 0;
         }
     }
@@ -1488,7 +1488,7 @@ int Mib_sprintReallocIpAddress( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_IPADDRESS ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be IpAddress): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1498,12 +1498,12 @@ int Mib_sprintReallocIpAddress( u_char** buf, size_t* buf_len, size_t* out_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "IpAddress: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
     while ( ( *out_len + 17 ) >= *buf_len ) {
-        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
             return 0;
         }
     }
@@ -1545,7 +1545,7 @@ int Mib_sprintReallocNull( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_NULL ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be NULL): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1553,7 +1553,7 @@ int Mib_sprintReallocNull( u_char** buf, size_t* buf_len, size_t* out_len,
             NULL );
     }
 
-    return Tools_strcat( buf, buf_len, out_len, allow_realloc, str );
+    return String_appendRealloc( buf, buf_len, out_len, allow_realloc, str );
 }
 
 /**
@@ -1589,7 +1589,7 @@ int Mib_sprintReallocBitString( u_char** buf, size_t* buf_len, size_t* out_len,
     if ( var->type != ASN01_BIT_STR && var->type != ASN01_OCTET_STR ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be BITS): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1599,12 +1599,12 @@ int Mib_sprintReallocBitString( u_char** buf, size_t* buf_len, size_t* out_len,
 
     if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "\"";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     } else {
         u_char str[] = "BITS: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
@@ -1615,7 +1615,7 @@ int Mib_sprintReallocBitString( u_char** buf, size_t* buf_len, size_t* out_len,
 
     if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "\"";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     } else {
@@ -1633,18 +1633,18 @@ int Mib_sprintReallocBitString( u_char** buf, size_t* buf_len, size_t* out_len,
                     if ( enum_string == NULL || DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM ) ) {
                         char str[ 32 ];
                         sprintf( str, "%d ", ( len * 8 ) + bit );
-                        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                                  ( const u_char* )str ) ) {
                             return 0;
                         }
                     } else {
                         char str[ 32 ];
                         sprintf( str, "(%d) ", ( len * 8 ) + bit );
-                        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                                  ( const u_char* )enum_string ) ) {
                             return 0;
                         }
-                        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                                  ( const u_char* )str ) ) {
                             return 0;
                         }
@@ -1666,7 +1666,7 @@ int Mib_sprintReallocNsapAddress( u_char** buf, size_t* buf_len,
     if ( var->type != ASN01_NSAP ) {
         if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be NsapAddress): ";
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) )
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                 return 0;
         }
         return Mib_sprintReallocByType( buf, buf_len, out_len,
@@ -1676,7 +1676,7 @@ int Mib_sprintReallocNsapAddress( u_char** buf, size_t* buf_len,
 
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
         u_char str[] = "NsapAddress: ";
-        if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc, str ) ) {
+        if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
             return 0;
         }
     }
@@ -1713,7 +1713,7 @@ int Mib_sprintReallocBadType( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     u_char str[] = "Variable has bad type";
 
-    return Tools_strcat( buf, buf_len, out_len, allow_realloc, str );
+    return String_appendRealloc( buf, buf_len, out_len, allow_realloc, str );
 }
 
 /**
@@ -1841,7 +1841,7 @@ static void _Mib_handleMibDirsConf( const char* token, char* line )
                 return;
             }
         }
-        TOOLS_FREE( _mib_confmibdir );
+        MEMORY_FREE( _mib_confmibdir );
     } else {
         ctmp = strdup( line );
         if ( !ctmp ) {
@@ -1875,7 +1875,7 @@ static void _Mib_handleMibsConf( const char* token, char* line )
                 return;
             }
         }
-        TOOLS_FREE( _mib_confmibs );
+        MEMORY_FREE( _mib_confmibs );
     } else {
         ctmp = strdup( line );
         if ( !ctmp ) {
@@ -2160,7 +2160,7 @@ void Mib_setMibDirectory( const char* dir )
 
     /** set_string calls strdup, so if we allocated memory, free it */
     if ( tmpdir == newdir ) {
-        TOOLS_FREE( tmpdir );
+        MEMORY_FREE( tmpdir );
     }
 }
 
@@ -2187,7 +2187,7 @@ char* Mib_getMibDirectory( void )
         DEBUG_MSGTL( ( "getMibDirectory", "no mib directories set\n" ) );
 
         /** Check if the environment variable is set */
-        dir = Tools_getenv( "MIBDIRS" );
+        dir = System_getEnvVariable( "MIBDIRS" );
         if ( dir == NULL ) {
             DEBUG_MSGTL( ( "getMibDirectory", "no mib directories set by environment\n" ) );
             /** Not set use hard coded path */
@@ -2223,7 +2223,7 @@ char* Mib_getMibDirectory( void )
  */
 void Mib_fixupMibDirectory( void )
 {
-    char* homepath = Tools_getenv( "HOME" );
+    char* homepath = System_getEnvVariable( "HOME" );
     char* mibpath = Mib_getMibDirectory();
     char* oldmibpath = NULL;
     char* ptr_home;
@@ -2241,7 +2241,7 @@ void Mib_fixupMibDirectory( void )
                 /** swap in the new value and repeat */
                 mibpath = new_mibpath;
                 if ( oldmibpath != NULL ) {
-                    TOOLS_FREE( oldmibpath );
+                    MEMORY_FREE( oldmibpath );
                 }
                 oldmibpath = new_mibpath;
             } else {
@@ -2254,7 +2254,7 @@ void Mib_fixupMibDirectory( void )
         /*  The above copies the mibpath for us, so...  */
 
         if ( oldmibpath != NULL ) {
-            TOOLS_FREE( oldmibpath );
+            MEMORY_FREE( oldmibpath );
         }
     }
 }
@@ -2291,9 +2291,9 @@ void Mib_initMib( void )
         Parse_addMibdir( entry );
         entry = strtok_r( NULL, ENV_SEPARATOR, &st );
     }
-    TOOLS_FREE( env_var );
+    MEMORY_FREE( env_var );
 
-    env_var = Tools_getenv( "MIBFILES" );
+    env_var = System_getEnvVariable( "MIBFILES" );
     if ( env_var != NULL ) {
         if ( *env_var == '+' )
             entry = strtok_r( env_var + 1, ENV_SEPARATOR, &st );
@@ -2311,7 +2311,7 @@ void Mib_initMib( void )
      * Read in any modules or mibs requested
      */
 
-    env_var = Tools_getenv( "MIBS" );
+    env_var = System_getEnvVariable( "MIBS" );
     if ( env_var == NULL ) {
         if ( _mib_confmibs != NULL )
             env_var = strdup( _mib_confmibs );
@@ -2324,7 +2324,7 @@ void Mib_initMib( void )
         entry = ( char* )malloc( strlen( PRIOT_DEFAULT_MIBS ) + strlen( env_var ) + 2 );
         if ( !entry ) {
             DEBUG_MSGTL( ( "initMib", "env mibs malloc failed" ) );
-            TOOLS_FREE( env_var );
+            MEMORY_FREE( env_var );
             return;
         } else {
             if ( *env_var == '+' )
@@ -2334,7 +2334,7 @@ void Mib_initMib( void )
                 sprintf( entry, "%s%c%s", env_var + 1, ENV_SEPARATOR_CHAR,
                     PRIOT_DEFAULT_MIBS );
         }
-        TOOLS_FREE( env_var );
+        MEMORY_FREE( env_var );
         env_var = entry;
     }
 
@@ -2353,9 +2353,9 @@ void Mib_initMib( void )
         entry = strtok_r( NULL, ENV_SEPARATOR, &st );
     }
     Parse_adoptOrphans();
-    TOOLS_FREE( env_var );
+    MEMORY_FREE( env_var );
 
-    env_var = Tools_getenv( "MIBFILES" );
+    env_var = System_getEnvVariable( "MIBFILES" );
     if ( env_var != NULL ) {
         if ( ( *env_var == '+' ) || ( *env_var == '-' ) ) {
             env_var = strdup( env_var + 1 );
@@ -2374,10 +2374,10 @@ void Mib_initMib( void )
             Parse_readMib( entry );
             entry = strtok_r( NULL, ENV_SEPARATOR, &st );
         }
-        TOOLS_FREE( env_var );
+        MEMORY_FREE( env_var );
     }
 
-    prefix = Tools_getenv( "PREFIX" );
+    prefix = System_getEnvVariable( "PREFIX" );
 
     if ( !prefix )
         prefix = _mib_standardPrefix;
@@ -2556,26 +2556,26 @@ void Mib_shutdownMib( void )
     Parse_unloadAllMibs();
     if ( _mib_treeTop ) {
         if ( _mib_treeTop->label )
-            TOOLS_FREE( _mib_treeTop->label );
-        TOOLS_FREE( _mib_treeTop );
+            MEMORY_FREE( _mib_treeTop->label );
+        MEMORY_FREE( _mib_treeTop );
     }
     parse_treeHead = NULL;
     mib_mib = NULL;
     if ( mib_mibIndexes ) {
         int i;
         for ( i = 0; i < _mib_mibIndex; ++i )
-            TOOLS_FREE( mib_mibIndexes[ i ] );
+            MEMORY_FREE( mib_mibIndexes[ i ] );
         free( mib_mibIndexes );
         _mib_mibIndex = 0;
         _mib_mibIndexMax = 0;
         mib_mibIndexes = NULL;
     }
     if ( _mib_prefix != NULL && _mib_prefix != &_mib_standardPrefix[ 0 ] )
-        TOOLS_FREE( _mib_prefix );
+        MEMORY_FREE( _mib_prefix );
     if ( _mib_prefix )
         _mib_prefix = NULL;
-    TOOLS_FREE( _mib_confmibs );
-    TOOLS_FREE( _mib_confmibdir );
+    MEMORY_FREE( _mib_confmibs );
+    MEMORY_FREE( _mib_confmibdir );
 }
 
 /**
@@ -2703,11 +2703,11 @@ int Mib_readObjid( const char* input, oid* output, size_t* out_len )
          * get past leading '.', append '.' to Prefix.
          */
         if ( *_mib_prefix == '.' )
-            Strlcpy_strlcpy( buf, _mib_prefix + 1, sizeof( buf ) );
+            String_copyTruncate( buf, _mib_prefix + 1, sizeof( buf ) );
         else
-            Strlcpy_strlcpy( buf, _mib_prefix, sizeof( buf ) );
-        Strlcat_strlcat( buf, ".", sizeof( buf ) );
-        Strlcat_strlcat( buf, input, sizeof( buf ) );
+            String_copyTruncate( buf, _mib_prefix, sizeof( buf ) );
+        String_appendTruncate( buf, ".", sizeof( buf ) );
+        String_appendTruncate( buf, input, sizeof( buf ) );
         input = buf;
     }
 
@@ -2727,10 +2727,10 @@ int Mib_readObjid( const char* input, oid* output, size_t* out_len )
         if ( ret == 0 )
             ret = ErrorCode_UNKNOWN_OBJID;
         API_SET_PRIOT_ERROR( ret );
-        TOOLS_FREE( name );
+        MEMORY_FREE( name );
         return 0;
     }
-    TOOLS_FREE( name );
+    MEMORY_FREE( name );
 
     return 1;
 }
@@ -2761,10 +2761,10 @@ void Mib_sprintReallocObjid( u_char** buf, size_t* buf_len,
 
     if ( tbuf_overflow ) {
         if ( !*buf_overflow ) {
-            Tools_strcat( buf, buf_len, out_len, allow_realloc, tbuf );
+            String_appendRealloc( buf, buf_len, out_len, allow_realloc, tbuf );
             *buf_overflow = 1;
         }
-        TOOLS_FREE( tbuf );
+        MEMORY_FREE( tbuf );
         return;
     }
 
@@ -2785,10 +2785,10 @@ void Mib_sprintReallocObjid( u_char** buf, size_t* buf_len,
         cp = NULL;
     }
 
-    if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, cp ) ) {
+    if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, cp ) ) {
         *buf_overflow = 1;
     }
-    TOOLS_FREE( tbuf );
+    MEMORY_FREE( tbuf );
 }
 
 /**
@@ -2820,10 +2820,10 @@ struct Parse_Tree_s* Mib_sprintReallocObjidTree( u_char** buf, size_t* buf_len,
 
     if ( tbuf_overflow ) {
         if ( !*buf_overflow ) {
-            Tools_strcat( buf, buf_len, out_len, allow_realloc, tbuf );
+            String_appendRealloc( buf, buf_len, out_len, allow_realloc, tbuf );
             *buf_overflow = 1;
         }
-        TOOLS_FREE( tbuf );
+        MEMORY_FREE( tbuf );
         return subtree;
     }
 
@@ -2872,9 +2872,9 @@ struct Parse_Tree_s* Mib_sprintReallocObjidTree( u_char** buf, size_t* buf_len,
              */
 
             if ( !*buf_overflow && modbuf[ 0 ] != '#' ) {
-                if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                          ( const u_char* )mod )
-                    || !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                    || !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                            ( const u_char* )"." ) ) {
                     *buf_overflow = 1;
                 }
@@ -2908,10 +2908,10 @@ struct Parse_Tree_s* Mib_sprintReallocObjidTree( u_char** buf, size_t* buf_len,
         cp = NULL;
     }
 
-    if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, cp ) ) {
+    if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, cp ) ) {
         *buf_overflow = 1;
     }
-    TOOLS_FREE( tbuf );
+    MEMORY_FREE( tbuf );
     return subtree;
 }
 
@@ -2976,7 +2976,7 @@ void Mib_fprintObjid( FILE* f, const oid* objid, size_t objidlen )
         }
     }
 
-    TOOLS_FREE( buf );
+    MEMORY_FREE( buf );
 }
 
 int Mib_sprintReallocVariable( u_char** buf, size_t* buf_len,
@@ -2997,18 +2997,18 @@ int Mib_sprintReallocVariable( u_char** buf, size_t* buf_len,
     }
     if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_PRINT_BARE_VALUE ) ) {
         if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
-            if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+            if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      ( const u_char* )" = " ) ) {
                 return 0;
             }
         } else {
             if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-                if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                          ( const u_char* )" " ) ) {
                     return 0;
                 }
             } else {
-                if ( !Tools_strcat( buf, buf_len, out_len, allow_realloc,
+                if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc,
                          ( const u_char* )" = " ) ) {
                     return 0;
                 }
@@ -3019,13 +3019,13 @@ int Mib_sprintReallocVariable( u_char** buf, size_t* buf_len,
     }
 
     if ( variable->type == PRIOT_NOSUCHOBJECT ) {
-        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return String_appendRealloc( buf, buf_len, out_len, allow_realloc,
             ( const u_char* )"No Such Object available on this agent at this OID" );
     } else if ( variable->type == PRIOT_NOSUCHINSTANCE ) {
-        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return String_appendRealloc( buf, buf_len, out_len, allow_realloc,
             ( const u_char* )"No Such Instance currently exists at this OID" );
     } else if ( variable->type == PRIOT_ENDOFMIBVIEW ) {
-        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return String_appendRealloc( buf, buf_len, out_len, allow_realloc,
             ( const u_char* )"No more variables left in this MIB View (It is past the end of the MIB tree)" );
     } else if ( subtree ) {
         const char* units = NULL;
@@ -3112,7 +3112,7 @@ void Mib_fprintVariable( FILE* f,
         }
     }
 
-    TOOLS_FREE( buf );
+    MEMORY_FREE( buf );
 }
 
 int Mib_sprintReallocValue( u_char** buf, size_t* buf_len,
@@ -3121,13 +3121,13 @@ int Mib_sprintReallocValue( u_char** buf, size_t* buf_len,
     const Types_VariableList* variable )
 {
     if ( variable->type == PRIOT_NOSUCHOBJECT ) {
-        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return String_appendRealloc( buf, buf_len, out_len, allow_realloc,
             ( const u_char* )"No Such Object available on this agent at this OID" );
     } else if ( variable->type == PRIOT_NOSUCHINSTANCE ) {
-        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return String_appendRealloc( buf, buf_len, out_len, allow_realloc,
             ( const u_char* )"No Such Instance currently exists at this OID" );
     } else if ( variable->type == PRIOT_ENDOFMIBVIEW ) {
-        return Tools_strcat( buf, buf_len, out_len, allow_realloc,
+        return String_appendRealloc( buf, buf_len, out_len, allow_realloc,
             ( const u_char* )"No more variables left in this MIB View (It is past the end of the MIB tree)" );
     } else {
         const char* units = NULL;
@@ -3195,7 +3195,7 @@ void Mib_fprintValue( FILE* f,
         }
     }
 
-    TOOLS_FREE( buf );
+    MEMORY_FREE( buf );
 }
 
 /**
@@ -3211,7 +3211,7 @@ int Mib_buildOidSegment( Types_VariableList* var )
     uint32_t ipaddr;
 
     if ( var->name && var->name != var->nameLoc )
-        TOOLS_FREE( var->name );
+        MEMORY_FREE( var->name );
     switch ( var->type ) {
     case ASN01_INTEGER:
     case ASN01_COUNTER:
@@ -3678,7 +3678,7 @@ int Mib_dumpReallocOidToInetAddress( const int addr_type, const oid* objid, size
     if ( p >= end )
         return 2;
 
-    return Tools_cstrcat( buf, buf_len, out_len, allow_realloc, intbuf );
+    return STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, intbuf );
 }
 
 int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
@@ -3698,7 +3698,7 @@ int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
             if ( alen == 0 ) {
                 if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
                     while ( ( *out_len + 2 ) >= *buf_len ) {
-                        if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                        if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                             return 0;
                         }
                     }
@@ -3706,7 +3706,7 @@ int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
                     ( *out_len )++;
                 }
                 while ( ( *out_len + 2 ) >= *buf_len ) {
-                    if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                    if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                         return 0;
                     }
                 }
@@ -3715,7 +3715,7 @@ int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
             }
 
             while ( ( *out_len + 2 ) >= *buf_len ) {
-                if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                     return 0;
                 }
             }
@@ -3727,7 +3727,7 @@ int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
         if ( alen ) {
             if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
                 while ( ( *out_len + 2 ) >= *buf_len ) {
-                    if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                    if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                         return 0;
                     }
                 }
@@ -3735,7 +3735,7 @@ int Mib_dumpReallocOidToString( const oid* objid, size_t objidlen,
                 ( *out_len )++;
             }
             while ( ( *out_len + 2 ) >= *buf_len ) {
-                if ( !( allow_realloc && Tools_realloc2( buf, buf_len ) ) ) {
+                if ( !( allow_realloc && Memory_reallocIncrease( buf, buf_len ) ) ) {
                     return 0;
                 }
             }
@@ -3755,7 +3755,7 @@ static void _Mib_oidFinishPrinting( const oid* objid, size_t objidlen,
 {
     char intbuf[ 64 ];
     if ( *buf != NULL && *( *buf + *out_len - 1 ) != '.' ) {
-        if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
+        if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
             *buf_overflow = 1;
         }
     }
@@ -3765,7 +3765,7 @@ static void _Mib_oidFinishPrinting( const oid* objid, size_t objidlen,
                          "l"
                          "u.",
             *objid++ );
-        if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+        if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
             *buf_overflow = 1;
         }
     }
@@ -3806,17 +3806,17 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
 
             if ( !strncmp( subtree->label, PARSE_ANON, PARSE_ANON_LEN ) || ( MIB_OID_OUTPUT_NUMERIC == output_format ) ) {
                 sprintf( intbuf, "%lu", subtree->subid );
-                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+                if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                     *buf_overflow = 1;
                 }
             } else {
-                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )subtree->label ) ) {
+                if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )subtree->label ) ) {
                     *buf_overflow = 1;
                 }
             }
 
             if ( objidlen > 1 ) {
-                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
+                if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
                     *buf_overflow = 1;
                 }
 
@@ -3861,7 +3861,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
             if ( *buf != NULL && *( *buf + *out_len - 1 ) == '.' ) {
                 ( *out_len )--;
             }
-            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"[" ) ) {
+            if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )"[" ) ) {
                 *buf_overflow = 1;
             }
         }
@@ -3938,28 +3938,28 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                 if ( numids == 1 ) {
                     if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
                         if ( !*buf_overflow
-                            && !Tools_strcat( buf, buf_len, out_len,
+                            && !String_appendRealloc( buf, buf_len, out_len,
                                    allow_realloc,
                                    ( const u_char* )"\\" ) ) {
                             *buf_overflow = 1;
                         }
                     }
                     if ( !*buf_overflow
-                        && !Tools_strcat( buf, buf_len, out_len,
+                        && !String_appendRealloc( buf, buf_len, out_len,
                                allow_realloc,
                                ( const u_char* )"\"" ) ) {
                         *buf_overflow = 1;
                     }
                     if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_ESCAPE_QUOTES ) ) {
                         if ( !*buf_overflow
-                            && !Tools_strcat( buf, buf_len, out_len,
+                            && !String_appendRealloc( buf, buf_len, out_len,
                                    allow_realloc,
                                    ( const u_char* )"\\" ) ) {
                             *buf_overflow = 1;
                         }
                     }
                     if ( !*buf_overflow
-                        && !Tools_strcat( buf, buf_len, out_len,
+                        && !String_appendRealloc( buf, buf_len, out_len,
                                allow_realloc,
                                ( const u_char* )"\"" ) ) {
                         *buf_overflow = 1;
@@ -4013,7 +4013,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                 }
                 if ( ep ) {
                     if ( !*buf_overflow
-                        && !Tools_strcat( buf, buf_len, out_len,
+                        && !String_appendRealloc( buf, buf_len, out_len,
                                allow_realloc,
                                ( const u_char* )ep->label ) ) {
                         *buf_overflow = 1;
@@ -4024,7 +4024,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                                      "u",
                         *objid );
                     if ( !*buf_overflow
-                        && !Tools_strcat( buf, buf_len, out_len,
+                        && !String_appendRealloc( buf, buf_len, out_len,
                                allow_realloc,
                                ( const u_char* )intbuf ) ) {
                         *buf_overflow = 1;
@@ -4035,7 +4035,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                                  "l"
                                  "u",
                     *objid );
-                if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+                if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                     *buf_overflow = 1;
                 }
             }
@@ -4053,7 +4053,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                                  "u",
                     *objid );
             }
-            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+            if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                 *buf_overflow = 1;
             }
             objid++;
@@ -4115,7 +4115,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                 objid[ 0 ], objid[ 1 ], objid[ 2 ], objid[ 3 ] );
             objid += 4;
             objidlen -= 4;
-            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+            if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                 *buf_overflow = 1;
             }
             break;
@@ -4128,7 +4128,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                              "l"
                              "u.",
                 ntype );
-            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
+            if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )intbuf ) ) {
                 *buf_overflow = 1;
             }
 
@@ -4145,7 +4145,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                                  "u",
                     objid[ 0 ], objid[ 1 ], objid[ 2 ], objid[ 3 ] );
                 if ( !*buf_overflow
-                    && !Tools_strcat( buf, buf_len, out_len,
+                    && !String_appendRealloc( buf, buf_len, out_len,
                            allow_realloc,
                            ( const u_char* )intbuf ) ) {
                     *buf_overflow = 1;
@@ -4164,11 +4164,11 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
         }
 
         if ( extended_index ) {
-            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"]" ) ) {
+            if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )"]" ) ) {
                 *buf_overflow = 1;
             }
         } else {
-            if ( !*buf_overflow && !Tools_strcat( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
+            if ( !*buf_overflow && !String_appendRealloc( buf, buf_len, out_len, allow_realloc, ( const u_char* )"." ) ) {
                 *buf_overflow = 1;
             }
         }
@@ -4239,7 +4239,7 @@ void Mib_fprintDescription( FILE* f, oid* objid, size_t objidlen, int width )
         }
     }
 
-    TOOLS_FREE( buf );
+    MEMORY_FREE( buf );
 }
 
 int Mib_snprintDescription( char* buf, size_t buf_len,
@@ -4298,12 +4298,12 @@ int Mib_sprintReallocDescription( u_char** buf, size_t* buf_len,
             cp = tmpbuf;
         }
 
-    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->label ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) ) {
+    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tp->label ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, cp ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n" ) ) {
         return 0;
     }
     if ( !_Mib_printTreeNode( buf, buf_len, out_len, allow_realloc, tp, width ) )
         return 0;
-    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ".= {" ) )
+    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, ".= {" ) )
         return 0;
     pos = 5;
     while ( objidlen > 1 ) {
@@ -4318,12 +4318,12 @@ int Mib_sprintReallocDescription( u_char** buf, size_t* buf_len,
                     sprintf( tmpbuf, " %lu", subtree->subid );
                 len = strlen( tmpbuf );
                 if ( pos + len + 2 > width ) {
-                    if ( !Tools_cstrcat( buf, buf_len, out_len,
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len,
                              allow_realloc, "\n     " ) )
                         return 0;
                     pos = 5;
                 }
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
                     return 0;
                 pos += len;
                 objid++;
@@ -4343,11 +4343,11 @@ int Mib_sprintReallocDescription( u_char** buf, size_t* buf_len,
             *objid );
         len = strlen( tmpbuf );
         if ( pos + len + 2 > width ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n     " ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n     " ) )
                 return 0;
             pos = 5;
         }
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
             return 0;
         pos += len;
         objid++;
@@ -4359,11 +4359,11 @@ int Mib_sprintReallocDescription( u_char** buf, size_t* buf_len,
         *objid );
     len = strlen( tmpbuf );
     if ( pos + len + 2 > width ) {
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n     " ) )
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n     " ) )
             return 0;
         pos = 5;
     }
-    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
+    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tmpbuf ) )
         return 0;
     return 1;
 }
@@ -4378,7 +4378,7 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
 
     if ( tp ) {
         Parse_moduleName( tp->modid, str );
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "  -- FROM\t" ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "  -- FROM\t" ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
             return 0;
         pos = 16 + strlen( str );
         for ( i = 1, prevmod = tp->modid; i < tp->number_modules; i++ ) {
@@ -4386,29 +4386,29 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
                 Parse_moduleName( tp->module_list[ i ], str );
                 len = strlen( str );
                 if ( pos + len + 2 > width ) {
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                              ",\n  --\t\t" ) )
                         return 0;
                     pos = 16;
                 } else {
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, ", " ) )
                         return 0;
                     pos += 2;
                 }
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len;
             }
             prevmod = tp->module_list[ i ];
         }
-        if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
+        if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n" ) )
             return 0;
         if ( tp->tc_index != -1 ) {
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  -- TEXTUAL CONVENTION " )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                        Parse_getTcDescriptor( tp->tc_index ) )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
         }
         switch ( tp->type ) {
@@ -4466,14 +4466,14 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
         }
 
         if ( cp )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  SYNTAX\t" )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, cp ) )
                 return 0;
         if ( tp->ranges ) {
             struct Parse_RangeList_s* rp = tp->ranges;
             int first = 1;
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " (" ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " (" ) )
                 return 0;
             while ( rp ) {
                 switch ( tp->type ) {
@@ -4500,55 +4500,55 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
                     /* No other range types allowed */
                     break;
                 }
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 if ( first )
                     first = 0;
                 rp = rp->next;
             }
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ") " ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, ") " ) )
                 return 0;
         }
         if ( tp->enums ) {
             struct Parse_EnumList_s* ep = tp->enums;
             int first = 1;
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " {" ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " {" ) )
                 return 0;
             pos = 16 + strlen( cp ) + 2;
             while ( ep ) {
                 if ( first )
                     first = 0;
-                else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                else if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, ", " ) )
                     return 0;
                 snprintf( str, sizeof( str ), "%s(%d)", ep->label, ep->value );
                 str[ sizeof( str ) - 1 ] = 0;
                 len = strlen( str );
                 if ( pos + len + 2 > width ) {
-                    if ( !Tools_cstrcat( buf, buf_len, out_len,
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len,
                              allow_realloc, "\n\t\t  " ) )
                         return 0;
                     pos = 18;
                 }
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len + 2;
                 ep = ep->next;
             }
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "} " ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "} " ) )
                 return 0;
         }
         if ( cp )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
         if ( tp->hint )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  DISPLAY-HINT\t\"" )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->hint ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tp->hint ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
                 return 0;
         if ( tp->units )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  UNITS\t\t\"" )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->units ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tp->units ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
                 return 0;
         switch ( tp->access ) {
         case PARSE_MIB_ACCESS_READONLY:
@@ -4577,9 +4577,9 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
             cp = str;
         }
         if ( cp )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  MAX-ACCESS\t" )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, cp ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
         switch ( tp->status ) {
         case PARSE_MIB_STATUS_MANDATORY:
@@ -4606,26 +4606,26 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
         }
 
         if ( cp )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  STATUS\t" )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, cp ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, cp ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n" ) )
                 return 0;
         if ( tp->augments )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  AUGMENTS\t{ " )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->augments ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tp->augments ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
         if ( tp->indexes ) {
             struct Parse_IndexList_s* ip = tp->indexes;
             int first = 1;
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  INDEX\t\t{ " ) )
                 return 0;
             pos = 16 + 2;
             while ( ip ) {
                 if ( first )
                     first = 0;
-                else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                else if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, ", " ) )
                     return 0;
                 snprintf( str, sizeof( str ), "%s%s",
                     ip->isimplied ? "IMPLIED " : "",
@@ -4633,16 +4633,16 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
                 str[ sizeof( str ) - 1 ] = 0;
                 len = strlen( str );
                 if ( pos + len + 2 > width ) {
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\n\t\t  " ) )
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\n\t\t  " ) )
                         return 0;
                     pos = 16 + 2;
                 }
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len + 2;
                 ip = ip->next;
             }
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
         }
         if ( tp->varbinds ) {
@@ -4650,11 +4650,11 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
             int first = 1;
 
             if ( tp->type == PARSE_TYPE_TRAPTYPE ) {
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                          "  VARIABLES\t{ " ) )
                     return 0;
             } else {
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                          "  OBJECTS\t{ " ) )
                     return 0;
             }
@@ -4662,35 +4662,35 @@ static int _Mib_printTreeNode( u_char** buf, size_t* buf_len,
             while ( vp ) {
                 if ( first )
                     first = 0;
-                else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, ", " ) )
+                else if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, ", " ) )
                     return 0;
-                Strlcpy_strlcpy( str, vp->vblabel, sizeof( str ) );
+                String_copyTruncate( str, vp->vblabel, sizeof( str ) );
                 len = strlen( str );
                 if ( pos + len + 2 > width ) {
-                    if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+                    if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                              "\n\t\t  " ) )
                         return 0;
                     pos = 16 + 2;
                 }
-                if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, str ) )
+                if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
                     return 0;
                 pos += len + 2;
                 vp = vp->next;
             }
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
         }
         if ( tp->description )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  DESCRIPTION\t\"" )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->description ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tp->description ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "\"\n" ) )
                 return 0;
         if ( tp->defaultValue )
-            if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc,
+            if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc,
                      "  DEFVAL\t{ " )
-                || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, tp->defaultValue ) || !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, " }\n" ) )
+                || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, tp->defaultValue ) || !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, " }\n" ) )
                 return 0;
-    } else if ( !Tools_cstrcat( buf, buf_len, out_len, allow_realloc, "No description\n" ) )
+    } else if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "No description\n" ) )
         return 0;
     return 1;
 }
@@ -4742,7 +4742,7 @@ int Mib_getModuleNode( const char* fname,
         }
     }
 
-    TOOLS_FREE( name );
+    MEMORY_FREE( name );
     return ( rc );
 }
 
@@ -5018,7 +5018,7 @@ static int _Mib_addStringsToOid( struct Parse_Tree_s* tp, char* cp,
                             ( *objidlen )++;
                             pos++;
                         }
-                        TOOLS_FREE( new_val );
+                        MEMORY_FREE( new_val );
                     } else {
                         while ( *cp ) {
                             if ( *objidlen >= maxlen )
@@ -5260,7 +5260,7 @@ int Mib_getNode( const char* name, oid* objid, size_t* objidlen )
          * 'cp' and 'name' *do* go that way round!
          */
         res = Mib_getModuleNode( cp, module, objid, objidlen );
-        TOOLS_FREE( module );
+        MEMORY_FREE( module );
     }
     if ( res == 0 ) {
         API_SET_PRIOT_ERROR( ErrorCode_UNKNOWN_OBJID );
@@ -5797,7 +5797,7 @@ const char* Mib_parseOctetHint( const char* hint, const char* value, unsigned ch
         *new_val_len = ph.result_len;
     } else {
         if ( ph.result ) {
-            TOOLS_FREE( ph.result );
+            MEMORY_FREE( ph.result );
         }
         *new_val = NULL;
         *new_val_len = 0;

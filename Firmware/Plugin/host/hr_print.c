@@ -191,7 +191,7 @@ void Init_HR_Print( void )
             free( HRP_name[ i ] );
         HRP_nbrnames = 0;
         HRP_maxnames = 0;
-        TOOLS_FREE( HRP_name );
+        MEMORY_FREE( HRP_name );
     }
 
     if ( ( p = fopen( "/etc/printcap", "r" ) ) != NULL ) {

@@ -1,10 +1,10 @@
 #include "BabySteps.h"
-#include "Tools.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "AgentHandler.h"
-#include "Enum.h"
-#include "Assert.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Assert.h"
 
 #include "Priot.h"
 
@@ -74,7 +74,7 @@ BabySteps_handlerGet(u_long modes)
     if(!mh)
         return NULL;
 
-    md = TOOLS_MALLOC_TYPEDEF(BabyStepsModes);
+    md = MEMORY_MALLOC_TYPEDEF(BabyStepsModes);
     if (NULL == md) {
         Logger_log(LOGGER_PRIORITY_ERR,"malloc failed in BabySteps_handlerGet\n");
         AgentHandler_handlerFree(mh);
@@ -110,7 +110,7 @@ _BabySteps_helper(MibHandler *handler,
     u_short *mode_map_ptr;
 
     DEBUG_MSGTL(("babySteps", "Got request, mode %s\n",
-                Enum_seFindLabelInSlist("agentMode",reqinfo->mode)));
+                MapList_findLabel("agentMode",reqinfo->mode)));
 
     bs_modes = (BabyStepsModes*)handler->myvoid;
     Assert_assert(NULL != bs_modes);
@@ -227,7 +227,7 @@ _BabySteps_helper(MibHandler *handler,
             break;
 
         DEBUG_MSGTL(("babySteps", " baby step mode %s\n",
-                    Enum_seFindLabelInSlist("babystepMode",mode_map_ptr[i])));
+                    MapList_findLabel("babystepMode",mode_map_ptr[i])));
 
         /*
          * skip modes the handler didn't register for
@@ -362,7 +362,7 @@ _BabySteps_accessMultiplexer(MibHandler *handler,
                    (requests!=NULL));
 
     DEBUG_MSGT(("babyStepsMux", "mode %s\n",
-               Enum_seFindLabelInSlist("babystepMode",reqinfo->mode)));
+               MapList_findLabel("babystepMode",reqinfo->mode)));
 
     access_methods = (BabyStepsAccessMethods *)handler->myvoid;
     if(!access_methods) {

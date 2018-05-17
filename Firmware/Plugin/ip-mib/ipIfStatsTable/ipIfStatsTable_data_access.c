@@ -10,9 +10,9 @@
 
 #include "ipIfStatsTable_data_access.h"
 #include "Agent.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "ipIfStatsTable_data_get.h"
 #include "ipIfStatsTable_interface.h"
 #include "siglog/agent/mfd.h"

@@ -13,7 +13,7 @@
      */
 
 #include "Types.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
     /*
      *********************************************************************
@@ -49,7 +49,7 @@
     /*
      * TODO:101:o: |-> Review ipAddressPrefixTable registration context.
      */
-    typedef DataList_DataList ipAddressPrefixTable_registration;
+    typedef Map ipAddressPrefixTable_registration;
 
 /**********************************************************************/
     /*
@@ -162,7 +162,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ipAddressPrefixTable_data_list;
+        Map *ipAddressPrefixTable_data_list;
 
     } ipAddressPrefixTable_rowreq_ctx;
 

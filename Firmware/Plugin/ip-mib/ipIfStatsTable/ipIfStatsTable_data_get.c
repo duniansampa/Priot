@@ -9,9 +9,9 @@
  * include our parent header 
  */
 #include "ipIfStatsTable.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "ipIfStatsTable_interface.h"
 #include "siglog/agent/mfd.h"
 
@@ -54,7 +54,7 @@ ipIfStatsTable_allocate_data( void )
     /*
      * TODO:201:r: |-> allocate memory for the ipIfStatsTable data context.
      */
-    ipIfStatsTable_data* rtn = TOOLS_MALLOC_TYPEDEF( ipIfStatsTable_data );
+    ipIfStatsTable_data* rtn = MEMORY_MALLOC_TYPEDEF( ipIfStatsTable_data );
 
     DEBUG_MSGTL( ( "verbose:ipIfStatsTable:ipIfStatsTable_allocate_data",
         "called\n" ) );

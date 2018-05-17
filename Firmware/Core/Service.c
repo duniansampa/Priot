@@ -1,7 +1,7 @@
 #include "Service.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "ReadConfig.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 static char** _Service_createWordArrayHelper(const char* cptr, size_t idx, char* tmp, size_t tmplen)
 {
@@ -65,7 +65,7 @@ int Service_registerDefaultDomain(const char* application, const char* domain)
       res = 1;
       }
     } else {
-    run = TOOLS_MALLOC_STRUCT(Service_LookupDomain_s);
+    run = MEMORY_MALLOC_STRUCT(Service_LookupDomain_s);
     run->application = strdup(application);
     run->userDomain = NULL;
     if (prev) {
@@ -132,7 +132,7 @@ static void _Service_registerUserDomain(const char* token, char* cptr)
         return;
     }
     } else {
-    run = TOOLS_MALLOC_STRUCT(Service_LookupDomain_s);
+    run = MEMORY_MALLOC_STRUCT(Service_LookupDomain_s);
     run->application = strdup(application);
     run->domain = NULL;
     if (prev) {
@@ -247,7 +247,7 @@ int Service_registerDefaultTarget(const char* application, const char* domain,
         res = 1;
       }
     } else {
-    run = TOOLS_MALLOC_STRUCT(Service_LookupTarget_s);
+    run = MEMORY_MALLOC_STRUCT(Service_LookupTarget_s);
     run->application = strdup(application);
     run->domain = strdup(domain);
     run->userTarget = NULL;
@@ -329,7 +329,7 @@ static void _Service_registerUserTarget(const char* token, char* cptr)
         goto goto_done;
     }
     } else {
-    run = TOOLS_MALLOC_STRUCT(Service_LookupTarget_s);
+    run = MEMORY_MALLOC_STRUCT(Service_LookupTarget_s);
     run->application = strdup(application);
     run->domain = strdup(domain);
     run->target = NULL;

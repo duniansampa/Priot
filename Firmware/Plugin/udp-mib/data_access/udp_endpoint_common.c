@@ -6,8 +6,8 @@
 
 //#include "udp-mib/udpEndpointTable/udpEndpointTable_constants.h"
 
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "udp_endpoint_private.h"
 
 //#include <siglog/data_access/ipaddress.h>
@@ -114,7 +114,7 @@ void netsnmp_access_udp_endpoint_container_free( Container_Container* container,
 netsnmp_udp_endpoint_entry*
 netsnmp_access_udp_endpoint_entry_create( void )
 {
-    netsnmp_udp_endpoint_entry* entry = TOOLS_MALLOC_TYPEDEF( netsnmp_udp_endpoint_entry );
+    netsnmp_udp_endpoint_entry* entry = MEMORY_MALLOC_TYPEDEF( netsnmp_udp_endpoint_entry );
 
     DEBUG_MSGTL( ( "access:udp_endpoint:entry", "create\n" ) );
 
@@ -137,7 +137,7 @@ void netsnmp_access_udp_endpoint_entry_free( netsnmp_udp_endpoint_entry* entry )
         return;
 
     /*
-     * TOOLS_FREE not needed, for any of these, 
+     * MEMORY_FREE not needed, for any of these, 
      * since the whole entry is about to be freed
      */
 

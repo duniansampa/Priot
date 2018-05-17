@@ -1,7 +1,7 @@
 
 #include "nsDebug.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "Scalar.h"
 #include "Tc.h"
@@ -58,7 +58,7 @@ void init_nsDebug( void )
      * We need to define the column structure and indexing....
      */
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !table_info ) {
         return;
     }
@@ -69,7 +69,7 @@ void init_nsDebug( void )
     /*
      * .... and the iteration information ....
      */
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     if ( !iinfo ) {
         return;
     }

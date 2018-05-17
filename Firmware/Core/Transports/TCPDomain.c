@@ -3,8 +3,8 @@
 #include  "IPv4BaseDomain.h"
 #include  "SocketBaseDomain.h"
 #include  "TCPBaseDomain.h"
-#include  "Debug.h"
-#include  "Tools.h"
+#include  "System/Util/Debug.h"
+#include  "System/Util/Utilities.h"
 #include  "Impl.h"
 /*
  * needs to be in sync with the definitions in snmplib/snmpUDPDomain.c
@@ -109,7 +109,7 @@ TPCDomain_transport(struct sockaddr_in *addr, int local)
         return NULL;
     }
 
-    t = TOOLS_MALLOC_TYPEDEF(Transport_Transport);
+    t = MEMORY_MALLOC_TYPEDEF(Transport_Transport);
     if (t == NULL) {
         return NULL;
     }

@@ -1,200 +1,406 @@
-
-//! \brief This is the include for the String entity.
 #include "String.h"
-#include <ctype.h>
+#include "Util/Memory.h"
 
-const struct String_Compare_s STRING_COMPARE = {-1, 0, -1};
+/** ================== Prototypes of Private Functions =============== */
 
-//Tests if this string begin with the specified prefix.
-bool String_beginsWith(const char * s, const char * prefix){
+static void _String_freeFunction( void* value );
+
+/** ============================= Public Functions ================== */
+
+char* String_new( const char* s )
+{
+    return strdup( s );
+}
+
+bool String_beginsWith( const char* s, const char* prefix )
+{
 
     int lp, ls;
 
-    if(s == NULL || prefix == NULL )
+    if ( String_isNull( s ) || String_isNull( prefix ) )
         return 0;
 
-    lp = strlen(prefix);
-    ls = strlen(s);
+    lp = String_length( prefix );
+    ls = String_length( s );
 
-    if(lp > ls)
+    if ( lp > ls )
         return 0;
 
-    return strncmp(s, prefix, lp) == 0;
+    return strncmp( s, prefix, lp ) == 0;
 }
 
-//Appends a copy of the source string to the destination string.
-//The terminating null character in destination is overwritten by the first character of source,
-//and a null-character is included at the end of the new string formed by the concatenation of
-//both in destination
-char * String_concat(char * destination, const char * source){
+char* String_append( char* destination, const char* source )
+{
+    return String_appendLittle( destination, source, String_length( source ) );
+}
 
-
-    int newSize;
-
-    // Determine new size
-    newSize = strlen(destination)  + strlen(source) + 1;
-
-    // Allocate new buffer
-    char * newBuffer = (char *)malloc(newSize);
-
-    // do the copy and concat
-    strcpy(newBuffer, destination);
-    strcat(newBuffer, source); // or strncat
-
-    // release old buffer
-    free( (char *)destination);
-
-    // store new pointer
-    destination = newBuffer;
+char* String_appendLittle( char* destination, const char* source, int num )
+{
+    /** do the concat */
+    strncat( destination, source, num );
 
     return destination;
 }
 
-//Compares two strings lexicographically.
-int String_compare(const char * s1, const char * s2){
+int String_appendRealloc( u_char** buffer, size_t* bufferLen, size_t* outLen,
+    int allowRealloc, const u_char* s )
+{
+    if ( buffer == NULL || bufferLen == NULL || outLen == NULL ) {
+        return 0;
+    }
 
-    return strcmp(s1, s2);
+    if ( s == NULL ) {
+        /*
+         * Appending a NULL string always succeeds since it is a NOP.
+         */
+        return 1;
+    }
 
+    while ( ( *outLen + strlen( ( const char* )s ) + 1 ) >= *bufferLen ) {
+        if ( !( allowRealloc && Memory_reallocIncrease( buffer, bufferLen ) ) ) {
+            return 0;
+        }
+    }
+
+    if ( !*buffer )
+        return 0;
+
+    strcpy( ( char* )( *buffer + *outLen ), ( const char* )s );
+    *outLen += strlen( ( char* )( *buffer + *outLen ) );
+    return 1;
 }
 
-//Tests if this string ends with the specified suffix.
-bool String_endsWith(const char * s, const char * suffix){
+char* String_appendAlloc( const char* s1, const char* s2, int num )
+{
+    int newSize;
+
+    /** Determine new size */
+    newSize = String_length( s1 ) + num + 1;
+
+    /** Allocate new buffer */
+    char* newBuffer = ( char* )malloc( newSize );
+
+    /** do the copy and concat */
+    strcpy( newBuffer, s1 );
+    String_appendLittle( newBuffer, s2, num );
+
+    return newBuffer;
+}
+
+char* String_appendTruncate( char* destination, const char* source, int destinationMaxSize )
+{
+
+    int len, diff;
+
+    len = String_length( destination );
+
+    diff = destinationMaxSize - len - 1;
+
+    if ( diff <= 0 )
+        return destination;
+
+    String_appendLittle( destination, source, diff );
+
+    return destination;
+}
+
+char* String_copyTruncate( char* destination, const char* source, int destinationMaxSize )
+{
+
+    String_fill( destination, 0, 1 );
+    return String_appendTruncate( destination, source, destinationMaxSize );
+}
+
+int String_compare( const char* s1, const char* s2 )
+{
+
+    return strcmp( s1, s2 );
+}
+
+bool String_endsWith( const char* s, const char* suffix )
+{
 
     int lp, ls, diff;
 
-    if(s == NULL || suffix == NULL )
+    if ( String_isNull( s ) || String_isNull( suffix ) )
         return 0;
 
-    lp = strlen(suffix);
-    ls = strlen(s);
+    lp = strlen( suffix );
+    ls = strlen( s );
 
-    if(lp > ls)
+    if ( lp > ls )
         return 0;
 
     diff = ls - lp;
 
-    return strcmp(s + diff, suffix) == 0;
+    return String_equals( s + diff, suffix );
 }
 
-//Compares this String to another String, ignoring case considerations.
-bool String_equalsIgnoreCase(const char * s1, const char * s2){
-
-   return strcasecmp(s1, s2) == 0;
+bool String_equalsIgnoreCase( const char* s1, const char* s2 )
+{
+    return strcasecmp( s1, s2 ) == 0;
 }
 
-//Compares this String to another String
-bool String_equals(const char * s1, const char * s2){
-    return String_compare(s1, s2) == 0;
+bool String_equals( const char* s1, const char* s2 )
+{
+    return String_compare( s1, s2 ) == 0;
 }
 
-//Returns a formatted string using the specified locale, format string, and arguments.
-char * String_format(const char * format, ...){
-    char buffer[512];
+bool String_isEmpty( const char* s1 )
+{
+    return String_length( s1 ) == 0;
+}
+
+bool String_isNull( const char* s1 )
+{
+    return s1 == NULL;
+}
+
+int String_length( const char* s1 )
+{
+    return strlen( s1 );
+}
+
+char* String_format( const char* format, ... )
+{
+    char buffer[ 512 ];
     int size;
     va_list args;
-    char * s;
-    va_start (args, format);
-    if( (size = vsprintf (buffer,format, args)) < 0){
+    char* s;
+    va_start( args, format );
+    if ( ( size = vsprintf( buffer, format, args ) ) < 0 ) {
         s = NULL;
-    }else{
-        s = strndup(buffer, size);
+    } else {
+        buffer[ size ] = 0;
+        s = String_new( buffer );
     }
-    va_end (args);
+    va_end( args );
 
     return s;
 }
 
-//Converts all of the characters in this string to lower case.
-char * String_toLowerCase(const char * s){
-    char * sA = strdup(s);
-    while( *sA != 0 ){
-        *sA  = tolower(*sA);
+char* String_toLowerCase( const char* s )
+{
+    char* sA = String_new( s );
+    while ( *sA != 0 ) {
+        *sA = tolower( *sA );
         sA++;
     }
     return sA;
 }
 
-//Returns a string representation of the string argument as an string in base 16.
-char * String_toHexString(const char * s){
-
-    int size = 0;
-    char buffer[512];
-    while(*s != 0 ){
-        size += sprintf(buffer + size , "%02X", *s);
-        s++;
-    }
-    return strndup(buffer, size);
-}
-
-//Converts all of the characters in this String to upper;
-char *	String_toUpperCase(const char * s){
-    char * sA = strdup(s);
-    while( *sA != 0 ){
-        *sA  = toupper(*sA);
+char* String_toUpperCase( const char* s )
+{
+    char* sA = String_new( s );
+    while ( *sA != 0 ) {
+        *sA = toupper( *sA );
         sA++;
     }
-	return sA;
+    return sA;
 }
 
-//Returns the string, with leading and trailing whitespace omitted.
-// returned string is equal to s after function call.
-char * String_trim(char * s){
+char* String_trim( const char* s )
+{
 
-    char *end;
+    int left = 0, right = 0, len = 0;
 
-    // Trim leading space
-    while(isspace((unsigned char)*s)) s++;
+    /** Trim leading space */
+    while ( isspace( ( unsigned char )s[ left ] ) )
+        left++;
 
-    if(*s == 0)  // All spaces?
-      return s;
+    if ( s[ left ] == 0 ) // All spaces?
+        return String_new( "" );
 
-    // Trim trailing space
-    end = s + strlen(s) - 1;
-    while(end > s && isspace((unsigned char)*end)) end--;
+    /** Trim trailing space */
+    len = String_length( s );
+    right = len - 1;
+    while ( right > left && isspace( ( unsigned char )s[ right ] ) )
+        right--;
 
-    // Write new null terminator
-    *(end+1) = 0;
+    return String_subString( s, left, right - left + 1 );
+}
 
+bool String_contains( const char* s, const char* sequence )
+{
+    return strstr( s, sequence ) != NULL;
+}
+
+char* String_subStringBeginAt( const char* s, int beginIndex )
+{
+    return String_subString( s, beginIndex, String_length( s ) );
+}
+
+char* String_subString( const char* s, int beginIndex, int length )
+{
+    int l;
+
+    if ( String_isNull( s ) || beginIndex > ( l = String_length( s ) ) )
+        return NULL;
+
+    length = length < ( l - beginIndex ) ? length : ( l - beginIndex );
+
+    /** Allocate new buffer */
+    char* newBuffer = ( char* )malloc( length + 1 );
+    const char* ptr = s + beginIndex;
+    l = length;
+    while ( ( *ptr ) != 0 && length > 0 ) {
+        *newBuffer++ = *ptr++;
+        length--;
+    }
+
+    *newBuffer = 0;
+
+    return newBuffer - l;
+}
+
+char* String_replaceChar( const char* s, char oldChar, char newChar )
+{
+    if ( String_isNull( s ) )
+        return NULL;
+
+    char *ret, *tmp;
+
+    ret = String_new( s );
+    tmp = ret;
+
+    while ( ( *tmp ) != 0 ) {
+        if ( ( *tmp ) == oldChar ) {
+            *tmp = newChar;
+        }
+        tmp++;
+    }
+    return ret;
+}
+
+char* String_replace( const char* s, const char* target, const char* replacement )
+{
+    int lr, lt, ls, size, count = 0;
+    char *tmp, *ptr;
+
+    if ( String_isNull( s ) || String_isNull( target ) || String_isNull( replacement ) )
+        return String_new( s );
+
+    lt = String_length( target );
+    lr = String_length( replacement );
+    ls = String_length( s );
+
+    if ( ls < lt )
+        return String_new( s );
+
+    tmp = ( char* )s;
+
+    /** Counts the number of occurrences of \e targer in \e s. */
+    while ( ( ptr = strstr( tmp, target ) ) != 0 ) {
+        count++;
+        tmp = ptr + lt;
+    }
+
+    /** computes the size of the new string and allocs the memory space for it */
+    size = ls - lt * count + lr * count + 1;
+    printf( "==> %d\n", size );
+    char* newString = ( char* )malloc( size );
+    tmp = ( char* )s;
+
+    /** makes the replaces. */
+    while ( ( ptr = strstr( tmp, target ) ) != 0 ) {
+        size = ptr - tmp;
+        printf( "==> %c\n", *ptr );
+        if ( size > 0 )
+            String_appendLittle( newString, tmp, size );
+        newString = String_append( newString, replacement );
+        tmp = ptr + lt;
+    }
+    return newString;
+}
+
+char* String_setInt64( int64_t i )
+{
+
+    return String_format( "%lld", i );
+}
+
+char* String_setBool( bool b )
+{
+    return String_new( ( b == 0 ) ? "false" : "true" );
+}
+
+char* String_setInt8( int8_t b )
+{
+    return String_format( "%hhd", b );
+}
+
+char* String_setDouble( double d )
+{
+    return String_format( "%f", d );
+}
+
+char* String_setFloat( float f )
+{
+    return String_format( "%f", f );
+}
+
+char* String_setInt32( int32_t i )
+{
+    return String_format( "%ld", i );
+}
+
+char* String_setInt16( int16_t i )
+{
+    return String_format( "%hd", i );
+}
+
+int String_indexOf( const char* s, const char* substring, int fromIndex )
+{
+    int len;
+    const char* ptr;
+
+    len = String_length( s );
+    if ( fromIndex > len )
+        return -1;
+    ptr = strstr( s + fromIndex, substring );
+
+    return ( ptr ) ? ( ptr - s ) : -1;
+}
+
+int String_indexOfChar( const char* s, const char ch, int fromIndex )
+{
+    int len;
+    const char* ptr;
+
+    len = String_length( s );
+    if ( fromIndex > len )
+        return -1;
+    ptr = strchr( s + fromIndex, ch );
+
+    return ( ptr ) ? ( ptr - s ) : -1;
+}
+
+Map* String_split( const char* s, const char* delimiters )
+{
+    int count = 0;
+    char *pch, *tmp;
+    Map* map = NULL;
+    tmp = String_new( s );
+    pch = strtok( tmp, delimiters );
+
+    while ( pch != NULL ) {
+        Map_emplace( &map, String_setInt32( count ), String_new( pch ), _String_freeFunction );
+        pch = strtok( NULL, delimiters );
+        count++;
+    }
+    free( tmp );
+    return map;
+}
+
+char* String_fill( char* s, char ch, int num )
+{
+    memset( s, ( int )ch, num );
     return s;
 }
 
-//Returns the string representation of the bigLong argument.
-char * String_valueOfS64(int64 b){
+/** ============================= Private Functions ================== */
 
-    return String_format("%lld", b);
+static void _String_freeFunction( void* value )
+{
+    free( value );
 }
-
-//Returns the string representation of the boolean argument.
-char * String_valueOfB(bool b){
-    return String_format("%d", b);
-}
-
-//Returns the string representation of the byte argument.
-char * String_valueOfBt(ubyte b){
-    return String_format("%d", b);
-}
-
-//Returns the string representation of the double argument.
-char * String_valueOfD(double d){
-    return String_format("%f", d);
-}
-//Returns the string representation of the float argument.
-char * String_valueOfF(float f){
-    return String_format("%f", f);
-}
-
-//Returns the string representation of the int argument.
-char * String_valueOfI32(int i){
-    return String_format("%d", i);
-}
-
-//Returns the string representation of the long argument.
-char * String_valueOfS32(long l){
-    return String_format("%ld", l);
-}
-
-//Returns the string representation of the short argument.
-char * 	String_valueOfS16(short i){
-    return String_format("%d", i);
-}
-

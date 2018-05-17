@@ -7,8 +7,8 @@
 #define NETSNMP_ACCESS_IPADDRESS_H
 
 
-#include "Container.h"
-#include "DataList.h"
+#include "System/Containers/Container.h"
+#include "System/Containers/Map.h"
 #include <netinet/in.h>
 
 /**---------------------------------------------------------------------*/
@@ -49,7 +49,7 @@ typedef struct netsnmp_ipaddress_s {
    u_char    ia_autonomous_flag; /*IpAutonomousFlag */
    u_long    ia_prefered_lifetime;/*IpPreferedLifeTime*/
    u_long    ia_valid_lifetime;/*IpValidLifeTime*/
-   DataList_DataList *arch_data;      /* arch specific data */
+   Map *arch_data;      /* arch specific data */
 
 } netsnmp_ipaddress_entry;
 

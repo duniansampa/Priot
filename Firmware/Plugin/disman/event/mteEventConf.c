@@ -7,11 +7,11 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Parse.h"
 #include "ReadConfig.h"
@@ -456,7 +456,7 @@ void parse_mteESetTable( const char* token, char* line )
 
 int store_mteETable( int majorID, int minorID, void* serverarg, void* clientarg )
 {
-    char line[ TOOLS_MAXBUF ];
+    char line[ UTILITIES_MAX_BUFFER ];
     char *cptr, *cp;
     void* vp;
     size_t tint;

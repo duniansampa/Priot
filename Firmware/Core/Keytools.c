@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "Types.h"
-#include "Tools.h"
-#include "Logger.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Logger.h"
 #include "Scapi.h"
 #include "Api.h"
 #include "Usm.h"
@@ -61,15 +61,15 @@ int Keytools_generateKu(const oid * hashtype, u_int hashtype_len, const u_char *
      * Sanity check.
      */
     if (!hashtype || !P || !Ku || !kulen || (*kulen <= 0)
-        || (hashtype_len != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_generateKuQuit);
+        || (hashtype_len != UTILITIES_USM_LENGTH_OID_TRANSFORM)) {
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_generateKuQuit);
     }
 
     if (pplen < KEYTOOLS_USM_LENGTH_P_MIN) {
         Logger_log(LOGGER_PRIORITY_ERR, "Error: passphrase chosen is below the length "
                  "requirements of the USM (min=%d).\n", KEYTOOLS_USM_LENGTH_P_MIN);
         Api_setDetail("The supplied password length is too short.");
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_generateKuQuit);
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_generateKuQuit);
     }
 
 
@@ -78,14 +78,14 @@ int Keytools_generateKu(const oid * hashtype, u_int hashtype_len, const u_char *
      */
     ctx = EVP_MD_CTX_create();
 
-    if (TOOLS_ISTRANSFORM(hashtype, hMACMD5Auth)) {
+    if (UTILITIES_ISTRANSFORM(hashtype, hMACMD5Auth)) {
         if (!EVP_DigestInit(ctx, EVP_md5()))
             return ErrorCode_GENERR;
-    } else    if (TOOLS_ISTRANSFORM(hashtype, hMACSHA1Auth)) {
+    } else    if (UTILITIES_ISTRANSFORM(hashtype, hMACSHA1Auth)) {
         if (!EVP_DigestInit(ctx, EVP_sha1()))
             return ErrorCode_GENERR;
     } else
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_generateKuQuit);
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_generateKuQuit);
 
 
     while (nbytes > 0) {
@@ -164,26 +164,26 @@ int Keytools_generateKul(const oid * hashtype, u_int hashtype_len, const u_char 
     size_t          properlength;
     int             iproperlength;
 
-    u_char          buf[TOOLS_MAXBUF];
+    u_char          buf[UTILITIES_MAX_BUFFER];
 
     /*
      * Sanity check.
      */
     if (!hashtype || !engineID || !Ku || !Kul || !kul_len
         || (engineID_len <= 0) || (ku_len <= 0) || (*kul_len <= 0)
-        || (hashtype_len != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_generateKulQuit);
+        || (hashtype_len != UTILITIES_USM_LENGTH_OID_TRANSFORM)) {
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_generateKulQuit);
     }
 
 
     iproperlength = Scapi_getProperLength(hashtype, hashtype_len);
     if (iproperlength == ErrorCode_GENERR)
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_generateKulQuit);
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_generateKulQuit);
 
     properlength = (size_t) iproperlength;
 
     if ((*kul_len < properlength) || (ku_len < properlength)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_generateKulQuit);
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_generateKulQuit);
     }
 
     /*
@@ -201,7 +201,7 @@ int Keytools_generateKul(const oid * hashtype, u_int hashtype_len, const u_char 
     rval = Scapi_hash(hashtype, hashtype_len, buf, nbytes, Kul, kul_len);
 
 
-    TOOLS_QUITFUN(rval, goto_generateKulQuit);
+    UTILITIES_QUIT_FUN(rval, goto_generateKulQuit);
 
 
 goto_generateKulQuit:
@@ -264,8 +264,8 @@ int Keytools_encodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
 
         if (!hashtype || !oldkey || !newkey || !kcstring || !kcstring_len
             || (oldkey_len <= 0) || (newkey_len <= 0) || (*kcstring_len <= 0)
-            || (hashtype_len != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-            TOOLS_QUITFUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
+            || (hashtype_len != UTILITIES_USM_LENGTH_OID_TRANSFORM)) {
+            UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
         }
 
         /*
@@ -273,13 +273,13 @@ int Keytools_encodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
          */
         iproperlength = Scapi_getProperLength(hashtype, hashtype_len);
         if (iproperlength == ErrorCode_GENERR)
-            TOOLS_QUITFUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
+            UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
 
         if ((oldkey_len != newkey_len) || (*kcstring_len < (2 * oldkey_len))) {
-            TOOLS_QUITFUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
+            UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
         }
 
-        properlength = TOOLS_MIN(oldkey_len, (size_t)iproperlength);
+        properlength = UTILITIES_MIN_VALUE(oldkey_len, (size_t)iproperlength);
 
         /*
          * Use the old key and some random bytes to encode the new key
@@ -293,9 +293,9 @@ int Keytools_encodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
         nbytes = properlength;
 
         rval = Scapi_random(kcstring, &nbytes);
-        TOOLS_QUITFUN(rval, goto_encodeKeychangeQuit);
+        UTILITIES_QUIT_FUN(rval, goto_encodeKeychangeQuit);
         if (nbytes != properlength) {
-            TOOLS_QUITFUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
+            UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_encodeKeychangeQuit);
         }
 
 
@@ -308,7 +308,7 @@ int Keytools_encodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
             rval = Scapi_hash(hashtype, hashtype_len, tmpbuf, properlength * 2,
                            kcstring + properlength, kcstring_len);
 
-            TOOLS_QUITFUN(rval, goto_encodeKeychangeQuit);
+            UTILITIES_QUIT_FUN(rval, goto_encodeKeychangeQuit);
 
             *kcstring_len = (properlength * 2);
 
@@ -322,7 +322,7 @@ int Keytools_encodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
 goto_encodeKeychangeQuit:
         if (rval != ErrorCode_SUCCESS)
             memset(kcstring, 0, *kcstring_len);
-        TOOLS_FREE(tmpbuf);
+        MEMORY_FREE(tmpbuf);
 
         return rval;
 
@@ -401,8 +401,8 @@ int Keytools_decodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
     int             iproperlength = 0;
     u_int           nbytes = 0;
 
-    u_char         *bufp, tmp_buf[TOOLS_MAXBUF];
-    size_t          tmp_buf_len = TOOLS_MAXBUF;
+    u_char         *bufp, tmp_buf[UTILITIES_MAX_BUFFER];
+    size_t          tmp_buf_len = UTILITIES_MAX_BUFFER;
     u_char         *tmpbuf = NULL;
 
     /*
@@ -410,8 +410,8 @@ int Keytools_decodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
      */
     if (!hashtype || !oldkey || !kcstring || !newkey || !newkey_len
         || (oldkey_len <= 0) || (kcstring_len <= 0) || (*newkey_len <= 0)
-        || (hashtype_len != TOOLS_USM_LENGTH_OID_TRANSFORM)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_decodeKeychangeQuit);
+        || (hashtype_len != UTILITIES_USM_LENGTH_OID_TRANSFORM)) {
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_decodeKeychangeQuit);
     }
 
 
@@ -420,12 +420,12 @@ int Keytools_decodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
      */
     iproperlength = Scapi_getProperLength(hashtype, hashtype_len);
     if (iproperlength == ErrorCode_GENERR)
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_decodeKeychangeQuit);
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_decodeKeychangeQuit);
 
     properlength = (size_t) iproperlength;
 
     if (((oldkey_len * 2) != kcstring_len) || (*newkey_len < oldkey_len)) {
-        TOOLS_QUITFUN(ErrorCode_GENERR, goto_decodeKeychangeQuit);
+        UTILITIES_QUIT_FUN(ErrorCode_GENERR, goto_decodeKeychangeQuit);
     }
 
     properlength = oldkey_len;
@@ -444,7 +444,7 @@ int Keytools_decodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
 
         rval = Scapi_hash(hashtype, hashtype_len, tmpbuf, properlength * 2,
                        tmp_buf, &tmp_buf_len);
-        TOOLS_QUITFUN(rval, goto_decodeKeychangeQuit);
+        UTILITIES_QUIT_FUN(rval, goto_decodeKeychangeQuit);
 
         memcpy(newkey, tmp_buf, properlength);
         bufp = kcstring + properlength;
@@ -459,8 +459,8 @@ int Keytools_decodeKeychange(const oid * hashtype, u_int hashtype_len, u_char * 
         if (newkey)
             memset(newkey, 0, properlength);
     }
-    memset(tmp_buf, 0, TOOLS_MAXBUF);
-    TOOLS_FREE(tmpbuf);
+    memset(tmp_buf, 0, UTILITIES_MAX_BUFFER);
+    MEMORY_FREE(tmpbuf);
 
     return rval;
 

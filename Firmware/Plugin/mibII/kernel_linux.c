@@ -4,8 +4,8 @@
  */
 
 #include "kernel_linux.h"
-#include "Debug.h"
-#include "Strlcpy.h"
+#include "System/Util/Debug.h"
+#include "System/String.h"
 #include <errno.h>
 #include <string.h>
 #include <sys/param.h>
@@ -53,8 +53,8 @@ static int decode_icmp_msg( char* line, char* data, struct icmp4_msg_mib* msg )
      * getting modified. So we take a local copy for this purpose even though
      * its expensive.
      */
-    Strlcpy_strlcpy( line_cpy, line, sizeof( line_cpy ) );
-    Strlcpy_strlcpy( data_cpy, data, sizeof( data_cpy ) );
+    String_copyTruncate( line_cpy, line, sizeof( line_cpy ) );
+    String_copyTruncate( data_cpy, data, sizeof( data_cpy ) );
 
     lineptr = line_cpy;
     dataptr = data_cpy;

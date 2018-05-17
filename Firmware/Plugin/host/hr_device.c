@@ -8,16 +8,16 @@
  */
 /*
  * Portions of this file are copyrighted by:
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
 
 #include "hr_device.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "host_res.h"
 
 /*********************
@@ -233,7 +233,7 @@ really_try_next:
         return ( u_char* )device_type_id;
     case HRDEV_DESCR:
         if ( ( device_descr[ type ] != NULL ) && ( NULL != ( tmp_str = ( ( *device_descr[ type ] )( dev_idx ) ) ) ) ) {
-            Strlcpy_strlcpy( string, tmp_str, sizeof( string ) );
+            String_copyTruncate( string, tmp_str, sizeof( string ) );
         } else
             goto try_next;
 

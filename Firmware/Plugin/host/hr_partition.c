@@ -15,7 +15,7 @@
 
 #include "hr_partition.h"
 #include "AgentRegistry.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "host_res.h"
 #include "hr_disk.h"

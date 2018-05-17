@@ -1,5 +1,5 @@
 #include "Null.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 
 
 int
@@ -15,7 +15,7 @@ Null_registerNullContext( oid *       loc,
                           const char* contextName )
 {
     HandlerRegistration *reginfo;
-    reginfo = TOOLS_MALLOC_TYPEDEF(HandlerRegistration);
+    reginfo = MEMORY_MALLOC_TYPEDEF(HandlerRegistration);
     if (reginfo != NULL) {
         reginfo->handlerName = strdup("");
         reginfo->rootoid = loc;

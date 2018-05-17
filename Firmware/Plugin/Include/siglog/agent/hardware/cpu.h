@@ -2,7 +2,7 @@
 #define _HARDWARE_CPU_H_
 
 #include "CacheHandler.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 typedef struct netsnmp_cpu_info_s netsnmp_cpu_info;
 extern int cpu_num;
@@ -26,8 +26,8 @@ struct netsnmp_cpu_history {
 struct netsnmp_cpu_info_s {
      int  idx;
                  /* For hrDeviceTable */
-     char name[  TOOLS_MAXBUF ];
-     char descr[ TOOLS_MAXBUF ];
+     char name[  UTILITIES_MAX_BUFFER ];
+     char descr[ UTILITIES_MAX_BUFFER ];
      int  status;
 
                  /* For UCD cpu stats */

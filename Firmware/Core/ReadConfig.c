@@ -1,17 +1,17 @@
 #include "ReadConfig.h"
 #include "Asn01.h"
 #include "Callback.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "Impl.h"
 #include "Int64.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Priot.h"
-#include "Strlcat.h"
-#include "Strlcpy.h"
+#include "System/String.h"
+#include "System/String.h"
 #include "System.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 
 #include <arpa/inet.h>
 
@@ -99,7 +99,7 @@ _ReadConfig_internalRegisterConfigHandler( const char* type_param,
         char buf[ READCONFIG_STRINGMAX ];
         char* cptr = buf;
 
-        Strlcpy_strlcpy( buf, type, READCONFIG_STRINGMAX );
+        String_copyTruncate( buf, type, READCONFIG_STRINGMAX );
         while ( cptr ) {
             char* c = cptr;
             cptr = strchr( cptr, ':' );
@@ -279,7 +279,7 @@ void ReadConfig_unregisterConfigHandler( const char* type_param, const char* tok
         char buf[ READCONFIG_STRINGMAX ];
         char* cptr = buf;
 
-        Strlcpy_strlcpy( buf, type, READCONFIG_STRINGMAX );
+        String_copyTruncate( buf, type, READCONFIG_STRINGMAX );
         while ( cptr ) {
             char* c = cptr;
             cptr = strchr( cptr, ':' );
@@ -320,9 +320,9 @@ void ReadConfig_unregisterConfigHandler( const char* type_param, const char* tok
         struct ReadConfig_ConfigLine_s* ltmp2 = ( *ltmp )->next;
         if ( ( *ltmp )->free_func )
             ( *ltmp )->free_func();
-        TOOLS_FREE( ( *ltmp )->config_token );
-        TOOLS_FREE( ( *ltmp )->help );
-        TOOLS_FREE( *ltmp );
+        MEMORY_FREE( ( *ltmp )->config_token );
+        MEMORY_FREE( ( *ltmp )->help );
+        MEMORY_FREE( *ltmp );
         ( *ctmp )->start = ltmp2;
         return;
     }
@@ -334,9 +334,9 @@ void ReadConfig_unregisterConfigHandler( const char* type_param, const char* tok
         struct ReadConfig_ConfigLine_s* ltmp2 = ( *ltmp )->next->next;
         if ( ( *ltmp )->next->free_func )
             ( *ltmp )->next->free_func();
-        TOOLS_FREE( ( *ltmp )->next->config_token );
-        TOOLS_FREE( ( *ltmp )->next->help );
-        TOOLS_FREE( ( *ltmp )->next );
+        MEMORY_FREE( ( *ltmp )->next->config_token );
+        MEMORY_FREE( ( *ltmp )->next->help );
+        MEMORY_FREE( ( *ltmp )->next );
         ( *ltmp )->next = ltmp2;
     }
 }
@@ -359,9 +359,9 @@ void ReadConfig_unregisterAllConfigHandlers( void )
             ReadConfig_unregisterConfigHandler( ctmp->fileHeader,
                 ltmp->config_token );
         }
-        TOOLS_FREE( ctmp->fileHeader );
+        MEMORY_FREE( ctmp->fileHeader );
         save = ctmp->next;
-        TOOLS_FREE( ctmp );
+        MEMORY_FREE( ctmp );
         ctmp = save;
         readConfig_configFiles = save;
     }
@@ -477,7 +477,7 @@ int ReadConfig_configWhen( char* line, int when )
         return ErrorCode_GENERR;
     }
 
-    Strlcpy_strlcpy( buf, line, READCONFIG_STRINGMAX );
+    String_copyTruncate( buf, line, READCONFIG_STRINGMAX );
     cptr = strtok_r( buf, READCONFIG_CONFIG_DELIMETERS, &st );
     if ( !cptr ) {
         ReadConfig_warn( "Wrong format: %s", line );
@@ -542,7 +542,7 @@ void ReadConfig_rememberInList( char* line,
     while ( *mem != NULL )
         mem = &( ( *mem )->next );
 
-    *mem = TOOLS_MALLOC_STRUCT( ReadConfig_Memory_s );
+    *mem = MEMORY_MALLOC_STRUCT( ReadConfig_Memory_s );
     if ( *mem != NULL ) {
         if ( line )
             ( *mem )->line = strdup( line );
@@ -553,9 +553,9 @@ void ReadConfig_rememberFreeList( struct ReadConfig_Memory_s** mem )
 {
     struct ReadConfig_Memory_s* tmpmem;
     while ( *mem ) {
-        TOOLS_FREE( ( *mem )->line );
+        MEMORY_FREE( ( *mem )->line );
         tmpmem = ( *mem )->next;
-        TOOLS_FREE( *mem );
+        MEMORY_FREE( *mem );
         *mem = tmpmem;
     }
 }
@@ -760,7 +760,7 @@ int ReadConfig_readConfig( const char* filename,
                 } else if ( strcasecmp( token, "includedir" ) == 0 ) {
                     DIR* d;
                     struct dirent* entry;
-                    char fname[ TOOLS_MAXPATH ];
+                    char fname[ UTILITIES_MAX_PATH ];
                     int len;
 
                     if ( cptr == NULL ) {
@@ -777,7 +777,7 @@ int ReadConfig_readConfig( const char* filename,
                         if ( entry->d_name[ 0 ] != '.' ) {
                             len = READCONFIG_NAMLEN( entry );
                             if ( ( len > 5 ) && ( strcmp( &( entry->d_name[ len - 5 ] ), ".conf" ) == 0 ) ) {
-                                snprintf( fname, TOOLS_MAXPATH, "%s/%s",
+                                snprintf( fname, UTILITIES_MAX_PATH, "%s/%s",
                                     cptr, entry->d_name );
                                 ( void )ReadConfig_readConfig( fname, line_handler, when );
                             }
@@ -786,7 +786,7 @@ int ReadConfig_readConfig( const char* filename,
                     closedir( d );
                     continue;
                 } else if ( strcasecmp( token, "includefile" ) == 0 ) {
-                    char fname[ TOOLS_MAXPATH ], *cp;
+                    char fname[ UTILITIES_MAX_PATH ], *cp;
 
                     if ( cptr == NULL ) {
                         if ( when != PREMIB_CONFIG )
@@ -794,15 +794,15 @@ int ReadConfig_readConfig( const char* filename,
                         continue;
                     }
                     if ( cptr[ 0 ] == '/' ) {
-                        Strlcpy_strlcpy( fname, cptr, TOOLS_MAXPATH );
+                        String_copyTruncate( fname, cptr, UTILITIES_MAX_PATH );
                     } else {
-                        Strlcpy_strlcpy( fname, filename, TOOLS_MAXPATH );
+                        String_copyTruncate( fname, filename, UTILITIES_MAX_PATH );
                         cp = strrchr( fname, '/' );
                         if ( !cp )
                             fname[ 0 ] = '\0';
                         else
                             *( ++cp ) = '\0';
-                        Strlcat_strlcat( fname, cptr, TOOLS_MAXPATH );
+                        String_appendTruncate( fname, cptr, UTILITIES_MAX_PATH );
                     }
                     if ( ReadConfig_readConfig( fname, line_handler, when ) != ErrorCode_SUCCESS && when != PREMIB_CONFIG )
                         ReadConfig_error( "Included file '%s' not found.",
@@ -996,7 +996,7 @@ ReadConfig_getConfigurationDirectory( void )
 
     if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
                      DsStr_CONFIGURATION_DIR ) ) {
-        homepath = Tools_getenv( "HOME" );
+        homepath = System_getEnvVariable( "HOME" );
         snprintf( defaultPath, sizeof( defaultPath ), "%s%c%s%c%s%s%s%s",
             SNMPCONFPATH, ENV_SEPARATOR_CHAR,
             SNMPSHAREPATH, ENV_SEPARATOR_CHAR, SNMPLIBPATH,
@@ -1041,7 +1041,7 @@ ReadConfig_getPersistentDirectory( void )
     if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
                      DsStr_PERSISTENT_DIR ) ) {
 
-        const char* persdir = Tools_getenv( "PRIOT_PERSISTENT_DIR" );
+        const char* persdir = System_getEnvVariable( "PRIOT_PERSISTENT_DIR" );
         if ( NULL == persdir )
             persdir = PERSISTENT_DIRECTORY;
         ReadConfig_setPersistentDirectory( persdir );
@@ -1188,7 +1188,7 @@ _ReadConfig_filesInPath( const char* path, struct ReadConfig_ConfigFiles_s* ctmp
 
         cptr2 = ++cptr1;
     }
-    TOOLS_FREE( envconfpath );
+    MEMORY_FREE( envconfpath );
     return ret;
 }
 
@@ -1242,8 +1242,8 @@ int ReadConfig_filesOfType( int when, struct ReadConfig_ConfigFiles_s* ctmp )
      * these shouldn't change
      */
     confpath = ReadConfig_getConfigurationDirectory();
-    persfile = Tools_getenv( "PRIOT_PERSISTENT_FILE" );
-    envconfpath = Tools_getenv( "PRIOTCONFPATH" );
+    persfile = System_getEnvVariable( "PRIOT_PERSISTENT_FILE" );
+    envconfpath = System_getEnvVariable( "PRIOTCONFPATH" );
 
     /*
          * read the config files. strdup() the result of
@@ -1374,7 +1374,7 @@ void ReadConfig_store( const char* type, const char* line )
      * 1. ENV variable SNMP_PERSISTENT_FILE
      * 2. configured <NETSNMP_PERSISTENT_DIRECTORY>/<type>.conf
      */
-    if ( ( filep = Tools_getenv( "PRIOT_PERSISTENT_FILE" ) ) == NULL ) {
+    if ( ( filep = System_getEnvVariable( "PRIOT_PERSISTENT_FILE" ) ) == NULL ) {
         snprintf( file, sizeof( file ),
             "%s/%s.conf", ReadConfig_getPersistentDirectory(), type );
         file[ sizeof( file ) - 1 ] = 0;
@@ -1576,7 +1576,7 @@ void ReadConfig_configPwarn( const char* str )
  */
 char* ReadConfig_skipWhite( char* ptr )
 {
-    return TOOLS_REMOVE_CONST( char*, ReadConfig_skipWhiteConst( ptr ) );
+    return UTILITIES_REMOVE_CONST( char*, ReadConfig_skipWhiteConst( ptr ) );
 }
 
 const char*
@@ -1593,7 +1593,7 @@ ReadConfig_skipWhiteConst( const char* ptr )
 
 char* ReadConfig_skipNotWhite( char* ptr )
 {
-    return TOOLS_REMOVE_CONST( char*, ReadConfig_skipNotWhiteConst( ptr ) );
+    return UTILITIES_REMOVE_CONST( char*, ReadConfig_skipNotWhiteConst( ptr ) );
 }
 
 const char*
@@ -1610,7 +1610,7 @@ ReadConfig_skipNotWhiteConst( const char* ptr )
 
 char* ReadConfig_skipToken( char* ptr )
 {
-    return TOOLS_REMOVE_CONST( char*, ReadConfig_skipTokenConst( ptr ) );
+    return UTILITIES_REMOVE_CONST( char*, ReadConfig_skipTokenConst( ptr ) );
 }
 
 const char*
@@ -1638,7 +1638,7 @@ ReadConfig_skipTokenConst( const char* ptr )
 
 char* ReadConfig_copyNword( char* from, char* to, int len )
 {
-    return TOOLS_REMOVE_CONST( char*, ReadConfig_copyNwordConst( from, to, len ) );
+    return UTILITIES_REMOVE_CONST( char*, ReadConfig_copyNwordConst( from, to, len ) );
 }
 
 const char*
@@ -1786,7 +1786,7 @@ char* ReadConfig_saveOctetString( char* saveto, const u_char* str, size_t len )
 char* ReadConfig_readOctetString( const char* readfrom, u_char** str,
     size_t* len )
 {
-    return TOOLS_REMOVE_CONST( char*,
+    return UTILITIES_REMOVE_CONST( char*,
         ReadConfig_readOctetStringConst( readfrom, str, len ) );
 }
 
@@ -1873,7 +1873,7 @@ ReadConfig_readOctetStringConst( const char* readfrom, u_char** str,
          * malloc string space if needed (including NULL terminator)
          */
         if ( *str == NULL ) {
-            char buf[ TOOLS_MAXBUF ];
+            char buf[ UTILITIES_MAX_BUFFER ];
             readfrom = ReadConfig_copyNwordConst( readfrom, buf, sizeof( buf ) );
 
             *len = strlen( buf );
@@ -1922,7 +1922,7 @@ char* ReadConfig_saveObjid( char* saveto, oid* objid, size_t len )
  */
 char* ReadConfig_readObjid( char* readfrom, oid** objid, size_t* len )
 {
-    return TOOLS_REMOVE_CONST( char*,
+    return UTILITIES_REMOVE_CONST( char*,
         ReadConfig_readObjidConst( readfrom, objid, len ) );
 }
 

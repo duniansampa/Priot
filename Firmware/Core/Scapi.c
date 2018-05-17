@@ -1,8 +1,8 @@
 #include "Scapi.h"
 #include "Api.h"
-#include "Debug.h"
-#include "Logger.h"
-#include "Tools.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 #include "Usm.h"
 #include <openssl/aes.h>
 #include <openssl/des.h>
@@ -40,10 +40,10 @@ int Scapi_getProperLength( const oid* hashtype, u_int hashtype_len )
     /*
      * Determine transform type hash length.
      */
-    if ( TOOLS_ISTRANSFORM( hashtype, hMACMD5Auth ) ) {
-        return TOOLS_BYTESIZE( SCAPI_TRANS_AUTHLEN_HMACMD5 );
-    } else if ( TOOLS_ISTRANSFORM( hashtype, hMACSHA1Auth ) ) {
-        return TOOLS_BYTESIZE( SCAPI_TRANS_AUTHLEN_HMACSHA1 );
+    if ( UTILITIES_ISTRANSFORM( hashtype, hMACMD5Auth ) ) {
+        return UTILITIES_BYTE_SIZE( SCAPI_TRANS_AUTHLEN_HMACMD5 );
+    } else if ( UTILITIES_ISTRANSFORM( hashtype, hMACSHA1Auth ) ) {
+        return UTILITIES_BYTE_SIZE( SCAPI_TRANS_AUTHLEN_HMACSHA1 );
     }
     return ErrorCode_GENERR;
 }
@@ -51,11 +51,11 @@ int Scapi_getProperLength( const oid* hashtype, u_int hashtype_len )
 int Scapi_getProperPrivLength( const oid* privtype, u_int privtype_len )
 {
     int properlength = 0;
-    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
-        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES );
+    if ( UTILITIES_ISTRANSFORM( privtype, dESPriv ) ) {
+        properlength = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_1DES );
     }
-    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
-        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES );
+    if ( UTILITIES_ISTRANSFORM( privtype, aESPriv ) ) {
+        properlength = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_AES );
     }
     return properlength;
 }
@@ -131,7 +131,7 @@ int Scapi_generateKeyedHash( const oid* authtype, size_t authtypelen,
     int iproperlength;
     size_t properlength;
 
-    u_char buf[ TOOLS_MAXBUF_SMALL ];
+    u_char buf[ UTILITIES_MAX_BUFFER_SMALL ];
     unsigned int buf_len = sizeof( buf );
 
     DEBUG_TRACE;
@@ -141,7 +141,7 @@ int Scapi_generateKeyedHash( const oid* authtype, size_t authtypelen,
      */
     if ( !authtype || !key || !message || !MAC || !maclen
         || ( keylen <= 0 ) || ( msglen <= 0 ) || ( *maclen <= 0 )
-        || ( authtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        || ( authtypelen != UTILITIES_USM_LENGTH_OID_TRANSFORM ) ) {
         SCAPI_QUITFUN( ErrorCode_GENERR, goto_generateKeyedHashQuit );
     }
 
@@ -155,9 +155,9 @@ int Scapi_generateKeyedHash( const oid* authtype, size_t authtypelen,
     /*
      * Determine transform type.
      */
-    if ( TOOLS_ISTRANSFORM( authtype, hMACMD5Auth ) )
+    if ( UTILITIES_ISTRANSFORM( authtype, hMACMD5Auth ) )
         HMAC( EVP_md5(), key, keylen, message, msglen, buf, &buf_len );
-    else if ( TOOLS_ISTRANSFORM( authtype, hMACSHA1Auth ) )
+    else if ( UTILITIES_ISTRANSFORM( authtype, hMACSHA1Auth ) )
         HMAC( EVP_sha1(), key, keylen, message, msglen, buf, &buf_len );
     else {
         SCAPI_QUITFUN( ErrorCode_GENERR, goto_generateKeyedHashQuit );
@@ -170,7 +170,7 @@ int Scapi_generateKeyedHash( const oid* authtype, size_t authtypelen,
     memcpy( MAC, buf, *maclen );
 
 goto_generateKeyedHashQuit:
-    memset( buf, 0, TOOLS_MAXBUF_SMALL );
+    memset( buf, 0, UTILITIES_MAX_BUFFER_SMALL );
     return rval;
 } /* end Scapi_generateKeyedHash() */
 
@@ -213,9 +213,9 @@ int Scapi_hash( const oid* hashtype, size_t hashtypelen, const u_char* buf,
     /*
      * Determine transform type.
      */
-    if ( TOOLS_ISTRANSFORM( hashtype, hMACMD5Auth ) ) {
+    if ( UTILITIES_ISTRANSFORM( hashtype, hMACMD5Auth ) ) {
         hashfn = ( const EVP_MD* )EVP_md5();
-    } else if ( TOOLS_ISTRANSFORM( hashtype, hMACSHA1Auth ) ) {
+    } else if ( UTILITIES_ISTRANSFORM( hashtype, hMACSHA1Auth ) ) {
         hashfn = ( const EVP_MD* )EVP_sha1();
     } else {
         return ( ErrorCode_GENERR );
@@ -269,9 +269,9 @@ int Scapi_checkKeyedHash( const oid* authtype, size_t authtypelen,
     const u_char* MAC, u_int maclen )
 {
     int rval = ErrorCode_SUCCESS;
-    size_t buf_len = TOOLS_MAXBUF_SMALL;
+    size_t buf_len = UTILITIES_MAX_BUFFER_SMALL;
 
-    u_char buf[ TOOLS_MAXBUF_SMALL ];
+    u_char buf[ UTILITIES_MAX_BUFFER_SMALL ];
 
     DEBUG_TRACE;
 
@@ -280,7 +280,7 @@ int Scapi_checkKeyedHash( const oid* authtype, size_t authtypelen,
      */
     if ( !authtype || !key || !message || !MAC
         || ( keylen <= 0 ) || ( msglen <= 0 ) || ( maclen <= 0 )
-        || ( authtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        || ( authtypelen != UTILITIES_USM_LENGTH_OID_TRANSFORM ) ) {
         SCAPI_QUITFUN( ErrorCode_GENERR, goto_checkKeyedHashQuit );
     }
 
@@ -306,7 +306,7 @@ int Scapi_checkKeyedHash( const oid* authtype, size_t authtypelen,
     }
 
 goto_checkKeyedHashQuit:
-    memset( buf, 0, TOOLS_MAXBUF_SMALL );
+    memset( buf, 0, UTILITIES_MAX_BUFFER_SMALL );
 
     return rval;
 
@@ -366,7 +366,7 @@ int Scapi_encrypt( const oid* privtype, size_t privtypelen,
 
     if ( !privtype || !key || !iv || !plaintext || !ciphertext || !ctlen
         || ( keylen <= 0 ) || ( ivlen <= 0 ) || ( ptlen <= 0 ) || ( *ctlen <= 0 )
-        || ( privtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        || ( privtypelen != UTILITIES_USM_LENGTH_OID_TRANSFORM ) ) {
         SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit );
     } else if ( ptlen > *ctlen ) {
         SCAPI_QUITFUN( ErrorCode_GENERR, goto_scEncryptQuit );
@@ -376,15 +376,15 @@ int Scapi_encrypt( const oid* privtype, size_t privtypelen,
      * Determine privacy transform.
      */
     have_trans = 0;
-    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
-        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES );
-        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES_IV );
+    if ( UTILITIES_ISTRANSFORM( privtype, dESPriv ) ) {
+        properlength = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_1DES );
+        properlength_iv = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_1DES_IV );
         pad_size = properlength;
         have_trans = 1;
     }
-    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
-        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES );
-        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES_IV );
+    if ( UTILITIES_ISTRANSFORM( privtype, aESPriv ) ) {
+        properlength = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_AES );
+        properlength_iv = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_AES_IV );
         have_trans = 1;
     }
     if ( !have_trans ) {
@@ -397,7 +397,7 @@ int Scapi_encrypt( const oid* privtype, size_t privtypelen,
 
     memset( my_iv, 0, sizeof( my_iv ) );
 
-    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
+    if ( UTILITIES_ISTRANSFORM( privtype, dESPriv ) ) {
 
         /*
          * now calculate the padding needed
@@ -434,7 +434,7 @@ int Scapi_encrypt( const oid* privtype, size_t privtypelen,
             *ctlen = plast;
         }
     }
-    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+    if ( UTILITIES_ISTRANSFORM( privtype, aESPriv ) ) {
         ( void )AES_set_encrypt_key( key, properlength * 8, &aes_key );
 
         memcpy( my_iv, iv, ivlen );
@@ -506,7 +506,7 @@ int Scapi_decrypt( const oid* privtype, size_t privtypelen,
 
     if ( !privtype || !key || !iv || !plaintext || !ciphertext || !ptlen
         || ( ctlen <= 0 ) || ( *ptlen <= 0 ) || ( *ptlen < ctlen )
-        || ( privtypelen != TOOLS_USM_LENGTH_OID_TRANSFORM ) ) {
+        || ( privtypelen != UTILITIES_USM_LENGTH_OID_TRANSFORM ) ) {
         SCAPI_QUITFUN( ErrorCode_GENERR, goto_scDecryptQuit );
     }
 
@@ -514,14 +514,14 @@ int Scapi_decrypt( const oid* privtype, size_t privtypelen,
      * Determine privacy transform.
      */
     have_transform = 0;
-    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
-        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES );
-        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_1DES_IV );
+    if ( UTILITIES_ISTRANSFORM( privtype, dESPriv ) ) {
+        properlength = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_1DES );
+        properlength_iv = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_1DES_IV );
         have_transform = 1;
     }
-    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
-        properlength = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES );
-        properlength_iv = TOOLS_BYTESIZE( SCAPI_TRANS_PRIVLEN_AES_IV );
+    if ( UTILITIES_ISTRANSFORM( privtype, aESPriv ) ) {
+        properlength = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_AES );
+        properlength_iv = UTILITIES_BYTE_SIZE( SCAPI_TRANS_PRIVLEN_AES_IV );
         have_transform = 1;
     }
     if ( !have_transform ) {
@@ -533,7 +533,7 @@ int Scapi_decrypt( const oid* privtype, size_t privtypelen,
     }
 
     memset( my_iv, 0, sizeof( my_iv ) );
-    if ( TOOLS_ISTRANSFORM( privtype, dESPriv ) ) {
+    if ( UTILITIES_ISTRANSFORM( privtype, dESPriv ) ) {
         memcpy( key_struct, key, sizeof( key_struct ) );
         ( void )DES_key_sched( &key_struct, key_sch );
 
@@ -542,7 +542,7 @@ int Scapi_decrypt( const oid* privtype, size_t privtypelen,
             ( DES_cblock* )my_iv, DES_DECRYPT );
         *ptlen = ctlen;
     }
-    if ( TOOLS_ISTRANSFORM( privtype, aESPriv ) ) {
+    if ( UTILITIES_ISTRANSFORM( privtype, aESPriv ) ) {
         ( void )AES_set_encrypt_key( key, properlength * 8, &aes_key );
 
         memcpy( my_iv, iv, ivlen );

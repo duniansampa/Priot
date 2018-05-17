@@ -15,8 +15,8 @@
  * include our parent header 
  */
 #include "ipIfStatsTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "Vars.h"
 #include "ipIfStatsTable_interface.h"
 #include "ipIfStatsTable_oids.h"
@@ -88,7 +88,7 @@ void initialize_table_ipIfStatsTable( void )
      * string token is used to add, find or remove pointers.
      */
     ipIfStatsTable_user_context_p
-        = DataList_create( "ipIfStatsTable", NULL, NULL );
+        = Map_newElement( "ipIfStatsTable", NULL, NULL );
 
     /*
      * No support for any flags yet, but in the future you would
@@ -111,7 +111,7 @@ void shutdown_table_ipIfStatsTable( void )
      * call interface shutdown code
      */
     _ipIfStatsTable_shutdown_interface( ipIfStatsTable_user_context_p );
-    DataList_freeAll( ipIfStatsTable_user_context_p );
+    Map_clear( ipIfStatsTable_user_context_p );
     ipIfStatsTable_user_context_p = NULL;
 }
 

@@ -8,7 +8,7 @@
 
 typedef struct StashCacheInfo_s {
    int            cache_valid;
-   markerT        cache_time;
+   timeMarker        cache_time;
    OidStash_Node* cache;
    int            cache_length;
 } StashCacheInfo;

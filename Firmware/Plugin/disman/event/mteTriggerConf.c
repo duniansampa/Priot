@@ -7,9 +7,9 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "Tc.h"
@@ -1271,7 +1271,7 @@ void parse_mteTriggerTable( const char* token, char* line )
 
 int store_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg )
 {
-    char line[ TOOLS_MAXBUF ];
+    char line[ UTILITIES_MAX_BUFFER ];
     char *cptr, *cp;
     void* vp;
     size_t tint;
@@ -1510,7 +1510,7 @@ int clear_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
                 CALLBACK_POST_READ_CONFIG,
                 _mteTrigger_callback_enable, entry, 0 );
             mteTrigger_disable( entry );
-            TOOLS_FREE( entry );
+            MEMORY_FREE( entry );
         }
     }
     return ErrorCode_SUCCESS;

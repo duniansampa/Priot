@@ -5,9 +5,9 @@
  */
 
 #include "siglog/data_access/tcpConn.h"
-#include "Assert.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "tcp-mib/tcpConnectionTable/tcpConnectionTable_constants.h"
 #include "tcpConn.h"
 #include "tcpConn_private.h"
@@ -158,7 +158,7 @@ _load4( Container_Container* container, u_int load_flags )
 
         /** the addr string may need work */
         buf_len = strlen( local_addr );
-        if ( ( 8 != buf_len ) || ( -1 == Tools_addrstrHton( local_addr, 8 ) ) ) {
+        if ( ( 8 != buf_len ) || ( -1 == Utilities_addrStringHton( local_addr, 8 ) ) ) {
             DEBUG_MSGT( ( "verbose:access:tcpconn:container",
                 " error processing local address\n" ) );
             netsnmp_access_tcpconn_entry_free( entry );
@@ -166,7 +166,7 @@ _load4( Container_Container* container, u_int load_flags )
         }
         offset = 0;
         tmp_ptr = entry->loc_addr;
-        rc = Tools_hexToBinary( &tmp_ptr, &buf_len,
+        rc = Convert_hexStringToBinaryString( &tmp_ptr, &buf_len,
             &offset, 0, local_addr, NULL );
         entry->loc_addr_len = offset;
         if ( 4 != entry->loc_addr_len ) {
@@ -180,7 +180,7 @@ _load4( Container_Container* container, u_int load_flags )
 
         /** the addr string may need work */
         buf_len = strlen( ( char* )remote_addr );
-        if ( ( 8 != buf_len ) || ( -1 == Tools_addrstrHton( remote_addr, 8 ) ) ) {
+        if ( ( 8 != buf_len ) || ( -1 == Utilities_addrStringHton( remote_addr, 8 ) ) ) {
             DEBUG_MSGT( ( "verbose:access:tcpconn:container",
                 " error processing remote address\n" ) );
             netsnmp_access_tcpconn_entry_free( entry );
@@ -188,7 +188,7 @@ _load4( Container_Container* container, u_int load_flags )
         }
         offset = 0;
         tmp_ptr = entry->rmt_addr;
-        rc = Tools_hexToBinary( &tmp_ptr, &buf_len,
+        rc = Convert_hexStringToBinaryString( &tmp_ptr, &buf_len,
             &offset, 0, remote_addr, NULL );
         entry->rmt_addr_len = offset;
         if ( 4 != entry->rmt_addr_len ) {

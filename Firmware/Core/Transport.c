@@ -1,11 +1,11 @@
 #include "Transport.h"
-#include "Tools.h"
+#include "System/Util/Utilities.h"
 #include "Asn01.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "Service.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "Api.h"
 #include "Priot.h"
 #include "DefaultStore.h"
@@ -65,7 +65,7 @@ Transport_copy(Transport_Transport *t)
         return NULL;
     }
 
-    n = TOOLS_MALLOC_TYPEDEF(Transport_Transport);
+    n = MEMORY_MALLOC_TYPEDEF(Transport_Transport);
     if (n == NULL) {
         return NULL;
     }
@@ -143,12 +143,12 @@ void Transport_free(Transport_Transport *t)
     if (NULL == t)
         return;
 
-    TOOLS_FREE(t->local);
-    TOOLS_FREE(t->remote);
-    TOOLS_FREE(t->data);
+    MEMORY_FREE(t->local);
+    MEMORY_FREE(t->remote);
+    MEMORY_FREE(t->data);
     Transport_free(t->base_transport);
 
-    TOOLS_FREE(t);
+    MEMORY_FREE(t);
 }
 
 /*
@@ -214,7 +214,7 @@ Transport_send(Transport_Transport *t, void *packet, int length,
         if (dumpPacket)
             Logger_log(LOGGER_PRIORITY_DEBUG, "\nSending %lu bytes to %s\n",
                      (unsigned long)length, str);
-        TOOLS_FREE(str);
+        MEMORY_FREE(str);
     }
     if (dumpPacket)
         Priot_xdump(packet, length, "");
@@ -248,7 +248,7 @@ Transport_recv(Transport_Transport *t, void *packet, int length,
         if (debugLength)
             DEBUG_MSGT_NC(("transport:recv","%d bytes from %s\n",
                           length, str));
-        TOOLS_FREE(str);
+        MEMORY_FREE(str);
     }
 
     return length;
@@ -299,7 +299,7 @@ Transport_clearTdomainList(void)
 
     while (list != NULL) {
     next = list->next;
-    TOOLS_FREE(list->prefix);
+    MEMORY_FREE(list->prefix);
         /* attention!! list itself is not in the heap, so we must not free it! */
     list = next;
     }
@@ -365,7 +365,7 @@ Transport_tdomainUnregister(Transport_Tdomain *n)
             if (Api_oidEquals(n->name, n->name_length,
                                 d->name, d->name_length) == 0) {
                 *prevNext = n->next;
-        TOOLS_FREE(n->prefix);
+        MEMORY_FREE(n->prefix);
                 return 1;
             }
             prevNext = &(d->next);
@@ -425,7 +425,7 @@ Transport_tdomainTransportFull(const char *application,
     const char         *addr = NULL;
     const char * const *spec = NULL;
     int                 any_found = 0;
-    char buf[TOOLS_MAXPATH];
+    char buf[UTILITIES_MAX_PATH];
     char **lspec = 0;
 
     DEBUG_MSGTL(("tdomain",
@@ -475,14 +475,14 @@ Transport_tdomainTransportFull(const char *application,
         if (NULL !=
             (newhost = DefaultStore_getString(DsStorage_LIBRARY_ID,
                                              DsStr_HOSTNAME))) {
-            Strlcpy_strlcpy(buf, newhost, sizeof(buf));
+            String_copyTruncate(buf, newhost, sizeof(buf));
             str = buf;
         }
 
         DefaultStore_setString(DsStorage_LIBRARY_ID,
                               DsStr_HOSTNAME,
                               prev_hostname);
-        TOOLS_FREE(prev_hostname);
+        MEMORY_FREE(prev_hostname);
     }
 
     /* First try - assume that there is a domain in str (domain:target) */
@@ -660,7 +660,7 @@ int Transport_addToList(Transport_TransportList **transport_list,
                               Transport_Transport *transport)
 {
     Transport_TransportList *newptr =
-        TOOLS_MALLOC_TYPEDEF(Transport_TransportList);
+        MEMORY_MALLOC_TYPEDEF(Transport_TransportList);
 
     if (!newptr)
         return 1;
@@ -695,7 +695,7 @@ Transport_removeFromList(Transport_TransportList **transport_list,
     else
         *transport_list = ptr->next;
 
-    TOOLS_FREE(ptr);
+    MEMORY_FREE(ptr);
 
     return 0;
 }
@@ -708,7 +708,7 @@ int Transport_configCompare(Transport_Config *left,
 Transport_Config *
 Transport_createConfig(char *key, char *value) {
     Transport_Config *entry =
-        TOOLS_MALLOC_TYPEDEF(Transport_Config);
+        MEMORY_MALLOC_TYPEDEF(Transport_Config);
     entry->key = strdup(key);
     entry->value = strdup(value);
     return entry;

@@ -6,8 +6,8 @@
 #include "nsVacmAccessTable.h"
 #include "CheckVarbind.h"
 #include "Client.h"
-#include "Debug.h"
-#include "Enum.h"
+#include "System/Util/Debug.h"
+#include "System/Containers/MapList.h"
 #include "Table.h"
 #include "Tc.h"
 #include "Vacm.h"
@@ -29,7 +29,7 @@ void init_register_nsVacm_context( const char* context )
         nsVacmAccessTable_oid, ASN01_OID_LENGTH( nsVacmAccessTable_oid ),
         HANDLER_CAN_RWRITE );
 
-    table_info = TOOLS_MALLOC_TYPEDEF( TableRegistrationInfo );
+    table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
         ASN01_OCTET_STR, /* index: vacmGroupName */
         ASN01_OCTET_STR, /* index: vacmAccessContextPrefix */
@@ -40,7 +40,7 @@ void init_register_nsVacm_context( const char* context )
     table_info->min_column = COLUMN_NSVACMCONTEXTMATCH;
     table_info->max_column = COLUMN_NSVACMACCESSSTATUS;
 
-    iinfo = TOOLS_MALLOC_TYPEDEF( IteratorInfo );
+    iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
     iinfo->get_first_data_point = nsVacmAccessTable_get_first_data_point;
     iinfo->get_next_data_point = nsVacmAccessTable_get_next_data_point;
     iinfo->table_reginfo = table_info;
@@ -116,7 +116,7 @@ newView:
         }
         if ( nsViewIdx == VACM_MAX_VIEWS )
             goto newView;
-        cp = Enum_seFindLabelInSlist( VACM_VIEW_ENUM_NAME, nsViewIdx++ );
+        cp = MapList_findLabel( VACM_VIEW_ENUM_NAME, nsViewIdx++ );
         DEBUG_MSGTL( ( "nsVacm", "nextDP %s:%s (%d)\n", entry->groupName + 1, cp, nsViewIdx - 1 ) );
         Client_setVarValue( idx, ( u_char* )cp, strlen( cp ) );
         idx = idx->nextVariable;
@@ -158,7 +158,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
             idx = table_info->indexes->nextVariable->nextVariable->nextVariable->nextVariable;
             memset( atype, 0, sizeof( atype ) );
             memcpy( atype, ( char* )idx->val.string, idx->valLen );
-            viewIdx = Enum_seFindValueInSlist( VACM_VIEW_ENUM_NAME, atype );
+            viewIdx = MapList_findValue( VACM_VIEW_ENUM_NAME, atype );
             DEBUG_MSGTL( ( "nsVacm", "GET %s (%d)\n", idx->val.string, viewIdx ) );
 
             if ( !entry || viewIdx < 0 )
@@ -231,7 +231,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                 idx = table_info->indexes->nextVariable->nextVariable->nextVariable->nextVariable;
                 memset( atype, 0, sizeof( atype ) );
                 memcpy( atype, ( char* )idx->val.string, idx->valLen );
-                viewIdx = Enum_seFindValueInSlist( VACM_VIEW_ENUM_NAME, atype );
+                viewIdx = MapList_findValue( VACM_VIEW_ENUM_NAME, atype );
                 if ( viewIdx < 0 ) {
                     ret = PRIOT_ERR_NOCREATION;
                     break;
@@ -309,7 +309,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
             idx = table_info->indexes->nextVariable->nextVariable->nextVariable->nextVariable;
             memset( atype, 0, sizeof( atype ) );
             memcpy( atype, ( char* )idx->val.string, idx->valLen );
-            viewIdx = Enum_seFindValueInSlist( VACM_VIEW_ENUM_NAME, atype );
+            viewIdx = MapList_findValue( VACM_VIEW_ENUM_NAME, atype );
             if ( viewIdx < 0 )
                 continue;
 

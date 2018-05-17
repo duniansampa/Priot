@@ -1,8 +1,8 @@
 
 #include "siglog/agent/hardware/cpu.h"
 #include "CacheHandler.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 
 #define CPU_FILE "/proc/cpuinfo"
 #define STAT_FILE "/proc/stat"

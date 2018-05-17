@@ -14,10 +14,10 @@
 #include "AgentRegistry.h"
 #include "BulkToNext.h"
 #include "Client.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "DefaultStore.h"
 #include "Impl.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ParseArgs.h"
 #include "Priot.h"
@@ -222,10 +222,10 @@ void proxy_free_config( void )
         AgentRegistry_unregisterMibContext( rm->name, rm->name_len,
             DEFAULT_MIB_PRIORITY, 0, 0,
             rm->context );
-        TOOLS_FREE( rm->variables );
-        TOOLS_FREE( rm->context );
+        MEMORY_FREE( rm->variables );
+        MEMORY_FREE( rm->context );
         Api_close( rm->sess );
-        TOOLS_FREE( rm );
+        MEMORY_FREE( rm );
     }
 }
 

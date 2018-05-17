@@ -8,7 +8,8 @@
 #define IFTABLE_H
 
 
-#include "DataList.h"
+#include "System/Containers/Map.h"
+
 #include "siglog/data_access/interface.h"
 
     /*
@@ -45,7 +46,7 @@
     /*
      * TODO:101:o: |-> Review ifTable registration context.
      */
-    typedef DataList_DataList ifTable_registration;
+    typedef Map ifTable_registration;
 
 /**********************************************************************/
     /*
@@ -298,7 +299,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *ifTable_data_list;
+        Map *ifTable_data_list;
 
     } ifTable_rowreq_ctx;
 

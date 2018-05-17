@@ -1,7 +1,7 @@
 #include "siglog/agent/hardware/cpu.h"
 #include "Alarm.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 
 extern CacheLoadFT netsnmp_cpu_arch_load;
 static void _cpu_update_stats( unsigned int, void* );
@@ -46,8 +46,8 @@ void shutdown_cpu( void )
     while ( _cpu_head ) {
         netsnmp_cpu_info* tmp = _cpu_head;
         _cpu_head = _cpu_head->next;
-        TOOLS_FREE( tmp->history );
-        TOOLS_FREE( tmp );
+        MEMORY_FREE( tmp->history );
+        MEMORY_FREE( tmp );
     }
     _cpu_tail = NULL;
 }
@@ -86,7 +86,7 @@ netsnmp_cpu_info* netsnmp_cpu_get_byIdx( int idx, int create )
     /*
          * Create a new CPU entry, and insert it into the list....
          */
-    cpu = TOOLS_MALLOC_TYPEDEF( netsnmp_cpu_info );
+    cpu = MEMORY_MALLOC_TYPEDEF( netsnmp_cpu_info );
     if ( !cpu ) {
         DEBUG_MSG( ( "cpu", "(failed)\n" ) );
         return NULL;
@@ -111,7 +111,7 @@ netsnmp_cpu_info* netsnmp_cpu_get_byIdx( int idx, int create )
             return cpu;
         }
     }
-    TOOLS_FREE( cpu ); /* just in case */
+    MEMORY_FREE( cpu ); /* just in case */
     return NULL; /* Shouldn't happen! */
 }
 
@@ -135,7 +135,7 @@ netsnmp_cpu_info* netsnmp_cpu_get_byName( char* name, int create )
     /*
          * Create a new CPU entry, and append it to the list
          */
-    cpu = TOOLS_MALLOC_TYPEDEF( netsnmp_cpu_info );
+    cpu = MEMORY_MALLOC_TYPEDEF( netsnmp_cpu_info );
     if ( !cpu )
         return NULL;
     if ( strlen( name ) >= sizeof( cpu->name ) ) {

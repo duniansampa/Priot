@@ -14,7 +14,7 @@
  */
 
 #include "siglog/data_access/tcpConn.h"
-#include "DataList.h"
+#include "System/Containers/Map.h"
 
     /*
      *********************************************************************
@@ -131,7 +131,7 @@
         /*
          * storage for future expansion
          */
-        DataList_DataList *tcpListenerTable_data_list;
+        Map *tcpListenerTable_data_list;
 
     } tcpListenerTable_rowreq_ctx;
 

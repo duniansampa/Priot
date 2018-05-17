@@ -1,10 +1,10 @@
 #include "TableArray.h"
 #include "PriotSettings.h"
-#include "Logger.h"
-#include "Debug.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Debug.h"
 #include "Tc.h"
 #include "Client.h"
-#include "Assert.h"
+#include "System/Util/Assert.h"
 #include "TableContainer.h"
 
 
@@ -141,14 +141,14 @@ TableArray_containerRegister(HandlerRegistration *reginfo,
                              Container_Container *container,
                              int group_rows)
 {
-    TableContainerData *tad = TOOLS_MALLOC_TYPEDEF(TableContainerData);
+    TableContainerData *tad = MEMORY_MALLOC_TYPEDEF(TableContainerData);
     if (!tad)
         return ErrorCode_GENERR;
     tad->tblreg_info = tabreg;  /* we need it too, but it really is not ours */
 
     if (!cb) {
         Logger_log(LOGGER_PRIORITY_ERR, "table_array registration with no callbacks\n" );
-        free(tad); /* TOOLS_FREE is overkill for local var */
+        free(tad); /* MEMORY_FREE is overkill for local var */
         return ErrorCode_GENERR;
     }
     /*
@@ -159,14 +159,14 @@ TableArray_containerRegister(HandlerRegistration *reginfo,
           (NULL==cb->row_copy)) )) {
         Logger_log(LOGGER_PRIORITY_ERR, "table_array registration with incomplete "
                  "callback structure.\n");
-        free(tad); /* TOOLS_FREE is overkill for local var */
+        free(tad); /* MEMORY_FREE is overkill for local var */
         return ErrorCode_GENERR;
     }
 
     if (NULL==container) {
         tad->table = Container_find("tableArray");
         Logger_log(LOGGER_PRIORITY_ERR, "table_array couldn't allocate container\n" );
-        free(tad); /* TOOLS_FREE is overkill for local var */
+        free(tad); /* MEMORY_FREE is overkill for local var */
         return ErrorCode_GENERR;
     } else
         tad->table = container;
@@ -526,7 +526,7 @@ TableArray_groupRequests(AgentRequestInfo *agtreq_info,
                          index.len));
             DEBUG_MSG(("table_array:group", "\n"));
             g = (RequestGroup *) tmp;
-            i = TOOLS_MALLOC_TYPEDEF(RequestGroupItem);
+            i = MEMORY_MALLOC_TYPEDEF(RequestGroupItem);
             if (i == NULL)
                 return;
             i->ri = current;
@@ -542,11 +542,11 @@ TableArray_groupRequests(AgentRequestInfo *agtreq_info,
         DEBUG_MSGOID(("table_array:group", index.oids,
                      index.len));
         DEBUG_MSG(("table_array:group", "\n"));
-        g = TOOLS_MALLOC_TYPEDEF(RequestGroup);
-        i = TOOLS_MALLOC_TYPEDEF(RequestGroupItem);
+        g = MEMORY_MALLOC_TYPEDEF(RequestGroup);
+        i = MEMORY_MALLOC_TYPEDEF(RequestGroupItem);
         if (i == NULL || g == NULL) {
-            TOOLS_FREE(i);
-            TOOLS_FREE(g);
+            MEMORY_FREE(i);
+            MEMORY_FREE(g);
             return;
         }
         g->list = i;
@@ -766,7 +766,7 @@ TableArray_processSetRequests(AgentRequestInfo *agtreq_info,
     request_group = (Container_Container*) Agent_getListData
         (agtreq_info, handler_name);
     if (request_group == NULL) {
-        DataList_DataList *tmp;
+        Map *tmp;
         request_group = Container_find("requestGroup:"
                                                "tableContainer");
         request_group->compare = Container_compareIndex;
@@ -774,7 +774,7 @@ TableArray_processSetRequests(AgentRequestInfo *agtreq_info,
 
         DEBUG_MSGTL(("tableArray", "Grouping requests by oid\n"));
 
-        tmp = DataList_create(handler_name,
+        tmp = Map_newElement(handler_name,
                                        request_group,
                                        _TableArray_releaseRequestGroups);
         Agent_addListData(agtreq_info, tmp);

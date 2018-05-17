@@ -5,12 +5,12 @@
  */
 
 #include "ipaddress_ioctl.h"
-#include "Assert.h"
-#include "DataList.h"
-#include "Debug.h"
-#include "Logger.h"
+#include "System/Util/Assert.h"
+#include "System/Containers/Map.h"
+#include "System/Util/Debug.h"
+#include "System/Util/Logger.h"
 #include "Priot.h"
-#include "Strlcpy.h"
+#include "System/String.h"
 #include "if-mib/data_access/interface_ioctl.h"
 #include "ip-mib/ipAddressTable/ipAddressTable_constants.h"
 #include <sys/ioctl.h>
@@ -32,7 +32,7 @@ netsnmp_ioctl_ipaddress_extras_get( netsnmp_ipaddress_entry* entry )
     if ( ( NULL == entry ) || ( NULL == entry->arch_data ) )
         return NULL;
 
-    return ( _ioctl_extras* )DataList_get( entry->arch_data, LIST_TOKEN );
+    return ( _ioctl_extras* )Map_at( entry->arch_data, LIST_TOKEN );
 }
 
 /**
@@ -43,23 +43,23 @@ netsnmp_ioctl_ipaddress_extras_get( netsnmp_ipaddress_entry* entry )
 _ioctl_extras*
 netsnmp_ioctl_ipaddress_entry_init( netsnmp_ipaddress_entry* entry )
 {
-    DataList_DataList* node;
+    Map* node;
     _ioctl_extras* extras;
 
     if ( NULL == entry )
         return NULL;
 
-    extras = TOOLS_MALLOC_TYPEDEF( _ioctl_extras );
+    extras = MEMORY_MALLOC_TYPEDEF( _ioctl_extras );
     if ( NULL == extras )
         return NULL;
 
-    node = DataList_create( LIST_TOKEN, extras, free );
+    node = Map_newElement( LIST_TOKEN, extras, free );
     if ( NULL == node ) {
         free( extras );
         return NULL;
     }
 
-    DataList_addNode( &entry->arch_data, node );
+    Map_insert( &entry->arch_data, node );
 
     return extras;
 }
@@ -79,7 +79,7 @@ void netsnmp_ioctl_ipaddress_entry_cleanup( netsnmp_ipaddress_entry* entry )
         return;
     }
 
-    DataList_removeNode( &entry->arch_data, LIST_TOKEN );
+    Map_erase( &entry->arch_data, LIST_TOKEN );
 }
 
 /**
@@ -463,7 +463,7 @@ int _netsnmp_ioctl_ipaddress_set_v4( netsnmp_ipaddress_entry* entry )
             name, alias_idx );
         ifrq.ifr_name[ sizeof( ifrq.ifr_name ) - 1 ] = 0;
     } else
-        Strlcpy_strlcpy( ifrq.ifr_name, ( char* )extras->name, sizeof( ifrq.ifr_name ) );
+        String_copyTruncate( ifrq.ifr_name, ( char* )extras->name, sizeof( ifrq.ifr_name ) );
 
     sin = ( struct sockaddr_in* )&ifrq.ifr_addr;
     sin->sin_family = AF_INET;
@@ -510,7 +510,7 @@ int _netsnmp_ioctl_ipaddress_delete_v4( netsnmp_ipaddress_entry* entry )
 
     memset( &ifrq, 0, sizeof( ifrq ) );
 
-    Strlcpy_strlcpy( ifrq.ifr_name, ( char* )extras->name, sizeof( ifrq.ifr_name ) );
+    String_copyTruncate( ifrq.ifr_name, ( char* )extras->name, sizeof( ifrq.ifr_name ) );
 
     ifrq.ifr_flags = 0;
 
@@ -638,7 +638,7 @@ int netsnmp_access_ipaddress_ioctl_get_interface_count( int sd, struct ifconf* i
                  * Something has gone genuinely wrong.  
                  */
                 Logger_log( LOGGER_PRIORITY_ERR, "bad rc from ioctl, errno %d", errno );
-                TOOLS_FREE( ifc->ifc_buf );
+                MEMORY_FREE( ifc->ifc_buf );
                 return -1;
             }
             /*
@@ -653,7 +653,7 @@ int netsnmp_access_ipaddress_ioctl_get_interface_count( int sd, struct ifconf* i
             }
             lastlen = ifc->ifc_len;
         }
-        free( ifc->ifc_buf ); /* no TOOLS_FREE, getting ready to reassign */
+        free( ifc->ifc_buf ); /* no MEMORY_FREE, getting ready to reassign */
     }
 
     if ( ifc == &ifc_tmp )

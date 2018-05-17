@@ -4,9 +4,9 @@
 
 #include "siglog/data_access/arp.h"
 #include "CacheHandler.h"
-#include "Debug.h"
+#include "System/Util/Debug.h"
 #include "FdEventManager.h"
-#include "Logger.h"
+#include "System/Util/Logger.h"
 #include <linux/rtnetlink.h>
 
 static int fillup_entry_info( netsnmp_arp_entry* entry, struct nlmsghdr* h );
@@ -23,7 +23,7 @@ netsnmp_access_arp_create( u_int init_flags,
 {
     netsnmp_arp_access* access;
 
-    access = TOOLS_MALLOC_TYPEDEF( netsnmp_arp_access );
+    access = MEMORY_MALLOC_TYPEDEF( netsnmp_arp_access );
     if ( NULL == access ) {
         Logger_log( LOGGER_PRIORITY_ERR, "malloc error in netsnmp_access_arp_create\n" );
         return NULL;

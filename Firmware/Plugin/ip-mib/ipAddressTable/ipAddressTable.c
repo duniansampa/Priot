@@ -15,8 +15,8 @@
  */
 
 #include "ipAddressTable.h"
-#include "Assert.h"
-#include "Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Debug.h"
 #include "Tc.h"
 #include "Vars.h"
 #include "ipAddressTable_constants.h"
@@ -106,7 +106,7 @@ void shutdown_table_ipAddressTable( void )
      * call interface shutdown code
      */
     _ipAddressTable_shutdown_interface( ipAddressTable_user_context_p );
-    DataList_freeAll( ipAddressTable_user_context_p );
+    Map_clear( ipAddressTable_user_context_p );
     ipAddressTable_user_context_p = NULL;
 }
 
