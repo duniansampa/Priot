@@ -1,11 +1,11 @@
 #include "snmp_mib_5_5.h"
 #include "AgentReadConfig.h"
-#include "Callback.h"
-#include "CheckVarbind.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Callback.h"
+#include "System/Util/VariableList.h"
 #include "GetStatistic.h"
 #include "PluginSettings.h"
 #include "SysORTable.h"
+#include "System/Util/Trace.h"
 #include "Watcher.h"
 #include "updates.h"
 
@@ -39,7 +39,7 @@ handle_truthvalue( MibHandler* handler,
     RequestInfo* requests )
 {
     if ( reqinfo->mode == MODE_SET_RESERVE1 ) {
-        int res = CheckVarbind_truthValue( requests->requestvb );
+        int res = VariableList_checkBoolLengthAndValue( requests->requestvb );
         if ( res != PRIOT_ERR_NOERROR )
             Agent_requestSetError( requests, res );
     }
@@ -108,6 +108,6 @@ void init_snmp_mib_5_5( void )
     if ( ++systemMib_systemModuleCount == 3 )
         REGISTER_SYSOR_TABLE( systemMib_systemModuleOid, systemMib_systemModuleOidLen,
             "The MIB module for SNMPv2 entities" );
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         snmp_enableauthentraps_store, NULL );
 }

@@ -1,6 +1,6 @@
 #include "CallbackDomain.h"
 #include "System/Util/Utilities.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "Client.h"
 #include "Priot.h"
@@ -36,12 +36,12 @@ _CallbackDomain_findTransportFromCallbackNum(int num)
 static void
 _CallbackDomain_debugPdu(const char *ourstring, Types_Pdu *pdu)
 {
-    Types_VariableList *vb;
+    VariableList *vb;
     int             i = 1;
     DEBUG_MSGTL((ourstring,
                 "PDU: command = %d, errstat = %ld, errindex = %ld\n",
                 pdu->command, pdu->errstat, pdu->errindex));
-    for (vb = pdu->variables; vb; vb = vb->nextVariable) {
+    for (vb = pdu->variables; vb; vb = vb->next) {
         DEBUG_MSGTL((ourstring, "  var %d:", i++));
         DEBUG_MSGVAR((ourstring, vb));
         DEBUG_MSG((ourstring, "\n"));

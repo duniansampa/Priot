@@ -1,10 +1,10 @@
 #include "loadave.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "System/Util/Logger.h"
 #include "ReadConfig.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "VarStruct.h"
 #include "utilities/header_simple_table.h"
 
@@ -72,7 +72,7 @@ void init_loadave( void )
     /*
      * we need to be called back later
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         loadave_store_config, NULL );
 }
 

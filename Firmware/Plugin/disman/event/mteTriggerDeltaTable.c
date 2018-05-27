@@ -7,11 +7,11 @@
  */
 
 #include "mteTriggerDeltaTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "mteTrigger.h"
 
 /** Initializes the mteTriggerDeltaTable module */
@@ -138,21 +138,21 @@ int mteTriggerDeltaTable_handler( MibHandler* handler,
              */
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERDELTADISCONTINUITYID:
-                ret = CheckVarbind_oid( request->requestvb );
+                ret = VariableList_checkOidMaxLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDWILDCARD:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDTYPE:
-                ret = CheckVarbind_intRange( request->requestvb,
+                ret = VariableList_checkIntLengthAndRange( request->requestvb,
                     MTE_DELTAD_TTICKS,
                     MTE_DELTAD_DATETIME );
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -224,27 +224,27 @@ int mteTriggerDeltaTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERDELTADISCONTINUITYID:
                 if ( Api_oidCompare(
-                         request->requestvb->val.objid,
-                         request->requestvb->valLen / sizeof( oid ),
+                         request->requestvb->value.objectId,
+                         request->requestvb->valueLength / sizeof( oid ),
                          _sysUpTime_instance, _sysUpTime_inst_len )
                     != 0 ) {
                     memset( entry->mteDeltaDiscontID, 0,
                         sizeof( entry->mteDeltaDiscontID ) );
                     memcpy( entry->mteDeltaDiscontID,
-                        request->requestvb->val.string,
-                        request->requestvb->valLen );
-                    entry->mteDeltaDiscontID_len = request->requestvb->valLen / sizeof( oid );
+                        request->requestvb->value.string,
+                        request->requestvb->valueLength );
+                    entry->mteDeltaDiscontID_len = request->requestvb->valueLength / sizeof( oid );
                     entry->flags &= ~MTE_TRIGGER_FLAG_SYSUPT;
                 }
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDWILDCARD:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_DWILD;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_DWILD;
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDTYPE:
-                entry->mteDeltaDiscontIDType = *request->requestvb->val.integer;
+                entry->mteDeltaDiscontIDType = *request->requestvb->value.integer;
                 break;
             }
         }

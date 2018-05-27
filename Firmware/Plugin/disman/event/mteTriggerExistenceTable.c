@@ -7,9 +7,9 @@
  */
 
 #include "mteTriggerExistenceTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
 #include "mteTrigger.h"
 
@@ -154,7 +154,7 @@ int mteTriggerExistenceTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGEREXISTENCETEST:
             case COLUMN_MTETRIGGEREXISTENCESTARTUP:
-                ret = CheckVarbind_typeAndSize(
+                ret = VariableList_checkTypeAndLength(
                     request->requestvb, ASN01_OCTET_STR, 1 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -166,7 +166,7 @@ int mteTriggerExistenceTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGEREXISTENCEOBJECTS:
             case COLUMN_MTETRIGGEREXISTENCEEVENTOWNER:
             case COLUMN_MTETRIGGEREXISTENCEEVENT:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -237,30 +237,30 @@ int mteTriggerExistenceTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGEREXISTENCETEST:
-                entry->mteTExTest = request->requestvb->val.string[ 0 ];
+                entry->mteTExTest = request->requestvb->value.string[ 0 ];
                 break;
             case COLUMN_MTETRIGGEREXISTENCESTARTUP:
-                entry->mteTExStartup = request->requestvb->val.string[ 0 ];
+                entry->mteTExStartup = request->requestvb->value.string[ 0 ];
                 break;
             case COLUMN_MTETRIGGEREXISTENCEOBJECTSOWNER:
                 memset( entry->mteTExObjOwner, 0, sizeof( entry->mteTExObjOwner ) );
-                memcpy( entry->mteTExObjOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTExObjOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEOBJECTS:
                 memset( entry->mteTExObjects, 0, sizeof( entry->mteTExObjects ) );
-                memcpy( entry->mteTExObjects, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTExObjects, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEEVENTOWNER:
                 memset( entry->mteTExEvOwner, 0, sizeof( entry->mteTExEvOwner ) );
-                memcpy( entry->mteTExEvOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTExEvOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEEVENT:
                 memset( entry->mteTExEvent, 0, sizeof( entry->mteTExEvent ) );
-                memcpy( entry->mteTExEvent, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTExEvent, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             }
         }

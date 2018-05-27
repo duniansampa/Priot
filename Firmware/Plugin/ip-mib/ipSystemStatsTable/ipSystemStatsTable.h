@@ -287,7 +287,7 @@
         
         ipSystemStatsHCInReceives_get(ipSystemStatsTable_rowreq_ctx *
                                       rowreq_ctx,
-                                      Int64_U64 *
+                                      Integer64 *
                                       ipSystemStatsHCInReceives_val_ptr);
     int             ipSystemStatsInOctets_get(ipSystemStatsTable_rowreq_ctx
                                               * rowreq_ctx,
@@ -311,7 +311,7 @@
         
         ipSystemStatsHCInOctets_get(ipSystemStatsTable_rowreq_ctx *
                                     rowreq_ctx,
-                                    Int64_U64 * ipSystemStatsHCInOctets_val_ptr);
+                                    Integer64 * ipSystemStatsHCInOctets_val_ptr);
     int
      
         
@@ -450,7 +450,7 @@
         
         ipSystemStatsHCInForwDatagrams_get(ipSystemStatsTable_rowreq_ctx *
                                            rowreq_ctx,
-                                           Int64_U64 *
+                                           Integer64 *
                                            ipSystemStatsHCInForwDatagrams_val_ptr);
     int
      
@@ -554,7 +554,7 @@
         
         ipSystemStatsHCInDelivers_get(ipSystemStatsTable_rowreq_ctx *
                                       rowreq_ctx,
-                                      Int64_U64 *
+                                      Integer64 *
                                       ipSystemStatsHCInDelivers_val_ptr);
     int
      
@@ -594,7 +594,7 @@
         
         ipSystemStatsHCOutRequests_get(ipSystemStatsTable_rowreq_ctx *
                                        rowreq_ctx,
-                                       Int64_U64 *
+                                       Integer64 *
                                        ipSystemStatsHCOutRequests_val_ptr);
     int
      
@@ -654,7 +654,7 @@
         
         ipSystemStatsHCOutForwDatagrams_get(ipSystemStatsTable_rowreq_ctx *
                                             rowreq_ctx,
-                                            Int64_U64 *
+                                            Integer64 *
                                             ipSystemStatsHCOutForwDatagrams_val_ptr);
     int
      
@@ -794,7 +794,7 @@
         
         ipSystemStatsHCOutTransmits_get(ipSystemStatsTable_rowreq_ctx *
                                         rowreq_ctx,
-                                        Int64_U64 *
+                                        Integer64 *
                                         ipSystemStatsHCOutTransmits_val_ptr);
     int
      
@@ -834,7 +834,7 @@
         
         ipSystemStatsHCOutOctets_get(ipSystemStatsTable_rowreq_ctx *
                                      rowreq_ctx,
-                                     Int64_U64 *
+                                     Integer64 *
                                      ipSystemStatsHCOutOctets_val_ptr);
     int
      
@@ -874,7 +874,7 @@
         
         ipSystemStatsHCInMcastPkts_get(ipSystemStatsTable_rowreq_ctx *
                                        rowreq_ctx,
-                                       Int64_U64 *
+                                       Integer64 *
                                        ipSystemStatsHCInMcastPkts_val_ptr);
     int
      
@@ -914,7 +914,7 @@
         
         ipSystemStatsHCInMcastOctets_get(ipSystemStatsTable_rowreq_ctx *
                                          rowreq_ctx,
-                                         Int64_U64 *
+                                         Integer64 *
                                          ipSystemStatsHCInMcastOctets_val_ptr);
     int
      
@@ -954,7 +954,7 @@
         
         ipSystemStatsHCOutMcastPkts_get(ipSystemStatsTable_rowreq_ctx *
                                         rowreq_ctx,
-                                        Int64_U64 *
+                                        Integer64 *
                                         ipSystemStatsHCOutMcastPkts_val_ptr);
     int
      
@@ -994,7 +994,7 @@
         
         ipSystemStatsHCOutMcastOctets_get(ipSystemStatsTable_rowreq_ctx *
                                           rowreq_ctx,
-                                          Int64_U64 *
+                                          Integer64 *
                                           ipSystemStatsHCOutMcastOctets_val_ptr);
     int
      
@@ -1034,7 +1034,7 @@
         
         ipSystemStatsHCInBcastPkts_get(ipSystemStatsTable_rowreq_ctx *
                                        rowreq_ctx,
-                                       Int64_U64 *
+                                       Integer64 *
                                        ipSystemStatsHCInBcastPkts_val_ptr);
     int
      
@@ -1074,7 +1074,7 @@
         
         ipSystemStatsHCOutBcastPkts_get(ipSystemStatsTable_rowreq_ctx *
                                         rowreq_ctx,
-                                        Int64_U64 *
+                                        Integer64 *
                                         ipSystemStatsHCOutBcastPkts_val_ptr);
     int
      

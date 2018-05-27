@@ -6,7 +6,7 @@
 */
 
 #include "Asn01.h"
-//#include <time.h>
+#include "System/Util/VariableList.h"
 
 #define TYPES_OID_MAX_SUBID 0xFFFFFFFFUL
 
@@ -24,61 +24,6 @@ typedef u_int Types_SocklenT;
 typedef int Types_SsizeT;
 
 typedef unsigned long int Types_NfdsT;
-
-/*
- *  For the initial release, this will just refer to the
- *  relevant UCD header files.
- *    In due course, the types and structures relevant to the
- *  Net-SNMP API will be identified, and defined here directly.
- *
- *  But for the time being, this header file is primarily a placeholder,
- *  to allow application writers to adopt the new header file names.
- */
-
-typedef union {
-    long* integer;
-    u_char* string;
-    oid* objid;
-    u_char* bitstring;
-    Asn01_Counter64* counter64;
-    float* floatVal;
-    double* doubleVal;
-    /*
-     * t_union *unionVal;
-    */
-} Types_Vardata;
-
-#define TYPES_MAX_OID_LEN 128 /* max subid's in an oid */
-
-/** @typedef struct Variable_s_list Types_VariableList
- * Typedefs the variable_list struct into Types_VariableList */
-/** @struct variable_list
- * The netsnmp variable list binding structure, it's typedef'd to
- * Types_VariableList.
- */
-typedef struct Types_VariableList_s {
-    /** NULL for last variable */
-    struct Types_VariableList_s* nextVariable;
-    /** Object identifier of variable */
-    oid* name;
-    /** number of subid's in name */
-    size_t nameLength;
-    /** ASN type of variable */
-    u_char type;
-    /** value of variable */
-    Types_Vardata val;
-    /** the length of the value to be copied into buf */
-    size_t valLen;
-    /** buffer to hold the OID */
-    oid nameLoc[ TYPES_MAX_OID_LEN ];
-    /** 90 percentile < 40. */
-    u_char buf[ 40 ];
-    /** (Opaque) hook for additional data */
-    void* data;
-    /** callback to free above */
-    void ( *dataFreeHook )( void* );
-    int index;
-} Types_VariableList;
 
 /** @typedef struct snmp_pdu to netsnmp_pdu
  * Typedefs the snmp_pdu struct into netsnmp_pdu */
@@ -133,7 +78,7 @@ typedef struct Types_Pdu_s {
     const oid* tDomain;
     size_t tDomainLen;
 
-    Types_VariableList* variables;
+    VariableList* variables;
 
     /*
      * SNMPv1 & SNMPv2c fields

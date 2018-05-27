@@ -1,10 +1,10 @@
 
 #include "target.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "ReadConfig.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "snmpTargetAddrEntry.h"
 #include "snmpTargetParamsEntry.h"
 

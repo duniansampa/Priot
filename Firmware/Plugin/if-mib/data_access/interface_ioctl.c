@@ -6,7 +6,7 @@
 
 #include "interface_ioctl.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/String.h"
 #include "if-mib/ifTable/ifTable_constants.h"

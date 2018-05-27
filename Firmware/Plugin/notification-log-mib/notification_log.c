@@ -1,16 +1,16 @@
 
 
 #include "notification_log.h"
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Instance.h"
 #include "SysORTable.h"
 #include "TableData.h"
 #include "TableDataset.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "Trap.h"
 
 /*
@@ -439,7 +439,7 @@ initialize_table_nlmLogTable( const char* context )
      * hmm...  5 minutes seems like a reasonable time to check for out
      * dated notification logs right?
      */
-    Alarm_register( 300, ALARM_SA_REPEAT, check_log_size, NULL );
+    Alarm_register( 300, AlarmFlag_REPEAT, check_log_size, NULL );
 }
 
 static int
@@ -467,7 +467,7 @@ void init_notification_log( void )
     char* context;
     char* apptype;
 
-    context = DefaultStore_getString( DsStorage_APPLICATION_ID,
+    context = DefaultStore_getString( DsStore_APPLICATION_ID,
         DsAgentString_NOTIF_LOG_CTX );
 
     DEBUG_MSGTL( ( "notification_log", "registering with '%s' context\n",
@@ -509,13 +509,13 @@ void init_notification_log( void )
     /*
      * disable flag
      */
-    apptype = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    apptype = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
     DefaultStore_registerConfig( ASN01_BOOLEAN, apptype, "dontRetainLogs",
-        DsStorage_APPLICATION_ID,
+        DsStore_APPLICATION_ID,
         DsAgentBoolean_DONT_RETAIN_NOTIFICATIONS );
     DefaultStore_registerConfig( ASN01_BOOLEAN, apptype, "doNotRetainNotificationLogs",
-        DsStorage_APPLICATION_ID,
+        DsStore_APPLICATION_ID,
         DsAgentBoolean_DONT_RETAIN_NOTIFICATIONS );
 
     REGISTER_SYSOR_ENTRY( nlm_module_oid,
@@ -541,7 +541,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
 
     static oid snmptrapoid[] = { 1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0 };
     size_t snmptrapoid_len = ASN01_OID_LENGTH( snmptrapoid );
-    Types_VariableList* vptr;
+    VariableList* vptr;
     u_char* logdate;
     size_t logdate_size;
     time_t timetnow;
@@ -552,7 +552,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
     Types_Pdu* orig_pdu = pdu;
 
     if ( !nlmLogVarTable
-        || DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        || DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                DsAgentBoolean_APP_DONT_LOG ) ) {
         return;
     }
@@ -614,13 +614,13 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
 
     if ( pdu->command == PRIOT_MSG_TRAP )
         pdu = Trap_convertV1pduToV2( orig_pdu );
-    for ( vptr = pdu->variables; vptr; vptr = vptr->nextVariable ) {
+    for ( vptr = pdu->variables; vptr; vptr = vptr->next ) {
         if ( Api_oidCompare( snmptrapoid, snmptrapoid_len,
                  vptr->name, vptr->nameLength )
             == 0 ) {
             TableDataset_setRowColumn( row, COLUMN_NLMLOGNOTIFICATIONID,
-                ASN01_OBJECT_ID, vptr->val.string,
-                vptr->valLen );
+                ASN01_OBJECT_ID, vptr->value.string,
+                vptr->valueLength );
         } else {
             TableRow* myrow;
             myrow = TableData_createTableDataRow();
@@ -705,7 +705,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
                 ASN01_INTEGER, &tmpul,
                 sizeof( tmpul ) );
             TableDataset_setRowColumn( myrow, col, vptr->type,
-                vptr->val.string, vptr->valLen );
+                vptr->value.string, vptr->valueLength );
             DEBUG_MSGTL( ( "notification_log",
                 "adding a row to the variables table\n" ) );
             TableDataset_addRow( nlmLogVarTable, myrow );

@@ -31,7 +31,7 @@
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
@@ -292,7 +292,7 @@ int ipv6ScopeZoneIndexTable_index_to_oid( Types_Index* oid_idx,
     /*
      * ipv6ScopeZoneIndexIfIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipv6ScopeZoneIndexIfIndex;
+    VariableList var_ipv6ScopeZoneIndexIfIndex;
 
     /*
      * set up varbinds
@@ -304,7 +304,7 @@ int ipv6ScopeZoneIndexTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipv6ScopeZoneIndexIfIndex.nextVariable = NULL;
+    var_ipv6ScopeZoneIndexIfIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipv6ScopeZoneIndexTable:ipv6ScopeZoneIndexTable_index_to_oid", "called\n" ) );
 
@@ -346,7 +346,7 @@ int ipv6ScopeZoneIndexTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ipv6ScopeZoneIndexIfIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipv6ScopeZoneIndexIfIndex;
+    VariableList var_ipv6ScopeZoneIndexIfIndex;
 
     /*
      * set up varbinds
@@ -358,7 +358,7 @@ int ipv6ScopeZoneIndexTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipv6ScopeZoneIndexIfIndex.nextVariable = NULL;
+    var_ipv6ScopeZoneIndexIfIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipv6ScopeZoneIndexTable:ipv6ScopeZoneIndexTable_index_from_oid", "called\n" ) );
 
@@ -371,7 +371,7 @@ int ipv6ScopeZoneIndexTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ipv6ScopeZoneIndexIfIndex = *( ( long* )var_ipv6ScopeZoneIndexIfIndex.val.string );
+        mib_idx->ipv6ScopeZoneIndexIfIndex = *( ( long* )var_ipv6ScopeZoneIndexIfIndex.value.string );
     }
 
     /*
@@ -654,7 +654,7 @@ _mfd_ipv6ScopeZoneIndexTable_object_lookup( MibHandler* handler,
 static inline int
 _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
                                          rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -669,120 +669,120 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          * ipv6ScopeZoneIndexLinkLocal(2)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXLINKLOCAL:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexLinkLocal_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndex3(3)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEX3:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndex3_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexAdminLocal(4)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXADMINLOCAL:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexAdminLocal_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexSiteLocal(5)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXSITELOCAL:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexSiteLocal_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndex6(6)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEX6:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndex6_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndex7(7)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEX7:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndex7_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexOrganizationLocal(8)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXORGANIZATIONLOCAL:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexOrganizationLocal_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndex9(9)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEX9:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndex9_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexA(10)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXA:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexA_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexB(11)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXB:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexB_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexC(12)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXC:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexC_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipv6ScopeZoneIndexD(13)/InetZoneIndex/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/H 
          */
     case COLUMN_IPV6SCOPEZONEINDEXD:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipv6ScopeZoneIndexD_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -820,14 +820,14 @@ int _mfd_ipv6ScopeZoneIndexTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -845,7 +845,7 @@ int _mfd_ipv6ScopeZoneIndexTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = PRIOT_ERR_GENERR;
         }
@@ -857,7 +857,7 @@ int _mfd_ipv6ScopeZoneIndexTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else

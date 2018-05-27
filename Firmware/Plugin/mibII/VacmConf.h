@@ -2,7 +2,7 @@
 #define VACMCONF_H
 
 #include "Types.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 
 
 #define VACM_CREATE_SIMPLE_V3       1
@@ -31,9 +31,9 @@ void            VacmConf_parseAuthcommunity(const char *, char *);
 void            VacmConf_parseAuthuser(const char *, char *);
 void            VacmConf_parseAuthaccess(const char *, char *);
 
-Callback_CallbackFT    VacmConf_inViewCallback;
-Callback_CallbackFT    VacmConf_warnIfNotConfigured;
-Callback_CallbackFT    VacmConf_standardViews;
+Callback_f    VacmConf_inViewCallback;
+Callback_f    VacmConf_warnIfNotConfigured;
+Callback_f    VacmConf_standardViews;
 
 int             VacmConf_inView(Types_Pdu *, oid *, size_t, int);
 int             VacmConf_checkView(Types_Pdu *, oid *, size_t, int, int);

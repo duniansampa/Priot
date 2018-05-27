@@ -13,9 +13,9 @@
 
 #include "snmpNotifyFilterTable.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
+#include "TextualConvention.h"
 #include "Vars.h"
 #include "siglog/agent/mfd.h"
 #include "snmpNotifyFilterTable_constants.h"
@@ -235,7 +235,7 @@ int snmpNotifyFilterTable_post_request( snmpNotifyFilterTable_registration*
             /*
              * notify library to save changed rows
              */
-            Api_storeNeeded( DefaultStore_getString( DsStorage_LIBRARY_ID,
+            Api_storeNeeded( DefaultStore_getString( DsStore_LIBRARY_ID,
                 DsStr_APPTYPE ) );
         }
 

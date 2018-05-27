@@ -1,5 +1,5 @@
 #include "Watcher.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Instance.h"
 #include "Scalar.h"
@@ -241,14 +241,14 @@ Watcher_helperHandler( MibHandler *handler,
             Agent_setRequestError(reqinfo, requests, PRIOT_ERR_WRONGTYPE);
             handler->flags |= MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE;
         } else if (((winfo->flags & WATCHER_MAX_SIZE) &&
-                     requests->requestvb->valLen > winfo->max_size) ||
+                     requests->requestvb->valueLength > winfo->max_size) ||
             ((winfo->flags & WATCHER_FIXED_SIZE) &&
-                requests->requestvb->valLen != Watcher_getDataSize(winfo))) {
+                requests->requestvb->valueLength != Watcher_getDataSize(winfo))) {
             Agent_setRequestError(reqinfo, requests, PRIOT_ERR_WRONGLENGTH);
             handler->flags |= MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE;
         } else if ((winfo->flags & WATCHER_SIZE_STRLEN) &&
-            (memchr(requests->requestvb->val.string, '\0',
-                requests->requestvb->valLen) != NULL)) {
+            (memchr(requests->requestvb->value.string, '\0',
+                requests->requestvb->valueLength) != NULL)) {
             Agent_setRequestError(reqinfo, requests, PRIOT_ERR_WRONGVALUE);
             handler->flags |= MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE;
         }
@@ -280,8 +280,8 @@ Watcher_helperHandler( MibHandler *handler,
         /*
          * update current
          */
-        Watcher_setData(winfo, (void *)requests->requestvb->val.string,
-                                requests->requestvb->valLen);
+        Watcher_setData(winfo, (void *)requests->requestvb->value.string,
+                                requests->requestvb->valueLength);
         break;
 
     case MODE_SET_UNDO:
@@ -454,7 +454,7 @@ Watcher_watchedSpinlockHandler(MibHandler *handler,
             if (request->processed)
                 continue;
 
-            if (*request->requestvb->val.integer != *spinlock) {
+            if (*request->requestvb->value.integer != *spinlock) {
                 Agent_setRequestError(reqinfo, requests, PRIOT_ERR_WRONGVALUE);
                 handler->flags |= MIB_HANDLER_AUTO_NEXT_OVERRIDE_ONCE;
                 return PRIOT_ERR_WRONGVALUE;

@@ -129,28 +129,28 @@ void            Mib_setFunction(struct Parse_Tree_s *);
 
 
 int             Mib_parseOneOidIndex(oid ** oidStart, size_t * oidLen,
-                                    Types_VariableList * data,
+                                    VariableList * data,
                                     int complete);
 
 int             Mib_parseOidIndexes(oid * oidIndex, size_t oidLen,
-                                  Types_VariableList * data);
+                                  VariableList * data);
 
 int             Mib_buildOidNoalloc(oid * in, size_t in_len,
                                   size_t * out_len, oid * prefix,
                                   size_t prefix_len,
-                                  Types_VariableList * indexes);
+                                  VariableList * indexes);
 
 int             Mib_buildOid(oid ** out, size_t * out_len, oid * prefix,
                              size_t prefix_len,
-                             Types_VariableList * indexes);
+                             VariableList * indexes);
 
-int             Mib_buildOidSegment(Types_VariableList * var);
+int             Mib_buildOidSegment(VariableList * var);
 
 
 int             Mib_sprintReallocVariable(u_char ** buf, size_t * buf_len,
                                size_t * out_len, int allow_realloc,
                                const oid * objid, size_t objidlen,
-                               const Types_VariableList * variable);
+                               const VariableList * variable);
 
 
 struct Parse_Tree_s *  Mib_sprintReallocObjidTree(u_char ** buf,
@@ -173,7 +173,7 @@ void            Mib_sprintReallocObjid(u_char ** buf,
 int             Mib_sprintReallocValue(u_char ** buf, size_t * buf_len,
                              size_t * out_len, int allow_realloc,
                              const oid * objid, size_t objidlen,
-                             const Types_VariableList * variable);
+                             const VariableList * variable);
 
 int             Mib_sprintReallocObjid2(u_char ** buf, size_t * buf_len,
                              size_t * out_len, int allow_realloc,
@@ -183,7 +183,7 @@ int             Mib_sprintReallocObjid2(u_char ** buf, size_t * buf_len,
 int             Mib_sprintReallocByType(u_char ** buf, size_t * buf_len,
                                        size_t * out_len,
                                        int allow_realloc,
-                                       const Types_VariableList * var,
+                                       const VariableList * var,
                                        const struct Parse_EnumList_s *enums,
                                        const char *hint,
                                        const char *units);
@@ -207,7 +207,7 @@ int             Mib_sprintReallocOctetString(u_char ** buf,
                                             size_t * buf_len,
                                             size_t * out_len,
                                             int allow_realloc,
-                                            const Types_VariableList *,
+                                            const VariableList *,
                                             const struct Parse_EnumList_s *,
                                             const char *,
                                             const char *);
@@ -215,7 +215,7 @@ int             Mib_sprintReallocOctetString(u_char ** buf,
 int             Mib_sprintReallocOpaque(u_char ** buf, size_t * buf_len,
                                       size_t * out_len,
                                       int allow_realloc,
-                                      const Types_VariableList *,
+                                      const VariableList *,
                                       const struct Parse_EnumList_s *, const char *,
                                       const char *);
 
@@ -223,7 +223,7 @@ int             Mib_sprintReallocObjectIdentifier(u_char ** buf,
                                                  size_t * buf_len,
                                                  size_t * out_len,
                                                  int allow_realloc,
-                                                 const Types_VariableList
+                                                 const VariableList
                                                  *, const struct Parse_EnumList_s *,
                                                  const char *,
                                                  const char *);
@@ -232,7 +232,7 @@ int             Mib_sprintReallocTimeticks(u_char ** buf,
                                          size_t * buf_len,
                                          size_t * out_len,
                                          int allow_realloc,
-                                         const Types_VariableList *,
+                                         const VariableList *,
                                          const struct Parse_EnumList_s *,
                                          const char *, const char *);
 
@@ -246,7 +246,7 @@ int             Mib_sprintReallocHintedInteger(u_char ** buf,
 int             Mib_sprintReallocInteger(u_char ** buf, size_t * buf_len,
                                        size_t * out_len,
                                        int allow_realloc,
-                                       const Types_VariableList *,
+                                       const VariableList *,
                                        const struct Parse_EnumList_s *,
                                        const char *, const char *);
 
@@ -254,21 +254,21 @@ int             Mib_sprintReallocUinteger(u_char ** buf,
                                         size_t * buf_len,
                                         size_t * out_len,
                                         int allow_realloc,
-                                        const Types_VariableList *,
+                                        const VariableList *,
                                         const struct Parse_EnumList_s *,
                                         const char *, const char *);
 
 int             Mib_sprintReallocQauge(u_char ** buf, size_t * buf_len,
                                      size_t * out_len,
                                      int allow_realloc,
-                                     const Types_VariableList *,
+                                     const VariableList *,
                                      const struct Parse_EnumList_s *, const char *,
                                      const char *);
 
 int             Mib_sprintReallocCounter(u_char ** buf, size_t * buf_len,
                                        size_t * out_len,
                                        int allow_realloc,
-                                       const Types_VariableList *,
+                                       const VariableList *,
                                        const struct Parse_EnumList_s *,
                                        const char *, const char *);
 
@@ -276,7 +276,7 @@ int             Mib_sprintReallocNetworkAddress(u_char ** buf,
                                               size_t * buf_len,
                                               size_t * out_len,
                                               int allow_realloc,
-                                              const Types_VariableList *,
+                                              const VariableList *,
                                               const struct Parse_EnumList_s *,
                                               const char *,
                                               const char *);
@@ -285,14 +285,14 @@ int             Mib_sprintReallocIpAddress(u_char ** buf,
                                          size_t * buf_len,
                                          size_t * out_len,
                                          int allow_realloc,
-                                         const Types_VariableList *,
+                                         const VariableList *,
                                          const struct Parse_EnumList_s *,
                                          const char *, const char *);
 
 int             Mib_sprintReallocNull(u_char ** buf, size_t * buf_len,
                                     size_t * out_len,
                                     int allow_realloc,
-                                    const Types_VariableList *,
+                                    const VariableList *,
                                     const struct Parse_EnumList_s *, const char *,
                                     const char *);
 
@@ -300,7 +300,7 @@ int             Mib_sprintReallocBitString(u_char ** buf,
                                          size_t * buf_len,
                                          size_t * out_len,
                                          int allow_realloc,
-                                         const Types_VariableList *,
+                                         const VariableList *,
                                          const struct Parse_EnumList_s *,
                                          const char *, const char *);
 
@@ -308,7 +308,7 @@ int             Mib_sprintReallocNsapAddress(u_char ** buf,
                                            size_t * buf_len,
                                            size_t * out_len,
                                            int allow_realloc,
-                                           const Types_VariableList *,
+                                           const VariableList *,
                                            const struct Parse_EnumList_s *,
                                            const char *, const char *);
 
@@ -316,20 +316,20 @@ int             Mib_sprintReallocCounter64(u_char ** buf,
                                          size_t * buf_len,
                                          size_t * out_len,
                                          int allow_realloc,
-                                         const Types_VariableList *,
+                                         const VariableList *,
                                          const struct Parse_EnumList_s *,
                                          const char *, const char *);
 
 int             Mib_sprintReallocBadType(u_char ** buf, size_t * buf_len,
                                        size_t * out_len,
                                        int allow_realloc,
-                                       const Types_VariableList *,
+                                       const VariableList *,
                                        const struct Parse_EnumList_s *,
                                        const char *, const char *);
 
 
 int             Mib_snprintByType(char *buf, size_t buf_len,
-                                Types_VariableList * var,
+                                VariableList * var,
                                 const struct Parse_EnumList_s *enums,
                                 const char *hint, const char *units);
 
@@ -340,22 +340,22 @@ int             Mib_snprintAsciiString(char *buf, size_t buf_len,
                                     const u_char * cp, size_t len);
 
 int             Mib_snprintOctetString(char *buf, size_t buf_len,
-                                     const Types_VariableList *,
+                                     const VariableList *,
                                      const struct Parse_EnumList_s *, const char *,
                                      const char *);
 
 int             Mib_snprintOpaque(char *buf, size_t buf_len,
-                               const Types_VariableList *,
+                               const VariableList *,
                                const struct Parse_EnumList_s *, const char *,
                                const char *);
 
 int             Mib_snprintObjectIdentifier(char *buf, size_t buf_len,
-                                          const Types_VariableList *,
+                                          const VariableList *,
                                           const struct Parse_EnumList_s *,
                                           const char *, const char *);
 
 int             Mib_snprintTimeticks(char *buf, size_t buf_len,
-                                  const Types_VariableList *,
+                                  const VariableList *,
                                   const struct Parse_EnumList_s *, const char *,
                                   const char *);
 
@@ -364,57 +364,57 @@ int             Mib_snprintHintedInteger(char *buf, size_t buf_len,
                                        const char *);
 
 int             Mib_snprintInteger(char *buf, size_t buf_len,
-                                const Types_VariableList *,
+                                const VariableList *,
                                 const struct Parse_EnumList_s *, const char *,
                                 const char *);
 
 int             Mib_snprintUinteger(char *buf, size_t buf_len,
-                                 const Types_VariableList *,
+                                 const VariableList *,
                                  const struct Parse_EnumList_s *, const char *,
                                  const char *);
 
 int             Mib_snprintGauge(char *buf, size_t buf_len,
-                              const Types_VariableList *,
+                              const VariableList *,
                               const struct Parse_EnumList_s *, const char *,
                               const char *);
 
 int             Mib_snprintCounter(char *buf, size_t buf_len,
-                                const Types_VariableList *,
+                                const VariableList *,
                                 const struct Parse_EnumList_s *, const char *,
                                 const char *);
 
 int             Mib_snprintNetworkaddress(char *buf, size_t buf_len,
-                                       const Types_VariableList *,
+                                       const VariableList *,
                                        const struct Parse_EnumList_s *,
                                        const char *, const char *);
 
 int             Mib_snprintIpAddress(char *buf, size_t buf_len,
-                                  const Types_VariableList *,
+                                  const VariableList *,
                                   const struct Parse_EnumList_s *, const char *,
                                   const char *);
 
 int             Mib_snprintNull(char *buf, size_t buf_len,
-                             const Types_VariableList *,
+                             const VariableList *,
                              const struct Parse_EnumList_s *, const char *,
                              const char *);
 
 int             Mib_snprintBitString(char *buf, size_t buf_len,
-                                  const Types_VariableList *,
+                                  const VariableList *,
                                   const struct Parse_EnumList_s *, const char *,
                                   const char *);
 
 int             Mib_snprintNsapAddress(char *buf, size_t buf_len,
-                                    const Types_VariableList *,
+                                    const VariableList *,
                                     const struct Parse_EnumList_s *, const char *,
                                     const char *);
 
 int             Mib_snprintCounter64(char *buf, size_t buf_len,
-                                  const Types_VariableList *,
+                                  const VariableList *,
                                   const struct Parse_EnumList_s *, const char *,
                                   const char *);
 
 int             Mib_snprintBadType(char *buf, size_t buf_len,
-                                const Types_VariableList *,
+                                const VariableList *,
                                 const struct Parse_EnumList_s *, const char *,
                                 const char *);
 
@@ -456,10 +456,10 @@ void            Mib_mibIndexLoad( void );
 void            Mib_fprintObjid(FILE * f, const oid * objid, size_t objidlen);
 
 void            Mib_fprintVariable(FILE * f, const oid * objid,
-                                   size_t objidlen, const Types_VariableList * variable);
+                                   size_t objidlen, const VariableList * variable);
 
 void            Mib_fprintValue(FILE * f, const oid * objid,
-                     size_t objidlen, const Types_VariableList * variable);
+                     size_t objidlen, const VariableList * variable);
 
 void            Mib_fprintDescription(FILE * f, oid * objid, size_t objidlen, int width);
 

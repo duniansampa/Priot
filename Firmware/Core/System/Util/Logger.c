@@ -1,11 +1,11 @@
 #include "System/Util/Logger.h"
 
-#include "System/Util/Assert.h"
-#include "Callback.h"
-#include "DefaultStore.h"
+#include "System/Util/Callback.h"
+#include "System/Util/DefaultStore.h"
 #include "ReadConfig.h"
 #include "System/String.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
 #include <sys/syslog.h>
 
@@ -53,7 +53,7 @@ void Logger_initLogger( void )
 {
 
     DefaultStore_registerPremib( DATATYPE_BOOLEAN, "priot", "logTimestamp",
-        DsStorage_LIBRARY_ID, DsBool_LOG_TIMESTAMP );
+        DsStore_LIBRARY_ID, DsBool_LOG_TIMESTAMP );
 
     ReadConfig_registerPrenetMibHandler( "priot", "logOption",
         Logger_parseConfigLogOption, NULL, "string" );
@@ -293,7 +293,7 @@ int Logger_logOptions( char* optarg, int argc, char* const* argv )
             logh->pri_max = pri_max;
             logh->token = strdup( optarg );
             Logger_enableFilelog( logh,
-                DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+                DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                                       DsBool_APPEND_LOGFILES ) );
         }
         break;
@@ -811,7 +811,7 @@ int Logger_logHandlerStdouterr( Logger_LogHandler* logh, int pri, const char* st
     const char* newline_ptr;
     char sbuf[ 40 ];
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
              DsBool_LOG_TIMESTAMP )
         && newline ) {
         _Logger_sprintfStamp( NULL, sbuf );
@@ -848,7 +848,7 @@ int Logger_logHandlerSyslog( Logger_LogHandler* logh, int pri, const char* str )
         const char* ident = logh->token;
         int facility = ( int )( intptr_t )logh->magic;
         if ( !ident )
-            ident = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_APPTYPE );
+            ident = DefaultStore_getString( DsStore_LIBRARY_ID, DsStr_APPTYPE );
 
         openlog( ident, LOG_CONS | LOG_PID, facility );
         logh->imagic = 1;
@@ -866,7 +866,7 @@ int Logger_logHandlerFile( Logger_LogHandler* logh, int pri, const char* str )
      * We use imagic to save information about whether the next output
      * will start a new line, and thus might need a timestamp
      */
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_LOG_TIMESTAMP ) && logh->imagic ) {
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_LOG_TIMESTAMP ) && logh->imagic ) {
         _Logger_sprintfStamp( NULL, sbuf );
     } else {
         strcpy( sbuf, "" );
@@ -905,7 +905,7 @@ int Logger_logHandlerCallback( Logger_LogHandler* logh, int pri, const char* str
     slm.msg = str;
     if ( dodebug ) /* turn off debugging inside the callbacks else will loop */
         Debug_setDoDebugging( 0 );
-    Callback_callCallbacks( CALLBACK_LIBRARY, CALLBACK_LOGGING, &slm );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_LOGGING, &slm );
     if ( dodebug )
         Debug_setDoDebugging( dodebug );
     return 1;

@@ -6,10 +6,10 @@
 #include "schedConf.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "ReadConfig.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "TextualConvention.h"
 #include "schedCore.h"
 
 static int schedEntries;
@@ -35,7 +35,7 @@ void init_schedConf( void )
      *   and arrange for dynamically configured entries to be saved
      */
     AgentReadConfig_priotdRegisterConfigHandler( "_schedTable", parse_schedTable, NULL, NULL );
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_schedTable, NULL );
     schedEntries = 0;
 }

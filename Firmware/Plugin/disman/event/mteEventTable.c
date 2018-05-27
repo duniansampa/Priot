@@ -7,11 +7,11 @@
  */
 
 #include "mteEventTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "mteEvent.h"
 #include "utilities/Iquery.h"
 
@@ -129,7 +129,7 @@ int mteEventTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTCOMMENT:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -146,7 +146,7 @@ int mteEventTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTEEVENTACTIONS:
-                ret = CheckVarbind_typeAndSize(
+                ret = VariableList_checkTypeAndLength(
                     request->requestvb, ASN01_OCTET_STR, 1 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -164,7 +164,7 @@ int mteEventTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTEEVENTENABLED:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -178,14 +178,14 @@ int mteEventTable_handler( MibHandler* handler,
                 break;
 
             case COLUMN_MTEEVENTENTRYSTATUS:
-                ret = CheckVarbind_rowStatus( request->requestvb,
+                ret = VariableList_checkRowStatusTransition( request->requestvb,
                     ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 /* An active row can only be deleted */
-                if ( entry && entry->flags & MTE_EVENT_FLAG_ACTIVE && *request->requestvb->val.integer == TC_RS_NOTINSERVICE ) {
+                if ( entry && entry->flags & MTE_EVENT_FLAG_ACTIVE && *request->requestvb->value.integer == TC_RS_NOTINSERVICE ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_INCONSISTENTVALUE );
                     return PRIOT_ERR_NOERROR;
@@ -208,19 +208,19 @@ int mteEventTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
                     memset( mteOwner, 0, sizeof( mteOwner ) );
-                    memcpy( mteOwner, tinfo->indexes->val.string,
-                        tinfo->indexes->valLen );
+                    memcpy( mteOwner, tinfo->indexes->value.string,
+                        tinfo->indexes->valueLength );
                     memset( mteEName, 0, sizeof( mteEName ) );
                     memcpy( mteEName,
-                        tinfo->indexes->nextVariable->val.string,
-                        tinfo->indexes->nextVariable->valLen );
+                        tinfo->indexes->next->value.string,
+                        tinfo->indexes->next->valueLength );
 
                     row = mteEvent_createEntry( mteOwner, mteEName, 0 );
                     if ( !row ) {
@@ -243,7 +243,7 @@ int mteEventTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
@@ -300,23 +300,23 @@ int mteEventTable_handler( MibHandler* handler,
                 memset( entry->mteEventComment, 0,
                     sizeof( entry->mteEventComment ) );
                 memcpy( entry->mteEventComment,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
 
             case COLUMN_MTEEVENTACTIONS:
-                entry->mteEventActions = request->requestvb->val.string[ 0 ];
+                entry->mteEventActions = request->requestvb->value.string[ 0 ];
                 break;
 
             case COLUMN_MTEEVENTENABLED:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_EVENT_FLAG_ENABLED;
                 else
                     entry->flags &= ~MTE_EVENT_FLAG_ENABLED;
                 break;
 
             case COLUMN_MTEEVENTENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                     entry->flags |= MTE_EVENT_FLAG_ACTIVE;
                     break;

@@ -13,10 +13,10 @@
 
 #include "ifXTable.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "if-mib/ifTable/ifTable_defs.h"
 #include "if-mib/ifTable/ifTable_interface.h"
 #include "ifXTable_constants.h"
@@ -223,7 +223,7 @@ int ifXTable_post_request( ifXTable_registration* user_context, int rc )
             /*
              * notify library to save changed rows
              */
-            Api_storeNeeded( DefaultStore_getString( DsStorage_LIBRARY_ID,
+            Api_storeNeeded( DefaultStore_getString( DsStore_LIBRARY_ID,
                 DsStr_APPTYPE ) );
         }
 
@@ -685,7 +685,7 @@ The total number of octets received on the interface,
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCInOctets_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCInOctets_val_ptr )
+    Integer64* ifHCInOctets_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCInOctets_val_ptr );
@@ -740,7 +740,7 @@ The number of packets, delivered by this sub-layer to a
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCInUcastPkts_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCInUcastPkts_val_ptr )
+    Integer64* ifHCInUcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCInUcastPkts_val_ptr );
@@ -796,7 +796,7 @@ The number of packets, delivered by this sub-layer to a
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCInMulticastPkts_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCInMulticastPkts_val_ptr )
+    Integer64* ifHCInMulticastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCInMulticastPkts_val_ptr );
@@ -851,7 +851,7 @@ The number of packets, delivered by this sub-layer to a
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCInBroadcastPkts_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCInBroadcastPkts_val_ptr )
+    Integer64* ifHCInBroadcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCInBroadcastPkts_val_ptr );
@@ -905,7 +905,7 @@ The total number of octets transmitted out of the
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCOutOctets_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCOutOctets_val_ptr )
+    Integer64* ifHCOutOctets_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCOutOctets_val_ptr );
@@ -961,7 +961,7 @@ The total number of packets that higher-level protocols
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCOutUcastPkts_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCOutUcastPkts_val_ptr )
+    Integer64* ifHCOutUcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCOutUcastPkts_val_ptr );
@@ -1018,7 +1018,7 @@ The total number of packets that higher-level protocols
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCOutMulticastPkts_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCOutMulticastPkts_val_ptr )
+    Integer64* ifHCOutMulticastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCOutMulticastPkts_val_ptr );
@@ -1074,7 +1074,7 @@ The total number of packets that higher-level protocols
  * @retval MFD_ERROR           : Any other error
  */
 int ifHCOutBroadcastPkts_get( ifXTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ifHCOutBroadcastPkts_val_ptr )
+    Integer64* ifHCOutBroadcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ifHCOutBroadcastPkts_val_ptr );

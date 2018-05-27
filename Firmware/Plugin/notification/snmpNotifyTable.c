@@ -11,15 +11,15 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Assert.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "SysORTable.h"
-#include "Tc.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
+#include "TextualConvention.h"
 #include "Trap.h"
 #include "Vacm.h"
 #include "VarStruct.h"
@@ -31,7 +31,7 @@
 
 #include "PluginSettings.h"
 
-Callback_CallbackFT store_snmpNotifyTable;
+Callback_f store_snmpNotifyTable;
 
 /*
  * snmpNotifyTable_variables_oid:
@@ -83,7 +83,7 @@ _checkFilter( const char* paramName, Types_Pdu* pdu )
     /*
      * find appropriate filterProfileEntry
      */
-    Types_VariableList *var, *trap_var;
+    VariableList *var, *trap_var;
     char* profileName;
     size_t profileNameLen;
     struct Vacm_ViewEntry_s *vp, *head;
@@ -146,12 +146,12 @@ _checkFilter( const char* paramName, Types_Pdu* pdu )
    then the notification name is considered excluded, and the
    notification should not be sent to this management target.
          */
-        vp = Vacm_viewGet( head, profileName, trap_var->val.objid,
-            trap_var->valLen / sizeof( oid ), VACM_MODE_FIND );
+        vp = Vacm_viewGet( head, profileName, trap_var->value.objectId,
+            trap_var->valueLength / sizeof( oid ), VACM_MODE_FIND );
         if ( ( NULL == vp ) || ( PRIOT_VIEW_INCLUDED != vp->viewType ) ) {
             DEBUG_MSGTL( ( "send_notifications", "  filtered (snmpTrapOID.0 " ) );
-            DEBUG_MSGOID( ( "send_notifications", trap_var->val.objid,
-                trap_var->valLen / sizeof( oid ) ) );
+            DEBUG_MSGOID( ( "send_notifications", trap_var->value.objectId,
+                trap_var->valueLength / sizeof( oid ) ) );
             DEBUG_MSG( ( "send_notifications", " not included)\n" ) );
             free( head );
             return 1;
@@ -161,7 +161,7 @@ _checkFilter( const char* paramName, Types_Pdu* pdu )
     /*
      * check varbinds
      */
-    for ( var = pdu->variables; var; var = var->nextVariable ) {
+    for ( var = pdu->variables; var; var = var->next ) {
         /*
                                                                For an
    object instance, if none match, the object instance is considered
@@ -405,16 +405,16 @@ void init_snmpNotifyTable( void )
     /*
      * we need to be called back later to store our data
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_snmpNotifyTable, NULL );
 
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_SEND_TRAP2, send_notifications,
         NULL );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_REGISTER_NOTIFICATIONS,
         notifyTable_register_notifications, NULL );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         notifyTable_unregister_notifications, NULL );
 
@@ -432,22 +432,22 @@ void shutdown_snmpNotifyTable( void )
 {
     DEBUG_MSGTL( ( "snmpNotifyTable", "shutting down ... " ) );
 
-    notifyTable_unregister_notifications( CALLBACK_APPLICATION,
+    notifyTable_unregister_notifications( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         NULL,
         NULL );
 
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         notifyTable_unregister_notifications, NULL, FALSE );
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_REGISTER_NOTIFICATIONS,
         notifyTable_register_notifications, NULL, FALSE );
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_SEND_TRAP2, send_notifications,
         NULL, FALSE );
 
-    Callback_unregisterCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_unregister( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_snmpNotifyTable, NULL, FALSE );
 
     UNREGISTER_SYSOR_ENTRY( snmpNotifyFullCompliance );
@@ -460,7 +460,7 @@ void shutdown_snmpNotifyTable( void )
  */
 int snmpNotifyTable_add( struct snmpNotifyTable_data* thedata )
 {
-    Types_VariableList* vars = NULL;
+    VariableList* vars = NULL;
     int retVal;
 
     DEBUG_MSGTL( ( "snmpNotifyTable", "adding data...  " ) );
@@ -866,7 +866,7 @@ int write_snmpNotifyRowStatus( int action,
     size_t newlen = name_len - ( sizeof( snmpNotifyTable_variables_oid ) / sizeof( oid ) + 3 - 1 );
     static int old_value;
     int set_value = *( ( long* )var_val );
-    static Types_VariableList *vars, *vp;
+    static VariableList *vars, *vp;
     struct header_complex_index* hciptr;
 
     DEBUG_MSGTL( ( "snmpNotifyTable",
@@ -943,13 +943,13 @@ int write_snmpNotifyRowStatus( int action,
             if ( StorageNew == NULL ) {
                 return PRIOT_ERR_RESOURCEUNAVAILABLE;
             }
-            StorageNew->snmpNotifyName = ( char* )calloc( 1, vp->valLen + 1 );
+            StorageNew->snmpNotifyName = ( char* )calloc( 1, vp->valueLength + 1 );
             if ( StorageNew->snmpNotifyName == NULL ) {
                 return PRIOT_ERR_RESOURCEUNAVAILABLE;
             }
-            memcpy( StorageNew->snmpNotifyName, vp->val.string, vp->valLen );
-            StorageNew->snmpNotifyNameLen = vp->valLen;
-            vp = vp->nextVariable;
+            memcpy( StorageNew->snmpNotifyName, vp->value.string, vp->valueLength );
+            StorageNew->snmpNotifyNameLen = vp->valueLength;
+            vp = vp->next;
 
             /*
              * default values

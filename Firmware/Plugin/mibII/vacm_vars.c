@@ -15,7 +15,7 @@
 #include "AgentRegistry.h"
 #include "Impl.h"
 #include "SysORTable.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "VarStruct.h"
 #include "utilities/header_generic.h"
 
@@ -88,7 +88,7 @@ void init_vacm_vars( void )
     /*
      * we need to be called back later 
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         Vacm_storeVacm, NULL );
 
     /*

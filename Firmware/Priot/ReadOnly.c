@@ -1,5 +1,5 @@
 #include "ReadOnly.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 
 /** @defgroup read_only read_only

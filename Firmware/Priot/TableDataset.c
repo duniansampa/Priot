@@ -1,13 +1,13 @@
 #include "TableDataset.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Parse.h"
 #include "ReadConfig.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
+#include "TextualConvention.h"
 
 static Map* _autoTables;
 
@@ -583,7 +583,7 @@ int TableDataset_helperHandler( MibHandler* handler,
                  * the RowStatus object (essentially duplicating the
                  * steps followed earlier in the 'allow_creation' case)
                  */
-                switch ( *( request->requestvb->val.integer ) ) {
+                switch ( *( request->requestvb->value.integer ) ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     newrowstash = TableDataset_createNewrowstash(
@@ -616,7 +616,7 @@ int TableDataset_helperHandler( MibHandler* handler,
                 continue;
             }
             if ( datatable->rowstatus_column == table_info->colnum ) {
-                switch ( *( request->requestvb->val.integer ) ) {
+                switch ( *( request->requestvb->value.integer ) ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_NOTINSERVICE:
                     /*
@@ -668,16 +668,16 @@ int TableDataset_helperHandler( MibHandler* handler,
              */
             MEMORY_FREE( data->data.string );
             data->data.string = ( u_char* )
-                Memory_strdupAndNull( request->requestvb->val.string,
-                    request->requestvb->valLen );
+                Memory_strdupAndNull( request->requestvb->value.string,
+                    request->requestvb->valueLength );
             if ( !data->data.string ) {
                 Agent_setRequestError( reqinfo, requests,
                     PRIOT_ERR_RESOURCEUNAVAILABLE );
             }
-            data->data_len = request->requestvb->valLen;
+            data->data_len = request->requestvb->valueLength;
 
             if ( datatable->rowstatus_column == table_info->colnum ) {
-                switch ( *( request->requestvb->val.integer ) ) {
+                switch ( *( request->requestvb->value.integer ) ) {
                 case TC_RS_CREATEANDGO:
                     /*
                      * XXX: check legality
@@ -902,17 +902,17 @@ _TableDataset_addIndexes( TableDataSet* table_set, struct Parse_Tree_s* tp )
         TableDataset_addIndex( table_set, type );
 
         /*
-         * hack alert: for fixed lenght strings, save the
-         * lenght for use during oid parsing.
+         * hack alert: for fixed length strings, save the
+         * length for use during oid parsing.
          */
         if ( fixed_len ) {
             /*
              * find last (just added) index
              */
-            Types_VariableList* var = table_set->table->indexes_template;
-            while ( NULL != var->nextVariable )
-                var = var->nextVariable;
-            var->valLen = fixed_len;
+            VariableList* var = table_set->table->indexes_template;
+            while ( NULL != var->next )
+                var = var->next;
+            var->valueLength = fixed_len;
         }
     }
 }
@@ -1059,7 +1059,7 @@ void TableDataset_configParseAddRow( const char* token, char* line )
     int rc;
 
     DataSetTables* tables;
-    Types_VariableList* vb; /* containing only types */
+    VariableList* vb; /* containing only types */
     TableRow* row;
     TableDataSetStorage* dr;
 
@@ -1077,7 +1077,7 @@ void TableDataset_configParseAddRow( const char* token, char* line )
     row = TableData_createTableDataRow();
 
     for ( vb = tables->table_set->table->indexes_template; vb;
-          vb = vb->nextVariable ) {
+          vb = vb->next ) {
         if ( !line ) {
             ReadConfig_configPwarn( "missing an index value" );
             MEMORY_FREE( row );

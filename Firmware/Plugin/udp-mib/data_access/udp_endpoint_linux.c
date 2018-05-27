@@ -5,9 +5,9 @@
  */
 
 #include "ReadConfig.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/File.h"
-#include "TextUtils.h"
+#include "System/Util/FileParser.h"
 #include "udp_endpoint_private.h"
 #include "utilities/get_pid_from_inode.h"
 
@@ -85,8 +85,8 @@ int netsnmp_arch_udp_endpoint_container_load( Container_Container* container,
  * process token value index line
  */
 static int
-_process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
-    struct TextUtils_LineProcessInfo_s* lpi )
+_process_line_udp_ep( TextLineInfo_t* line_info, void* mem,
+    struct TextLineProcessInfo_s* lpi )
 {
     netsnmp_udp_endpoint_entry* ep = ( netsnmp_udp_endpoint_entry* )mem;
     char *ptr, *sep;
@@ -102,13 +102,13 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
     if ( NULL == ptr ) {
         DEBUG_MSGTL( ( "access:udp_endpoint", "no sl '%s'\n",
             line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     ptr = ReadConfig_skipWhite( ptr );
     if ( NULL == ptr ) {
         DEBUG_MSGTL( ( "text:util:tvi", "no space after sl '%s'\n",
             line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
 
     /*
@@ -122,20 +122,20 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
     if ( NULL == sep ) {
         DEBUG_MSGTL( ( "text:util:tvi", "no ':' '%s'\n",
             line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     len = ( sep - ptr );
     if ( -1 == Utilities_addrStringHton( ptr, len ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad length %d for loc addr '%s'\n",
             ( int )u_ptr_len, line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     offset = 0;
     Convert_hexStringToBinaryString( &u_ptr, &u_ptr_len, &offset, 0, ptr, NULL );
     if ( ( 4 != offset ) && ( 16 != offset ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad offset %d for loc addr '%s'\n",
             ( int )offset, line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     ep->loc_addr_len = offset;
     ptr += ( offset * 2 );
@@ -158,20 +158,20 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
     if ( NULL == sep ) {
         DEBUG_MSGTL( ( "text:util:tvi", "no ':' '%s'\n",
             line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     len = ( sep - ptr );
     if ( -1 == Utilities_addrStringHton( ptr, len ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad length %d for rmt addr '%s'\n",
             ( int )u_ptr_len, line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     offset = 0;
     Convert_hexStringToBinaryString( &u_ptr, &u_ptr_len, &offset, 0, ptr, NULL );
     if ( ( 4 != offset ) && ( 16 != offset ) ) {
         DEBUG_MSGTL( ( "text:util:tvi", "bad offset %d for rmt addr '%s'\n",
             ( int )offset, line_info->start ) );
-        return TEXTUTILS_PMLP_RC_MEMORY_UNUSED;
+        return fpRETURN_CODE_MEMORY_UNUSED;
     }
     ep->rmt_addr_len = offset;
     ptr += ( offset * 2 );
@@ -204,13 +204,13 @@ _process_line_udp_ep( TextUtils_LineInfo* line_info, void* mem,
      */
     ep->pid = netsnmp_get_pid_from_inode( inode );
 
-    ep->index = ( uintptr_t )( lpi->user_context );
-    lpi->user_context = ( void* )( ( char* )( lpi->user_context ) + 1 );
+    ep->index = ( uintptr_t )( lpi->userContext );
+    lpi->userContext = ( void* )( ( char* )( lpi->userContext ) + 1 );
 
     ep->oid_index.oids = &ep->index;
     ep->oid_index.len = 1;
 
-    return TEXTUTILS_PMLP_RC_MEMORY_USED;
+    return fpRETURN_CODE_MEMORY_USED;
 }
 
 /**
@@ -222,7 +222,7 @@ static int
 _load4( Container_Container* container, u_int load_flags )
 {
     File* fp;
-    TextUtils_LineProcessInfo lpi;
+    TextLineProcessInfo_t textLineProcessInfo;
 
     if ( NULL == container )
         return -1;
@@ -234,13 +234,13 @@ _load4( Container_Container* container, u_int load_flags )
     if ( NULL == fp ) /** msg already logged */
         return -2;
 
-    memset( &lpi, 0x0, sizeof( lpi ) );
-    lpi.mem_size = sizeof( netsnmp_udp_endpoint_entry );
-    lpi.process = _process_line_udp_ep;
-    lpi.user_context = ( void* )0;
+    memset( &textLineProcessInfo, 0x0, sizeof( textLineProcessInfo ) );
+    textLineProcessInfo.memSize = sizeof( netsnmp_udp_endpoint_entry );
+    textLineProcessInfo.processFunc = _process_line_udp_ep;
+    textLineProcessInfo.userContext = ( void* )0;
 
-    container = TextUtils_fileTextParse( fp, container, TEXTUTILS_PM_USER_FUNCTION,
-        0, &lpi );
+    container = FileParser_parse( fp, container, fpPARSE_MODE_USER_FUNCTION,
+        0, &textLineProcessInfo );
     File_release( fp );
     return ( NULL == container );
 }

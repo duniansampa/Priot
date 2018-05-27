@@ -6,7 +6,7 @@
 #include "dlmod.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "ReadConfig.h"

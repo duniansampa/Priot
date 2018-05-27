@@ -1,32 +1,32 @@
 #include "V3.h"
-#include "System/Util/Utilities.h"
-#include "Priot.h"
-#include "DefaultStore.h"
-#include "System/Util/Utilities.h"
-#include "ReadConfig.h"
-#include "Usm.h"
-#include "System.h"
-#include "System/Util/Logger.h"
-#include "Secmod.h"
-#include "LcdTime.h"
-#include "System/String.h"
 #include "Api.h"
-#include "System/Util/Debug.h"
+#include "System/Util/DefaultStore.h"
+#include "LcdTime.h"
+#include "Priot.h"
+#include "ReadConfig.h"
+#include "Secmod.h"
+#include "System.h"
+#include "System/String.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
+#include "System/Util/Utilities.h"
+#include "Usm.h"
 
-#include <sys/ioctl.h>
 #include <net/if.h>
+#include <sys/ioctl.h>
 
-static u_long   _v3_engineBoots = 1;
+static u_long _v3_engineBoots = 1;
 static unsigned int _v3_engineIDType = ENGINEID_TYPE_NETSNMP_RND;
-static unsigned char * _v3_engineID = NULL;
-static size_t   _v3_engineIDLength = 0;
-static unsigned char * _v3_engineIDNic = NULL;
-static unsigned int _v3_engineIDIsSet = 0;  /* flag if ID set by config */
-static unsigned char * _v3_oldEngineID = NULL;
-static size_t   _v3_oldEngineIDLength = 0;
+static unsigned char* _v3_engineID = NULL;
+static size_t _v3_engineIDLength = 0;
+static unsigned char* _v3_engineIDNic = NULL;
+static unsigned int _v3_engineIDIsSet = 0; /* flag if ID set by config */
+static unsigned char* _v3_oldEngineID = NULL;
+static size_t _v3_oldEngineIDLength = 0;
 static struct timeval _v3_starttime;
 
-static int      _V3_getHwAddress(const char *networkDevice, char *addressOut);
+static int _V3_getHwAddress( const char* networkDevice, char* addressOut );
 
 /*******************************************************************-o-******
  * snmpv3_secLevel_conf
@@ -39,196 +39,187 @@ static int      _V3_getHwAddress(const char *networkDevice, char *addressOut);
  *	defSecurityLevel "noAuthNoPriv" | "authNoPriv" | "authPriv"
  */
 
-int V3_parseSecLevelConf(const char *word, char *cptr) {
-    if (strcasecmp(cptr, "noAuthNoPriv") == 0 || strcmp(cptr, "1") == 0 ||
-    strcasecmp(cptr, "nanp") == 0) {
+int V3_parseSecLevelConf( const char* word, char* cptr )
+{
+    if ( strcasecmp( cptr, "noAuthNoPriv" ) == 0 || strcmp( cptr, "1" ) == 0 || strcasecmp( cptr, "nanp" ) == 0 ) {
         return PRIOT_SEC_LEVEL_NOAUTH;
-    } else if (strcasecmp(cptr, "authNoPriv") == 0 || strcmp(cptr, "2") == 0 ||
-           strcasecmp(cptr, "anp") == 0) {
+    } else if ( strcasecmp( cptr, "authNoPriv" ) == 0 || strcmp( cptr, "2" ) == 0 || strcasecmp( cptr, "anp" ) == 0 ) {
         return PRIOT_SEC_LEVEL_AUTHNOPRIV;
-    } else if (strcasecmp(cptr, "authPriv") == 0 || strcmp(cptr, "3") == 0 ||
-           strcasecmp(cptr, "ap") == 0) {
+    } else if ( strcasecmp( cptr, "authPriv" ) == 0 || strcmp( cptr, "3" ) == 0 || strcasecmp( cptr, "ap" ) == 0 ) {
         return PRIOT_SEC_LEVEL_AUTHPRIV;
     } else {
         return -1;
     }
 }
 
-void V3_secLevelConf(const char *word, char *cptr)
+void V3_secLevelConf( const char* word, char* cptr )
 {
-    int             secLevel;
+    int secLevel;
 
-    if ((secLevel = V3_parseSecLevelConf( word, cptr )) >= 0 ) {
-        DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_SECLEVEL, secLevel);
+    if ( ( secLevel = V3_parseSecLevelConf( word, cptr ) ) >= 0 ) {
+        DefaultStore_setInt( DsStore_LIBRARY_ID, DsInt_SECLEVEL, secLevel );
     } else {
-    ReadConfig_error("Unknown security level: %s", cptr);
+        ReadConfig_error( "Unknown security level: %s", cptr );
     }
-    DEBUG_MSGTL(("snmpv3", "default secLevel set to: %s = %d\n", cptr,
-                DefaultStore_getInt(DsStorage_LIBRARY_ID,
-                   DsInt_SECLEVEL)));
+    DEBUG_MSGTL( ( "snmpv3", "default secLevel set to: %s = %d\n", cptr,
+        DefaultStore_getInt( DsStore_LIBRARY_ID,
+                       DsInt_SECLEVEL ) ) );
 }
 
-
-
-int V3_options(char *optarg, Types_Session * session, char **Apsz,
-               char **Xpsz, int argc, char *const *argv)
+int V3_options( char* optarg, Types_Session* session, char** Apsz,
+    char** Xpsz, int argc, char* const* argv )
 {
-    char           *cp = optarg;
+    char* cp = optarg;
     int testcase;
     optarg++;
     /*
      * Support '... -3x=value ....' syntax
      */
-    if (*optarg == '=') {
+    if ( *optarg == '=' ) {
         optarg++;
     }
     /*
      * and '.... "-3x value" ....'  (*with* the quotes)
      */
-    while (*optarg && isspace((unsigned char)(*optarg))) {
+    while ( *optarg && isspace( ( unsigned char )( *optarg ) ) ) {
         optarg++;
     }
     /*
      * Finally, handle ".... -3x value ...." syntax
      *   (*without* surrounding quotes)
      */
-    if (!*optarg) {
+    if ( !*optarg ) {
         /*
          * We've run off the end of the argument
          *  so move on the the next.
          */
-        optarg = argv[optind++];
-        if (optind > argc) {
-            fprintf(stderr,
-                    "Missing argument after SNMPv3 '-3%c' option.\n", *cp);
-            return (-1);
+        optarg = argv[ optind++ ];
+        if ( optind > argc ) {
+            fprintf( stderr,
+                "Missing argument after SNMPv3 '-3%c' option.\n", *cp );
+            return ( -1 );
         }
     }
 
-    switch (*cp) {
+    switch ( *cp ) {
 
     case 'Z':
-        errno=0;
-        session->engineBoots = strtoul(optarg, &cp, 10);
-        if (errno || cp == optarg) {
-            fprintf(stderr, "Need engine boots value after -3Z flag.\n");
-            return (-1);
+        errno = 0;
+        session->engineBoots = strtoul( optarg, &cp, 10 );
+        if ( errno || cp == optarg ) {
+            fprintf( stderr, "Need engine boots value after -3Z flag.\n" );
+            return ( -1 );
         }
-        if (*cp == ',') {
-            char *endptr;
+        if ( *cp == ',' ) {
+            char* endptr;
             cp++;
-            session->engineTime = strtoul(cp, &endptr, 10);
-            if (errno || cp == endptr) {
-                fprintf(stderr, "Need engine time after \"-3Z engineBoot,\".\n");
-                return (-1);
+            session->engineTime = strtoul( cp, &endptr, 10 );
+            if ( errno || cp == endptr ) {
+                fprintf( stderr, "Need engine time after \"-3Z engineBoot,\".\n" );
+                return ( -1 );
             }
         } else {
-            fprintf(stderr, "Need engine time after \"-3Z engineBoot,\".\n");
-            return (-1);
+            fprintf( stderr, "Need engine time after \"-3Z engineBoot,\".\n" );
+            return ( -1 );
         }
         break;
 
-    case 'e':{
-            size_t          ebuf_len = 32, eout_len = 0;
-            u_char         *ebuf = (u_char *) malloc(ebuf_len);
+    case 'e': {
+        size_t ebuf_len = 32, eout_len = 0;
+        u_char* ebuf = ( u_char* )malloc( ebuf_len );
 
-            if (ebuf == NULL) {
-                fprintf(stderr, "malloc failure processing -3e flag.\n");
-                return (-1);
-            }
-            if (!Convert_hexStringToBinaryStringWrapper
-                (&ebuf, &ebuf_len, &eout_len, 1, optarg)) {
-                fprintf(stderr, "Bad engine ID value after -3e flag.\n");
-                MEMORY_FREE(ebuf);
-                return (-1);
-            }
-            session->securityEngineID = ebuf;
-            session->securityEngineIDLen = eout_len;
-            break;
+        if ( ebuf == NULL ) {
+            fprintf( stderr, "malloc failure processing -3e flag.\n" );
+            return ( -1 );
         }
-
-    case 'E':{
-            size_t          ebuf_len = 32, eout_len = 0;
-            u_char         *ebuf = (u_char *) malloc(ebuf_len);
-
-            if (ebuf == NULL) {
-                fprintf(stderr, "malloc failure processing -3E flag.\n");
-                return (-1);
-            }
-            if (!Convert_hexStringToBinaryStringWrapper
-                (&ebuf, &ebuf_len, &eout_len, 1, optarg)) {
-                fprintf(stderr, "Bad engine ID value after -3E flag.\n");
-                MEMORY_FREE(ebuf);
-                return (-1);
-            }
-            session->contextEngineID = ebuf;
-            session->contextEngineIDLen = eout_len;
-            break;
+        if ( !Convert_hexStringToBinaryStringWrapper( &ebuf, &ebuf_len, &eout_len, 1, optarg ) ) {
+            fprintf( stderr, "Bad engine ID value after -3e flag.\n" );
+            MEMORY_FREE( ebuf );
+            return ( -1 );
         }
+        session->securityEngineID = ebuf;
+        session->securityEngineIDLen = eout_len;
+        break;
+    }
+
+    case 'E': {
+        size_t ebuf_len = 32, eout_len = 0;
+        u_char* ebuf = ( u_char* )malloc( ebuf_len );
+
+        if ( ebuf == NULL ) {
+            fprintf( stderr, "malloc failure processing -3E flag.\n" );
+            return ( -1 );
+        }
+        if ( !Convert_hexStringToBinaryStringWrapper( &ebuf, &ebuf_len, &eout_len, 1, optarg ) ) {
+            fprintf( stderr, "Bad engine ID value after -3E flag.\n" );
+            MEMORY_FREE( ebuf );
+            return ( -1 );
+        }
+        session->contextEngineID = ebuf;
+        session->contextEngineIDLen = eout_len;
+        break;
+    }
 
     case 'n':
         session->contextName = optarg;
-        session->contextNameLen = strlen(optarg);
+        session->contextNameLen = strlen( optarg );
         break;
 
     case 'u':
         session->securityName = optarg;
-        session->securityNameLen = strlen(optarg);
+        session->securityNameLen = strlen( optarg );
         break;
 
     case 'l':
-        if (!strcasecmp(optarg, "noAuthNoPriv") || !strcmp(optarg, "1") ||
-            !strcasecmp(optarg, "nanp")) {
+        if ( !strcasecmp( optarg, "noAuthNoPriv" ) || !strcmp( optarg, "1" ) || !strcasecmp( optarg, "nanp" ) ) {
             session->securityLevel = PRIOT_SEC_LEVEL_NOAUTH;
-        } else if (!strcasecmp(optarg, "authNoPriv")
-                   || !strcmp(optarg, "2") || !strcasecmp(optarg, "anp")) {
+        } else if ( !strcasecmp( optarg, "authNoPriv" )
+            || !strcmp( optarg, "2" ) || !strcasecmp( optarg, "anp" ) ) {
             session->securityLevel = PRIOT_SEC_LEVEL_AUTHNOPRIV;
-        } else if (!strcasecmp(optarg, "authPriv") || !strcmp(optarg, "3")
-                   || !strcasecmp(optarg, "ap")) {
+        } else if ( !strcasecmp( optarg, "authPriv" ) || !strcmp( optarg, "3" )
+            || !strcasecmp( optarg, "ap" ) ) {
             session->securityLevel = PRIOT_SEC_LEVEL_AUTHPRIV;
         } else {
-            fprintf(stderr,
-                    "Invalid security level specified after -3l flag: %s\n",
-                    optarg);
-            return (-1);
+            fprintf( stderr,
+                "Invalid security level specified after -3l flag: %s\n",
+                optarg );
+            return ( -1 );
         }
 
         break;
 
     case 'a':
-        if (!strcasecmp(optarg, "MD5")) {
+        if ( !strcasecmp( optarg, "MD5" ) ) {
             session->securityAuthProto = usm_hMACMD5AuthProtocol;
             session->securityAuthProtoLen = USM_AUTH_PROTO_MD5_LEN;
-        } else
-            if (!strcasecmp(optarg, "SHA")) {
+        } else if ( !strcasecmp( optarg, "SHA" ) ) {
             session->securityAuthProto = usm_hMACSHA1AuthProtocol;
             session->securityAuthProtoLen = USM_AUTH_PROTO_SHA_LEN;
         } else {
-            fprintf(stderr,
-                    "Invalid authentication protocol specified after -3a flag: %s\n",
-                    optarg);
-            return (-1);
+            fprintf( stderr,
+                "Invalid authentication protocol specified after -3a flag: %s\n",
+                optarg );
+            return ( -1 );
         }
         break;
 
     case 'x':
         testcase = 0;
-        if (!strcasecmp(optarg, "DES")) {
+        if ( !strcasecmp( optarg, "DES" ) ) {
             session->securityPrivProto = usm_dESPrivProtocol;
             session->securityPrivProtoLen = USM_PRIV_PROTO_DES_LEN;
             testcase = 1;
         }
-        if (!strcasecmp(optarg, "AES128") ||
-            strcasecmp(optarg, "AES")) {
+        if ( !strcasecmp( optarg, "AES128" ) || strcasecmp( optarg, "AES" ) ) {
             session->securityPrivProto = usm_aES128PrivProtocol;
             session->securityPrivProtoLen = USM_PRIV_PROTO_AES128_LEN;
             testcase = 1;
         }
-        if (testcase == 0) {
-            fprintf(stderr,
-                    "Invalid privacy protocol specified after -3x flag: %s\n",
-                    optarg);
-            return (-1);
+        if ( testcase == 0 ) {
+            fprintf( stderr,
+                "Invalid privacy protocol specified after -3x flag: %s\n",
+                optarg );
+            return ( -1 );
         }
         break;
 
@@ -241,40 +232,39 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
         break;
 
     case 'm': {
-        size_t bufSize = sizeof(session->securityAuthKey);
-        u_char *tmpp = session->securityAuthKey;
-        if (!Convert_hexStringToBinaryStringWrapper(&tmpp, &bufSize,
-                                &session->securityAuthKeyLen, 0, optarg)) {
-            fprintf(stderr, "Bad key value after -3m flag.\n");
-            return (-1);
+        size_t bufSize = sizeof( session->securityAuthKey );
+        u_char* tmpp = session->securityAuthKey;
+        if ( !Convert_hexStringToBinaryStringWrapper( &tmpp, &bufSize,
+                 &session->securityAuthKeyLen, 0, optarg ) ) {
+            fprintf( stderr, "Bad key value after -3m flag.\n" );
+            return ( -1 );
         }
         break;
     }
 
     case 'M': {
-        size_t bufSize = sizeof(session->securityPrivKey);
-        u_char *tmpp = session->securityPrivKey;
-        if (!Convert_hexStringToBinaryStringWrapper(&tmpp, &bufSize,
-             &session->securityPrivKeyLen, 0, optarg)) {
-            fprintf(stderr, "Bad key value after -3M flag.\n");
-            return (-1);
+        size_t bufSize = sizeof( session->securityPrivKey );
+        u_char* tmpp = session->securityPrivKey;
+        if ( !Convert_hexStringToBinaryStringWrapper( &tmpp, &bufSize,
+                 &session->securityPrivKeyLen, 0, optarg ) ) {
+            fprintf( stderr, "Bad key value after -3M flag.\n" );
+            return ( -1 );
         }
         break;
     }
 
     case 'k': {
-        size_t          kbuf_len = 32, kout_len = 0;
-        u_char         *kbuf = (u_char *) malloc(kbuf_len);
+        size_t kbuf_len = 32, kout_len = 0;
+        u_char* kbuf = ( u_char* )malloc( kbuf_len );
 
-        if (kbuf == NULL) {
-            fprintf(stderr, "malloc failure processing -3k flag.\n");
-            return (-1);
+        if ( kbuf == NULL ) {
+            fprintf( stderr, "malloc failure processing -3k flag.\n" );
+            return ( -1 );
         }
-        if (!Convert_hexStringToBinaryStringWrapper
-            (&kbuf, &kbuf_len, &kout_len, 1, optarg)) {
-            fprintf(stderr, "Bad key value after -3k flag.\n");
-            MEMORY_FREE(kbuf);
-            return (-1);
+        if ( !Convert_hexStringToBinaryStringWrapper( &kbuf, &kbuf_len, &kout_len, 1, optarg ) ) {
+            fprintf( stderr, "Bad key value after -3k flag.\n" );
+            MEMORY_FREE( kbuf );
+            return ( -1 );
         }
         session->securityAuthLocalKey = kbuf;
         session->securityAuthLocalKeyLen = kout_len;
@@ -282,18 +272,17 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
     }
 
     case 'K': {
-        size_t          kbuf_len = 32, kout_len = 0;
-        u_char         *kbuf = (u_char *) malloc(kbuf_len);
+        size_t kbuf_len = 32, kout_len = 0;
+        u_char* kbuf = ( u_char* )malloc( kbuf_len );
 
-        if (kbuf == NULL) {
-            fprintf(stderr, "malloc failure processing -3K flag.\n");
-            return (-1);
+        if ( kbuf == NULL ) {
+            fprintf( stderr, "malloc failure processing -3K flag.\n" );
+            return ( -1 );
         }
-        if (!Convert_hexStringToBinaryStringWrapper
-            (&kbuf, &kbuf_len, &kout_len, 1, optarg)) {
-            fprintf(stderr, "Bad key value after -3K flag.\n");
-            MEMORY_FREE(kbuf);
-            return (-1);
+        if ( !Convert_hexStringToBinaryStringWrapper( &kbuf, &kbuf_len, &kout_len, 1, optarg ) ) {
+            fprintf( stderr, "Bad key value after -3K flag.\n" );
+            MEMORY_FREE( kbuf );
+            return ( -1 );
         }
         session->securityPrivLocalKey = kbuf;
         session->securityPrivLocalKeyLen = kout_len;
@@ -301,7 +290,7 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
     }
 
     default:
-        fprintf(stderr, "Unknown SNMPv3 option passed to -3: %c.\n", *cp);
+        fprintf( stderr, "Unknown SNMPv3 option passed to -3: %c.\n", *cp );
         return -1;
     }
     return 0;
@@ -332,37 +321,36 @@ int V3_options(char *optarg, Types_Session * session, char **Apsz,
  *       which is dependant on the current engineID.  Enumeration and other
  *       tricks won't work).
  */
-int V3_setupEngineID(u_char ** eidp, const char *text)
+int V3_setupEngineID( u_char** eidp, const char* text )
 {
-    int             enterpriseid = htonl(ENTERPRISE_OID),
-        netsnmpoid = htonl(NET_OID),
-        localsetup = (eidp) ? 0 : 1;
+    int enterpriseid = htonl( ENTERPRISE_OID ),
+        netsnmpoid = htonl( NET_OID ),
+        localsetup = ( eidp ) ? 0 : 1;
 
     /*
      * Use local engineID if *eidp == NULL.
      */
-    u_char          buf[UTILITIES_MAX_BUFFER_SMALL];
-    struct hostent *hent = NULL;
+    u_char buf[ UTILITIES_MAX_BUFFER_SMALL ];
+    struct hostent* hent = NULL;
 
-    u_char         *bufp = NULL;
-    size_t          len;
-    int             localEngineIDType = _v3_engineIDType;
-    int             tmpint;
-    time_t          tmptime;
+    u_char* bufp = NULL;
+    size_t len;
+    int localEngineIDType = _v3_engineIDType;
+    int tmpint;
+    time_t tmptime;
 
     _v3_engineIDIsSet = 1;
 
     /*
      * see if they selected IPV4 or IPV6 support
      */
-    if ((ENGINEID_TYPE_IPV6 == localEngineIDType) ||
-        (ENGINEID_TYPE_IPV4 == localEngineIDType)) {
+    if ( ( ENGINEID_TYPE_IPV6 == localEngineIDType ) || ( ENGINEID_TYPE_IPV4 == localEngineIDType ) ) {
         /*
          * get the host name and save the information
          */
-        gethostname((char *) buf, sizeof(buf));
-        hent = System_gethostbyname((char *) buf);
-        if (hent && hent->h_addrtype == AF_INET6) {
+        gethostname( ( char* )buf, sizeof( buf ) );
+        hent = System_gethostbyname( ( char* )buf );
+        if ( hent && hent->h_addrtype == AF_INET6 ) {
             localEngineIDType = ENGINEID_TYPE_IPV6;
         } else {
             /*
@@ -376,80 +364,78 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
      * Determine if we have text and if so setup our localEngineIDType
      * * appropriately.
      */
-    if (NULL != text) {
+    if ( NULL != text ) {
         _v3_engineIDType = localEngineIDType = ENGINEID_TYPE_TEXT;
     }
     /*
      * Determine length of the engineID string.
      */
-    len = 5;                    /* always have 5 leading bytes */
-    switch (localEngineIDType) {
+    len = 5; /* always have 5 leading bytes */
+    switch ( localEngineIDType ) {
     case ENGINEID_TYPE_TEXT:
-        if (NULL == text) {
-            Logger_log(LOGGER_PRIORITY_ERR,
-                     "Can't set up engineID of type text from an empty string.\n");
+        if ( NULL == text ) {
+            Logger_log( LOGGER_PRIORITY_ERR,
+                "Can't set up engineID of type text from an empty string.\n" );
             return -1;
         }
-        len += strlen(text);    /* 5 leading bytes+text. No NULL char */
+        len += strlen( text ); /* 5 leading bytes+text. No NULL char */
         break;
-    case ENGINEID_TYPE_MACADDR:        /* MAC address */
-        len += 6;               /* + 6 bytes for MAC address */
+    case ENGINEID_TYPE_MACADDR: /* MAC address */
+        len += 6; /* + 6 bytes for MAC address */
         break;
-    case ENGINEID_TYPE_IPV4:   /* IPv4 */
-        len += 4;               /* + 4 byte IPV4 address */
+    case ENGINEID_TYPE_IPV4: /* IPv4 */
+        len += 4; /* + 4 byte IPV4 address */
         break;
-    case ENGINEID_TYPE_IPV6:   /* IPv6 */
-        len += 16;              /* + 16 byte IPV6 address */
+    case ENGINEID_TYPE_IPV6: /* IPv6 */
+        len += 16; /* + 16 byte IPV6 address */
         break;
-    case ENGINEID_TYPE_NETSNMP_RND:        /* Net-SNMP specific encoding */
-        if (_v3_engineID)           /* already setup, keep current value */
+    case ENGINEID_TYPE_NETSNMP_RND: /* Net-SNMP specific encoding */
+        if ( _v3_engineID ) /* already setup, keep current value */
             return _v3_engineIDLength;
-        if (_v3_oldEngineID) {
+        if ( _v3_oldEngineID ) {
             len = _v3_oldEngineIDLength;
         } else {
-            len += sizeof(int) + sizeof(time_t);
+            len += sizeof( int ) + sizeof( time_t );
         }
         break;
     default:
-        Logger_log(LOGGER_PRIORITY_ERR,
-                 "Unknown EngineID type requested for setup (%d).  Using IPv4.\n",
-                 localEngineIDType);
+        Logger_log( LOGGER_PRIORITY_ERR,
+            "Unknown EngineID type requested for setup (%d).  Using IPv4.\n",
+            localEngineIDType );
         localEngineIDType = ENGINEID_TYPE_IPV4; /* make into IPV4 */
-        len += 4;               /* + 4 byte IPv4 address */
+        len += 4; /* + 4 byte IPv4 address */
         break;
-    }                           /* switch */
-
+    } /* switch */
 
     /*
      * Allocate memory and store enterprise ID.
      */
-    if ((bufp = (u_char *) malloc(len)) == NULL) {
-        Logger_logPerror("setup_engineID malloc");
+    if ( ( bufp = ( u_char* )malloc( len ) ) == NULL ) {
+        Logger_logPerror( "setup_engineID malloc" );
         return -1;
     }
-    if (localEngineIDType == ENGINEID_TYPE_NETSNMP_RND)
+    if ( localEngineIDType == ENGINEID_TYPE_NETSNMP_RND )
         /*
          * we must use the net-snmp enterprise id here, regardless
          */
-        memcpy(bufp, &netsnmpoid, sizeof(netsnmpoid));    /* XXX Must be 4 bytes! */
+        memcpy( bufp, &netsnmpoid, sizeof( netsnmpoid ) ); /* XXX Must be 4 bytes! */
     else
-        memcpy(bufp, &enterpriseid, sizeof(enterpriseid));      /* XXX Must be 4 bytes! */
+        memcpy( bufp, &enterpriseid, sizeof( enterpriseid ) ); /* XXX Must be 4 bytes! */
 
-    bufp[0] |= 0x80;
-
+    bufp[ 0 ] |= 0x80;
 
     /*
      * Store the given text  -OR-   the first found IP address
      *  -OR-  the MAC address  -OR-  random elements
      * (the latter being the recommended default)
      */
-    switch (localEngineIDType) {
+    switch ( localEngineIDType ) {
     case ENGINEID_TYPE_NETSNMP_RND:
-        if (_v3_oldEngineID) {
+        if ( _v3_oldEngineID ) {
             /*
              * keep our previous notion of the engineID
              */
-            memcpy(bufp, _v3_oldEngineID, _v3_oldEngineIDLength);
+            memcpy( bufp, _v3_oldEngineID, _v3_oldEngineIDLength );
         } else {
             /*
              * Here we've desigend our own ENGINEID that is not based on
@@ -462,54 +448,52 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
              * that may not have a correct clock setting and random number
              * seed at startup, but few OSes should have that problem.
              */
-            bufp[4] = ENGINEID_TYPE_NETSNMP_RND;
+            bufp[ 4 ] = ENGINEID_TYPE_NETSNMP_RND;
             tmpint = random();
-            memcpy(bufp + 5, &tmpint, sizeof(tmpint));
-            tmptime = time(NULL);
-            memcpy(bufp + 5 + sizeof(tmpint), &tmptime, sizeof(tmptime));
+            memcpy( bufp + 5, &tmpint, sizeof( tmpint ) );
+            tmptime = time( NULL );
+            memcpy( bufp + 5 + sizeof( tmpint ), &tmptime, sizeof( tmptime ) );
         }
         break;
     case ENGINEID_TYPE_TEXT:
-        bufp[4] = ENGINEID_TYPE_TEXT;
-        memcpy((char *) bufp + 5, (text), strlen(text));
+        bufp[ 4 ] = ENGINEID_TYPE_TEXT;
+        memcpy( ( char* )bufp + 5, ( text ), strlen( text ) );
         break;
     case ENGINEID_TYPE_IPV6:
-        bufp[4] = ENGINEID_TYPE_IPV6;
-        memcpy(bufp + 5, hent->h_addr_list[0], hent->h_length);
+        bufp[ 4 ] = ENGINEID_TYPE_IPV6;
+        memcpy( bufp + 5, hent->h_addr_list[ 0 ], hent->h_length );
         break;
 
-    case ENGINEID_TYPE_MACADDR:
-        {
-            int             x;
-            bufp[4] = ENGINEID_TYPE_MACADDR;
-            /*
+    case ENGINEID_TYPE_MACADDR: {
+        int x;
+        bufp[ 4 ] = ENGINEID_TYPE_MACADDR;
+        /*
              * use default NIC if none provided
              */
-            if (NULL == _v3_engineIDNic) {
-          x = _V3_getHwAddress(DEFAULT_NIC, (char *)&bufp[5]);
-            } else {
-          x = _V3_getHwAddress((char *)_v3_engineIDNic, (char *)&bufp[5]);
-            }
-            if (0 != x)
-                /*
+        if ( NULL == _v3_engineIDNic ) {
+            x = _V3_getHwAddress( DEFAULT_NIC, ( char* )&bufp[ 5 ] );
+        } else {
+            x = _V3_getHwAddress( ( char* )_v3_engineIDNic, ( char* )&bufp[ 5 ] );
+        }
+        if ( 0 != x )
+        /*
                  * function failed fill MAC address with zeros
                  */
-            {
-                memset(&bufp[5], 0, 6);
-            }
+        {
+            memset( &bufp[ 5 ], 0, 6 );
         }
-        break;
+    } break;
     case ENGINEID_TYPE_IPV4:
     default:
-        bufp[4] = ENGINEID_TYPE_IPV4;
-        if (hent && hent->h_addrtype == AF_INET) {
-            memcpy(bufp + 5, hent->h_addr_list[0], hent->h_length);
-        } else {                /* Unknown address type.  Default to 127.0.0.1. */
+        bufp[ 4 ] = ENGINEID_TYPE_IPV4;
+        if ( hent && hent->h_addrtype == AF_INET ) {
+            memcpy( bufp + 5, hent->h_addr_list[ 0 ], hent->h_length );
+        } else { /* Unknown address type.  Default to 127.0.0.1. */
 
-            bufp[5] = 127;
-            bufp[6] = 0;
-            bufp[7] = 0;
-            bufp[8] = 1;
+            bufp[ 5 ] = 127;
+            bufp[ 6 ] = 0;
+            bufp[ 7 ] = 0;
+            bufp[ 8 ] = 1;
         }
 
         break;
@@ -519,8 +503,8 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
      * Pass the string back to the calling environment, or use it for
      * our local engineID.
      */
-    if (localsetup) {
-        MEMORY_FREE(_v3_engineID);
+    if ( localsetup ) {
+        MEMORY_FREE( _v3_engineID );
         _v3_engineID = bufp;
         _v3_engineIDLength = len;
 
@@ -528,17 +512,16 @@ int V3_setupEngineID(u_char ** eidp, const char *text)
         *eidp = bufp;
     }
 
-
     return len;
 
-}                               /* end setup_engineID() */
+} /* end setup_engineID() */
 
-int V3_freeEngineID(int majorid, int minorid, void *serverarg,
-          void *clientarg)
+int V3_freeEngineID( int majorid, int minorid, void* serverarg,
+    void* clientarg )
 {
-    MEMORY_FREE(_v3_engineID);
-    MEMORY_FREE(_v3_engineIDNic);
-    MEMORY_FREE(_v3_oldEngineID);
+    MEMORY_FREE( _v3_engineID );
+    MEMORY_FREE( _v3_engineIDNic );
+    MEMORY_FREE( _v3_oldEngineID );
     _v3_engineIDIsSet = 0;
     return 0;
 }
@@ -553,10 +536,10 @@ int V3_freeEngineID(int majorid, int minorid, void *serverarg,
  * Line syntax:
  *	engineBoots <num_boots>
  */
-void V3_engineBootsConf(const char *word, char *cptr)
+void V3_engineBootsConf( const char* word, char* cptr )
 {
-    _v3_engineBoots = atoi(cptr) + 1;
-    DEBUG_MSGTL(("snmpv3", "v3_engineBoots: %lu\n", _v3_engineBoots));
+    _v3_engineBoots = atoi( cptr ) + 1;
+    DEBUG_MSGTL( ( "snmpv3", "v3_engineBoots: %lu\n", _v3_engineBoots ) );
 }
 
 /*******************************************************************-o-******
@@ -573,29 +556,29 @@ void V3_engineBootsConf(const char *word, char *cptr)
  *		2 is for IPv6.
  *		3 is hardware (MAC) address, currently supported under Linux
  */
-void V3_engineIDTypeConf(const char *word, char *cptr)
+void V3_engineIDTypeConf( const char* word, char* cptr )
 {
-    _v3_engineIDType = atoi(cptr);
+    _v3_engineIDType = atoi( cptr );
     /*
      * verify valid type selected
      */
-    switch (_v3_engineIDType) {
-    case ENGINEID_TYPE_IPV4:   /* IPv4 */
-    case ENGINEID_TYPE_IPV6:   /* IPv6 */
+    switch ( _v3_engineIDType ) {
+    case ENGINEID_TYPE_IPV4: /* IPv4 */
+    case ENGINEID_TYPE_IPV6: /* IPv6 */
         /*
          * IPV? is always good
          */
         break;
-    case ENGINEID_TYPE_MACADDR:        /* MAC address */
+    case ENGINEID_TYPE_MACADDR: /* MAC address */
         break;
     default:
         /*
          * unsupported one chosen
          */
-        ReadConfig_configPerror("Unsupported enginedIDType, forcing IPv4");
+        ReadConfig_configPerror( "Unsupported enginedIDType, forcing IPv4" );
         _v3_engineIDType = ENGINEID_TYPE_IPV4;
     }
-    DEBUG_MSGTL(("snmpv3", "engineIDType: %d\n", _v3_engineIDType));
+    DEBUG_MSGTL( ( "snmpv3", "engineIDType: %d\n", _v3_engineIDType ) );
 }
 
 /*******************************************************************-o-******
@@ -609,34 +592,33 @@ void V3_engineIDTypeConf(const char *word, char *cptr)
  *	engineIDNic <string>
  *		eth0 is default
  */
-void
-V3_engineIDNicConf(const char *word, char *cptr)
+void V3_engineIDNicConf( const char* word, char* cptr )
 {
     /*
      * Make sure they haven't already specified the engineID via the
      * * configuration file
      */
-    if (0 == _v3_engineIDIsSet)
-        /*
+    if ( 0 == _v3_engineIDIsSet )
+    /*
          * engineID has NOT been set via configuration file
          */
     {
         /*
          * See if already set if so erase & release it
          */
-        MEMORY_FREE(_v3_engineIDNic);
-        _v3_engineIDNic = (u_char *) malloc(strlen(cptr) + 1);
-        if (NULL != _v3_engineIDNic) {
-            strcpy((char *) _v3_engineIDNic, cptr);
-            DEBUG_MSGTL(("snmpv3", "Initializing engineIDNic: %s\n",
-                        _v3_engineIDNic));
+        MEMORY_FREE( _v3_engineIDNic );
+        _v3_engineIDNic = ( u_char* )malloc( strlen( cptr ) + 1 );
+        if ( NULL != _v3_engineIDNic ) {
+            strcpy( ( char* )_v3_engineIDNic, cptr );
+            DEBUG_MSGTL( ( "snmpv3", "Initializing engineIDNic: %s\n",
+                _v3_engineIDNic ) );
         } else {
-            DEBUG_MSGTL(("snmpv3",
-                        "Error allocating memory for engineIDNic!\n"));
+            DEBUG_MSGTL( ( "snmpv3",
+                "Error allocating memory for engineIDNic!\n" ) );
         }
     } else {
-        DEBUG_MSGTL(("snmpv3",
-                    "NOT setting engineIDNic, engineID already set\n"));
+        DEBUG_MSGTL( ( "snmpv3",
+            "NOT setting engineIDNic, engineID already set\n" ) );
     }
 }
 
@@ -650,28 +632,27 @@ V3_engineIDNicConf(const char *word, char *cptr)
  * This function reads a string from the configuration file and uses that
  * string to initialize the engineID.  It's assumed to be human readable.
  */
-void V3_engineIDConf(const char *word, char *cptr)
+void V3_engineIDConf( const char* word, char* cptr )
 {
-    V3_setupEngineID(NULL, cptr);
-    DEBUG_MSGTL(("snmpv3", "initialized engineID with: %s\n", cptr));
+    V3_setupEngineID( NULL, cptr );
+    DEBUG_MSGTL( ( "snmpv3", "initialized engineID with: %s\n", cptr ) );
 }
 
-void V3_versionConf(const char *word, char *cptr)
+void V3_versionConf( const char* word, char* cptr )
 {
     int valid = 0;
-    if ((strcasecmp(cptr,  "3" ) == 0) ||
-               (strcasecmp(cptr, "v3" ) == 0)) {
-        DefaultStore_setInt(DsStorage_LIBRARY_ID, DsInt_SNMPVERSION,
-               DEFAULTSTORE_PRIOT_VERSION_3);
+    if ( ( strcasecmp( cptr, "3" ) == 0 ) || ( strcasecmp( cptr, "v3" ) == 0 ) ) {
+        DefaultStore_setInt( DsStore_LIBRARY_ID, DsInt_SNMPVERSION,
+            DEFAULTSTORE_PRIOT_VERSION_3 );
         valid = 1;
     }
-    if (!valid) {
-        ReadConfig_configPerror("Unknown version specification");
+    if ( !valid ) {
+        ReadConfig_configPerror( "Unknown version specification" );
         return;
     }
-    DEBUG_MSGTL(("snmpv3", "set default version to %d\n",
-                DefaultStore_getInt(DsStorage_LIBRARY_ID,
-                   DsInt_SNMPVERSION)));
+    DEBUG_MSGTL( ( "snmpv3", "set default version to %d\n",
+        DefaultStore_getInt( DsStore_LIBRARY_ID,
+                       DsInt_SNMPVERSION ) ) );
 }
 
 /*
@@ -680,9 +661,9 @@ void V3_versionConf(const char *word, char *cptr)
  * Reads a octet string encoded engineID into the oldEngineID and
  * oldEngineIDLen pointers.
  */
-void V3_oldengineIDConf(const char *word, char *cptr)
+void V3_oldengineIDConf( const char* word, char* cptr )
 {
-    ReadConfig_readOctetString(cptr, &_v3_oldEngineID, &_v3_oldEngineIDLength);
+    ReadConfig_readOctetString( cptr, &_v3_oldEngineID, &_v3_oldEngineIDLength );
 }
 
 /*
@@ -691,25 +672,24 @@ void V3_oldengineIDConf(const char *word, char *cptr)
  * Reads a octet string encoded engineID into the engineID and
  * engineIDLen pointers.
  */
-void V3_exactEngineIDConf(const char *word, char *cptr)
+void V3_exactEngineIDConf( const char* word, char* cptr )
 {
-    ReadConfig_readOctetString(cptr, &_v3_engineID, &_v3_engineIDLength);
-    if (_v3_engineIDLength > MAX_ENGINEID_LENGTH) {
-    ReadConfig_error(
-        "exactEngineID '%s' too long; truncating to %d bytes",
-        cptr, MAX_ENGINEID_LENGTH);
-        _v3_engineID[MAX_ENGINEID_LENGTH - 1] = '\0';
+    ReadConfig_readOctetString( cptr, &_v3_engineID, &_v3_engineIDLength );
+    if ( _v3_engineIDLength > MAX_ENGINEID_LENGTH ) {
+        ReadConfig_error(
+            "exactEngineID '%s' too long; truncating to %d bytes",
+            cptr, MAX_ENGINEID_LENGTH );
+        _v3_engineID[ MAX_ENGINEID_LENGTH - 1 ] = '\0';
         _v3_engineIDLength = MAX_ENGINEID_LENGTH;
     }
     _v3_engineIDIsSet = 1;
     _v3_engineIDType = ENGINEID_TYPE_EXACT;
 }
 
-
 /*
  * merely call
  */
-void V3_getEnginetimeAlarm(unsigned int regnum, void *clientargs)
+void V3_getEnginetimeAlarm( unsigned int regnum, void* clientargs )
 {
     /* we do this every so (rarely) often just to make sure we watch
        wrapping of the times() output */
@@ -726,28 +706,28 @@ void V3_getEnginetimeAlarm(unsigned int regnum, void *clientargs)
  * Set parsing functions for config file tokens.
  * Initialize SNMP Crypto API (SCAPI).
  */
-void V3_initV3(const char *type)
+void V3_initV3( const char* type )
 {
-    Tools_getMonotonicClock(&_v3_starttime);
+    Time_getMonotonicClock( &_v3_starttime );
 
-    if (!type)
+    if ( !type )
         type = "__priotapp__";
 
     /*
      * we need to be called back later
      */
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                             CALLBACK_POST_READ_CONFIG,
-                           V3_initPostConfig, NULL);
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_READ_CONFIG,
+        V3_initPostConfig, NULL );
 
-    Callback_registerCallback(CALLBACK_LIBRARY,
-                              CALLBACK_POST_PREMIB_READ_CONFIG,
-                           V3_initPostPremibConfig, NULL);
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_PREMIB_READ_CONFIG,
+        V3_initPostPremibConfig, NULL );
     /*
      * we need to be called back later
      */
-    Callback_registerCallback(CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
-                           V3_store, (void *) strdup(type));
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
+        V3_store, ( void* )strdup( type ) );
 
     /*
      * initialize submodules
@@ -765,53 +745,53 @@ void V3_initV3(const char *type)
     /*
      * handle engineID setup before everything else which may depend on it
      */
-    ReadConfig_registerPrenetMibHandler(type, "engineID", V3_engineIDConf, NULL,
-                                    "string");
-    ReadConfig_registerPrenetMibHandler(type, "oldEngineID", V3_oldengineIDConf,
-                                    NULL, NULL);
-    ReadConfig_registerPrenetMibHandler(type, "exactEngineID", V3_exactEngineIDConf,
-                                    NULL, NULL);
-    ReadConfig_registerPrenetMibHandler(type, "engineIDType",
-                                    V3_engineIDTypeConf, NULL, "num");
-    ReadConfig_registerPrenetMibHandler(type, "engineIDNic", V3_engineIDNicConf,
-                                    NULL, "string");
-    ReadConfig_registerConfigHandler(type, "engineBoots", V3_engineBootsConf, NULL,
-                            NULL);
+    ReadConfig_registerPrenetMibHandler( type, "engineID", V3_engineIDConf, NULL,
+        "string" );
+    ReadConfig_registerPrenetMibHandler( type, "oldEngineID", V3_oldengineIDConf,
+        NULL, NULL );
+    ReadConfig_registerPrenetMibHandler( type, "exactEngineID", V3_exactEngineIDConf,
+        NULL, NULL );
+    ReadConfig_registerPrenetMibHandler( type, "engineIDType",
+        V3_engineIDTypeConf, NULL, "num" );
+    ReadConfig_registerPrenetMibHandler( type, "engineIDNic", V3_engineIDNicConf,
+        NULL, "string" );
+    ReadConfig_registerConfigHandler( type, "engineBoots", V3_engineBootsConf, NULL,
+        NULL );
 
     /*
      * default store config entries
      */
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defSecurityName",
-                   DsStorage_LIBRARY_ID, DsStr_SECNAME);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defContext",
-                   DsStorage_LIBRARY_ID, DsStr_CONTEXT);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defPassphrase",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_PASSPHRASE);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defAuthPassphrase",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_AUTHPASSPHRASE);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defPrivPassphrase",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_PRIVPASSPHRASE);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defAuthMasterKey",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_AUTHMASTERKEY);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defPrivMasterKey",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_PRIVMASTERKEY);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defAuthLocalizedKey",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_AUTHLOCALIZEDKEY);
-    DefaultStore_registerConfig(ASN01_OCTET_STR, "priot", "defPrivLocalizedKey",
-                               DsStorage_LIBRARY_ID,
-                               DsStr_PRIVLOCALIZEDKEY);
-    ReadConfig_registerConfigHandler("priot", "defVersion", V3_versionConf, NULL,
-                            "1|2c|3");
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defSecurityName",
+        DsStore_LIBRARY_ID, DsStr_SECNAME );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defContext",
+        DsStore_LIBRARY_ID, DsStr_CONTEXT );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPassphrase",
+        DsStore_LIBRARY_ID,
+        DsStr_PASSPHRASE );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defAuthPassphrase",
+        DsStore_LIBRARY_ID,
+        DsStr_AUTHPASSPHRASE );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPrivPassphrase",
+        DsStore_LIBRARY_ID,
+        DsStr_PRIVPASSPHRASE );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defAuthMasterKey",
+        DsStore_LIBRARY_ID,
+        DsStr_AUTHMASTERKEY );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPrivMasterKey",
+        DsStore_LIBRARY_ID,
+        DsStr_PRIVMASTERKEY );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defAuthLocalizedKey",
+        DsStore_LIBRARY_ID,
+        DsStr_AUTHLOCALIZEDKEY );
+    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPrivLocalizedKey",
+        DsStore_LIBRARY_ID,
+        DsStr_PRIVLOCALIZEDKEY );
+    ReadConfig_registerConfigHandler( "priot", "defVersion", V3_versionConf, NULL,
+        "1|2c|3" );
 
-    ReadConfig_registerConfigHandler("priot", "defSecurityLevel",
-                            V3_secLevelConf, NULL,
-                            "noAuthNoPriv|authNoPriv|authPriv");
+    ReadConfig_registerConfigHandler( "priot", "defSecurityLevel",
+        V3_secLevelConf, NULL,
+        "noAuthNoPriv|authNoPriv|authPriv" );
 }
 
 /*
@@ -819,48 +799,46 @@ void V3_initV3(const char *type)
  * have been read.
  */
 
-int V3_initPostConfig(int majorid, int minorid, void *serverarg,
-                        void *clientarg)
+int V3_initPostConfig( int majorid, int minorid, void* serverarg,
+    void* clientarg )
 {
 
-    size_t          engineIDLen;
-    u_char         *c_engineID;
+    size_t engineIDLen;
+    u_char* c_engineID;
 
-    c_engineID = V3_generateEngineID(&engineIDLen);
+    c_engineID = V3_generateEngineID( &engineIDLen );
 
-    if (engineIDLen == 0 || !c_engineID) {
+    if ( engineIDLen == 0 || !c_engineID ) {
         /*
          * Somethine went wrong - help!
          */
-        MEMORY_FREE(c_engineID);
+        MEMORY_FREE( c_engineID );
         return ErrorCode_GENERR;
     }
 
     /*
      * if our engineID has changed at all, the boots record must be set to 1
      */
-    if (engineIDLen != _v3_oldEngineIDLength ||
-        _v3_oldEngineID == NULL || c_engineID == NULL ||
-        memcmp(_v3_oldEngineID, c_engineID, engineIDLen) != 0) {
+    if ( engineIDLen != _v3_oldEngineIDLength || _v3_oldEngineID == NULL || c_engineID == NULL || memcmp( _v3_oldEngineID, c_engineID, engineIDLen ) != 0 ) {
         _v3_engineBoots = 1;
     }
 
     /*
      * for USM set our local engineTime in the LCD timing cache
      */
-    LcdTime_setEnginetime(c_engineID, engineIDLen,
-                   V3_localEngineBoots(),
-                   V3_localEngineTime(), TRUE);
+    LcdTime_setEnginetime( c_engineID, engineIDLen,
+        V3_localEngineBoots(),
+        V3_localEngineTime(), TRUE );
 
-    MEMORY_FREE(c_engineID);
+    MEMORY_FREE( c_engineID );
     return ErrorCode_SUCCESS;
 }
 
-int V3_initPostPremibConfig(int majorid, int minorid, void *serverarg,
-                               void *clientarg)
+int V3_initPostPremibConfig( int majorid, int minorid, void* serverarg,
+    void* clientarg )
 {
-    if (!_v3_engineIDIsSet)
-        V3_setupEngineID(NULL, NULL);
+    if ( !_v3_engineIDIsSet )
+        V3_setupEngineID( NULL, NULL );
 
     return ErrorCode_SUCCESS;
 }
@@ -871,39 +849,38 @@ int V3_initPostPremibConfig(int majorid, int minorid, void *serverarg,
  * Parameters:
  *	*type
  */
-int V3_store(int majorID, int minorID, void *serverarg, void *clientarg)
+int V3_store( int majorID, int minorID, void* serverarg, void* clientarg )
 {
-    char            line[UTILITIES_MAX_BUFFER_SMALL];
-    u_char          c_engineID[UTILITIES_MAX_BUFFER_SMALL];
-    int             engineIDLen;
-    const char     *type = (const char *) clientarg;
+    char line[ UTILITIES_MAX_BUFFER_SMALL ];
+    u_char c_engineID[ UTILITIES_MAX_BUFFER_SMALL ];
+    int engineIDLen;
+    const char* type = ( const char* )clientarg;
 
-    if (type == NULL)           /* should never happen, since the arg is ours */
+    if ( type == NULL ) /* should never happen, since the arg is ours */
         type = "unknown";
 
-    sprintf(line, "engineBoots %ld", _v3_engineBoots);
-    ReadConfig_store(type, line);
+    sprintf( line, "engineBoots %ld", _v3_engineBoots );
+    ReadConfig_store( type, line );
 
-    engineIDLen = V3_getEngineID(c_engineID, UTILITIES_MAX_BUFFER_SMALL);
+    engineIDLen = V3_getEngineID( c_engineID, UTILITIES_MAX_BUFFER_SMALL );
 
-    if (engineIDLen) {
+    if ( engineIDLen ) {
         /*
          * store the engineID used for this run
          */
-        sprintf(line, "oldEngineID ");
-        ReadConfig_saveOctetString(line + strlen(line), c_engineID,
-                                      engineIDLen);
-        ReadConfig_store(type, line);
+        sprintf( line, "oldEngineID " );
+        ReadConfig_saveOctetString( line + strlen( line ), c_engineID,
+            engineIDLen );
+        ReadConfig_store( type, line );
     }
     return ErrorCode_SUCCESS;
-}                               /* snmpv3_store() */
+} /* snmpv3_store() */
 
 u_long
-V3_localEngineBoots(void)
+V3_localEngineBoots( void )
 {
     return _v3_engineBoots;
 }
-
 
 /*******************************************************************-o-******
  * snmpv3_get_engineID
@@ -921,22 +898,22 @@ V3_localEngineBoots(void)
  *
  */
 size_t
-V3_getEngineID(u_char * buf, size_t buflen)
+V3_getEngineID( u_char* buf, size_t buflen )
 {
     /*
      * Sanity check.
      */
-    if (!buf || (buflen < _v3_engineIDLength)) {
+    if ( !buf || ( buflen < _v3_engineIDLength ) ) {
         return 0;
     }
-    if (!_v3_engineID) {
+    if ( !_v3_engineID ) {
         return 0;
     }
 
-    memcpy(buf, _v3_engineID, _v3_engineIDLength);
+    memcpy( buf, _v3_engineID, _v3_engineIDLength );
     return _v3_engineIDLength;
 
-}                               /* end snmpv3_get_engineID() */
+} /* end snmpv3_get_engineID() */
 
 /*******************************************************************-o-******
  * snmpv3_clone_engineID
@@ -955,26 +932,24 @@ V3_getEngineID(u_char * buf, size_t buflen)
  * Clones engineID, creates memory
  *
  */
-int
-V3_cloneEngineID(u_char ** dest, size_t * destlen, u_char * src,
-                      size_t srclen)
+int V3_cloneEngineID( u_char** dest, size_t* destlen, u_char* src,
+    size_t srclen )
 {
-    if (!dest || !destlen)
+    if ( !dest || !destlen )
         return 0;
 
-    MEMORY_FREE(*dest);
+    MEMORY_FREE( *dest );
     *destlen = 0;
 
-    if (srclen && src) {
-        *dest = (u_char *) malloc(srclen);
-        if (*dest == NULL)
+    if ( srclen && src ) {
+        *dest = ( u_char* )malloc( srclen );
+        if ( *dest == NULL )
             return 0;
-        memmove(*dest, src, srclen);
+        memmove( *dest, src, srclen );
         *destlen = srclen;
     }
     return *destlen;
-}                               /* end snmpv3_clone_engineID() */
-
+} /* end snmpv3_clone_engineID() */
 
 /*******************************************************************-o-******
  * snmpv3_generate_engineID
@@ -991,24 +966,24 @@ V3_cloneEngineID(u_char ** dest, size_t * destlen, u_char * src,
  *
  * 'length' is set to the length of engineID  -OR-  < 0 on failure.
  */
-u_char *
-V3_generateEngineID(size_t * length)
+u_char*
+V3_generateEngineID( size_t* length )
 {
-    u_char         *newID;
-    newID = (u_char *) malloc(_v3_engineIDLength);
+    u_char* newID;
+    newID = ( u_char* )malloc( _v3_engineIDLength );
 
-    if (newID) {
-        *length = V3_getEngineID(newID, _v3_engineIDLength);
+    if ( newID ) {
+        *length = V3_getEngineID( newID, _v3_engineIDLength );
     }
 
-    if (*length == 0) {
-        MEMORY_FREE(newID);
+    if ( *length == 0 ) {
+        MEMORY_FREE( newID );
         newID = NULL;
     }
 
     return newID;
 
-}                               /* end snmpv3_generate_engineID() */
+} /* end snmpv3_generate_engineID() */
 
 /**
  * Return the value of snmpEngineTime. According to RFC 3414 snmpEngineTime
@@ -1021,31 +996,28 @@ V3_generateEngineID(size_t * length)
  *   2**31 seconds.
  */
 u_long
-V3_localEngineTime(void)
+V3_localEngineTime( void )
 {
 
-
     static uint32_t last_engineTime;
-    struct timeval  now;
+    struct timeval now;
     uint32_t engineTime;
 
-    Tools_getMonotonicClock(&now);
-    engineTime = System_calculateSectimeDiff(&now, &_v3_starttime) & 0x7fffffffL;
-    if (engineTime < last_engineTime)
+    Time_getMonotonicClock( &now );
+    engineTime = System_calculateSectimeDiff( &now, &_v3_starttime ) & 0x7fffffffL;
+    if ( engineTime < last_engineTime )
         _v3_engineBoots++;
     last_engineTime = engineTime;
     return engineTime;
 }
 
-
-
 /*
  * Code only for Linux systems
  */
 static int
-_V3_getHwAddress(const char *networkDevice, /* e.g. "eth0", "eth1" */
-             char *addressOut)
-{                               /* return address. Len=IFHWADDRLEN */
+_V3_getHwAddress( const char* networkDevice, /* e.g. "eth0", "eth1" */
+    char* addressOut )
+{ /* return address. Len=IFHWADDRLEN */
     /*
      * V3_getHwAddress(...)
      * *
@@ -1067,10 +1039,10 @@ _V3_getHwAddress(const char *networkDevice, /* e.g. "eth0", "eth1" */
      * *
      * *  Caveats:    This has only been tested on Ethernet networking cards.
      */
-    int             sock;       /* our socket */
-    struct ifreq    request;    /* struct which will have HW address */
+    int sock; /* our socket */
+    struct ifreq request; /* struct which will have HW address */
 
-    if ((NULL == networkDevice) || (NULL == addressOut)) {
+    if ( ( NULL == networkDevice ) || ( NULL == addressOut ) ) {
         return -1;
     }
     /*
@@ -1079,28 +1051,26 @@ _V3_getHwAddress(const char *networkDevice, /* e.g. "eth0", "eth1" */
      * * 1.  Create a socket
      * * 2.  Do an ioctl(...) call with the SIOCGIFHWADDRLEN operation.
      */
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
+    sock = socket( AF_INET, SOCK_DGRAM, 0 );
+    if ( sock < 0 ) {
         return -1;
     }
     /*
      * erase the request block
      */
-    memset(&request, 0, sizeof(request));
+    memset( &request, 0, sizeof( request ) );
     /*
      * copy the name of the net device we want to find the HW address for
      */
-    String_copyTruncate(request.ifr_name, networkDevice, IFNAMSIZ);
+    String_copyTruncate( request.ifr_name, networkDevice, IFNAMSIZ );
     /*
      * Get the HW address
      */
-    if (ioctl(sock, SIOCGIFHWADDR, &request)) {
-        close(sock);
+    if ( ioctl( sock, SIOCGIFHWADDR, &request ) ) {
+        close( sock );
         return -1;
     }
-    close(sock);
-    memcpy(addressOut, request.ifr_hwaddr.sa_data, IFHWADDRLEN);
+    close( sock );
+    memcpy( addressOut, request.ifr_hwaddr.sa_data, IFHWADDRLEN );
     return 0;
 }
-
-

@@ -1,12 +1,12 @@
 #include "Vacm.h"
 #include "System/Containers/MapList.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "ReadConfig.h"
 #include "System/Util/Utilities.h"
 #include "Priot.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "Api.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 
 /*
@@ -1046,7 +1046,7 @@ int Vacm_storeVacm(int majorID, int minorID, void *serverarg, void *clientarg)
      */
     char           *appname = (char *) clientarg;
     if (appname == NULL) {
-        appname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+        appname = DefaultStore_getString(DsStore_LIBRARY_ID,
                     DsStr_APPTYPE);
     }
 

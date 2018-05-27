@@ -1,7 +1,7 @@
 #include "SysORTable.h"
 #include "Agent.h"
-#include "System/Util/Debug.h"
-#include "Callback.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Callback.h"
 #include "AgentCallbacks.h"
 
 typedef struct DataNode_s {
@@ -17,7 +17,7 @@ _SysORTable_erase( DataNode entry )
 {
     entry->data.OR_uptime = Agent_getAgentUptime();
     DEBUG_MSGTL(("agent/sysORTable", "UNREG_SYSOR %p\n", &entry->data));
-    Callback_callCallbacks(CALLBACK_APPLICATION, PriotdCallback_UNREG_SYSOR, &entry->data);
+    Callback_call(CallbackMajor_APPLICATION, PriotdCallback_UNREG_SYSOR, &entry->data);
     free(entry->data.OR_oid);
     free(entry->data.OR_descr);
     if (entry->next == entry)
@@ -92,7 +92,7 @@ SysORTable_registerSysORTableSess( oid*          oidin,
 
     entry->data.OR_uptime = Agent_getAgentUptime();
 
-    Callback_callCallbacks(CALLBACK_APPLICATION,
+    Callback_call(CallbackMajor_APPLICATION,
                         PriotdCallback_REG_SYSOR, &entry->data);
 
     return SYS_ORTABLE_REGISTERED_OK;
@@ -215,13 +215,13 @@ SysORTable_initAgentSysORTable( void )
 {
     DEBUG_MSGTL(("agent/sysORTable", "SysORTable_initAgentSysORTable\n"));
 
-    Callback_registerCallback(CALLBACK_APPLICATION,
+    Callback_register(CallbackMajor_APPLICATION,
                               PriotdCallback_REQ_REG_SYSOR,
                               _SysORTable_registerSysORCallback, NULL);
-    Callback_registerCallback(CALLBACK_APPLICATION,
+    Callback_register(CallbackMajor_APPLICATION,
                               PriotdCallback_REQ_UNREG_SYSOR,
                                _SysORTable_unregisterSysORCallback, NULL);
-    Callback_registerCallback(CALLBACK_APPLICATION,
+    Callback_register(CallbackMajor_APPLICATION,
                            PriotdCallback_REQ_UNREG_SYSOR_SESS,
                            _SysORTable_unregisterSysORBySessionCallback, NULL);
 }

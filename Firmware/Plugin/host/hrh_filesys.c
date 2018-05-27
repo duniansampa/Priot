@@ -18,7 +18,7 @@
 #include "Impl.h"
 #include "System/String.h"
 #include "System/String.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "VarStruct.h"
 #include "host_res.h"
 #include "hr_disk.h"

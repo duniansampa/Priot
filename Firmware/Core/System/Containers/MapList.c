@@ -1,16 +1,3 @@
-/** \file Map.c
- *  \brief  MapList is a map list. Each element in the list contains
- *          a 'name' and a 'map'. The name is a 'map' identifier in the list.
- *          The 'name' must be unique.
- *
- *  This is the implementation of the MapList container.
- *  More details about its implementation,
- *  one should read these comments.
- *
- *  \author Dunian Coutinho Sampa (duniansampa)
- *  \bug    No known bugs.
- */
-
 #include "MapList.h"
 #include "System/Containers/Map.h"
 #include "System/Util/Utilities.h"
@@ -92,11 +79,11 @@ void MapList_clear( void )
     _mapList_storage = NULL;
 }
 
-/** \brief  Returns a value of item in the map based on a lookup label
+/** @brief  Returns a value of item in the map based on a lookup label
  *
- *  \param  map - the map to be used for search
- *  \param  label - the lookup label
- *  \return If successful, returns value.
+ *  @param  map - the map to be used for search
+ *  @param  label - the lookup label
+ *  @return If successful, returns value.
  *          If not, returns the error code MapListErrorCode_NULL.
  */
 static int _MapList_findValue( Map* map, const char* label )
@@ -118,12 +105,12 @@ static int _MapList_findValue( Map* map, const char* label )
 
 /** ============================= Private Functions ================== */
 
-/** \brief  Returns a label of item in the map based on a lookup value.
+/** @brief  Returns a label of item in the map based on a lookup value.
  *          operates directly on a possibly external map.
  *
- *  \param  map - the map to be used for search
- *  \param  value - the lookup value
- *  \return If successful, returns value. If not,
+ *  @param  map - the map to be used for search
+ *  @param  value - the lookup value
+ *  @return If successful, returns value. If not,
  *          returns NULL.
  */
 static char* _MapList_findLabel( Map* map, int value )
@@ -140,12 +127,12 @@ static char* _MapList_findLabel( Map* map, int value )
     return Map_at( map, key );
 }
 
-/** \brief  adds label and value to the map if value not exist
+/** @brief  adds label and value to the map if value not exist
 *           if the map is null, create first item of the map
 *
-*   \param  map - the map to be used for search
-*   \param  value - the lookup value
-*   \return MapListErrorCode_*
+*   @param  map - the map to be used for search
+*   @param  value - the lookup value
+*   @return MapListErrorCode_*
 */
 static int _MapList_addPair( Map** map, char* label, int value )
 {
@@ -165,10 +152,10 @@ static int _MapList_addPair( Map** map, char* label, int value )
     return ( MapListErrorCode_SUCCESS );
 }
 
-/** \brief  Returns a map of enums based on a lookup name
+/** @brief  Returns a map of enums based on a lookup name
  *
- *  \param mapName - the lookup name
- *  \return If successful, returns map. If not, returns NULL.
+ *  @param mapName - the lookup name
+ *  @return If successful, returns map. If not, returns NULL.
  */
 static Map* _MapList_find( const char* mapName )
 {

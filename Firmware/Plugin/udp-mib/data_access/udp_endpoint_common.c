@@ -6,7 +6,7 @@
 
 //#include "udp-mib/udpEndpointTable/udpEndpointTable_constants.h"
 
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "udp_endpoint_private.h"
 
@@ -39,7 +39,7 @@ Container_Container* netsnmp_access_udp_endpoint_container_init( u_int flags )
     /*
      * create the containers.
      */
-    container = Container_find( "access_udp_endpoint:table_container" );
+    container = Container_find( "access_udp_endpoint:tableContainer" );
     if ( NULL == container )
         return NULL;
 

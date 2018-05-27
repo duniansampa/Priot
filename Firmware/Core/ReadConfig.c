@@ -1,16 +1,16 @@
 #include "ReadConfig.h"
 #include "Asn01.h"
-#include "Callback.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Callback.h"
+#include "System/Util/DefaultStore.h"
 #include "Impl.h"
-#include "Int64.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Priot.h"
-#include "System/String.h"
-#include "System/String.h"
 #include "System.h"
+#include "System/Numerics/Integer64.h"
+#include "System/String.h"
+#include "System/String.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
 
 #include <arpa/inet.h>
@@ -42,7 +42,7 @@
  *                                   SNMPCallback *new_callback,
  *                                   void *arg);
  *
- * You will need to set major to CALLBACK_LIBRARY, minor to
+ * You will need to set major to CallbackMajor_LIBRARY, minor to
  * CALLBACK_STORE_DATA. arg is whatever you want.
  *
  * Your callback function's prototype is:
@@ -87,7 +87,7 @@ _ReadConfig_internalRegisterConfigHandler( const char* type_param,
     const char* type = type_param;
 
     if ( type == NULL || *type == '\0' ) {
-        type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        type = DefaultStore_getString( DsStore_LIBRARY_ID,
             DsStr_APPTYPE );
     }
 
@@ -268,7 +268,7 @@ void ReadConfig_unregisterConfigHandler( const char* type_param, const char* tok
     const char* type = type_param;
 
     if ( type == NULL || *type == '\0' ) {
-        type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        type = DefaultStore_getString( DsStore_LIBRARY_ID,
             DsStr_APPTYPE );
     }
 
@@ -446,7 +446,7 @@ int ReadConfig_runConfigHandler( struct ReadConfig_ConfigLine_s* lptr,
         } else
             DEBUG_MSGTL( ( "9:read_config:parser",
                 "%s handler not registered for this time\n", token ) );
-    } else if ( when != PREMIB_CONFIG && !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS ) ) {
+    } else if ( when != PREMIB_CONFIG && !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS ) ) {
         ReadConfig_warn( "Unknown token: %s.", token );
         return ErrorCode_GENERR;
     }
@@ -504,7 +504,7 @@ int ReadConfig_configWhen( char* line, int when )
         for ( ; ctmp != NULL && lptr == NULL; ctmp = ctmp->next )
             lptr = ReadConfig_findHandler( ctmp->start, cptr );
     }
-    if ( lptr == NULL && DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( lptr == NULL && DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                              DsBool_NO_TOKEN_WARNINGS ) ) {
         ReadConfig_warn( "Unknown token: %s.", cptr );
         return ErrorCode_GENERR;
@@ -525,7 +525,7 @@ int ReadConfig_config( char* line )
     ReadConfig_remember( line ); /* always remember it so it's read
                                          * processed after a ReadConfig_freeConfig()
                                          * call */
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
              DsBool_HAVE_READ_CONFIG ) ) {
         DEBUG_MSGTL( ( "priot_config", "  ... processing it now\n" ) );
         ret = ReadConfig_configWhen( line, NORMAL_CONFIG );
@@ -753,7 +753,7 @@ int ReadConfig_readConfig( const char* filename,
                 }
             } else if ( ( token[ 0 ] == 'i' ) && ( strncasecmp( token, "include", 7 ) == 0 ) ) {
                 if ( strcasecmp( token, "include" ) == 0 ) {
-                    if ( when != PREMIB_CONFIG && !DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS ) ) {
+                    if ( when != PREMIB_CONFIG && !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS ) ) {
                         ReadConfig_warn( "Ambiguous token '%s' - use 'includeSearch' (or 'includeFile') instead.", token );
                     }
                     continue;
@@ -872,7 +872,7 @@ int ReadConfig_optional( const char* optional_config, int when )
 {
     char *newp, *cp, *st = NULL;
     int ret = ErrorCode_GENERR;
-    char* type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    char* type = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
 
     if ( ( NULL == optional_config ) || ( NULL == type ) )
@@ -903,11 +903,10 @@ int ReadConfig_optional( const char* optional_config, int when )
 
 void ReadConfig_readConfigs( void )
 {
-    char* optional_config = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    char* optional_config = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_OPTIONALCONFIG );
 
-    Callback_callCallbacks( CALLBACK_LIBRARY,
-        CALLBACK_PRE_READ_CONFIG, NULL );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_PRE_READ_CONFIG, NULL );
 
     DEBUG_MSGTL( ( "read_config", "reading normal configuration tokens\n" ) );
 
@@ -926,20 +925,18 @@ void ReadConfig_readConfigs( void )
 
     ReadConfig_processMemoriesWhen( NORMAL_CONFIG, 1 );
 
-    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+    DefaultStore_setBoolean( DsStore_LIBRARY_ID,
         DsBool_HAVE_READ_CONFIG, 1 );
 
-    Callback_callCallbacks( CALLBACK_LIBRARY,
-        CALLBACK_POST_READ_CONFIG, NULL );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_POST_READ_CONFIG, NULL );
 }
 
 void ReadConfig_readPremibConfigs( void )
 {
-    char* optional_config = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    char* optional_config = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_OPTIONALCONFIG );
 
-    Callback_callCallbacks( CALLBACK_LIBRARY,
-        CALLBACK_PRE_PREMIB_READ_CONFIG, NULL );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_PRE_PREMIB_READ_CONFIG, NULL );
 
     DEBUG_MSGTL( ( "read_config", "reading premib configuration tokens\n" ) );
 
@@ -955,11 +952,10 @@ void ReadConfig_readPremibConfigs( void )
 
     ReadConfig_processMemoriesWhen( PREMIB_CONFIG, 0 );
 
-    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+    DefaultStore_setBoolean( DsStore_LIBRARY_ID,
         DsBool_HAVE_READ_PREMIB_CONFIG, 1 );
 
-    Callback_callCallbacks( CALLBACK_LIBRARY,
-        CALLBACK_POST_PREMIB_READ_CONFIG, NULL );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_POST_PREMIB_READ_CONFIG, NULL );
 }
 
 /*******************************************************************-o-******
@@ -972,7 +968,7 @@ void ReadConfig_readPremibConfigs( void )
  */
 void ReadConfig_setConfigurationDirectory( const char* dir )
 {
-    DefaultStore_setString( DsStorage_LIBRARY_ID,
+    DefaultStore_setString( DsStore_LIBRARY_ID,
         DsStr_CONFIGURATION_DIR, dir );
 }
 
@@ -994,7 +990,7 @@ ReadConfig_getConfigurationDirectory( void )
     char defaultPath[ IMPL_SPRINT_MAX_LEN ];
     char* homepath;
 
-    if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
+    if ( NULL == DefaultStore_getString( DsStore_LIBRARY_ID,
                      DsStr_CONFIGURATION_DIR ) ) {
         homepath = System_getEnvVariable( "HOME" );
         snprintf( defaultPath, sizeof( defaultPath ), "%s%c%s%c%s%s%s%s",
@@ -1006,7 +1002,7 @@ ReadConfig_getConfigurationDirectory( void )
         defaultPath[ sizeof( defaultPath ) - 1 ] = 0;
         ReadConfig_setConfigurationDirectory( defaultPath );
     }
-    return ( DefaultStore_getString( DsStorage_LIBRARY_ID,
+    return ( DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_CONFIGURATION_DIR ) );
 }
 
@@ -1021,7 +1017,7 @@ ReadConfig_getConfigurationDirectory( void )
  */
 void ReadConfig_setPersistentDirectory( const char* dir )
 {
-    DefaultStore_setString( DsStorage_LIBRARY_ID,
+    DefaultStore_setString( DsStore_LIBRARY_ID,
         DsStr_PERSISTENT_DIR, dir );
 }
 
@@ -1038,7 +1034,7 @@ void ReadConfig_setPersistentDirectory( const char* dir )
 const char*
 ReadConfig_getPersistentDirectory( void )
 {
-    if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
+    if ( NULL == DefaultStore_getString( DsStore_LIBRARY_ID,
                      DsStr_PERSISTENT_DIR ) ) {
 
         const char* persdir = System_getEnvVariable( "PRIOT_PERSISTENT_DIR" );
@@ -1046,7 +1042,7 @@ ReadConfig_getPersistentDirectory( void )
             persdir = PERSISTENT_DIRECTORY;
         ReadConfig_setPersistentDirectory( persdir );
     }
-    return ( DefaultStore_getString( DsStorage_LIBRARY_ID,
+    return ( DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_PERSISTENT_DIR ) );
 }
 
@@ -1061,7 +1057,7 @@ ReadConfig_getPersistentDirectory( void )
  */
 void ReadConfig_setTempFilePattern( const char* pattern )
 {
-    DefaultStore_setString( DsStorage_LIBRARY_ID,
+    DefaultStore_setString( DsStore_LIBRARY_ID,
         DsStr_TEMP_FILE_PATTERN, pattern );
 }
 
@@ -1078,11 +1074,11 @@ void ReadConfig_setTempFilePattern( const char* pattern )
 const char*
 ReadConfig_getTempFilePattern( void )
 {
-    if ( NULL == DefaultStore_getString( DsStorage_LIBRARY_ID,
+    if ( NULL == DefaultStore_getString( DsStore_LIBRARY_ID,
                      DsStr_TEMP_FILE_PATTERN ) ) {
         ReadConfig_setTempFilePattern( NETSNMP_TEMP_FILE_PATTERN );
     }
-    return ( DefaultStore_getString( DsStorage_LIBRARY_ID,
+    return ( DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_TEMP_FILE_PATTERN ) );
 }
 
@@ -1231,9 +1227,9 @@ int ReadConfig_filesOfType( int when, struct ReadConfig_ConfigFiles_s* ctmp )
     char* perspath;
     int ret = ErrorCode_GENERR;
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
              DsBool_DONT_PERSIST_STATE )
-        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+        || DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                DsBool_DONT_READ_CONFIGS )
         || ( NULL == ctmp ) )
         return ret;
@@ -1363,9 +1359,9 @@ void ReadConfig_store( const char* type, const char* line )
     FILE* fout;
     mode_t oldmask;
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
              DsBool_DONT_PERSIST_STATE )
-        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+        || DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                DsBool_DISABLE_PERSISTENT_LOAD ) )
         return;
 
@@ -1402,7 +1398,7 @@ void ReadConfig_store( const char* type, const char* line )
 
 void ReadConfig_readAppConfigStore( const char* line )
 {
-    ReadConfig_store( DefaultStore_getString( DsStorage_LIBRARY_ID,
+    ReadConfig_store( DefaultStore_getString( DsStore_LIBRARY_ID,
                           DsStr_APPTYPE ),
         line );
 }
@@ -1432,9 +1428,9 @@ void ReadConfig_savePersistent( const char* type )
     struct stat statbuf;
     int j;
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
              DsBool_DONT_PERSIST_STATE )
-        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+        || DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                DsBool_DISABLE_PERSISTENT_SAVE ) )
         return;
 
@@ -1498,9 +1494,9 @@ void ReadConfig_cleanPersistent( const char* type )
     struct stat statbuf;
     int j;
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
              DsBool_DONT_PERSIST_STATE )
-        || DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+        || DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                DsBool_DISABLE_PERSISTENT_SAVE ) )
         return;
 
@@ -2099,10 +2095,10 @@ char* ReadConfig_readMemory( int type, char* readfrom,
         return readfrom;
 
     case ASN01_COUNTER64:
-        if ( *len < sizeof( Int64_U64 ) )
+        if ( *len < sizeof( Integer64 ) )
             return NULL;
-        *len = sizeof( Int64_U64 );
-        Int64_read64( ( Int64_U64* )dataptr, readfrom );
+        *len = sizeof( Integer64 );
+        Integer64_stringToInt64( ( Integer64* )dataptr, readfrom );
         readfrom = ReadConfig_skipToken( readfrom );
         return readfrom;
     }

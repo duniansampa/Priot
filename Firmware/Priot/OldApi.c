@@ -2,7 +2,7 @@
 #include "Impl.h"
 #include "AgentRegistry.h"
 #include "Api.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "AgentCallbacks.h"
 #include "Client.h"
@@ -243,7 +243,7 @@ OldApi_registerMibTableRow(const char *moduleName,
         reg_parms.range_ubound = ubound;
         reg_parms.timeout = timeout;
         reg_parms.contextName = context;
-        rc = Callback_callCallbacks(CALLBACK_APPLICATION,
+        rc = Callback_call(CallbackMajor_APPLICATION,
                                  PriotdCallback_REGISTER_OID, &reg_parms);
     }
 
@@ -389,10 +389,10 @@ OldApi_helper(MibHandler *handler,
             _OldApi_setCurrentAgentSession(reqinfo->asp);
             status =
                 (*(cacheptr->write_method)) (reqinfo->mode,
-                                             requests->requestvb->val.
+                                             requests->requestvb->value.
                                              string,
                                              requests->requestvb->type,
-                                             requests->requestvb->valLen,
+                                             requests->requestvb->valueLength,
                                              cacheptr->data,
                                              requests->requestvb->name,
                                              requests->requestvb->

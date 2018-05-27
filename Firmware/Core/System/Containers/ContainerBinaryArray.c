@@ -1,7 +1,7 @@
 #include "ContainerBinaryArray.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 #include <stdio.h>
 #include <stdlib.h>

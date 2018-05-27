@@ -1,11 +1,13 @@
-#ifndef UTILITIES_H_
-#define UTILITIES_H_
+#ifndef IOT_UTILITIES_H
+#define IOT_UTILITIES_H
 
 #include "System/Convert.h"
 #include "System/String.h"
 #include "System/Util/Memory.h"
 #include "System/Util/Time.h"
 #include <stddef.h>
+
+/** ============================[ Macros ]============================ */
 
 /*
  * General acros and constants.
@@ -24,8 +26,8 @@
  * Cast away constness without that gcc -Wcast-qual prints a compiler warning,
  * similar to const_cast<> in C++.
  *
- * \param[in] t A pointer type.
- * \param[in] e An expression of a type that can be assigned to the type (const t).
+ * @param[in] t A pointer type.
+ * @param[in] e An expression of a type that can be assigned to the type (const t).
  */
 #define UTILITIES_REMOVE_CONST( t, e ) ( __extension__( { const t tmp = (e); (t)(uintptr_t)tmp; } ) )
 
@@ -69,9 +71,11 @@
 #define UTILITIES_ENGINETIME_MAX 2147483647 /* ((2^31)-1) */
 #define UTILITIES_ENGINEBOOT_MAX 2147483647 /* ((2^31)-1) */
 
+/** =============================[ Functions Prototypes ]================== */
+
 /*
  * swap the order of an inet addr string
  */
 int Utilities_addrStringHton( char* ptr, size_t len );
 
-#endif // UTILITIES_H_
+#endif // IOT_UTILITIES_H

@@ -4,7 +4,7 @@
 
 #include "nsTransactionTable.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 
 /** Initialize the nsTransactionTable table by defining it's contents
@@ -89,14 +89,14 @@ void init_nsTransactionTable( void )
 */
 extern AgentSession* agent_delegated_list;
 
-Types_VariableList*
+VariableList*
 nsTransactionTable_get_first_data_point( void** my_loop_context,
     void** my_data_context,
-    Types_VariableList* put_index_data,
+    VariableList* put_index_data,
     IteratorInfo* iinfo )
 {
 
-    Types_VariableList* vptr;
+    VariableList* vptr;
 
     if ( !agent_delegated_list )
         return NULL;
@@ -121,14 +121,14 @@ nsTransactionTable_get_first_data_point( void** my_loop_context,
    to something you need later and the indexes in put_index_data
    updated again. */
 
-Types_VariableList*
+VariableList*
 nsTransactionTable_get_next_data_point( void** my_loop_context,
     void** my_data_context,
-    Types_VariableList* put_index_data,
+    VariableList* put_index_data,
     IteratorInfo* iinfo )
 {
 
-    Types_VariableList* vptr;
+    VariableList* vptr;
     AgentSession* alist = ( AgentSession* )*my_loop_context;
 
     if ( !alist->next )
@@ -155,7 +155,7 @@ int nsTransactionTable_handler( MibHandler* handler,
 {
 
     TableRequestInfo* table_info;
-    Types_VariableList* var;
+    VariableList* var;
     AgentSession* asp;
 
     for ( ; requests; requests = requests->next ) {

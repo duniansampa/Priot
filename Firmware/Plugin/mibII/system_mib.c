@@ -17,12 +17,12 @@
 #include "Agent.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Scalar.h"
 #include "SysORTable.h"
+#include "System/Util/Logger.h"
 #include "Watcher.h"
 #include "updates.h"
 #include "util_funcs.h"
@@ -330,6 +330,6 @@ void init_system_mib( void )
     AgentReadConfig_priotdRegisterConfigHandler( "sysobjectid",
         system_parse_config_sysObjectID, NULL,
         "OID" );
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         system_store, NULL );
 }

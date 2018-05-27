@@ -13,7 +13,7 @@
 
 #include "ipDefaultRouterTable.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Vars.h"
 #include "ipDefaultRouterTable_interface.h"
 #include "ipDefaultRouterTable_oids.h"

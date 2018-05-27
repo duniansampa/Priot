@@ -1,8 +1,8 @@
 #include "pass_persist.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Alarm.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Alarm.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "ReadConfig.h"
@@ -44,7 +44,7 @@ void init_pass_persist( void )
         pass_persist_parse_config,
         pass_persist_free_config,
         "miboid program" );
-    pipe_check_alarm_id = Alarm_register( 10, ALARM_SA_REPEAT, check_persist_pipes, NULL );
+    pipe_check_alarm_id = Alarm_register( 10, AlarmFlag_REPEAT, check_persist_pipes, NULL );
 }
 
 void shutdown_pass_persist( void )

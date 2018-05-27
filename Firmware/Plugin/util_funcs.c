@@ -10,7 +10,7 @@
 
 #include "util_funcs.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "ReadConfig.h"
@@ -417,7 +417,7 @@ int check_and_reload_table( struct internal_mib_table* table )
      * If the saved data is fairly recent,
      *    we don't need to reload it
      */
-    if ( table->cache_markerM && !( Tools_readyMonotonic( table->cache_markerM, table->cache_timeout * 1000 ) ) )
+    if ( table->cache_markerM && !( Time_readyMonotonic( table->cache_markerM, table->cache_timeout * 1000 ) ) )
         return 1;
 
     /*
@@ -426,7 +426,7 @@ int check_and_reload_table( struct internal_mib_table* table )
      * N.B:  Update the cache marker *before* calling
      *   this routine, to avoid problems with recursion
      */
-    Tools_setMonotonicMarker( &table->cache_markerM );
+    Time_setMonotonicMarker( &table->cache_markerM );
 
     table->next_index = 1;
     if ( table->reload( ( mib_table_t )table ) < 0 ) {

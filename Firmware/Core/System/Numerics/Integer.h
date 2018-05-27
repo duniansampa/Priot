@@ -1,8 +1,8 @@
-#ifndef INTEGER_H_
-#define INTEGER_H_
+#ifndef IOT_INTEGER_H
+#define IOT_INTEGER_H
 
-/*!
- * \brief     Number class.
+/**
+ * @brief     Number class.
  * \details   A class to define Number operations.
  * \author    Dunian Coutinho Sampa
  * \version   1.0
@@ -14,6 +14,8 @@
  */
 
 #include "Generals.h"
+
+/** ============================[ Macros ]============================ */
 
 #define INTEGER_INT8_MAXVALUE UCHAR_MAX
 #define INTEGER_INT8_MINVALUE 0
@@ -30,6 +32,8 @@
 #define INTEGER_INT64_MAXVALUE LLONG_MAX
 #define INTEGER_INT64_MINVALUE LLONG_MIN
 #define INTEGER_INT64_SIZE sizeof( int64_t )
+
+/** =============================[ Functions Prototypes ]================== */
 
 /** Returns a int8_t whose value is equivalent to this int8_t with the designated bit cleared. */
 int8_t Integer_clearBitInt8( int8_t b, uint8_t n );
@@ -49,4 +53,4 @@ int32_t Integer_setBitInt32( int32_t value, uint8_t n );
 /** Returns true if and only if the designated bit is set. */
 bool Integer_testBitInt32( int32_t value, uint8_t n );
 
-#endif /* INTEGER_H_ */
+#endif /* IOT_INTEGER_H */

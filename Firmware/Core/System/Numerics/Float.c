@@ -1,5 +1,4 @@
 
-//! \brief This is the include for the Float entity.
 #include "Float.h"
 
 //Compares the two specified float values.

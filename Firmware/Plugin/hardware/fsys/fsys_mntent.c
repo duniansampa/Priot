@@ -1,7 +1,7 @@
 
 #include "siglog/agent/hardware/fsys.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "System/Util/Logger.h"
 #include "System/String.h"
@@ -152,7 +152,7 @@ void netsnmp_fsys_arch_load( void )
         /*
          *  Optionally skip retrieving statistics for remote mounts
          */
-        if ( ( entry->flags & NETSNMP_FS_FLAG_REMOTE ) && DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        if ( ( entry->flags & NETSNMP_FS_FLAG_REMOTE ) && DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                                                               DsAgentBoolean_SKIPNFSINHOSTRESOURCES ) )
             continue;
 

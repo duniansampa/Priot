@@ -16,7 +16,7 @@
  */
 #include "ipv6ScopeZoneIndexTable.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Vars.h"
 #include "ipv6ScopeZoneIndexTable_interface.h"
 #include "ipv6ScopeZoneIndexTable_oids.h"

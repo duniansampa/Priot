@@ -7,11 +7,11 @@
  */
 
 #include "mteEventSetTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "mteEvent.h"
 
 static TableRegistrationInfo* table_info;
@@ -154,7 +154,7 @@ int mteEventSetTable_handler( MibHandler* handler,
              */
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTSETOBJECT:
-                ret = CheckVarbind_oid( request->requestvb );
+                ret = VariableList_checkOidMaxLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -162,14 +162,14 @@ int mteEventSetTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTEEVENTSETOBJECTWILDCARD:
             case COLUMN_MTEEVENTSETCONTEXTNAMEWILDCARD:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_MTEEVENTSETVALUE:
-                ret = CheckVarbind_int( request->requestvb );
+                ret = VariableList_checkIntLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -177,7 +177,7 @@ int mteEventSetTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTEEVENTSETTARGETTAG:
             case COLUMN_MTEEVENTSETCONTEXTNAME:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR2_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -249,31 +249,31 @@ int mteEventSetTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTSETOBJECT:
                 memset( entry->mteSetOID, 0, sizeof( entry->mteSetOID ) );
-                memcpy( entry->mteSetOID, request->requestvb->val.objid,
-                    request->requestvb->valLen );
-                entry->mteSetOID_len = request->requestvb->valLen / sizeof( oid );
+                memcpy( entry->mteSetOID, request->requestvb->value.objectId,
+                    request->requestvb->valueLength );
+                entry->mteSetOID_len = request->requestvb->valueLength / sizeof( oid );
                 break;
             case COLUMN_MTEEVENTSETOBJECTWILDCARD:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_SET_FLAG_OBJWILD;
                 else
                     entry->flags &= ~MTE_SET_FLAG_OBJWILD;
                 break;
             case COLUMN_MTEEVENTSETVALUE:
-                entry->mteSetValue = *request->requestvb->val.integer;
+                entry->mteSetValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTEEVENTSETTARGETTAG:
                 memset( entry->mteSetTarget, 0, sizeof( entry->mteSetTarget ) );
-                memcpy( entry->mteSetTarget, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteSetTarget, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTEEVENTSETCONTEXTNAME:
                 memset( entry->mteSetContext, 0, sizeof( entry->mteSetContext ) );
-                memcpy( entry->mteSetContext, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteSetContext, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTEEVENTSETCONTEXTNAMEWILDCARD:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_SET_FLAG_CTXWILD;
                 else
                     entry->flags &= ~MTE_SET_FLAG_CTXWILD;

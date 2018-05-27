@@ -1,7 +1,9 @@
-#ifndef CONVERT_H_
-#define CONVERT_H_
+#ifndef IOT_CONVERT_H
+#define IOT_CONVERT_H
 
 #include "Generals.h"
+
+/** ============================[ Macros ]============================ */
 
 /** Converts \p c to upper case */
 #define CONVERT_TO_UPPER( c ) ( c >= 'a' && c <= 'z' ? c - ( 'a' - 'A' ) : c )
@@ -25,16 +27,18 @@
  */
 #define CONVERT_MACRO_VALUE_TO_STRING( s ) #s
 
+/** =============================[ Functions Prototypes ]================== */
+
 /** Parses the string argument as a decimal int8_t. */
 int8_t Convert_stringToInt8( const char* s );
 
 /** Parses the string argument as a ubyte in the base specified by the second argument. */
 int8_t Convert_stringBaseToInt8( const char* s, uint8_t base );
 
-/** \brief  Returns a string representation of the string argument as an string in base 16.
+/** @brief  Returns a string representation of the string argument as an string in base 16.
  *
- *  \param  s: the string
- *  \return string, converted to base 16.
+ *  @param  s: the string
+ *  @return string, converted to base 16.
  */
 char* Convert_stringToHexString( const char* s );
 
@@ -165,23 +169,23 @@ char* Convert_floatToString( float f );
 /**
  * Converts \p numBit bits within string to double, using a given resolution and flag \p isSigned.
  *
- * \param beginByte - the first byte of the string where the bits should be picked up.
- * \param startBit - the position of the first bit (which must be picked up) within the first byte.
- * \param numBit - the number of bits that must be picked up.
- * \param resolution - the resolution that should be used.
- * \param isSigned  - it tells you if value is signaled or not signaled.
- * \return a double value
+ * @param beginByte - the first byte of the string where the bits should be picked up.
+ * @param startBit - the position of the first bit (which must be picked up) within the first byte.
+ * @param numBit - the number of bits that must be picked up.
+ * @param resolution - the resolution that should be used.
+ * @param isSigned  - it tells you if value is signaled or not signaled.
+ * @return a double value
 */
 double Convert_bitsToDouble( uint8_t* beginByte, uint8_t startBit, uint8_t numBit, double resolution, bool isSigned );
 
 /**
  * Converts double value to \p numBit bits within string, using a given resolution.
  *
- * \param value - the value that must be converted.
- * \param beginByte - the first byte of the string where the bits should be placed.
- * \param startBit - the position of the first bit (where the value should be placed) within the first byte.
- * \param numBit - the number of bits that must be placed.
- * \param resolution - the resolution that should be used.
+ * @param value - the value that must be converted.
+ * @param beginByte - the first byte of the string where the bits should be placed.
+ * @param startBit - the position of the first bit (where the value should be placed) within the first byte.
+ * @param numBit - the number of bits that must be placed.
+ * @param resolution - the resolution that should be used.
 */
 void Convert_doubleToBits( double value, uint8_t* beginByte, uint8_t startBit, uint8_t numBit, double resolution );
 
@@ -189,9 +193,9 @@ void Convert_doubleToBits( double value, uint8_t* beginByte, uint8_t startBit, u
  * It makes the reflection \p numBit bits within a string, starting at the
  * \p startBit position of the first byte of the string.
  *
- * \param beginByte - the first byte of the string where the bits should be reflected.
- * \param startBit - the position of the first bit (where the value should reflected) within the first byte.
- * \param numBit - the number of bits that must be reflected.
+ * @param beginByte - the first byte of the string where the bits should be reflected.
+ * @param startBit - the position of the first bit (where the value should reflected) within the first byte.
+ * @param numBit - the number of bits that must be reflected.
 */
 void Convert_valueToReflectedValue( uint8_t* beginByte, uint8_t startBit, uint8_t numBit );
 
@@ -202,51 +206,51 @@ void Convert_valueToReflectedValue( uint8_t* beginByte, uint8_t startBit, uint8_
  * 'm' for minutes, 'h' for hours, 'd' for days, or 'w' for weeks.  The
  * upper case versions are also accepted.
  *
- * \param timeString The time string to convert.
+ * @param timeString The time string to convert.
  *
- * \return seconds converted from the string
- * \return -1  : on failure
+ * @return seconds converted from the string
+ * @return -1  : on failure
  */
 uint32_t Convert_stringTimeToSeconds( const char* time_string );
 
 /** converts binary to hexidecimal
  *
- *     \param *input            Binary data.
- *     \param inputLen          Length of binary data.
- *     \param **dest            NULL terminated string equivalent in hex.
- *     \param *destLen         size of destination buffer
- *     \param allowRealloc     flag indicating if buffer can be realloc'd
+ *     @param *input            Binary data.
+ *     @param inputLen          Length of binary data.
+ *     @param **dest            NULL terminated string equivalent in hex.
+ *     @param *destLen         size of destination buffer
+ *     @param allowRealloc     flag indicating if buffer can be realloc'd
  *
- * \return length of output string not including NULL terminator.
+ * @return length of output string not including NULL terminator.
  */
 u_int Convert_binaryStringToHexString( u_char** dest, size_t* destLen, int allowRealloc, const u_char* input, size_t inputLen );
 
 /**
  * convert an ASCII hex string (with specified delimiters) to binary
  *
- * \param buffer  address of a pointer (pointer to pointer) for the output buffer.
+ * @param buffer  address of a pointer (pointer to pointer) for the output buffer.
  *                If allowRealloc is set, the buffer may be grown via Memory_realloc
  *                to accomodate the data.
  *
- * \param bufferLen pointer to a size_t containing the initial size of buf.
+ * @param bufferLen pointer to a size_t containing the initial size of buf.
  *
- * \param offset  On input, a pointer to a size_t indicating an offset into buffer.
+ * @param offset  On input, a pointer to a size_t indicating an offset into buffer.
  *                The  binary data will be stored at this offset.
  *                On output, this pointer will have updated the offset to be
  *                the first byte after the converted data.
  *
- * \param allowRealloc  If true, the buffer can be reallocated. If false, and
+ * @param allowRealloc  If true, the buffer can be reallocated. If false, and
  *                      the buffer is not large enough to contain the string,
  *                      an error will be returned.
  *
- * \param hexString    pointer to hex string to be converted. May be prefixed by
+ * @param hexString    pointer to hex string to be converted. May be prefixed by
  *                     "0x" or "0X".
  *
- * \param delimiters   point to a string of allowed delimiters between bytes.
+ * @param delimiters   point to a string of allowed delimiters between bytes.
  *                     If not specified, any non-hex characters will be an error.
  *
- * \retval 1  success
- * \retval 0  error
+ * @retval 1  success
+ * @retval 0  error
  */
 int Convert_hexStringToBinaryString( u_char** buffer, size_t* bufferLen, size_t* offset, int allowRealloc, const char* hexString, const char* delimiters );
 
@@ -258,8 +262,8 @@ int Convert_hexStringToBinaryString( u_char** buffer, size_t* bufferLen, size_t*
  *
  * See Tools_hexToBinary for parameter descriptions.
  *
- * \retval 1  success
- * \retval 0  error
+ * @retval 1  success
+ * @retval 0  error
  */
 int Convert_hexStringToBinaryStringWrapper( u_char** buffer, size_t* bufferLen, size_t* offset, int allowRealloc, const char* hexString );
 
@@ -281,21 +285,21 @@ int Convert_hexStringToBinaryString2( const u_char* input, size_t inputLen, char
 /**
  * convert an integer string to binary
  *
- * \param buffer - address of a pointer (pointer to pointer) for the output buffer.
+ * @param buffer - address of a pointer (pointer to pointer) for the output buffer.
  *
- * \param bufferLen - pointer to a size_t containing the initial size of buf.
+ * @param bufferLen - pointer to a size_t containing the initial size of buf.
  *
- * \param outLen - the lenght of the buffer. Refers to the amount of data in the buffer.
+ * @param outLen - the length of the buffer. Refers to the amount of data in the buffer.
  *
- * \param allowRealloc - If true, the buffer can be reallocated. If false, and
+ * @param allowRealloc - If true, the buffer can be reallocated. If false, and
  *                      the buffer is not large enough to contain the string,
  *                      an error will be returned.
  *
- * \param integerString - pointer to integer string to be converted.
+ * @param integerString - pointer to integer string to be converted.
  *
- * \retval 1  success
- * \retval 0  error
+ * @retval 1  success
+ * @retval 0  error
  */
 int Convert_integerStringToBinaryString( u_char** buffer, size_t* bufferLen, size_t* outLen, int allowRealloc, const char* integerString );
 
-#endif // CONVERT_H_
+#endif // IOT_CONVERT_H

@@ -1,17 +1,17 @@
 #include "Usm.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
 #include "Keytools.h"
 #include "LcdTime.h"
-#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Scapi.h"
 #include "Secmod.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
+#include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
+#include "TextualConvention.h"
 #include "V3.h"
 
 /*
@@ -93,8 +93,8 @@ int Usm_calcOffsets( size_t globalDataLen,
         if ( ref == NULL )                                                        \
             return -1;                                                            \
         if ( ref->field != NULL ) {                                               \
-            MEMORY_FILL_ZERO( ref->field, ref->field_len );                             \
-            MEMORY_FREE( ref->field );                                             \
+            MEMORY_FILL_ZERO( ref->field, ref->field_len );                       \
+            MEMORY_FREE( ref->field );                                            \
         }                                                                         \
         ref->field_len = 0;                                                       \
         if ( len == 0 || item == NULL ) {                                         \
@@ -2489,7 +2489,7 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
         session->securityPrivProtoLen = i;
     }
 
-    if ( ( in_session->securityAuthKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    if ( ( in_session->securityAuthKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                             DsStr_AUTHMASTERKEY ) ) ) ) {
         size_t buflen = sizeof( session->securityAuthKey );
         u_char* tmpp = session->securityAuthKey;
@@ -2500,9 +2500,9 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
             Api_setDetail( "error parsing authentication master key" );
             return PRIOT_ERR_GENERR;
         }
-    } else if ( ( in_session->securityAuthKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    } else if ( ( in_session->securityAuthKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                                    DsStr_AUTHPASSPHRASE ) )
-                                                               || ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                               || ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                                         DsStr_PASSPHRASE ) ) ) ) {
         session->securityAuthKeyLen = USM_AUTH_KU_LEN;
         if ( Keytools_generateKu( session->securityAuthProto,
@@ -2516,7 +2516,7 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
         }
     }
 
-    if ( ( in_session->securityPrivKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    if ( ( in_session->securityPrivKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                             DsStr_PRIVMASTERKEY ) ) ) ) {
         size_t buflen = sizeof( session->securityPrivKey );
         u_char* tmpp = session->securityPrivKey;
@@ -2527,9 +2527,9 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
             Api_setDetail( "error parsing encryption master key" );
             return PRIOT_ERR_GENERR;
         }
-    } else if ( ( in_session->securityPrivKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    } else if ( ( in_session->securityPrivKeyLen <= 0 ) && ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                                    DsStr_PRIVPASSPHRASE ) )
-                                                               || ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+                                                               || ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                                         DsStr_PASSPHRASE ) ) ) ) {
         session->securityPrivKeyLen = USM_PRIV_KU_LEN;
         if ( Keytools_generateKu( session->securityAuthProto,
@@ -2683,7 +2683,7 @@ int Usm_createUserFromSession( Types_Session* session )
                 Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
-        } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        } else if ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                           DsStr_AUTHLOCALIZEDKEY ) ) ) {
             size_t buflen = USM_AUTH_KU_LEN;
             MEMORY_FREE( user->authKey );
@@ -2732,7 +2732,7 @@ int Usm_createUserFromSession( Types_Session* session )
                 Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
-        } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        } else if ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                           DsStr_PRIVLOCALIZEDKEY ) ) ) {
             size_t buflen = USM_PRIV_KU_LEN;
             MEMORY_FREE( user->privKey );
@@ -2910,16 +2910,16 @@ void Usm_initUsm( void )
     def->post_probe_engineid = Usm_createUserFromSessionHook;
     Secmod_register( USM_SEC_MODEL_NUMBER, "usm", def );
 
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_POST_PREMIB_READ_CONFIG,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_PREMIB_READ_CONFIG,
         Usm_initUsmPostConfig, NULL );
 
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_SHUTDOWN,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_SHUTDOWN,
         Usm_deinitUsmPostConfig, NULL );
 
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_SHUTDOWN,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_SHUTDOWN,
         V3_freeEngineID, NULL );
 
     ReadConfig_registerConfigHandler( "priot", "defAuthType", Usm_v3AuthtypeConf,
@@ -2931,11 +2931,11 @@ void Usm_initUsm( void )
     /*
      * Free stuff at shutdown time
      */
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_SHUTDOWN,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_SHUTDOWN,
         Usm_freeEnginetimeOnShutdown, NULL );
 
-    type = DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_APPTYPE );
+    type = DefaultStore_getString( DsStore_LIBRARY_ID, DsStr_APPTYPE );
 
     ReadConfig_registerConfigHandler( type, "userSetAuthPass", Usm_setPassword,
         NULL, NULL );
@@ -2962,7 +2962,7 @@ void Usm_initUsmConf( const char* app )
     /*
      * we need to be called back later
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         Usm_storeUsers, NULL );
 }
 
@@ -3575,7 +3575,7 @@ int Usm_storeUsers( int majorID, int minorID, void* serverarg, void* clientarg )
      */
     char* appname = ( char* )clientarg;
     if ( appname == NULL ) {
-        appname = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        appname = DefaultStore_getString( DsStore_LIBRARY_ID,
             DsStr_APPTYPE );
     }
 

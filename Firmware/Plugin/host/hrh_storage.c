@@ -8,7 +8,7 @@
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
 #include "Client.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
@@ -87,14 +87,14 @@ void init_hrh_storage( void )
     REGISTER_MIB( "host/hr_storage", hrstore_variables, Variable2_s,
         hrStorageTable_oid );
 
-    appname = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    appname = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
     DefaultStore_registerConfig( ASN01_BOOLEAN, appname, "skipNFSInHostResources",
-        DsStorage_APPLICATION_ID,
+        DsStore_APPLICATION_ID,
         DsAgentBoolean_SKIPNFSINHOSTRESOURCES );
 
     DefaultStore_registerConfig( ASN01_BOOLEAN, appname, "realStorageUnits",
-        DsStorage_APPLICATION_ID,
+        DsStore_APPLICATION_ID,
         DsAgentBoolean_REALSTORAGEUNITS );
 
     AgentReadConfig_priotdRegisterConfigHandler( "storageUseNFS", parse_storage_config, NULL,
@@ -318,7 +318,7 @@ really_try_next:
         return NULL;
 
     store_idx = name[ HRSTORE_ENTRY_NAME_LENGTH ];
-    if ( HRFS_entry && store_idx > NETSNMP_MEM_TYPE_MAX && DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    if ( HRFS_entry && store_idx > NETSNMP_MEM_TYPE_MAX && DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                                                                DsAgentBoolean_SKIPNFSINHOSTRESOURCES )
         && Check_HR_FileSys_NFS() )
         return NULL;
@@ -367,7 +367,7 @@ really_try_next:
         }
     case HRSTORE_UNITS:
         if ( store_idx > NETSNMP_MEM_TYPE_MAX ) {
-            if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                      DsAgentBoolean_REALSTORAGEUNITS ) )
                 vars_longReturn = HRFS_entry->units & 0xffffffff;
             else
@@ -380,7 +380,7 @@ really_try_next:
         return ( u_char* )&vars_longReturn;
     case HRSTORE_SIZE:
         if ( store_idx > NETSNMP_MEM_TYPE_MAX ) {
-            if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                      DsAgentBoolean_REALSTORAGEUNITS ) )
                 vars_longReturn = HRFS_entry->size & 0xffffffff;
             else
@@ -393,7 +393,7 @@ really_try_next:
         return ( u_char* )&vars_longReturn;
     case HRSTORE_USED:
         if ( store_idx > NETSNMP_MEM_TYPE_MAX ) {
-            if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                      DsAgentBoolean_REALSTORAGEUNITS ) )
                 vars_longReturn = HRFS_entry->used & 0xffffffff;
             else
@@ -449,7 +449,7 @@ int Get_Next_HR_Store( void )
     for ( ;; ) {
         HRS_index = Get_Next_HR_FileSys();
         if ( HRS_index >= 0 ) {
-            if ( !( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( !( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                         DsAgentBoolean_SKIPNFSINHOSTRESOURCES )
                      && Check_HR_FileSys_NFS() ) ) {
                 return HRS_index + NETSNMP_MEM_TYPE_MAX;

@@ -1,5 +1,5 @@
 #include "TableData.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Client.h"
 #include "System/Util/Logger.h"
 #include "ReadOnly.h"
@@ -681,8 +681,8 @@ TableData_insertTableRow(RequestInfo *request,
 {
     RequestInfo       *req;
     TableRequestInfo *table_info = NULL;
-    Types_VariableList      *this_index = NULL;
-    Types_VariableList      *that_index = NULL;
+    VariableList      *this_index = NULL;
+    VariableList      *that_index = NULL;
     oid      base_oid[] = {0, 0};	/* Make sure index OIDs are legal! */
     oid      this_oid[ASN01_MAX_OID_LEN];
     oid      that_oid[ASN01_MAX_OID_LEN];
@@ -803,7 +803,7 @@ TableData_getNextRow(TableData *table,
 /** finds the data in "datalist" stored at "indexes" */
 TableRow *
 TableData_get(TableData *table,
-                       Types_VariableList * indexes)
+                       VariableList * indexes)
 {
     oid             searchfor[ASN01_MAX_OID_LEN];
     size_t          searchfor_len = ASN01_MAX_OID_LEN;
@@ -899,14 +899,14 @@ TableData_rowNextByoid(TableData *table,
 
 TableRow *
 TableData_rowGetByidx( TableData    *table,
-                                  Types_VariableList *indexes)
+                                  VariableList *indexes)
 {
     return TableData_get(table, indexes);
 }
 
 TableRow *
 TableData_rowNextByidx(TableData    *table,
-                                  Types_VariableList *indexes)
+                                  VariableList *indexes)
 {
     oid    instance[ASN01_MAX_OID_LEN];
     size_t len    = ASN01_MAX_OID_LEN;
@@ -958,7 +958,7 @@ TableData_tableDataEntryNext( TableData *table,
 
 void *
 TableData_entryGetByidx( TableData    *table,
-                                    Types_VariableList *indexes)
+                                    VariableList *indexes)
 {
     TableRow *row =
         TableData_rowGetByidx(table, indexes);
@@ -967,7 +967,7 @@ TableData_entryGetByidx( TableData    *table,
 
 void *
 TableData_entryNextByidx(TableData    *table,
-                                    Types_VariableList *indexes)
+                                    VariableList *indexes)
 {
     TableRow *row =
         TableData_rowNextByidx(table, indexes);

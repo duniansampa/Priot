@@ -5,7 +5,7 @@
  */
 
 #include "siglog/data_access/tcpConn.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Priot.h"
 
@@ -50,7 +50,7 @@ netsnmp_access_tcpconn_container_init( u_int flags )
     /*
      * create the container
      */
-    container1 = Container_find( "access:tcpconn:table_container" );
+    container1 = Container_find( "access:tcpconn:tableContainer" );
     if ( NULL == container1 ) {
         Logger_log( LOGGER_PRIORITY_ERR, "tcpconn primary container not found\n" );
         return NULL;

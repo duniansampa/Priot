@@ -32,16 +32,16 @@
 
 #include "ifTable_interface.h"
 #include "AgentHandler.h"
-#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Priot.h"
 #include "RowMerge.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "TableContainer.h"
 #include "Watcher.h"
 #include "ifTable_constants.h"
@@ -152,7 +152,7 @@ static NodeHandlerFT _mfd_ifTable_check_dependencies;
 
 static inline int _ifTable_undo_column( ifTable_rowreq_ctx*
                                             rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column );
 
 ifTable_data* ifTable_allocate_data( void );
@@ -392,7 +392,7 @@ int ifTable_index_to_oid( Types_Index* oid_idx, ifTable_mib_index* mib_idx )
     /*
      * ifIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/w/e/R/d/H
      */
-    Types_VariableList var_ifIndex;
+    VariableList var_ifIndex;
 
     /*
      * set up varbinds
@@ -403,7 +403,7 @@ int ifTable_index_to_oid( Types_Index* oid_idx, ifTable_mib_index* mib_idx )
     /*
      * chain temp index varbinds together
      */
-    var_ifIndex.nextVariable = NULL;
+    var_ifIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ifTable:ifTable_index_to_oid", "called\n" ) );
 
@@ -443,7 +443,7 @@ int ifTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ifIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/w/e/R/d/H
      */
-    Types_VariableList var_ifIndex;
+    VariableList var_ifIndex;
 
     /*
      * set up varbinds
@@ -454,7 +454,7 @@ int ifTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ifIndex.nextVariable = NULL;
+    var_ifIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ifTable:ifTable_index_from_oid", "called\n" ) );
 
@@ -466,7 +466,7 @@ int ifTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ifIndex = *( ( long* )var_ifIndex.val.string );
+        mib_idx->ifIndex = *( ( long* )var_ifIndex.value.string );
     }
 
     /*
@@ -706,7 +706,7 @@ _mfd_ifTable_object_lookup( MibHandler* handler,
  */
 static inline int
 _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -722,8 +722,8 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINDEX:
         var->type = ASN01_INTEGER;
-        var->valLen = sizeof( long );
-        ( *var->val.integer ) = rowreq_ctx->tbl_idx.ifIndex;
+        var->valueLength = sizeof( long );
+        ( *var->value.integer ) = rowreq_ctx->tbl_idx.ifIndex;
         break;
 
     /*
@@ -731,35 +731,35 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFDESCR:
         var->type = ASN01_OCTET_STR;
-        rc = ifDescr_get( rowreq_ctx, ( char** )&var->val.string,
-            &var->valLen );
+        rc = ifDescr_get( rowreq_ctx, ( char** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * ifType(3)/IANAifType/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IFTYPE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ifType_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifType_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifMtu(4)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFMTU:
-        var->valLen = sizeof( long );
+        var->valueLength = sizeof( long );
         var->type = ASN01_INTEGER;
-        rc = ifMtu_get( rowreq_ctx, ( long* )var->val.string );
+        rc = ifMtu_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
     /*
          * ifSpeed(5)/GAUGE/ASN_GAUGE/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFSPEED:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_GAUGE;
-        rc = ifSpeed_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifSpeed_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
@@ -767,143 +767,143 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFPHYSADDRESS:
         var->type = ASN01_OCTET_STR;
-        rc = ifPhysAddress_get( rowreq_ctx, ( char** )&var->val.string,
-            &var->valLen );
+        rc = ifPhysAddress_get( rowreq_ctx, ( char** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * ifAdminStatus(7)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IFADMINSTATUS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ifAdminStatus_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifAdminStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOperStatus(8)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IFOPERSTATUS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ifOperStatus_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOperStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifLastChange(9)/TICKS/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFLASTCHANGE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_TIMETICKS;
-        rc = ifLastChange_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifLastChange_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInOctets(10)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINOCTETS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInOctets_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInOctets_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInUcastPkts(11)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINUCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInUcastPkts_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInNUcastPkts(12)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINNUCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInNUcastPkts_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInNUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInDiscards(13)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINDISCARDS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInDiscards_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInDiscards_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInErrors(14)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINERRORS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInErrors_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInErrors_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInUnknownProtos(15)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINUNKNOWNPROTOS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInUnknownProtos_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInUnknownProtos_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutOctets(16)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTOCTETS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifOutOctets_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOutOctets_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutUcastPkts(17)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTUCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifOutUcastPkts_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOutUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutNUcastPkts(18)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTNUCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifOutNUcastPkts_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOutNUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutDiscards(19)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTDISCARDS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifOutDiscards_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOutDiscards_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutErrors(20)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTERRORS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifOutErrors_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOutErrors_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutQLen(21)/GAUGE/ASN_GAUGE/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTQLEN:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_GAUGE;
-        rc = ifOutQLen_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifOutQLen_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
@@ -911,8 +911,8 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFSPECIFIC:
         var->type = ASN01_OBJECT_ID;
-        rc = ifSpecific_get( rowreq_ctx, ( oid** )&var->val.string,
-            &var->valLen );
+        rc = ifSpecific_get( rowreq_ctx, ( oid** )&var->value.string,
+            &var->valueLength );
         break;
 
     default:
@@ -944,14 +944,14 @@ int _mfd_ifTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -968,7 +968,7 @@ int _mfd_ifTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = ErrorCode_GENERR;
         }
@@ -980,7 +980,7 @@ int _mfd_ifTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -1008,7 +1008,7 @@ int _mfd_ifTable_get_values( MibHandler* handler,
  */
 static inline int
 _ifTable_check_column( ifTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1068,15 +1068,15 @@ _ifTable_check_column( ifTable_rowreq_ctx* rowreq_ctx,
          ** for storage, so we can't use sizeof on data context. So we
          ** just check that it's the expected size. The enum tests below
          ** will ensure that there is no data overflow. */
-        rc = CheckVarbind_typeAndSize( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
             sizeof( u_long ) );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != IFADMINSTATUS_UP )
-            && ( *var->val.integer != IFADMINSTATUS_DOWN )
-            && ( *var->val.integer != IFADMINSTATUS_TESTING ) ) {
+            && ( *var->value.integer != IFADMINSTATUS_UP )
+            && ( *var->value.integer != IFADMINSTATUS_DOWN )
+            && ( *var->value.integer != IFADMINSTATUS_TESTING ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
@@ -1084,7 +1084,7 @@ _ifTable_check_column( ifTable_rowreq_ctx* rowreq_ctx,
                 "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ifAdminStatus_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1483,7 +1483,7 @@ int _mfd_ifTable_undo_cleanup( MibHandler* handler,
  */
 static inline int
 _ifTable_set_column( ifTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1499,7 +1499,7 @@ _ifTable_set_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFADMINSTATUS:
         rowreq_ctx->column_set_flags |= COLUMN_IFADMINSTATUS_FLAG;
-        rc = ifAdminStatus_set( rowreq_ctx, *( ( u_long* )var->val.string ) );
+        rc = ifAdminStatus_set( rowreq_ctx, *( ( u_long* )var->value.string ) );
         break;
 
     default:
@@ -1651,7 +1651,7 @@ int _mfd_ifTable_undo_commit( MibHandler* handler,
  */
 static inline int
 _ifTable_undo_column( ifTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1875,7 +1875,7 @@ void _ifTable_container_init( ifTable_interface_ctx* if_ctx )
 
     ifTable_container_init( &if_ctx->container, if_ctx->cache );
     if ( NULL == if_ctx->container )
-        if_ctx->container = Container_find( "ifTable:table_container" );
+        if_ctx->container = Container_find( "ifTable:tableContainer" );
     if ( NULL == if_ctx->container ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error creating container in "
                                          "ifTable_container_init\n" );

@@ -2,7 +2,7 @@
 #include "PriotSettings.h"
 #include "CacheHandler.h"
 #include "System/Util/Utilities.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Client.h"
 #include "StashToNext.h"
 
@@ -121,7 +121,7 @@ StashCache_helper( MibHandler *handler,
     Cache            *cache;
     StashCacheInfo *cinfo;
     OidStash_Node   *cnode;
-    Types_VariableList    *cdata;
+    VariableList    *cdata;
     RequestInfo     *request;
 
     DEBUG_MSGTL(("helper:stash_cache", "Got request\n"));
@@ -138,16 +138,16 @@ StashCache_helper( MibHandler *handler,
     case MODE_GET:
         DEBUG_MSGTL(("helper:stash_cache", "Processing GET request\n"));
         for(request = requests; request; request = request->next) {
-            cdata = (Types_VariableList*)
+            cdata = (VariableList*)
                 OidStash_getData(cinfo->cache,
                                            requests->requestvb->name,
                                            requests->requestvb->nameLength);
-            if (cdata && cdata->val.string && cdata->valLen) {
+            if (cdata && cdata->value.string && cdata->valueLength) {
                 DEBUG_MSGTL(("helper:stash_cache", "Found cached GET varbind\n"));
                 DEBUG_MSGOID(("helper:stash_cache", cdata->name, cdata->nameLength));
                 DEBUG_MSG(("helper:stash_cache", "\n"));
                 Client_setVarTypedValue(request->requestvb, cdata->type,
-                                         cdata->val.string, cdata->valLen);
+                                         cdata->value.string, cdata->valueLength);
             }
         }
         break;
@@ -160,13 +160,13 @@ StashCache_helper( MibHandler *handler,
                                                requests->requestvb->name,
                                                requests->requestvb->nameLength);
             if (cnode && cnode->thedata) {
-                cdata =  (Types_VariableList*)cnode->thedata;
-                if (cdata->val.string && cdata->name && cdata->nameLength) {
+                cdata =  (VariableList*)cnode->thedata;
+                if (cdata->value.string && cdata->name && cdata->nameLength) {
                     DEBUG_MSGTL(("helper:stash_cache", "Found cached GETNEXT varbind\n"));
                     DEBUG_MSGOID(("helper:stash_cache", cdata->name, cdata->nameLength));
                     DEBUG_MSG(("helper:stash_cache", "\n"));
                     Client_setVarTypedValue(request->requestvb, cdata->type,
-                                             cdata->val.string, cdata->valLen);
+                                             cdata->value.string, cdata->valueLength);
                     Client_setVarObjid(request->requestvb, cdata->name,
                                        cdata->nameLength);
                 }

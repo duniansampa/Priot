@@ -2,7 +2,7 @@
 #define OIDSTASH_H
 
 #include "Generals.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 
 /*
  * designed to store/retrieve information associated with a given oid.
@@ -41,7 +41,7 @@ int  OidStash_addData(OidStash_Node **root, const oid * lookup,
                                  size_t lookup_len,
                                  void *mydata);
 
-Callback_CallbackFT OidStash_storeAll;
+Callback_f OidStash_storeAll;
 
 
 OidStash_Node

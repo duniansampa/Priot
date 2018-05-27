@@ -166,8 +166,8 @@ struct mteTrigger {
      */
     unsigned int    alarm;
     long            sysUpTime;
-    Types_VariableList *old_results;
-    Types_VariableList *old_deltaDs;
+    VariableList *old_results;
+    VariableList *old_deltaDs;
 
     /*
      *  ... stats...
@@ -179,7 +179,7 @@ struct mteTrigger {
      */
     char           *mteTriggerXOwner;
     char           *mteTriggerXObjects;
-    Types_VariableList *mteTriggerFired;
+    VariableList *mteTriggerFired;
 };
 
   /*

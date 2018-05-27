@@ -7,14 +7,14 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "Parse.h"
 #include "ReadConfig.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "mteEvent.h"
 #include "mteObjects.h"
 
@@ -34,9 +34,9 @@ void init_mteEventConf( void )
         "eventname [-I] OID = value" );
 
     DefaultStore_registerConfig( ASN01_BOOLEAN,
-        DefaultStore_getString( DsStorage_LIBRARY_ID,
+        DefaultStore_getString( DsStore_LIBRARY_ID,
                                      DsStr_APPTYPE ),
-        "strictDisman", DsStorage_APPLICATION_ID,
+        "strictDisman", DsStore_APPLICATION_ID,
         DsAgentBoolean_STRICT_DISMAN );
 
     /*
@@ -55,9 +55,9 @@ void init_mteEventConf( void )
     /*
      * Register to save (non-fixed) entries when the agent shuts down
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_mteETable, NULL );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         clear_mteETable, NULL );
 }
@@ -74,18 +74,18 @@ void init_mteEventConf( void )
 static struct mteEvent*
 _find_mteEvent_entry( const char* owner, const char* ename )
 {
-    Types_VariableList owner_var, ename_var;
+    VariableList owner_var, ename_var;
     TdataRow* row;
     /*
          * If there's already an existing entry,
          *   then use that...
          */
-    memset( &owner_var, 0, sizeof( Types_VariableList ) );
-    memset( &ename_var, 0, sizeof( Types_VariableList ) );
+    memset( &owner_var, 0, sizeof( VariableList ) );
+    memset( &ename_var, 0, sizeof( VariableList ) );
     Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR, owner, strlen( owner ) );
     Client_setVarTypedValue( &ename_var, ASN01_PRIV_IMPLIED_OCTET_STR,
         ename, strlen( ename ) );
-    owner_var.nextVariable = &ename_var;
+    owner_var.next = &ename_var;
     row = TableTdata_rowGetByidx( event_table_data, &owner_var );
     /*
          * ... otherwise, create a new one
@@ -563,12 +563,12 @@ int store_mteETable( int majorID, int minorID, void* serverarg, void* clientarg 
 int clear_mteETable( int majorID, int minorID, void* serverarg, void* clientarg )
 {
     TdataRow* row;
-    Types_VariableList owner_var;
+    VariableList owner_var;
 
     /*
      * We're only interested in entries set up via the config files
      */
-    memset( &owner_var, 0, sizeof( Types_VariableList ) );
+    memset( &owner_var, 0, sizeof( VariableList ) );
     Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR,
         "priotd.conf", strlen( "priotd.conf" ) );
     while ( ( row = TableTdata_rowNextByidx( event_table_data,

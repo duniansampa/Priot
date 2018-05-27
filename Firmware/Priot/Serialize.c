@@ -1,6 +1,6 @@
 #include "Serialize.h"
 
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 /** @defgroup serialize serialize
  *  Calls sub handlers one request at a time.

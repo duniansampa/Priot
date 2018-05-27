@@ -1,5 +1,5 @@
 #include "System.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include <arpa/inet.h>
 #include <grp.h>
 #include <net/if.h>

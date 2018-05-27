@@ -1,6 +1,6 @@
 #include "AgentIndex.h"
 
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Utilities.h"
 #include "Client.h"
 #include "Priot.h"
@@ -10,7 +10,7 @@
 #include "DsAgent.h"
 #include "System/Util/Utilities.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Agentx/XClient.h"
 
 /*
@@ -26,7 +26,7 @@
  */
 
 struct Index_s {
-    Types_VariableList* varbind;     /* or pointer to var_list ? */
+    VariableList* varbind;     /* or pointer to var_list ? */
     int                 allocated;
     Types_Session*      session;
     struct Index_s*     next_oid;
@@ -46,9 +46,9 @@ AgentIndex_registerStringIndex( oid*  name,
                                 size_t name_len,
                                 char*  cp )
 {
-    Types_VariableList varbind, *res;
+    VariableList varbind, *res;
 
-    memset(&varbind, 0, sizeof(Types_VariableList));
+    memset(&varbind, 0, sizeof(VariableList));
     varbind.type = ASN01_OCTET_STR;
     Client_setVarObjid(&varbind, name, name_len);
     if (cp != ANY_STRING_INDEX) {
@@ -61,10 +61,10 @@ AgentIndex_registerStringIndex( oid*  name,
     if (res == NULL) {
         return NULL;
     } else {
-        char *rv = (char *)malloc(res->valLen + 1);
+        char *rv = (char *)malloc(res->valueLength + 1);
         if (rv) {
-            memcpy(rv, res->val.string, res->valLen);
-            rv[res->valLen] = 0;
+            memcpy(rv, res->value.string, res->valueLength);
+            rv[res->valueLength] = 0;
         }
         free(res);
         return rv;
@@ -76,15 +76,15 @@ AgentIndex_registerIntIndex( oid*  name,
                              size_t name_len,
                              int    val )
 {
-    Types_VariableList varbind, *res;
+    VariableList varbind, *res;
 
-    memset(&varbind, 0, sizeof(Types_VariableList));
+    memset(&varbind, 0, sizeof(VariableList));
     varbind.type = ASN01_INTEGER;
     Client_setVarObjid(&varbind, name, name_len);
-    varbind.val.string = varbind.buf;
+    varbind.value.string = varbind.buffer;
     if (val != ANY_INTEGER_INDEX) {
-        varbind.valLen = sizeof(long);
-        *varbind.val.integer = val;
+        varbind.valueLength = sizeof(long);
+        *varbind.value.integer = val;
         res = AgentIndex_registerIndex(&varbind, ALLOCATE_THIS_INDEX, agent_mainSession);
     } else {
         res = AgentIndex_registerIndex(&varbind, ALLOCATE_ANY_INDEX, agent_mainSession);
@@ -93,7 +93,7 @@ AgentIndex_registerIntIndex( oid*  name,
     if (res == NULL) {
         return -1;
     } else {
-        int             rv = *(res->val.integer);
+        int             rv = *(res->value.integer);
         free(res);
         return rv;
     }
@@ -104,15 +104,15 @@ AgentIndex_registerIntIndex( oid*  name,
  * this function.
  */
 
-Types_VariableList*
+VariableList*
 AgentIndex_registerOidIndex( oid*  name,
                              size_t name_len,
                              oid*  value,
                              size_t value_len )
 {
-    Types_VariableList varbind;
+    VariableList varbind;
 
-    memset(&varbind, 0, sizeof(Types_VariableList));
+    memset(&varbind, 0, sizeof(VariableList));
     varbind.type = ASN01_OBJECT_ID;
     Client_setVarObjid(&varbind, name, name_len);
     if (value != ANY_OID_INDEX) {
@@ -129,12 +129,12 @@ AgentIndex_registerOidIndex( oid*  name,
  * this function.
  */
 
-Types_VariableList*
-AgentIndex_registerIndex( Types_VariableList* varbind,
+VariableList*
+AgentIndex_registerIndex( VariableList* varbind,
                           int                 flags,
                           Types_Session*      ss )
 {
-    Types_VariableList *rv = NULL;
+    VariableList *rv = NULL;
     struct Index_s *new_index, *idxptr, *idxptr2;
     struct Index_s *prev_oid_ptr, *prev_idx_ptr;
     int             res, res2, i;
@@ -143,7 +143,7 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
     DEBUG_MSGVAR(("AgentIndex_registerIndex", varbind));
     DEBUG_MSG(("AgentIndex_registerIndex", "for session %8p\n", ss));
 
-    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStore_APPLICATION_ID,
                    DsAgentBoolean_ROLE) == SUB_AGENT) {
         return (XClient_registerIndex(ss, varbind, flags));
     }
@@ -197,22 +197,22 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
                 switch (varbind->type) {
                 case ASN01_INTEGER:
                     res2 =
-                        (*varbind->val.integer -
-                         *idxptr2->varbind->val.integer);
+                        (*varbind->value.integer -
+                         *idxptr2->varbind->value.integer);
                     break;
                 case ASN01_OCTET_STR:
-                    i = UTILITIES_MIN_VALUE(varbind->valLen,
-                                 idxptr2->varbind->valLen);
+                    i = UTILITIES_MIN_VALUE(varbind->valueLength,
+                                 idxptr2->varbind->valueLength);
                     res2 =
-                        memcmp(varbind->val.string,
-                               idxptr2->varbind->val.string, i);
+                        memcmp(varbind->value.string,
+                               idxptr2->varbind->value.string, i);
                     break;
                 case ASN01_OBJECT_ID:
                     res2 =
-                        Api_oidCompare(varbind->val.objid,
-                                         varbind->valLen / sizeof(oid),
-                                         idxptr2->varbind->val.objid,
-                                         idxptr2->varbind->valLen /
+                        Api_oidCompare(varbind->value.objectId,
+                                         varbind->valueLength / sizeof(oid),
+                                         idxptr2->varbind->value.objectId,
+                                         idxptr2->varbind->valueLength /
                                          sizeof(oid));
                     break;
                 default:
@@ -281,8 +281,8 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
                                           varbind->name,
                                           varbind->nameLength,
                                           varbind->type,
-                                          varbind->val.string,
-                                          varbind->valLen)) {
+                                          varbind->value.string,
+                                          varbind->valueLength)) {
         /*
          * if (Client_cloneVar( varbind, new_index->varbind ) != 0 )
          */
@@ -293,7 +293,7 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
     new_index->allocated = 1;
 
     if (varbind->type == ASN01_OCTET_STR && flags == ALLOCATE_THIS_INDEX)
-        new_index->varbind->val.string[new_index->varbind->valLen] = 0;
+        new_index->varbind->value.string[new_index->varbind->valueLength] = 0;
 
     /*
      * If we've been given a value, then we can use that, but
@@ -309,48 +309,48 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
                 return NULL;
             }
         } else
-            new_index->varbind->val.string = new_index->varbind->buf;
+            new_index->varbind->value.string = new_index->varbind->buffer;
 
         switch (varbind->type) {
         case ASN01_INTEGER:
             if (prev_idx_ptr) {
-                (*new_index->varbind->val.integer)++;
+                (*new_index->varbind->value.integer)++;
             } else
-                *(new_index->varbind->val.integer) = 1;
-            new_index->varbind->valLen = sizeof(long);
+                *(new_index->varbind->value.integer) = 1;
+            new_index->varbind->valueLength = sizeof(long);
             break;
         case ASN01_OCTET_STR:
             if (prev_idx_ptr) {
-                i = new_index->varbind->valLen - 1;
-                while (new_index->varbind->buf[i] == 'z') {
-                    new_index->varbind->buf[i] = 'a';
+                i = new_index->varbind->valueLength - 1;
+                while (new_index->varbind->buffer[i] == 'z') {
+                    new_index->varbind->buffer[i] = 'a';
                     i--;
                     if (i < 0) {
-                        i = new_index->varbind->valLen;
-                        new_index->varbind->buf[i] = 'a';
-                        new_index->varbind->buf[i + 1] = 0;
+                        i = new_index->varbind->valueLength;
+                        new_index->varbind->buffer[i] = 'a';
+                        new_index->varbind->buffer[i + 1] = 0;
                     }
                 }
-                new_index->varbind->buf[i]++;
+                new_index->varbind->buffer[i]++;
             } else
-                strcpy((char *) new_index->varbind->buf, "aaaa");
-            new_index->varbind->valLen =
-                strlen((char *) new_index->varbind->buf);
+                strcpy((char *) new_index->varbind->buffer, "aaaa");
+            new_index->varbind->valueLength =
+                strlen((char *) new_index->varbind->buffer);
             break;
         case ASN01_OBJECT_ID:
             if (prev_idx_ptr) {
-                i = prev_idx_ptr->varbind->valLen / sizeof(oid) - 1;
-                while (new_index->varbind->val.objid[i] == 255) {
-                    new_index->varbind->val.objid[i] = 1;
+                i = prev_idx_ptr->varbind->valueLength / sizeof(oid) - 1;
+                while (new_index->varbind->value.objectId[i] == 255) {
+                    new_index->varbind->value.objectId[i] = 1;
                     i--;
-                    if (i == 0 && new_index->varbind->val.objid[0] == 2) {
-                        new_index->varbind->val.objid[0] = 1;
-                        i = new_index->varbind->valLen / sizeof(oid);
-                        new_index->varbind->val.objid[i] = 0;
-                        new_index->varbind->valLen += sizeof(oid);
+                    if (i == 0 && new_index->varbind->value.objectId[0] == 2) {
+                        new_index->varbind->value.objectId[0] = 1;
+                        i = new_index->varbind->valueLength / sizeof(oid);
+                        new_index->varbind->value.objectId[i] = 0;
+                        new_index->varbind->valueLength += sizeof(oid);
                     }
                 }
-                new_index->varbind->val.objid[i]++;
+                new_index->varbind->value.objectId[i]++;
             } else {
                 /*
                  * If the requested OID name is small enough,
@@ -359,11 +359,11 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
                  */
                 if ((varbind->nameLength + 1) * sizeof(oid) <= 40) {
                     for (i = 0; i < (int) varbind->nameLength; i++)
-                        new_index->varbind->val.objid[i] =
+                        new_index->varbind->value.objectId[i] =
                             varbind->name[i];
-                    new_index->varbind->val.objid[varbind->nameLength] =
+                    new_index->varbind->value.objectId[varbind->nameLength] =
                         1;
-                    new_index->varbind->valLen =
+                    new_index->varbind->valueLength =
                         (varbind->nameLength + 1) * sizeof(oid);
                 } else {
                     /*
@@ -372,9 +372,9 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
                     i = 40 / sizeof(oid);
                     if (i > 4)
                         i = 4;
-                    new_index->varbind->valLen = i * (sizeof(oid));
+                    new_index->varbind->valueLength = i * (sizeof(oid));
                     for (i--; i >= 0; i--)
-                        new_index->varbind->val.objid[i] = 1;
+                        new_index->varbind->value.objectId[i] = 1;
                 }
             }
             break;
@@ -430,7 +430,7 @@ AgentIndex_registerIndex( Types_VariableList* varbind,
  *   to allow it to be used elsewhere
  */
 int
-AgentIndex_releaseIndex( Types_VariableList* varbind )
+AgentIndex_releaseIndex( VariableList* varbind )
 {
     return (AgentIndex_unregisterIndex(varbind, TRUE, NULL));
 }
@@ -440,7 +440,7 @@ AgentIndex_releaseIndex( Types_VariableList* varbind )
  *   due to errors in the registration process.
  */
 int
-AgentIndex_removeIndex( Types_VariableList* varbind,
+AgentIndex_removeIndex( VariableList* varbind,
                         Types_Session*      ss )
 {
     return (AgentIndex_unregisterIndex(varbind, FALSE, ss));
@@ -462,7 +462,7 @@ AgentIndex_unregisterIndexBySession( Types_Session * ss )
 
 
 int
-AgentIndex_unregisterIndex( Types_VariableList* varbind,
+AgentIndex_unregisterIndex( VariableList* varbind,
                             int                 remember,
                             Types_Session*      ss )
 {
@@ -470,7 +470,7 @@ AgentIndex_unregisterIndex( Types_VariableList* varbind,
     struct Index_s *prev_oid_ptr, *prev_idx_ptr;
     int             res, res2, i;
 
-    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStore_APPLICATION_ID,
                    DsAgentBoolean_ROLE) == SUB_AGENT) {
         return (XClient_unregisterIndex(ss, varbind));
     }
@@ -499,22 +499,22 @@ AgentIndex_unregisterIndex( Types_VariableList* varbind,
         switch (varbind->type) {
         case ASN01_INTEGER:
             res2 =
-                (*varbind->val.integer -
-                 *idxptr2->varbind->val.integer);
+                (*varbind->value.integer -
+                 *idxptr2->varbind->value.integer);
             break;
         case ASN01_OCTET_STR:
-            i = UTILITIES_MIN_VALUE(varbind->valLen,
-                         idxptr2->varbind->valLen);
+            i = UTILITIES_MIN_VALUE(varbind->valueLength,
+                         idxptr2->varbind->valueLength);
             res2 =
-                memcmp(varbind->val.string,
-                       idxptr2->varbind->val.string, i);
+                memcmp(varbind->value.string,
+                       idxptr2->varbind->value.string, i);
             break;
         case ASN01_OBJECT_ID:
             res2 =
-                Api_oidCompare(varbind->val.objid,
-                                 varbind->valLen / sizeof(oid),
-                                 idxptr2->varbind->val.objid,
-                                 idxptr2->varbind->valLen /
+                Api_oidCompare(varbind->value.objectId,
+                                 varbind->valueLength / sizeof(oid),
+                                 idxptr2->varbind->value.objectId,
+                                 idxptr2->varbind->valueLength /
                                  sizeof(oid));
             break;
         default:
@@ -572,9 +572,9 @@ AgentIndex_unregisterStringIndex( oid*  name,
                                   size_t name_len,
                                   char*  cp )
 {
-    Types_VariableList varbind;
+    VariableList varbind;
 
-    memset(&varbind, 0, sizeof(Types_VariableList));
+    memset(&varbind, 0, sizeof(VariableList));
     varbind.type = ASN01_OCTET_STR;
     Client_setVarObjid(&varbind, name, name_len);
     Client_setVarValue(&varbind, (u_char *) cp, strlen(cp));
@@ -586,14 +586,14 @@ AgentIndex_unregisterIntIndex( oid*  name,
                                size_t name_len,
                                int    val )
 {
-    Types_VariableList varbind;
+    VariableList varbind;
 
-    memset(&varbind, 0, sizeof(Types_VariableList));
+    memset(&varbind, 0, sizeof(VariableList));
     varbind.type = ASN01_INTEGER;
     Client_setVarObjid(&varbind, name, name_len);
-    varbind.val.string = varbind.buf;
-    varbind.valLen = sizeof(long);
-    *varbind.val.integer = val;
+    varbind.value.string = varbind.buffer;
+    varbind.valueLength = sizeof(long);
+    *varbind.value.integer = val;
     return (AgentIndex_unregisterIndex(&varbind, FALSE, agent_mainSession));
 }
 
@@ -603,9 +603,9 @@ AgentIndex_unregisterOidIndex( oid*  name,
                                oid*  value,
                                size_t value_len )
 {
-    Types_VariableList varbind;
+    VariableList varbind;
 
-    memset(&varbind, 0, sizeof(Types_VariableList));
+    memset(&varbind, 0, sizeof(VariableList));
     varbind.type = ASN01_OBJECT_ID;
     Client_setVarObjid(&varbind, name, name_len);
     Client_setVarValue(&varbind, (u_char *) value,
@@ -640,19 +640,19 @@ AgentIndex_dumpIdxRegistry( void )
             switch (idxptr2->varbind->type) {
             case ASN01_INTEGER:
                 printf("    %ld for session %8p, allocated %d\n",
-                       *idxptr2->varbind->val.integer, idxptr2->session,
+                       *idxptr2->varbind->value.integer, idxptr2->session,
                        idxptr2->allocated);
                 break;
             case ASN01_OCTET_STR:
                 printf("    \"%s\" for session %8p, allocated %d\n",
-                       idxptr2->varbind->val.string, idxptr2->session,
+                       idxptr2->varbind->value.string, idxptr2->session,
                        idxptr2->allocated);
                 break;
             case ASN01_OBJECT_ID:
                 eout_len = 0;
                 if (Mib_sprintReallocObjid2(&ebuf, &ebuf_len, &eout_len, 1,
-                                         idxptr2->varbind->val.objid,
-                                         idxptr2->varbind->valLen /
+                                         idxptr2->varbind->value.objectId,
+                                         idxptr2->varbind->valueLength /
                                          sizeof(oid))) {
                     printf("    %s for session %8p, allocated %d\n", ebuf,
                            idxptr2->session, idxptr2->allocated);

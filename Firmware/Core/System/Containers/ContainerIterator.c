@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "System/Util/Logger.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Priot.h"
 #include "System/Util/Utilities.h"
 

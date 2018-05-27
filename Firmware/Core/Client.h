@@ -17,26 +17,26 @@ struct Client_SynchState_s {
     Types_Pdu* pdu;
 };
 
-void Client_replaceVarTypes( Types_VariableList* vbl, u_char old_type,
+void Client_replaceVarTypes( VariableList* vbl, u_char old_type,
     u_char new_type );
 
-void Client_resetVarBuffers( Types_VariableList* var );
-void Client_resetVarTypes( Types_VariableList* vbl, u_char new_type );
+void Client_resetVarBuffers( VariableList* var );
+void Client_resetVarTypes( VariableList* vbl, u_char new_type );
 
-int Client_countVarbinds( Types_VariableList* var_ptr );
+int Client_countVarbinds( VariableList* var_ptr );
 
-int Client_countVarbindsOfType( Types_VariableList* var_ptr, u_char type );
-Types_VariableList* Client_findVarbindOfType( Types_VariableList* var_ptr,
+int Client_countVarbindsOfType( VariableList* var_ptr, u_char type );
+VariableList* Client_findVarbindOfType( VariableList* var_ptr,
     u_char type );
 
-Types_VariableList* Client_findVarbindInList( Types_VariableList* vblist,
+VariableList* Client_findVarbindInList( VariableList* vblist,
     const oid* name, size_t len );
 
 Types_Pdu* Client_splitPdu( Types_Pdu*, int skipCount, int copyCount );
 
 unsigned long Client_varbindLen( Types_Pdu* pdu );
 
-int Client_cloneVar( Types_VariableList*, Types_VariableList* );
+int Client_cloneVar( VariableList*, VariableList* );
 
 int Client_synchResponseCb( Types_Session*, Types_Pdu*, Types_Pdu**,
     Types_CallbackFT );
@@ -51,13 +51,13 @@ Types_Session* Client_queryGetDefaultSessionUnchecked( void );
 
 Types_Session* Client_queryGetDefaultSession( void );
 
-int Client_queryGet( Types_VariableList*, Types_Session* );
+int Client_queryGet( VariableList*, Types_Session* );
 
-int Client_queryGetnext( Types_VariableList*, Types_Session* );
+int Client_queryGetnext( VariableList*, Types_Session* );
 
-int Client_queryWalk( Types_VariableList*, Types_Session* );
+int Client_queryWalk( VariableList*, Types_Session* );
 
-int Client_querySet( Types_VariableList*, Types_Session* );
+int Client_querySet( VariableList*, Types_Session* );
 
 /** **************************************************************************
 *
@@ -107,12 +107,12 @@ typedef struct Client_StateMachineInput_s {
 
 int Client_stateMachineRun( Client_StateMachineInput* input );
 
-int Client_rowCreate( Types_Session* sess, Types_VariableList* vars,
+int Client_rowCreate( Types_Session* sess, VariableList* vars,
     int row_status_index );
 
 Types_Pdu* Client_pduCreate( int command );
 
-Types_VariableList* Client_addNullVar( Types_Pdu* pdu, const oid* name,
+VariableList* Client_addNullVar( Types_Pdu* pdu, const oid* name,
     size_t name_length );
 
 int Client_sessSynchResponse( void* sessp, Types_Pdu* pdu,
@@ -120,18 +120,18 @@ int Client_sessSynchResponse( void* sessp, Types_Pdu* pdu,
 
 Types_Pdu* Client_clonePdu( Types_Pdu* pdu );
 
-int Client_setVarObjid( Types_VariableList* vp, const oid* objid,
+int Client_setVarObjid( VariableList* vp, const oid* objid,
     size_t name_length );
 
-int Client_setVarValue( Types_VariableList* vars, const void* value,
+int Client_setVarValue( VariableList* vars, const void* value,
     size_t len );
 
-Types_VariableList* Client_cloneVarbind( Types_VariableList* varlist );
+VariableList* Client_cloneVarbind( VariableList* varlist );
 
-int Client_setVarTypedValue( Types_VariableList* newvar, u_char type,
+int Client_setVarTypedValue( VariableList* newvar, u_char type,
     const void* val_str, size_t valLen );
 
-int Client_setVarTypedInteger( Types_VariableList* newvar, u_char type,
+int Client_setVarTypedInteger( VariableList* newvar, u_char type,
     long val );
 
 const char* Client_errstring( int errstat );

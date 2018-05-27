@@ -5,10 +5,10 @@
 
 #include "mteObjects.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 
 Tdata* objects_table_data;
 
@@ -23,7 +23,7 @@ void init_objects_table_data( void )
         objects_table_data = TableTdata_createTable( "mteObjectsTable", 0 );
 }
 
-Callback_CallbackFT _init_default_mteObject_lists;
+Callback_f _init_default_mteObject_lists;
 
 /** Initializes the mteObjects module */
 void init_mteObjects( void )
@@ -34,8 +34,8 @@ void init_mteObjects( void )
      * Insert fixed object lists for the default trigger
      * notifications, once the MIB files have been read in.
      */
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_POST_READ_CONFIG,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_READ_CONFIG,
         _init_default_mteObject_lists, NULL );
 }
 
@@ -232,7 +232,7 @@ void mteObjects_removeEntry( TdataRow* row )
 void mteObjects_removeEntries( const char* owner, char* oname )
 {
     TdataRow* row;
-    Types_VariableList owner_var, oname_var;
+    VariableList owner_var, oname_var;
 
     memset( &owner_var, 0, sizeof( owner_var ) );
     memset( &oname_var, 0, sizeof( oname_var ) );
@@ -240,7 +240,7 @@ void mteObjects_removeEntries( const char* owner, char* oname )
         owner, strlen( owner ) );
     Client_setVarTypedValue( &oname_var, ASN01_OCTET_STR,
         oname, strlen( oname ) );
-    owner_var.nextVariable = &oname_var;
+    owner_var.next = &oname_var;
 
     row = TableTdata_rowNextByidx( objects_table_data, &owner_var );
 
@@ -257,14 +257,14 @@ void mteObjects_removeEntries( const char* owner, char* oname )
      *
      * =================================================== */
 
-int mteObjects_vblist( Types_VariableList* vblist,
+int mteObjects_vblist( VariableList* vblist,
     char* owner, char* oname,
     oid* suffix, size_t sfx_len )
 {
     TdataRow* row;
     struct mteObject* entry;
-    Types_VariableList owner_var, oname_var;
-    Types_VariableList* var = vblist;
+    VariableList owner_var, oname_var;
+    VariableList* var = vblist;
     oid name[ ASN01_MAX_OID_LEN ];
     size_t name_len;
 
@@ -287,7 +287,7 @@ int mteObjects_vblist( Types_VariableList* vblist,
         owner, strlen( owner ) );
     Client_setVarTypedValue( &oname_var, ASN01_OCTET_STR,
         oname, strlen( oname ) );
-    owner_var.nextVariable = &oname_var;
+    owner_var.next = &oname_var;
 
     row = TableTdata_rowNextByidx( objects_table_data, &owner_var );
 
@@ -316,12 +316,12 @@ int mteObjects_vblist( Types_VariableList* vblist,
     return 0;
 }
 
-int mteObjects_internal_vblist( Types_VariableList* vblist,
+int mteObjects_internal_vblist( VariableList* vblist,
     char* oname,
     struct mteTrigger* trigger,
     Types_Session* sess )
 {
-    Types_VariableList *var = NULL, *vp;
+    VariableList *var = NULL, *vp;
     oid mteHotTrigger[] = { 1, 3, 6, 1, 2, 1, 88, 2, 1, 1, 0 };
     oid mteHotTarget[] = { 1, 3, 6, 1, 2, 1, 88, 2, 1, 2, 0 };
     oid mteHotContext[] = { 1, 3, 6, 1, 2, 1, 88, 2, 1, 3, 0 };
@@ -358,8 +358,8 @@ int mteObjects_internal_vblist( Types_VariableList* vblist,
         Api_varlistAddVariable( &var,
             mteHotValue, ASN01_OID_LENGTH( mteHotValue ),
             trigger->mteTriggerFired->type,
-            trigger->mteTriggerFired->val.string,
-            trigger->mteTriggerFired->valLen );
+            trigger->mteTriggerFired->value.string,
+            trigger->mteTriggerFired->valueLength );
     } else if ( ( !strcmp( oname, "_linkUpDown" ) ) ) {
         /*
          * The ifOperStatus varbind that triggered this entry
@@ -385,16 +385,16 @@ int mteObjects_internal_vblist( Types_VariableList* vblist,
         Api_varlistAddVariable( &var,
             ifAdminStatus, ASN01_OID_LENGTH( ifAdminStatus ),
             ASN01_INTEGER,
-            trigger->mteTriggerFired->val.integer,
-            trigger->mteTriggerFired->valLen );
+            trigger->mteTriggerFired->value.integer,
+            trigger->mteTriggerFired->valueLength );
         /* ... then retrieve the actual value */
-        Client_queryGet( var->nextVariable, sess );
+        Client_queryGet( var->next, sess );
 
         Api_varlistAddVariable( &var,
             ifOperStatus, ASN01_OID_LENGTH( ifOperStatus ),
             ASN01_INTEGER,
-            trigger->mteTriggerFired->val.integer,
-            trigger->mteTriggerFired->valLen );
+            trigger->mteTriggerFired->value.integer,
+            trigger->mteTriggerFired->valueLength );
     } else {
         DEBUG_MSGTL( ( "disman:event:objects",
             "Unknown internal objects tag (%s)\n", oname ) );
@@ -405,9 +405,9 @@ int mteObjects_internal_vblist( Types_VariableList* vblist,
      * ... and insert them into the main varbind list
      *     (at the point specified)
      */
-    for ( vp = var; vp && vp->nextVariable; vp = vp->nextVariable )
+    for ( vp = var; vp && vp->next; vp = vp->next )
         ;
-    vp->nextVariable = vblist->nextVariable;
-    vblist->nextVariable = var;
+    vp->next = vblist->next;
+    vblist->next = var;
     return 0;
 }

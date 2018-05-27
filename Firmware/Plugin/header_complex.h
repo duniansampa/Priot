@@ -25,14 +25,14 @@ void           *header_complex(struct header_complex_index *datalist,
                                size_t * var_len,
                                WriteMethodFT ** write_method);
 
-int             header_complex_generate_varoid(Types_VariableList *
+int             header_complex_generate_varoid(VariableList *
                                                var);
 int             header_complex_parse_oid(oid * oidIndex, size_t oidLen,
-                                         Types_VariableList * data);
+                                         VariableList * data);
 void            header_complex_generate_oid(oid * name, size_t * length,
                                             oid * prefix,
                                             size_t prefix_len,
-                                            Types_VariableList * data);
+                                            VariableList * data);
 void            header_complex_free_all(struct header_complex_index
                                         *thestuff,
                                         HeaderComplexCleaner * cleaner);
@@ -49,7 +49,7 @@ struct header_complex_index *header_complex_find_entry(struct
                                                        void *entry);
 
 void           *header_complex_get(struct header_complex_index *datalist,
-                                   Types_VariableList * index);
+                                   VariableList * index);
 void           *header_complex_get_from_oid(struct header_complex_index
                                             *datalist, oid * searchfor,
                                             size_t searchfdor_len);
@@ -57,10 +57,10 @@ void           *header_complex_get_from_oid(struct header_complex_index
 struct header_complex_index *header_complex_add_data(struct
                                                      header_complex_index
                                                      **thedata,
-                                                     Types_VariableList
+                                                     VariableList
                                                      * var, void *data);
 struct header_complex_index *header_complex_maybe_add_data(struct header_complex_index **thedata,
-                                                           Types_VariableList * var,
+                                                           VariableList * var,
                                                            void *data,
                                                            int dont_allow_duplicates);
 

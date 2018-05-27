@@ -7,7 +7,7 @@
 #include "siglog/data_access/route.h"
 #include "System/Util/Assert.h"
 #include "System/Containers/Container.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/String.h"
 #include "if-mib/data_access/interface_ioctl.h"

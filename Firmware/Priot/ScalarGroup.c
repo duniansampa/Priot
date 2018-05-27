@@ -1,7 +1,7 @@
 #include "ScalarGroup.h"
 #include "System/Util/Utilities.h"
 #include "Instance.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Client.h"
 #include "Serialize.h"
 
@@ -62,7 +62,7 @@ ScalarGroup_helperHandler(MibHandler *handler,
                                 AgentRequestInfo *reqinfo,
                                 RequestInfo *requests)
 {
-    Types_VariableList *var = requests->requestvb;
+    VariableList *var = requests->requestvb;
 
     ScalarGroup *sgroup = (ScalarGroup *)handler->myvoid;
     int             ret, cmp;

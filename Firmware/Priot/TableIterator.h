@@ -6,14 +6,14 @@
 
 struct IteratorInfo_s;
 
-typedef Types_VariableList*( FirstDataPointFT )( void** loop_context,
+typedef VariableList*( FirstDataPointFT )( void** loop_context,
     void** data_context,
-    Types_VariableList*,
+    VariableList*,
     struct IteratorInfo_s* );
 
-typedef Types_VariableList*( NextDataPointFT )( void** loop_context,
+typedef VariableList*( NextDataPointFT )( void** loop_context,
     void** data_context,
-    Types_VariableList*,
+    VariableList*,
     struct IteratorInfo_s* );
 
 typedef void*( MakeDataContextFT )( void* loop_context,
@@ -92,7 +92,7 @@ typedef struct IteratorInfo_s {
     /* Experimental extension - Use At Your Own Risk
        (these two fields may change/disappear without warning) */
     FirstDataPointFT* get_row_indexes;
-    Types_VariableList* indexes;
+    VariableList* indexes;
 } IteratorInfo;
 
 #define TABLE_ITERATOR_NAME "tableIterator"
@@ -137,10 +137,10 @@ void* TableIterator_rowGet( IteratorInfo*, void* );
 void* TableIterator_rowNext( IteratorInfo*, void* );
 
 void* TableIterator_rowGetByidx( IteratorInfo*,
-    Types_VariableList* );
+    VariableList* );
 
 void* TableIterator_rowNextByidx( IteratorInfo*,
-    Types_VariableList* );
+    VariableList* );
 
 void* TableIterator_rowGetByoid( IteratorInfo*,
     oid*,

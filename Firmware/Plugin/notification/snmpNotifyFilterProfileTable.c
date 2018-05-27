@@ -9,10 +9,10 @@
 #include "snmpNotifyFilterProfileTable.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "ReadConfig.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "TextualConvention.h"
 #include "header_complex.h"
 
 /*
@@ -81,7 +81,7 @@ void init_snmpNotifyFilterProfileTable( void )
     /*
      * we need to be called back later to store our data 
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_snmpNotifyFilterProfileTable, NULL );
 
     /*
@@ -96,7 +96,7 @@ void init_snmpNotifyFilterProfileTable( void )
  */
 int snmpNotifyFilterProfileTable_add( struct snmpNotifyFilterProfileTable_data* thedata )
 {
-    Types_VariableList* vars = NULL;
+    VariableList* vars = NULL;
     int retVal;
 
     DEBUG_MSGTL( ( "snmpNotifyFilterProfileTable", "adding data...  " ) );
@@ -456,7 +456,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
     size_t newlen = name_len - ( sizeof( snmpNotifyFilterProfileTable_variables_oid ) / sizeof( oid ) + 3 - 1 );
     static int old_value;
     int set_value = *( ( long* )var_val );
-    Types_VariableList* vars;
+    VariableList* vars;
     struct header_complex_index* hciptr;
 
     DEBUG_MSGTL( ( "snmpNotifyFilterProfileTable",
@@ -540,8 +540,8 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
             if ( StorageNew == NULL )
                 return PRIOT_ERR_GENERR;
             StorageNew->snmpTargetParamsName = ( char* )
-                Memory_memdup( vars->val.string, vars->valLen );
-            StorageNew->snmpTargetParamsNameLen = vars->valLen;
+                Memory_memdup( vars->value.string, vars->valueLength );
+            StorageNew->snmpTargetParamsNameLen = vars->valueLength;
             StorageNew->snmpNotifyFilterProfileStorType = TC_ST_NONVOLATILE;
 
             StorageNew->snmpNotifyFilterProfileRowStatus = TC_RS_NOTREADY;
@@ -664,7 +664,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
 char* get_FilterProfileName( const char* paramName, size_t paramName_len,
     size_t* profileName_len )
 {
-    Types_VariableList* vars = NULL;
+    VariableList* vars = NULL;
     struct snmpNotifyFilterProfileTable_data* data;
 
     /*

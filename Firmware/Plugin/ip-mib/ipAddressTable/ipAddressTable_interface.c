@@ -33,9 +33,9 @@
 #include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
@@ -135,7 +135,7 @@ static NodeHandlerFT _mfd_ipAddressTable_check_dependencies;
 
 static inline int
 _ipAddressTable_undo_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column );
 
 static inline int
@@ -349,11 +349,11 @@ int ipAddressTable_index_to_oid( Types_Index* oid_idx,
     /*
      * ipAddressAddrType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipAddressAddrType;
+    VariableList var_ipAddressAddrType;
     /*
      * ipAddressAddr(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_ipAddressAddr;
+    VariableList var_ipAddressAddr;
 
     /*
      * set up varbinds
@@ -366,8 +366,8 @@ int ipAddressTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipAddressAddrType.nextVariable = &var_ipAddressAddr;
-    var_ipAddressAddr.nextVariable = NULL;
+    var_ipAddressAddrType.next = &var_ipAddressAddr;
+    var_ipAddressAddr.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipAddressTable:ipAddressTable_index_to_oid",
         "called\n" ) );
@@ -416,11 +416,11 @@ int ipAddressTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ipAddressAddrType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipAddressAddrType;
+    VariableList var_ipAddressAddrType;
     /*
      * ipAddressAddr(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_ipAddressAddr;
+    VariableList var_ipAddressAddr;
 
     /*
      * set up varbinds
@@ -433,8 +433,8 @@ int ipAddressTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipAddressAddrType.nextVariable = &var_ipAddressAddr;
-    var_ipAddressAddr.nextVariable = NULL;
+    var_ipAddressAddrType.next = &var_ipAddressAddr;
+    var_ipAddressAddr.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipAddressTable:ipAddressTable_index_from_oid",
         "called\n" ) );
@@ -448,16 +448,16 @@ int ipAddressTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ipAddressAddrType = *( ( u_long* )var_ipAddressAddrType.val.string );
+        mib_idx->ipAddressAddrType = *( ( u_long* )var_ipAddressAddrType.value.string );
         /*
          * NOTE: val_len is in bytes, ipAddressAddr_len might not be
          */
-        if ( var_ipAddressAddr.valLen > sizeof( mib_idx->ipAddressAddr ) )
+        if ( var_ipAddressAddr.valueLength > sizeof( mib_idx->ipAddressAddr ) )
             err = PRIOT_ERR_GENERR;
         else {
-            memcpy( mib_idx->ipAddressAddr, var_ipAddressAddr.val.string,
-                var_ipAddressAddr.valLen );
-            mib_idx->ipAddressAddr_len = var_ipAddressAddr.valLen / sizeof( mib_idx->ipAddressAddr[ 0 ] );
+            memcpy( mib_idx->ipAddressAddr, var_ipAddressAddr.value.string,
+                var_ipAddressAddr.valueLength );
+            mib_idx->ipAddressAddr_len = var_ipAddressAddr.valueLength / sizeof( mib_idx->ipAddressAddr[ 0 ] );
         }
     }
 
@@ -772,7 +772,7 @@ _mfd_ipAddressTable_object_lookup( MibHandler* handler,
  */
 static inline int
 _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -787,18 +787,18 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressIfIndex(3)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/W/e/R/d/H 
          */
     case COLUMN_IPADDRESSIFINDEX:
-        var->valLen = sizeof( long );
+        var->valueLength = sizeof( long );
         var->type = ASN01_INTEGER;
-        rc = ipAddressIfIndex_get( rowreq_ctx, ( long* )var->val.string );
+        rc = ipAddressIfIndex_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
     /*
          * ipAddressType(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSTYPE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ipAddressType_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ipAddressType_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
@@ -806,65 +806,65 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSPREFIX:
         var->type = ASN01_OBJECT_ID;
-        rc = ipAddressPrefix_get( rowreq_ctx, ( oid** )&var->val.string,
-            &var->valLen );
+        rc = ipAddressPrefix_get( rowreq_ctx, ( oid** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * ipAddressOrigin(6)/IpAddressOriginTC/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IPADDRESSORIGIN:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ipAddressOrigin_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ipAddressOrigin_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressStatus(7)/IpAddressStatusTC/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSSTATUS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ipAddressStatus_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ipAddressStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressCreated(8)/TimeStamp/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPADDRESSCREATED:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_TIMETICKS;
-        rc = ipAddressCreated_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ipAddressCreated_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressLastChanged(9)/TimeStamp/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPADDRESSLASTCHANGED:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_TIMETICKS;
         rc = ipAddressLastChanged_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressRowStatus(10)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IPADDRESSROWSTATUS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ipAddressRowStatus_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressStorageType(11)/StorageType/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSSTORAGETYPE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ipAddressStorageType_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -898,14 +898,14 @@ int _mfd_ipAddressTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -922,7 +922,7 @@ int _mfd_ipAddressTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = PRIOT_ERR_GENERR;
         }
@@ -934,7 +934,7 @@ int _mfd_ipAddressTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -1017,7 +1017,7 @@ _ipAddressTable_check_indexes( ipAddressTable_rowreq_ctx* rowreq_ctx )
  */
 static inline int
 _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1044,20 +1044,20 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressIfIndex(3)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/W/e/R/d/H 
          */
     case COLUMN_IPADDRESSIFINDEX:
-        rc = CheckVarbind_type( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, ASN01_INTEGER );
         /*
          * check defined range(s). 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( ( *var->val.integer < 1 )
-                   || ( *var->val.integer > 2147483647 ) ) ) {
+            && ( ( *var->value.integer < 1 )
+                   || ( *var->value.integer > 2147483647 ) ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipAddressTable:_ipAddressTable_check_column:ipAddressIfIndex", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ipAddressIfIndex_check_value( rowreq_ctx,
-                *( ( long* )var->val.string ) );
+                *( ( long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1072,21 +1072,21 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressType(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSTYPE:
-        rc = CheckVarbind_type( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, ASN01_INTEGER );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != IPADDRESSTYPE_UNICAST )
-            && ( *var->val.integer != IPADDRESSTYPE_ANYCAST )
-            && ( *var->val.integer != IPADDRESSTYPE_BROADCAST ) ) {
+            && ( *var->value.integer != IPADDRESSTYPE_UNICAST )
+            && ( *var->value.integer != IPADDRESSTYPE_ANYCAST )
+            && ( *var->value.integer != IPADDRESSTYPE_BROADCAST ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipAddressTable:_ipAddressTable_check_column:ipAddressType", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ipAddressType_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1114,24 +1114,24 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressStatus(7)/IpAddressStatusTC/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSSTATUS:
-        rc = CheckVarbind_type( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, ASN01_INTEGER );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != IPADDRESSSTATUSTC_PREFERRED )
-            && ( *var->val.integer != IPADDRESSSTATUSTC_INVALID )
-            && ( *var->val.integer != IPADDRESSSTATUSTC_INACCESSIBLE )
-            && ( *var->val.integer != IPADDRESSSTATUSTC_UNKNOWN )
-            && ( *var->val.integer != IPADDRESSSTATUSTC_TENTATIVE )
-            && ( *var->val.integer != IPADDRESSSTATUSTC_DUPLICATE ) ) {
+            && ( *var->value.integer != IPADDRESSSTATUSTC_PREFERRED )
+            && ( *var->value.integer != IPADDRESSSTATUSTC_INVALID )
+            && ( *var->value.integer != IPADDRESSSTATUSTC_INACCESSIBLE )
+            && ( *var->value.integer != IPADDRESSSTATUSTC_UNKNOWN )
+            && ( *var->value.integer != IPADDRESSSTATUSTC_TENTATIVE )
+            && ( *var->value.integer != IPADDRESSSTATUSTC_DUPLICATE ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipAddressTable:_ipAddressTable_check_column:ipAddressStatus", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ipAddressStatus_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1160,12 +1160,12 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressRowStatus(10)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IPADDRESSROWSTATUS:
-        rc = CheckVarbind_rowStatusValue( var );
+        rc = VariableList_checkRowStatusLengthAndRange( var );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipAddressTable:_ipAddressTable_check_column:ipAddressRowStatus", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ipAddressRowStatus_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1180,23 +1180,23 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressStorageType(11)/StorageType/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSSTORAGETYPE:
-        rc = CheckVarbind_type( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, ASN01_INTEGER );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != STORAGETYPE_OTHER )
-            && ( *var->val.integer != STORAGETYPE_VOLATILE )
-            && ( *var->val.integer != STORAGETYPE_NONVOLATILE )
-            && ( *var->val.integer != STORAGETYPE_PERMANENT )
-            && ( *var->val.integer != STORAGETYPE_READONLY ) ) {
+            && ( *var->value.integer != STORAGETYPE_OTHER )
+            && ( *var->value.integer != STORAGETYPE_VOLATILE )
+            && ( *var->value.integer != STORAGETYPE_NONVOLATILE )
+            && ( *var->value.integer != STORAGETYPE_PERMANENT )
+            && ( *var->value.integer != STORAGETYPE_READONLY ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipAddressTable:_ipAddressTable_check_column:ipAddressStorageType", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ipAddressStorageType_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1478,7 +1478,7 @@ int _mfd_ipAddressTable_undo_cleanup( MibHandler* handler,
  */
 static inline int
 _ipAddressTable_set_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1494,7 +1494,7 @@ _ipAddressTable_set_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSIFINDEX:
         rowreq_ctx->column_set_flags |= COLUMN_IPADDRESSIFINDEX_FLAG;
-        rc = ipAddressIfIndex_set( rowreq_ctx, *( ( long* )var->val.string ) );
+        rc = ipAddressIfIndex_set( rowreq_ctx, *( ( long* )var->value.string ) );
         break;
 
     /*
@@ -1502,7 +1502,7 @@ _ipAddressTable_set_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSTYPE:
         rowreq_ctx->column_set_flags |= COLUMN_IPADDRESSTYPE_FLAG;
-        rc = ipAddressType_set( rowreq_ctx, *( ( u_long* )var->val.string ) );
+        rc = ipAddressType_set( rowreq_ctx, *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1511,7 +1511,7 @@ _ipAddressTable_set_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
     case COLUMN_IPADDRESSSTATUS:
         rowreq_ctx->column_set_flags |= COLUMN_IPADDRESSSTATUS_FLAG;
         rc = ipAddressStatus_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1520,7 +1520,7 @@ _ipAddressTable_set_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
     case COLUMN_IPADDRESSROWSTATUS:
         rowreq_ctx->column_set_flags |= COLUMN_IPADDRESSROWSTATUS_FLAG;
         rc = ipAddressRowStatus_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1529,7 +1529,7 @@ _ipAddressTable_set_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
     case COLUMN_IPADDRESSSTORAGETYPE:
         rowreq_ctx->column_set_flags |= COLUMN_IPADDRESSSTORAGETYPE_FLAG;
         rc = ipAddressStorageType_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     default:
@@ -1676,7 +1676,7 @@ int _mfd_ipAddressTable_undo_commit( MibHandler* handler,
  */
 static inline int
 _ipAddressTable_undo_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 

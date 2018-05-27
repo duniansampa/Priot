@@ -1,9 +1,9 @@
-#ifndef TIME_H_
-#define TIME_H_
+#ifndef IOT_TIME_H_
+#define IOT_TIME_H_
 
 #include "Generals.h"
 
-/** ============================ Macros ============================ */
+/** ============================[ Macros ]============================ */
 
 /**
  * Compute res = a + b.
@@ -41,13 +41,13 @@
         }                                                              \
     }
 
-/** ============================ Variables ================== */
+/** ============================[ Types ]================== */
 
 /** A pointer to an opaque time marker value. */
 typedef void* timeMarker;
 typedef const void* timeMarkerConst;
 
-/** ============================= Functions Prototypes ================== */
+/** =============================[ Functions Prototypes ]================== */
 
 /**
  * Query the current value of the monotonic clock.
@@ -57,32 +57,32 @@ typedef const void* timeMarkerConst;
  * the operating system. A monotonic clock is a clock that is never adjusted
  * backwards and that proceeds at the same rate as wall clock time.
  *
- * \param[out] tv Pointer to monotonic clock time.
+ * @param[out] tv - Pointer to monotonic clock time.
  */
-void Tools_getMonotonicClock( struct timeval* tv );
+void Time_getMonotonicClock( struct timeval* tv );
 
 /**
  * Set a time marker to the current value of the monotonic clock.
  */
-void Tools_setMonotonicMarker( timeMarker* pm );
+void Time_setMonotonicMarker( timeMarker* pm );
 
 /**
- * Returns the difference (in u_long 1/100th secs) between the two markers
+ * Returns the difference (in uint32_t 1/100th secs) between the two markers
  * (functionally this is what sysUpTime needs)
  *
  * \deprecated Don't use in new code.
  */
-uint32_t Tools_uatimeHdiff( timeMarkerConst first, timeMarkerConst second );
+uint32_t Time_uatimeHdiff( timeMarkerConst first, timeMarkerConst second );
 
 /**
  * Is the current time past (marked time plus delta) ?
  *
- * \param[in] pm Pointer to marked time as obtained via
- *   netsnmp_set_monotonic_marker().
- * \param[in] delta_ms Time delta in milliseconds.
+ * @param[in] pm - Pointer to marked time as obtained via
+ *                 Tools_setMonotonicMarker().
+ * @param[in] deltaMs - Time delta in milliseconds.
  *
- * \return pm != NULL && now >= (*pm + delta_ms)
+ * @return pm != NULL && now >= (*pm + delta_ms)
  */
-int Tools_readyMonotonic( timeMarkerConst pm, int delta_ms );
+int Time_readyMonotonic( timeMarkerConst pm, int deltaMs );
 
-#endif // TIME_H_
+#endif // IOT_TIME_H_

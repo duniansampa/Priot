@@ -5,7 +5,7 @@
 #include "icmp.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "System/Util/Logger.h"
 #include "PluginSettings.h"
@@ -231,14 +231,14 @@ int icmp_msg_stats_load( Cache* cache, void* vmagic )
     return 0;
 }
 
-Types_VariableList*
+VariableList*
 icmp_stats_next_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     int i = ( int )( intptr_t )( *loop_context );
-    Types_VariableList* idx = index;
+    VariableList* idx = index;
 
     if ( i > 1 )
         return NULL;
@@ -248,7 +248,7 @@ icmp_stats_next_entry( void** loop_context,
      */
     Client_setVarTypedValue( idx, ASN01_INTEGER, ( u_char* )&icmp_stats_table[ i ].ipVer,
         sizeof( uint32_t ) );
-    idx = idx->nextVariable;
+    idx = idx->next;
 
     *data_context = &icmp_stats_table[ i ];
 
@@ -257,10 +257,10 @@ icmp_stats_next_entry( void** loop_context,
     return index;
 }
 
-Types_VariableList*
+VariableList*
 icmp_stats_first_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     *loop_context = NULL;
@@ -268,14 +268,14 @@ icmp_stats_first_entry( void** loop_context,
     return icmp_stats_next_entry( loop_context, data_context, index, data );
 }
 
-Types_VariableList*
+VariableList*
 icmp_msg_stats_next_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     int i = ( int )( intptr_t )( *loop_context );
-    Types_VariableList* idx = index;
+    VariableList* idx = index;
 
     if ( i >= ICMP_MSG_STATS_IPV4_COUNT + ICMP_MSG_STATS_IPV6_COUNT )
         return NULL;
@@ -286,7 +286,7 @@ icmp_msg_stats_next_entry( void** loop_context,
         sizeof( uint32_t ) );
 
     /* set packet type */
-    idx = idx->nextVariable;
+    idx = idx->next;
     Client_setVarTypedValue( idx, ASN01_INTEGER,
         ( u_char* )&icmp_msg_stats_table[ i ].icmpMsgStatsType,
         sizeof( uint32_t ) );
@@ -297,10 +297,10 @@ icmp_msg_stats_next_entry( void** loop_context,
     return index;
 }
 
-Types_VariableList*
+VariableList*
 icmp_msg_stats_first_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     *loop_context = NULL;
@@ -433,7 +433,7 @@ int icmp_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     long ret_value;
     oid subid;
 
@@ -569,7 +569,7 @@ int icmp_stats_table_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     TableRequestInfo* table_info;
     struct icmp_stats_table_entry* entry;
     oid subid;
@@ -638,7 +638,7 @@ int icmp_msg_stats_table_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     TableRequestInfo* table_info;
     struct icmp_msg_stats_table_entry* entry;
     oid subid;

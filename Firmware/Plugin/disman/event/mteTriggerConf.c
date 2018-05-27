@@ -7,12 +7,12 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "ReadConfig.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
+#include "TextualConvention.h"
 #include "mteObjects.h"
 #include "mteTrigger.h"
 #include "utilities/Iquery.h"
@@ -60,9 +60,9 @@ void init_mteTriggerConf( void )
     /*
      * Register to save (non-fixed) entries when the agent shuts down
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_mteTTable, NULL );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         clear_mteTTable, NULL );
 }
@@ -79,19 +79,19 @@ void init_mteTriggerConf( void )
 struct mteTrigger*
 _find_mteTrigger_entry( const char* owner, char* tname )
 {
-    Types_VariableList owner_var, tname_var;
+    VariableList owner_var, tname_var;
     TdataRow* row;
 
     /*
          * If there's already an existing entry,
          *   then use that...
          */
-    memset( &owner_var, 0, sizeof( Types_VariableList ) );
-    memset( &tname_var, 0, sizeof( Types_VariableList ) );
+    memset( &owner_var, 0, sizeof( VariableList ) );
+    memset( &tname_var, 0, sizeof( VariableList ) );
     Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR, owner, strlen( owner ) );
     Client_setVarTypedValue( &tname_var, ASN01_PRIV_IMPLIED_OCTET_STR,
         tname, strlen( tname ) );
-    owner_var.nextVariable = &tname_var;
+    owner_var.next = &tname_var;
     row = TableTdata_rowGetByidx( trigger_table_data, &owner_var );
     /*
          * ... otherwise, create a new one
@@ -716,8 +716,8 @@ void parse_mteMonitor( const char* token, const char* line )
 
         break;
     }
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_POST_READ_CONFIG,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_READ_CONFIG,
         _mteTrigger_callback_enable, entry );
     return;
 }
@@ -1506,8 +1506,8 @@ int clear_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
             TableTdata_removeAndDeleteRow( trigger_table_data, row );
         if ( entry ) {
             /* Remove from the callbacks list and disable triggers */
-            Callback_unregisterCallback( CALLBACK_LIBRARY,
-                CALLBACK_POST_READ_CONFIG,
+            Callback_unregister( CallbackMajor_LIBRARY,
+                CallbackMinor_POST_READ_CONFIG,
                 _mteTrigger_callback_enable, entry, 0 );
             mteTrigger_disable( entry );
             MEMORY_FREE( entry );

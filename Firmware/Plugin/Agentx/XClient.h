@@ -41,14 +41,14 @@ XClient_unregister( Types_Session * ss,
                     oid             range_ubound,
                     const char *    contextName );
 
-Types_VariableList *
+VariableList *
 XClient_registerIndex( Types_Session *,
-                       Types_VariableList *,
+                       VariableList *,
                        int );
 
 int
 XClient_unregisterIndex( Types_Session *,
-                         Types_VariableList * );
+                         VariableList * );
 
 int
 XClient_addAgentcaps( Types_Session *,

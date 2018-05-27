@@ -7,18 +7,18 @@
 #ifndef TCPCONNECTIONTABLE_DATA_ACCESS_H
 #define TCPCONNECTIONTABLE_DATA_ACCESS_H
 
-#include "System/Containers/Container.h"
 #include "CacheHandler.h"
 #include "RowMerge.h"
+#include "System/Containers/Container.h"
+#include "System/Util/VariableList.h"
 #include "TableContainer.h"
-#include "CheckVarbind.h"
 
-    /*
+/*
      *********************************************************************
      * function declarations
      */
 
-    /*
+/*
      *********************************************************************
      * Table declarations
      */
@@ -29,74 +29,32 @@
  ***
  **********************************************************************
  **********************************************************************/
-    /*
+/*
      * TCP-MIB::tcpConnectionTable is subid 19 of tcp.
      * Its status is Current.
      * OID: .1.3.6.1.2.1.6.19, length: 8
      */
 
+int tcpConnectionTable_init_data( tcpConnectionTable_registration*
+        tcpConnectionTable_reg );
 
-    int
-     
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        tcpConnectionTable_init_data(tcpConnectionTable_registration *
-                                     tcpConnectionTable_reg);
-
-
-    /*
+/*
      * TODO:180:o: Review tcpConnectionTable cache timeout.
      * The number of seconds before the cache times out
      */
-#define TCPCONNECTIONTABLE_CACHE_TIMEOUT   60
+#define TCPCONNECTIONTABLE_CACHE_TIMEOUT 60
 
-    void            tcpConnectionTable_container_init(Container_Container
-                                                      **container_ptr_ptr,
-                                                      Cache *
-                                                      cache);
-    void            tcpConnectionTable_container_shutdown(Container_Container
-                                                          *container_ptr);
+void tcpConnectionTable_container_init( Container_Container** container_ptr_ptr,
+    Cache* cache );
+void tcpConnectionTable_container_shutdown( Container_Container* container_ptr );
 
-    int             tcpConnectionTable_container_load(Container_Container
-                                                      *container);
-    void            tcpConnectionTable_container_free(Container_Container
-                                                      *container);
+int tcpConnectionTable_container_load( Container_Container* container );
+void tcpConnectionTable_container_free( Container_Container* container );
 
-    int             tcpConnectionTable_cache_load(Container_Container
-                                                  *container);
-    void            tcpConnectionTable_cache_free(Container_Container
-                                                  *container);
+int tcpConnectionTable_cache_load( Container_Container* container );
+void tcpConnectionTable_cache_free( Container_Container* container );
 
-    int
-     
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        tcpConnectionTable_row_prep(tcpConnectionTable_rowreq_ctx *
-                                    rowreq_ctx);
+int tcpConnectionTable_row_prep( tcpConnectionTable_rowreq_ctx*
+        rowreq_ctx );
 
-
-#endif                          /* TCPCONNECTIONTABLE_DATA_ACCESS_H */
+#endif /* TCPCONNECTIONTABLE_DATA_ACCESS_H */

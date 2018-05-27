@@ -15,7 +15,7 @@
 
 #include "hr_device.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/String.h"
 #include "host_res.h"

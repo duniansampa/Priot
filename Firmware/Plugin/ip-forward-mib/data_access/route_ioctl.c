@@ -5,7 +5,7 @@
 
 #include "route_ioctl.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "ip-forward-mib/inetCidrRouteTable/inetCidrRouteTable_constants.h"
 #include "siglog/data_access/ipaddress.h"
 #include <arpa/inet.h>

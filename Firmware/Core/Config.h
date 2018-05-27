@@ -376,4 +376,6 @@
 
 #define config_UNUSED( x ) ( void )( x )
 
+#define TYPES_MAX_OID_LEN 128 /* max subid's in an oid */
+
 #endif // PRIO_CONFIG_H

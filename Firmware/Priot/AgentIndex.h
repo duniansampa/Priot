@@ -30,14 +30,14 @@ AgentIndex_registerIntIndex( oid*  name,
                              size_t name_len,
                              int    val );
 
-Types_VariableList*
+VariableList*
 AgentIndex_registerOidIndex( oid*  name,
                              size_t name_len,
                              oid*  value,
                              size_t value_len );
 
-Types_VariableList*
-AgentIndex_registerIndex( Types_VariableList* varbind,
+VariableList*
+AgentIndex_registerIndex( VariableList* varbind,
                           int                 flags,
                           Types_Session*      ss );
 
@@ -58,17 +58,17 @@ AgentIndex_unregisterOidIndex( oid*  name,
                                size_t value_len );
 
 int
-AgentIndex_releaseIndex( Types_VariableList* varbind );
+AgentIndex_releaseIndex( VariableList* varbind );
 
 int
-AgentIndex_removeIndex( Types_VariableList * varbind,
+AgentIndex_removeIndex( VariableList * varbind,
                         Types_Session * ss );
 
 void
 AgentIndex_unregisterIndexBySession( Types_Session* ss );
 
 int
-AgentIndex_unregisterIndex( Types_VariableList* varbind,
+AgentIndex_unregisterIndex( VariableList* varbind,
                             int                 remember,
                             Types_Session*      ss );
 

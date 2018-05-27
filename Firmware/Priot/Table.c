@@ -2,7 +2,7 @@
 #include "System/Util/Assert.h"
 #include "Client.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "Mib.h"
 #include "System/Util/Utilities.h"
@@ -165,7 +165,7 @@ int Table_helperHandler( MibHandler* handler,
     int status = PRIOT_ERR_NOERROR, need_processing = 0;
     oid* tmp_name;
     TableRequestInfo* tbl_req_info;
-    Types_VariableList* vb;
+    VariableList* vb;
 
     if ( !reginfo || !handler )
         return ErrorCode_GENERR;
@@ -236,7 +236,7 @@ int Table_helperHandler( MibHandler* handler,
      */
 
         for ( request = requests; request; request = request->next ) {
-            Types_VariableList* var = request->requestvb;
+            VariableList* var = request->requestvb;
 
             DEBUG_MSGOID( ( "verbose:table", var->name, var->nameLength ) );
             DEBUG_MSG( ( "verbose:table", "\n" ) );
@@ -513,7 +513,7 @@ int Table_helperHandler( MibHandler* handler,
                 tbl_info->number_indexes ) );
             for ( tmp_idx = 0, vb = tbl_req_info->indexes;
                   tmp_idx < tbl_info->number_indexes;
-                  ++tmp_idx, vb = vb->nextVariable ) {
+                  ++tmp_idx, vb = vb->next ) {
                 size_t parsed_oid_len;
 
                 if ( incomplete && tmp_len ) {
@@ -576,7 +576,7 @@ int Table_helperHandler( MibHandler* handler,
                     tbl_req_info->number_indexes ) );
                 for ( vb = tbl_req_info->indexes, count = 0;
                       vb && count < tbl_req_info->number_indexes;
-                      count++, vb = vb->nextVariable ) {
+                      count++, vb = vb->next ) {
                     out_len = 0;
                     if ( Mib_sprintReallocByType( &buf, &buf_len, &out_len, 1,
                              vb, NULL, NULL, NULL ) ) {
@@ -794,7 +794,7 @@ int Table_buildResult( HandlerRegistration* reginfo,
     u_char type, u_char* result, size_t result_len )
 {
 
-    Types_VariableList* var;
+    VariableList* var;
 
     if ( !reqinfo || !table_info )
         return ErrorCode_GENERR;
@@ -823,7 +823,7 @@ int Table_buildOid( HandlerRegistration* reginfo,
     TableRequestInfo* table_info )
 {
     oid tmpoid[ ASN01_MAX_OID_LEN ];
-    Types_VariableList* var;
+    VariableList* var;
 
     if ( !reginfo || !reqinfo || !table_info )
         return ErrorCode_GENERR;
@@ -859,7 +859,7 @@ int Table_buildOidFromIndex( HandlerRegistration* reginfo,
     TableRequestInfo* table_info )
 {
     oid tmpoid[ ASN01_MAX_OID_LEN ];
-    Types_VariableList* var;
+    VariableList* var;
     int len;
 
     if ( !reginfo || !reqinfo || !table_info )
@@ -914,8 +914,8 @@ int Table_updateIndexesFromVariableList( TableRequestInfo* tri )
 int Table_checkGetnextReply( RequestInfo* request,
     oid* prefix,
     size_t prefix_len,
-    Types_VariableList* newvar,
-    Types_VariableList** outvar )
+    VariableList* newvar,
+    VariableList** outvar )
 {
     oid myname[ ASN01_MAX_OID_LEN ];
     size_t myname_len;

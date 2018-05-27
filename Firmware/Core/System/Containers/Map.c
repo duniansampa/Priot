@@ -1,24 +1,6 @@
-/** \file Map.c
- *  \brief  Maps are associative containers that store elements
- *          formed by a combination of a key value and a mapped
- *          value, following a specific order.
- *
- *  This is the implementation of the Map container.
- *  More details about its implementation,
- *  one should read these comments.
- *
- *  \author Dunian Coutinho Sampa (duniansampa)
- *  \bug    No known bugs.
- */
-
 #include "Map.h"
-#include "DefaultStore.h"
-#include "Priot.h"
-#include "ReadConfig.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
-#include "System/Util/Logger.h"
-#include "System/Util/Utilities.h"
+#include "System/Util/Trace.h"
 
 /** ============================= Public Functions ================== */
 
@@ -145,20 +127,20 @@ Map* Map_find( Map* mapHead, const char* key )
     return NULL;
 }
 
-int Map_erase( Map** realhead, const char* name )
+int Map_erase( Map** realhead, const char* key )
 {
     Map *head, *prev;
-    if ( !name )
+    if ( !key )
         return 1;
     for ( head = *realhead, prev = NULL; head;
           prev = head, head = head->next ) {
-        if ( head->key && strcmp( head->key, name ) == 0 ) {
+        if ( head->key && strcmp( head->key, key ) == 0 ) {
             if ( prev )
                 prev->next = head->next;
             else
                 *realhead = head->next;
             Map_free( head );
-            free( head );
+            Memory_free( head );
             return 0;
         }
     }

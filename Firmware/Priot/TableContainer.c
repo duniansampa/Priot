@@ -352,8 +352,8 @@ void TableContainer_rowInsert( RequestInfo* request,
 {
     RequestInfo* req;
     TableRequestInfo* table_info = NULL;
-    Types_VariableList* this_index = NULL;
-    Types_VariableList* that_index = NULL;
+    VariableList* this_index = NULL;
+    VariableList* that_index = NULL;
     oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
     oid this_oid[ ASN01_MAX_OID_LEN ];
     oid that_oid[ ASN01_MAX_OID_LEN ];
@@ -440,8 +440,8 @@ void TableContainer_rowRemove( RequestInfo* request,
 {
     RequestInfo* req;
     TableRequestInfo* table_info = NULL;
-    Types_VariableList* this_index = NULL;
-    Types_VariableList* that_index = NULL;
+    VariableList* this_index = NULL;
+    VariableList* that_index = NULL;
     oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
     oid this_oid[ ASN01_MAX_OID_LEN ];
     oid that_oid[ ASN01_MAX_OID_LEN ];
@@ -533,7 +533,7 @@ _TableContainer_dataLookup( HandlerRegistration* reginfo,
 {
     Types_Index* row = NULL;
     TableRequestInfo* tblreq_info;
-    Types_VariableList* var;
+    VariableList* var;
     Types_Index index;
     void* key;
 

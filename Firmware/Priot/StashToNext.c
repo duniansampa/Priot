@@ -42,7 +42,7 @@ StashToNext_helper( MibHandler*          handler,
     int             namelen;
     int             finished = 0;
     OidStash_Node **cinfo;
-    Types_VariableList   *vb;
+    VariableList   *vb;
     RequestInfo    *reqtmp;
 
     /*
@@ -70,7 +70,7 @@ StashToNext_helper( MibHandler*          handler,
         }
         cinfo  = StashCache_extractStashCache( reqinfo );
         reqtmp = MEMORY_MALLOC_TYPEDEF(RequestInfo);
-        vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+        vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( VariableList );
         vb->type = ASN01_NULL;
         Client_setVarObjid( vb, reginfo->rootoid, reginfo->rootoid_len );
 

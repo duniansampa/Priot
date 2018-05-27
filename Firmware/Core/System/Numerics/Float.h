@@ -1,8 +1,8 @@
-#ifndef FLOAT_H_
-#define FLOAT_H_
+#ifndef IOT_FLOAT_H
+#define IOT_FLOAT_H
 
 /**
- * \brief     Float class.
+ * @brief     Float class.
  * \details   A class to define Float operations.
  * \author    Dunian Coutinho Sampa
  * \version   1.0
@@ -17,6 +17,8 @@
 #include "Generals.h"
 #include "System/String.h"
 
+/** ============================[ Macros ]============================ */
+
 /** A constant holding the largest positive finite value of type float */
 #define FLOAT_MAXVALUE FLT_MAX
 
@@ -28,6 +30,8 @@
 
 /** Difference between 1 and the least value greater than 1 that is representable. */
 #define FLOAT_EPSILON FLT_EPSILON
+
+/** =============================[ Functions Prototypes ]================== */
 
 /** Compares the two specified float values. */
 int Float_compare( float f1, float f2 );
@@ -41,4 +45,4 @@ bool Float_isInfinite( float v );
 /** Returns true if the specified number is a Not-a-Number (NaN) value, false otherwise. */
 bool Float_isNaN( float v );
 
-#endif /* FLOAT_H_ */
+#endif /* IOT_FLOAT_H */

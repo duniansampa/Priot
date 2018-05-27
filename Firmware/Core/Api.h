@@ -336,7 +336,7 @@ void Api_setDetail( const char* );
  * Frees the pdu and any malloc'd data associated with it.
  */
 
-void Api_freeVarInternals( Types_VariableList* ); /* frees contents only */
+void Api_freeVarInternals( VariableList* ); /* frees contents only */
 
 /*
  * Sets up the session with the snmp_session information provided
@@ -564,7 +564,7 @@ Types_Session* Api_addFull( Types_Session* in_session,
 int Api_sessSelectInfoFlags( void* sessp, int* numfds, fd_set* fdset,
     struct timeval* timeout, int* block, int flags );
 
-void Api_freeVarbind( Types_VariableList* var );
+void Api_freeVarbind( VariableList* var );
 
 int Api_closeSessions( void );
 
@@ -577,7 +577,7 @@ int Api_sessAsyncSend( void* sessp,
     Types_Pdu* pdu,
     Types_CallbackFT callback, void* cb_data );
 
-Types_VariableList*
+VariableList*
 Api_pduAddVariable( Types_Pdu* pdu,
     const oid* name,
     size_t name_length,
@@ -599,13 +599,13 @@ void* Api_sessPointer( Types_Session* session );
 int Api_sessSelectInfo( void* sessp, int* numfds, fd_set* fdset,
     struct timeval* timeout, int* block );
 
-Types_VariableList*
-Api_varlistAddVariable( Types_VariableList** varlist,
+VariableList*
+Api_varlistAddVariable( VariableList** varlist,
     const oid* name,
     size_t name_length,
     u_char type, const void* value, size_t len );
 
-void Api_freeVar( Types_VariableList* var );
+void Api_freeVar( VariableList* var );
 
 void Api_sessPerror( const char* prog_string, Types_Session* ss );
 

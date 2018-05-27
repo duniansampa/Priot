@@ -4,7 +4,7 @@
 #include "Api.h"
 #include "Mib.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 
 #define TABLE_ROW_DATA  "tableRow"
@@ -80,7 +80,7 @@ TableRow_handlerGet(void *row)
 int
 TableRow_register(HandlerRegistration *reginfo,
                            TableRegistrationInfo *tabreg,
-                           void *row, Types_VariableList *index)
+                           void *row, VariableList *index)
 {
     HandlerRegistration *reg2;
     MibHandler *handler;

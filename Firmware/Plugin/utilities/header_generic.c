@@ -2,7 +2,7 @@
 
 #include "header_generic.h"
 
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 /*
  * header_generic(...

@@ -10,7 +10,7 @@
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "TableData.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "Watcher.h"
 #include "mibdefs.h"
 #include "struct.h"
@@ -267,7 +267,7 @@ void init_extend( void )
     REGISTER_MIB( "ucd-extensible", old_extensible_variables,
         Variable2_s, old_extensible_variables_oid );
 
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         extend_clear_callback, NULL );
 }
@@ -675,7 +675,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                  * Must have a full path to the command
                  * XXX - Assumes Unix-style paths
                  */
-                if ( request->requestvb->valLen == 0 || request->requestvb->val.string[ 0 ] != '/' ) {
+                if ( request->requestvb->valueLength == 0 || request->requestvb->value.string[ 0 ] != '/' ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGVALUE );
                     return PRIOT_ERR_WRONGVALUE;
@@ -719,7 +719,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 /*
                  * -1 is a special value indicating "don't cache"
                  *    [[ XXX - should this be 0 ?? ]]
@@ -738,7 +738,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 if ( i < 1 || i > 2 ) { /* 'exec(1)' or 'shell(2)' only */
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGVALUE );
@@ -764,7 +764,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                  * 'run-on-read(1)', 'run-on-set(2)'
                  *  or 'run-command(3)' only
                  */
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 if ( i < 1 || i > 3 ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGVALUE );
@@ -797,7 +797,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_NOTINSERVICE:
@@ -836,13 +836,13 @@ int handle_nsExtendConfigTable( MibHandler* handler,
         case MODE_SET_RESERVE2:
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_STATUS:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     eptr = _find_extension_block( request->requestvb->name,
                         request->requestvb->nameLength );
-                    extension = _new_extension( ( char* )table_info->indexes->val.string,
+                    extension = _new_extension( ( char* )table_info->indexes->value.string,
                         0, eptr );
                     if ( !extension ) { /* failed */
                         Agent_setRequestError( reqinfo, request,
@@ -857,7 +857,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
         case MODE_SET_FREE:
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_STATUS:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
@@ -873,23 +873,23 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             case COLUMN_EXTCFG_COMMAND:
                 extension->old_command = extension->command;
                 extension->command = Memory_strdupAndNull(
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_EXTCFG_ARGS:
                 extension->old_args = extension->args;
                 extension->args = Memory_strdupAndNull(
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_EXTCFG_INPUT:
                 extension->old_input = extension->input;
                 extension->input = Memory_strdupAndNull(
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_EXTCFG_STATUS:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_CREATEANDGO:
@@ -923,7 +923,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 }
                 break;
             case COLUMN_EXTCFG_STATUS:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
@@ -938,12 +938,12 @@ int handle_nsExtendConfigTable( MibHandler* handler,
         case MODE_SET_COMMIT:
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_CACHETIME:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 extension->cache->timeout = i;
                 break;
 
             case COLUMN_EXTCFG_RUNTYPE:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case 1:
                     extension->flags &= ~NS_EXTEND_FLAGS_WRITEABLE;
@@ -958,7 +958,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_EXECTYPE:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 if ( i == NS_EXTEND_ETYPE_SHELL )
                     extension->flags |= NS_EXTEND_FLAGS_SHELL;
                 else
@@ -966,7 +966,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_STATUS:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 switch ( i ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_CREATEANDGO:
@@ -1003,7 +1003,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             extension = ( netsnmp_extend* )TableData_extractTableRowData( request );
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_STATUS:
-                i = *request->requestvb->val.integer;
+                i = *request->requestvb->value.integer;
                 if ( ( i == TC_RS_ACTIVE || i == TC_RS_CREATEANDGO ) && !( extension && extension->command && extension->command[ 0 ] == '/' /* &&
                       is_executable(extension->command) */ ) ) {
                     Agent_setRequestError( reqinfo, request,
@@ -1144,7 +1144,7 @@ _extend_find_entry( RequestInfo* request,
     size_t token_len;
 
     if ( !request || !table_info || !table_info->indexes
-        || !table_info->indexes->nextVariable ) {
+        || !table_info->indexes->next ) {
         DEBUG_MSGTL( ( "nsExtendTable:output2", "invalid invocation\n" ) );
         return NULL;
     }
@@ -1157,10 +1157,10 @@ _extend_find_entry( RequestInfo* request,
      ***/
     if ( mode == MODE_GET ) {
         DEBUG_MSGTL( ( "nsExtendTable:output2", "GET: %s / %ld\n ",
-            table_info->indexes->val.string,
-            *table_info->indexes->nextVariable->val.integer ) );
+            table_info->indexes->value.string,
+            *table_info->indexes->next->value.integer ) );
         for ( eptr = ereg->ehead; eptr; eptr = eptr->next ) {
-            if ( !strcmp( eptr->token, ( char* )table_info->indexes->val.string ) )
+            if ( !strcmp( eptr->token, ( char* )table_info->indexes->value.string ) )
                 break;
         }
 
@@ -1174,7 +1174,7 @@ _extend_find_entry( RequestInfo* request,
             /*
              * ...and check the line requested is valid
              */
-            line_idx = *table_info->indexes->nextVariable->val.integer;
+            line_idx = *table_info->indexes->next->value.integer;
             if ( line_idx < 1 || line_idx > eptr->numlines )
                 return NULL;
         }
@@ -1184,7 +1184,7 @@ _extend_find_entry( RequestInfo* request,
          *  GETNEXT handling - find the first suitable entry
          ***/
     else {
-        if ( !table_info->indexes->valLen ) {
+        if ( !table_info->indexes->valueLength ) {
             DEBUG_MSGTL( ( "nsExtendTable:output2", "GETNEXT: first entry\n" ) );
             /*
              * Beginning of the table - find the first active
@@ -1197,9 +1197,9 @@ _extend_find_entry( RequestInfo* request,
                 }
             }
         } else {
-            token = ( char* )table_info->indexes->val.string;
-            token_len = table_info->indexes->valLen;
-            line_idx = *table_info->indexes->nextVariable->val.integer;
+            token = ( char* )table_info->indexes->value.string;
+            token_len = table_info->indexes->valueLength;
+            line_idx = *table_info->indexes->next->value.integer;
             DEBUG_MSGTL( ( "nsExtendTable:output2", "GETNEXT: %s / %d\n ",
                 token, line_idx ) );
             /*
@@ -1286,7 +1286,7 @@ _extend_find_entry( RequestInfo* request,
              */
             Client_setVarValue( table_info->indexes,
                 eptr->token, strlen( eptr->token ) );
-            Client_setVarValue( table_info->indexes->nextVariable,
+            Client_setVarValue( table_info->indexes->next,
                 ( const u_char* )&line_idx, sizeof( line_idx ) );
         }
     }
@@ -1339,7 +1339,7 @@ int handle_nsExtendOutput2Table( MibHandler* handler,
                 /* 
                  * Determine which line we've been asked for....
                  */
-                line_idx = *table_info->indexes->nextVariable->val.integer;
+                line_idx = *table_info->indexes->next->value.integer;
                 if ( line_idx < 1 || line_idx > extension->numlines ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_NOSUCHINSTANCE );
                     continue;

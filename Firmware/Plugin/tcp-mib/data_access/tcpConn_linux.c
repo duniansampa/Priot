@@ -6,7 +6,7 @@
 
 #include "siglog/data_access/tcpConn.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "tcp-mib/tcpConnectionTable/tcpConnectionTable_constants.h"
 #include "tcpConn.h"

@@ -7,9 +7,9 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
 #include "ReadConfig.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "TextualConvention.h"
 #include "mteObjects.h"
 
 /** Initializes the mteObjectsConf module */
@@ -28,9 +28,9 @@ void init_mteObjectsConf( void )
     /*
      * Register to save (non-fixed) entries when the agent shuts down
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_mteOTable, NULL );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_PRE_UPDATE_CONFIG,
         clear_mteOTable, NULL );
 }
@@ -155,12 +155,12 @@ int store_mteOTable( int majorID, int minorID, void* serverarg, void* clientarg 
 int clear_mteOTable( int majorID, int minorID, void* serverarg, void* clientarg )
 {
     TdataRow* row;
-    Types_VariableList owner_var;
+    VariableList owner_var;
 
     /*
      * We're only interested in entries set up via the config files
      */
-    memset( &owner_var, 0, sizeof( Types_VariableList ) );
+    memset( &owner_var, 0, sizeof( VariableList ) );
     Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR,
         "priotd.conf", strlen( "priotd.conf" ) );
     while ( ( row = TableTdata_rowNextByidx( objects_table_data,

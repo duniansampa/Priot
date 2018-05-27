@@ -7,11 +7,11 @@
  */
 
 #include "mteTriggerBooleanTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "mteTrigger.h"
 
 static TableRegistrationInfo* table_info;
@@ -161,7 +161,7 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
              */
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERBOOLEANCOMPARISON:
-                ret = CheckVarbind_intRange( request->requestvb,
+                ret = VariableList_checkIntLengthAndRange( request->requestvb,
                     MTE_BOOL_UNEQUAL, MTE_BOOL_GREATEREQUAL );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -169,14 +169,14 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTETRIGGERBOOLEANVALUE:
-                ret = CheckVarbind_int( request->requestvb );
+                ret = VariableList_checkIntLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_MTETRIGGERBOOLEANSTARTUP:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -186,7 +186,7 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERBOOLEANOBJECTS:
             case COLUMN_MTETRIGGERBOOLEANEVENTOWNER:
             case COLUMN_MTETRIGGERBOOLEANEVENT:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -256,36 +256,36 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERBOOLEANCOMPARISON:
-                entry->mteTBoolComparison = *request->requestvb->val.integer;
+                entry->mteTBoolComparison = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERBOOLEANVALUE:
-                entry->mteTBoolValue = *request->requestvb->val.integer;
+                entry->mteTBoolValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERBOOLEANSTARTUP:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_BSTART;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_BSTART;
                 break;
             case COLUMN_MTETRIGGERBOOLEANOBJECTSOWNER:
                 memset( entry->mteTBoolObjOwner, 0, sizeof( entry->mteTBoolObjOwner ) );
-                memcpy( entry->mteTBoolObjOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTBoolObjOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERBOOLEANOBJECTS:
                 memset( entry->mteTBoolObjects, 0, sizeof( entry->mteTBoolObjects ) );
-                memcpy( entry->mteTBoolObjects, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTBoolObjects, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERBOOLEANEVENTOWNER:
                 memset( entry->mteTBoolEvOwner, 0, sizeof( entry->mteTBoolEvOwner ) );
-                memcpy( entry->mteTBoolEvOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTBoolEvOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERBOOLEANEVENT:
                 memset( entry->mteTBoolEvent, 0, sizeof( entry->mteTBoolEvent ) );
-                memcpy( entry->mteTBoolEvent, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTBoolEvent, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             }
         }

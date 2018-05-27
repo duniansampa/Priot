@@ -4,7 +4,7 @@
 
 #include "siglog/data_access/arp.h"
 #include "CacheHandler.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "FdEventManager.h"
 #include "System/Util/Logger.h"
 #include <linux/rtnetlink.h>

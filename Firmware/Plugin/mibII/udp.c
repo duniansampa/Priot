@@ -6,7 +6,7 @@
 #include "udp.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "System/Util/Logger.h"
 #include "PluginSettings.h"
@@ -92,7 +92,7 @@ int udp_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     long ret_value = -1;
     oid subid;
     int type = ASN01_COUNTER;

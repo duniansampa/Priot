@@ -7,7 +7,7 @@
 #include "AgentRegistry.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
@@ -182,7 +182,7 @@ int ip_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     long ret_value;
     oid subid;
     int type = ASN01_COUNTER;

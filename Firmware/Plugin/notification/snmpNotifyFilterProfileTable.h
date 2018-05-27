@@ -8,7 +8,7 @@
 #define _MIBGROUP_SNMPNOTIFYFILTERPROFILETABLE_H
 
 #include "Vars.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 
 /*
  * we may use header_complex from the header_complex module 
@@ -53,7 +53,7 @@
      FindVarMethodFT   var_snmpNotifyFilterProfileTable;
      void            parse_snmpNotifyFilterProfileTable(const char *,
                                                         char *);
-     Callback_CallbackFT    store_snmpNotifyFilterProfileTable;
+     Callback_f    store_snmpNotifyFilterProfileTable;
 
      WriteMethodFT     write_snmpNotifyFilterProfileName;
      WriteMethodFT     write_snmpNotifyFilterProfileStorType;

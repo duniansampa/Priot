@@ -5,7 +5,7 @@
  */
 
 #include "siglog/data_access/systemstats.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 
 /**---------------------------------------------------------------------*/
@@ -227,7 +227,7 @@ _calculate_entries( netsnmp_systemstats_entry* entry )
         && entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINNOROUTES ] ) {
 
         entry->stats.HCInForwDatagrams = entry->stats.HCInNoRoutes;
-        Int64_u64Incr( &entry->stats.HCInForwDatagrams, &entry->stats.HCOutForwDatagrams );
+        Integer64_addInt64( &entry->stats.HCInForwDatagrams, &entry->stats.HCOutForwDatagrams );
         entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINFORWDATAGRAMS ] = 1;
     }
 
@@ -239,7 +239,7 @@ _calculate_entries( netsnmp_systemstats_entry* entry )
         && entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGFAILS ] ) {
 
         entry->stats.HCOutFragReqds = entry->stats.HCOutFragOKs;
-        Int64_u64Incr( &entry->stats.HCOutFragReqds, &entry->stats.HCOutFragFails );
+        Integer64_addInt64( &entry->stats.HCOutFragReqds, &entry->stats.HCOutFragFails );
         entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGREQDS ] = 1;
     }
 
@@ -255,14 +255,14 @@ _calculate_entries( netsnmp_systemstats_entry* entry )
         && entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGCREATES ]
         && entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTDISCARDS ] ) {
 
-        Int64_U64 tmp, tmp2, tmp3;
+        Integer64 tmp, tmp2, tmp3;
         tmp = entry->stats.HCOutRequests;
-        Int64_u64Incr( &tmp, &entry->stats.HCOutForwDatagrams );
-        Int64_u64Incr( &tmp, &entry->stats.HCOutFragCreates );
+        Integer64_addInt64( &tmp, &entry->stats.HCOutForwDatagrams );
+        Integer64_addInt64( &tmp, &entry->stats.HCOutFragCreates );
 
-        Int64_u64Subtract( &tmp, &entry->stats.HCOutFragReqds, &tmp2 );
-        Int64_u64Subtract( &tmp2, &entry->stats.HCOutNoRoutes, &tmp3 );
-        Int64_u64Subtract( &tmp3, &entry->stats.HCOutDiscards, &entry->stats.HCOutTransmits );
+        Integer64_subtract( &tmp, &entry->stats.HCOutFragReqds, &tmp2 );
+        Integer64_subtract( &tmp2, &entry->stats.HCOutNoRoutes, &tmp3 );
+        Integer64_subtract( &tmp3, &entry->stats.HCOutDiscards, &entry->stats.HCOutTransmits );
 
         entry->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTTRANSMITS ] = 1;
     }
@@ -322,7 +322,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
          * update 64bit counters
          */
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINNOROUTES ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInNoRoutes,
                           &new_vals->stats.HCInNoRoutes,
                           &prev_vals->old_stats->HCInNoRoutes,
@@ -332,7 +332,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTNOROUTES ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutNoRoutes,
                           &new_vals->stats.HCOutNoRoutes,
                           &prev_vals->old_stats->HCOutNoRoutes,
@@ -342,7 +342,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTDISCARDS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutDiscards,
                           &new_vals->stats.HCOutDiscards,
                           &prev_vals->old_stats->HCOutDiscards,
@@ -352,7 +352,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGREQDS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutFragReqds,
                           &new_vals->stats.HCOutFragReqds,
                           &prev_vals->old_stats->HCOutFragReqds,
@@ -362,7 +362,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGOKS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutFragOKs,
                           &new_vals->stats.HCOutFragOKs,
                           &prev_vals->old_stats->HCOutFragOKs,
@@ -372,7 +372,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGFAILS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutFragFails,
                           &new_vals->stats.HCOutFragFails,
                           &prev_vals->old_stats->HCOutFragFails,
@@ -382,7 +382,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFRAGCREATES ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutFragCreates,
                           &new_vals->stats.HCOutFragCreates,
                           &prev_vals->old_stats->HCOutFragCreates,
@@ -392,7 +392,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINRECEIVES ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInReceives,
                           &new_vals->stats.HCInReceives,
                           &prev_vals->old_stats->HCInReceives,
@@ -402,7 +402,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINOCTETS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInOctets,
                           &new_vals->stats.HCInOctets,
                           &prev_vals->old_stats->HCInOctets,
@@ -412,7 +412,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINFORWDATAGRAMS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInForwDatagrams,
                           &new_vals->stats.HCInForwDatagrams,
                           &prev_vals->old_stats->HCInForwDatagrams,
@@ -422,7 +422,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINDELIVERS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInDelivers,
                           &new_vals->stats.HCInDelivers,
                           &prev_vals->old_stats->HCInDelivers,
@@ -432,7 +432,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTREQUESTS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutRequests,
                           &new_vals->stats.HCOutRequests,
                           &prev_vals->old_stats->HCOutRequests,
@@ -442,7 +442,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTFORWDATAGRAMS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutForwDatagrams,
                           &new_vals->stats.HCOutForwDatagrams,
                           &prev_vals->old_stats->HCOutForwDatagrams,
@@ -452,7 +452,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTTRANSMITS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutTransmits,
                           &new_vals->stats.HCOutTransmits,
                           &prev_vals->old_stats->HCOutTransmits,
@@ -462,7 +462,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTOCTETS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutOctets,
                           &new_vals->stats.HCOutOctets,
                           &prev_vals->old_stats->HCOutOctets,
@@ -472,7 +472,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINMCASTPKTS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInMcastPkts,
                           &new_vals->stats.HCInMcastPkts,
                           &prev_vals->old_stats->HCInMcastPkts,
@@ -482,7 +482,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINMCASTOCTETS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInMcastOctets,
                           &new_vals->stats.HCInMcastOctets,
                           &prev_vals->old_stats->HCInMcastOctets,
@@ -492,7 +492,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTMCASTPKTS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutMcastPkts,
                           &new_vals->stats.HCOutMcastPkts,
                           &prev_vals->old_stats->HCOutMcastPkts,
@@ -502,7 +502,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTMCASTOCTETS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutMcastOctets,
                           &new_vals->stats.HCOutMcastOctets,
                           &prev_vals->old_stats->HCOutMcastOctets,
@@ -512,7 +512,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCINBCASTPKTS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCInBcastPkts,
                           &new_vals->stats.HCInBcastPkts,
                           &prev_vals->old_stats->HCInBcastPkts,
@@ -522,7 +522,7 @@ int netsnmp_access_systemstats_entry_update_stats( netsnmp_systemstats_entry* pr
                     prev_vals->tableName ) );
 
         if ( new_vals->stats.columnAvail[ IPSYSTEMSTATSTABLE_HCOUTBCASTPKTS ] )
-            if ( 0 != Int64_c64Check32AndUpdate(
+            if ( 0 != Integer64_check32AndUpdate(
                           &prev_vals->stats.HCOutBcastPkts,
                           &new_vals->stats.HCOutBcastPkts,
                           &prev_vals->old_stats->HCOutBcastPkts,

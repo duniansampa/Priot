@@ -1,12 +1,12 @@
 #include "AgentReadConfig.h"
 #include "PriotSettings.h"
 #include "ReadConfig.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/String.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "AgentCallbacks.h"
 #include "AgentHandler.h"
 #include "Trap.h"
@@ -26,7 +26,7 @@ AgentReadConfig_priotdSetAgentUser(const char *token, char *cptr)
         if (*ecp != 0) {
             ReadConfig_configPerror("Bad number");
         } else {
-            DefaultStore_setInt(DsStorage_APPLICATION_ID,
+            DefaultStore_setInt(DsStore_APPLICATION_ID,
                        DsAgentInterger_USERID, uid);
         }
     } else {
@@ -34,7 +34,7 @@ AgentReadConfig_priotdSetAgentUser(const char *token, char *cptr)
 
         info = getpwnam(cptr);
         if (info)
-            DefaultStore_setInt(DsStorage_APPLICATION_ID,
+            DefaultStore_setInt(DsStore_APPLICATION_ID,
                                DsAgentInterger_USERID, info->pw_uid);
         else
             ReadConfig_configPerror("User not found in passwd database");
@@ -52,7 +52,7 @@ AgentReadConfig_priotdSetAgentGroup(const char *token, char *cptr)
         if (*ecp != 0) {
             ReadConfig_configPerror("Bad number");
         } else {
-                DefaultStore_setInt(DsStorage_APPLICATION_ID,
+                DefaultStore_setInt(DsStore_APPLICATION_ID,
                        DsAgentInterger_GROUPID, gid);
         }
     } else {
@@ -60,7 +60,7 @@ AgentReadConfig_priotdSetAgentGroup(const char *token, char *cptr)
 
         info = getgrnam(cptr);
         if (info)
-            DefaultStore_setInt(DsStorage_APPLICATION_ID,
+            DefaultStore_setInt(DsStore_APPLICATION_ID,
                                DsAgentInterger_GROUPID, info->gr_gid);
         else
             ReadConfig_configPerror("Group not found in group database");
@@ -77,7 +77,7 @@ AgentReadConfig_priotdSetAgentAddress(const char *token, char *cptr)
     /*
      * has something been specified before?
      */
-    ptr = DefaultStore_getString(DsStorage_APPLICATION_ID,
+    ptr = DefaultStore_getString(DsStore_APPLICATION_ID,
                 DsAgentString_PORTS);
 
     if (ptr) {
@@ -91,16 +91,16 @@ AgentReadConfig_priotdSetAgentAddress(const char *token, char *cptr)
     }
 
     DEBUG_MSGTL(("snmpd_ports", "port spec: %s\n", buf));
-    DefaultStore_setString(DsStorage_APPLICATION_ID, DsAgentString_PORTS, buf);
+    DefaultStore_setString(DsStore_APPLICATION_ID, DsAgentString_PORTS, buf);
 }
 
 void
 AgentReadConfig_initAgentReadConfig(const char *app)
 {
     if (app != NULL) {
-        DefaultStore_setString(DsStorage_LIBRARY_ID, DsStr_APPTYPE, app);
+        DefaultStore_setString(DsStore_LIBRARY_ID, DsStr_APPTYPE, app);
     } else {
-        app = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_APPTYPE);
+        app = DefaultStore_getString(DsStore_LIBRARY_ID, DsStr_APPTYPE);
     }
 
     ReadConfig_registerAppConfigHandler("authtrapenable",
@@ -109,7 +109,7 @@ AgentReadConfig_initAgentReadConfig(const char *app)
     ReadConfig_registerAppConfigHandler("pauthtrapenable", Trap_priotdParseConfigAuthtrap, NULL, NULL);
 
 
-    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStore_APPLICATION_ID,
                    DsAgentBoolean_ROLE) == MASTER_AGENT) {
 
 
@@ -120,7 +120,7 @@ AgentReadConfig_initAgentReadConfig(const char *app)
     }
 
     DefaultStore_registerConfig(ASN01_OCTET_STR, app, "v1trapaddress",
-                               DsStorage_APPLICATION_ID,
+                               DsStore_APPLICATION_ID,
                                DsAgentString_TRAP_ADDR);
     ReadConfig_registerAppConfigHandler("agentuser",
                                 AgentReadConfig_priotdSetAgentUser, NULL, "userid");
@@ -130,19 +130,19 @@ AgentReadConfig_initAgentReadConfig(const char *app)
                                 AgentReadConfig_priotdSetAgentAddress, NULL,
                                 "SNMP bind address");
     DefaultStore_registerConfig(ASN01_BOOLEAN, app, "quit",
-                   DsStorage_APPLICATION_ID,
+                   DsStore_APPLICATION_ID,
                    DsAgentBoolean_QUIT_IMMEDIATELY);
     DefaultStore_registerConfig(ASN01_BOOLEAN, app, "leave_pidfile",
-                   DsStorage_APPLICATION_ID,
+                   DsStore_APPLICATION_ID,
                    DsAgentBoolean_LEAVE_PIDFILE);
     DefaultStore_registerConfig(ASN01_BOOLEAN, app, "dontLogTCPWrappersConnects",
-                               DsStorage_APPLICATION_ID,
+                               DsStore_APPLICATION_ID,
                                DsAgentBoolean_DONT_LOG_TCPWRAPPERS_CONNECTS);
     DefaultStore_registerConfig(ASN01_INTEGER, app, "maxGetbulkRepeats",
-                               DsStorage_APPLICATION_ID,
+                               DsStore_APPLICATION_ID,
                                DsAgentInterger_MAX_GETBULKREPEATS);
     DefaultStore_registerConfig(ASN01_INTEGER, app, "maxGetbulkResponses",
-                               DsStorage_APPLICATION_ID,
+                               DsStore_APPLICATION_ID,
                                DsAgentInterger_MAX_GETBULKRESPONSES);
     AgentHandler_initHandlerConf();
 
@@ -151,7 +151,7 @@ AgentReadConfig_initAgentReadConfig(const char *app)
 void
 AgentReadConfig_updateConfig(void)
 {
-    Callback_callCallbacks(CALLBACK_APPLICATION,
+    Callback_call(CallbackMajor_APPLICATION,
                         PriotdCallback_PRE_UPDATE_CONFIG, NULL);
     ReadConfig_freeConfig();
     ReadConfig_readConfigs();

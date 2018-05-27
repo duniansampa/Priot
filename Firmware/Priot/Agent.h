@@ -39,7 +39,7 @@ typedef struct RequestInfo_s {
     /**
    * variable bindings
    */
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
 
     /**
    * can be used to pass information on a per-request basis from a
@@ -70,7 +70,7 @@ typedef struct RequestInfo_s {
     /** get-bulk */
     int repeat;
     int orig_repeat;
-    Types_VariableList* requestvb_start;
+    VariableList* requestvb_start;
 
     /* internal use */
     struct RequestInfo_s* next;
@@ -181,7 +181,7 @@ typedef struct AgentSession_s {
     AgentRequestInfo* reqinfo;
     RequestInfo* requests;
     TreeCache* treecache;
-    Types_VariableList** bulkcache;
+    VariableList** bulkcache;
     int treecache_len; /* length of cache array */
     int treecache_num; /* number of current cache entries */
     Cachemap* cache_store;

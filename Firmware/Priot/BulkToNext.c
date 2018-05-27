@@ -2,7 +2,7 @@
 #include "Client.h"
 #include "System/Util/Assert.h"
 #include "Api.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 /** @defgroup bulk_to_next bulk_to_next
  *  Convert GETBULK requests into GETNEXT requests for the handler.
@@ -52,12 +52,12 @@ BulkToNext_fixRequests(RequestInfo *requests)
                               request->requestvb->nameLength,
                               request->range_end,
                               request->range_end_len) < 0) &&
-            request->requestvb->nextVariable ) {
+            request->requestvb->next ) {
             request->repeat--;
-            Client_setVarObjid(request->requestvb->nextVariable,
+            Client_setVarObjid(request->requestvb->next,
                                request->requestvb->name,
                                request->requestvb->nameLength);
-            request->requestvb = request->requestvb->nextVariable;
+            request->requestvb = request->requestvb->next;
             request->requestvb->type = ASN01_PRIV_RETRY;
             /*
              * if inclusive == 2, it was set in check_getnext_results for

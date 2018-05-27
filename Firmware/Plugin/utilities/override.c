@@ -14,7 +14,7 @@
 #include "override.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Instance.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
@@ -60,8 +60,8 @@ int override_handler( MibHandler* handler,
         break;
 
     case MODE_SET_RESERVE2:
-        data->set_space = Memory_memdup( requests->requestvb->val.string,
-            requests->requestvb->valLen );
+        data->set_space = Memory_memdup( requests->requestvb->value.string,
+            requests->requestvb->valueLength );
         if ( !data->set_space )
             Agent_setRequestError( reqinfo, requests,
                 PRIOT_ERR_RESOURCEUNAVAILABLE );
@@ -79,7 +79,7 @@ int override_handler( MibHandler* handler,
 
         /* set the lengths */
         data->set_len = data->value_len;
-        data->value_len = requests->requestvb->valLen;
+        data->value_len = requests->requestvb->valueLength;
         break;
 
     case MODE_SET_UNDO:

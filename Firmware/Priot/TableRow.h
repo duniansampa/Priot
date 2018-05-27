@@ -10,7 +10,7 @@ TableRow_handlerGet( void *row );
 int
 TableRow_register( HandlerRegistration *reginfo,
                    TableRegistrationInfo *tabreg,
-                   void *row, Types_VariableList *index);
+                   void *row, VariableList *index);
 
 void *
 TableRow_extract( RequestInfo *request );

@@ -1,14 +1,14 @@
 #include "Transport.h"
 #include "System/Util/Utilities.h"
 #include "Asn01.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "ReadConfig.h"
 #include "Service.h"
 #include "System/String.h"
 #include "Api.h"
 #include "Priot.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 
 #include <ctype.h>
 
@@ -49,7 +49,7 @@ void Transport_initTransport(void)
 {
     DefaultStore_registerConfig(ASN01_BOOLEAN,
                                "priot", "dontLoadHostConfig",
-                               DsStorage_LIBRARY_ID,
+                               DsStore_LIBRARY_ID,
                                DsBool_DONT_LOAD_HOST_FILES);
 }
 
@@ -199,7 +199,7 @@ Transport_send(Transport_Transport *t, void *packet, int length,
         return ErrorCode_GENERR;
     }
 
-    dumpPacket = DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+    dumpPacket = DefaultStore_getBoolean(DsStore_LIBRARY_ID,
                                         DsBool_DUMP_PACKET);
     debugLength = (ErrorCode_SUCCESS ==
                    Debug_isTokenRegistered("transport:send"));
@@ -435,7 +435,7 @@ Transport_tdomainTransportFull(const char *application,
                 default_target ? default_target : "[NIL]"));
 
     /* see if we can load a host-name specific set of conf files */
-    if (!DefaultStore_getBoolean(DsStorage_LIBRARY_ID,
+    if (!DefaultStore_getBoolean(DsStore_LIBRARY_ID,
                                 DsBool_DONT_LOAD_HOST_FILES) &&
         _Transport_isFqdn(str)) {
         static int have_added_handler = 0;
@@ -449,7 +449,7 @@ Transport_tdomainTransportFull(const char *application,
             have_added_handler = 1;
             DefaultStore_registerConfig(ASN01_OCTET_STR,
                                        "priot", "transport",
-                                       DsStorage_LIBRARY_ID,
+                                       DsStore_LIBRARY_ID,
                                        DsStr_HOSTNAME);
         }
 
@@ -457,7 +457,7 @@ Transport_tdomainTransportFull(const char *application,
            from one transport creation to the next; ie, we don't want
            the "transport" specifier to be a default.  It should be a
            single invocation use only */
-        prev_hostname = DefaultStore_getString(DsStorage_LIBRARY_ID,
+        prev_hostname = DefaultStore_getString(DsStore_LIBRARY_ID,
                                               DsStr_HOSTNAME);
         if (prev_hostname)
             prev_hostname = strdup(prev_hostname);
@@ -473,13 +473,13 @@ Transport_tdomainTransportFull(const char *application,
         ReadConfig_filesOfType(EITHER_CONFIG, &file_names);
 
         if (NULL !=
-            (newhost = DefaultStore_getString(DsStorage_LIBRARY_ID,
+            (newhost = DefaultStore_getString(DsStore_LIBRARY_ID,
                                              DsStr_HOSTNAME))) {
             String_copyTruncate(buf, newhost, sizeof(buf));
             str = buf;
         }
 
-        DefaultStore_setString(DsStorage_LIBRARY_ID,
+        DefaultStore_setString(DsStore_LIBRARY_ID,
                               DsStr_HOSTNAME,
                               prev_hostname);
         MEMORY_FREE(prev_hostname);

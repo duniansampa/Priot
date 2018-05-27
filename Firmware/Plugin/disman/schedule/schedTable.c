@@ -8,11 +8,11 @@
 
 #include "schedTable.h"
 #include "System/Util/Assert.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "schedCore.h"
 #include "utilities/Iquery.h"
 
@@ -205,7 +205,7 @@ int schedTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDDESCR:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, SCHED_STR2_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -213,14 +213,14 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDINTERVAL:
-                ret = CheckVarbind_uint( request->requestvb );
+                ret = VariableList_checkUIntLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_SCHEDWEEKDAY:
-                ret = CheckVarbind_typeAndSize(
+                ret = VariableList_checkTypeAndLength(
                     request->requestvb, ASN01_OCTET_STR, 1 );
                 /* XXX - check for bit(7) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -229,7 +229,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDMONTH:
-                ret = CheckVarbind_typeAndSize( /* max_size ?? */
+                ret = VariableList_checkTypeAndLength( /* max_size ?? */
                     request->requestvb, ASN01_OCTET_STR, 2 );
                 /* XXX - check for bit(12)-bit(15) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -238,7 +238,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDDAY:
-                ret = CheckVarbind_typeAndSize( /* max_size ?? */
+                ret = VariableList_checkTypeAndLength( /* max_size ?? */
                     request->requestvb, ASN01_OCTET_STR, 4 + 4 );
                 /* XXX - check for bit(62) or bit(63) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -247,7 +247,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDHOUR:
-                ret = CheckVarbind_typeAndSize( /* max_size ?? */
+                ret = VariableList_checkTypeAndLength( /* max_size ?? */
                     request->requestvb, ASN01_OCTET_STR, 3 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -255,7 +255,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDMINUTE:
-                ret = CheckVarbind_typeAndSize( /* max_size ?? */
+                ret = VariableList_checkTypeAndLength( /* max_size ?? */
                     request->requestvb, ASN01_OCTET_STR, 8 );
                 /* XXX - check for bit(60)-bit(63) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -264,7 +264,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDCONTEXTNAME:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, SCHED_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -272,21 +272,21 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDVARIABLE:
-                ret = CheckVarbind_oid( request->requestvb );
+                ret = VariableList_checkOidMaxLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_SCHEDVALUE:
-                ret = CheckVarbind_int( request->requestvb );
+                ret = VariableList_checkIntLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 break;
             case COLUMN_SCHEDTYPE:
-                ret = CheckVarbind_intRange( request->requestvb,
+                ret = VariableList_checkIntLengthAndRange( request->requestvb,
                     SCHED_TYPE_PERIODIC, SCHED_TYPE_ONESHOT );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -294,7 +294,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDADMINSTATUS:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
@@ -302,7 +302,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDSTORAGETYPE:
-                ret = CheckVarbind_intRange( request->requestvb,
+                ret = VariableList_checkIntLengthAndRange( request->requestvb,
                     TC_ST_NONE, TC_ST_READONLY );
                 /* XXX - check valid/consistent assignments */
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -311,7 +311,7 @@ int schedTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_SCHEDROWSTATUS:
-                ret = CheckVarbind_rowStatus( request->requestvb,
+                ret = VariableList_checkRowStatusTransition( request->requestvb,
                     ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
                 /* XXX - check consistency assignments */
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -336,7 +336,7 @@ int schedTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDROWSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
@@ -344,10 +344,10 @@ int schedTable_handler( MibHandler* handler,
                      */
                     memset( owner, 0, SCHED_STR1_LEN + 1 );
                     memset( name, 0, SCHED_STR1_LEN + 1 );
-                    memcpy( owner, tinfo->indexes->val.string,
-                        tinfo->indexes->valLen );
-                    memcpy( name, tinfo->indexes->nextVariable->val.string,
-                        tinfo->indexes->nextVariable->valLen );
+                    memcpy( owner, tinfo->indexes->value.string,
+                        tinfo->indexes->valueLength );
+                    memcpy( name, tinfo->indexes->next->value.string,
+                        tinfo->indexes->next->valueLength );
                     row = schedTable_createEntry( owner, name );
                     if ( !row ) {
                         Agent_setRequestError( reqinfo, request,
@@ -369,7 +369,7 @@ int schedTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDROWSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
@@ -423,70 +423,70 @@ int schedTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDDESCR:
                 memset( entry->schedDescr, 0, sizeof( entry->schedDescr ) );
-                memcpy( entry->schedDescr, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->schedDescr, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_SCHEDINTERVAL:
-                entry->schedInterval = *request->requestvb->val.integer;
+                entry->schedInterval = *request->requestvb->value.integer;
                 recalculate = 1;
                 break;
             case COLUMN_SCHEDWEEKDAY:
-                entry->schedWeekDay = request->requestvb->val.string[ 0 ];
+                entry->schedWeekDay = request->requestvb->value.string[ 0 ];
                 recalculate = 1;
                 break;
             case COLUMN_SCHEDMONTH:
-                entry->schedMonth[ 0 ] = request->requestvb->val.string[ 0 ];
-                entry->schedMonth[ 1 ] = request->requestvb->val.string[ 1 ];
+                entry->schedMonth[ 0 ] = request->requestvb->value.string[ 0 ];
+                entry->schedMonth[ 1 ] = request->requestvb->value.string[ 1 ];
                 recalculate = 1;
                 break;
             case COLUMN_SCHEDDAY:
                 memset( entry->schedDay, 0, sizeof( entry->schedDay ) );
-                memcpy( entry->schedDay, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->schedDay, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 recalculate = 1;
                 break;
             case COLUMN_SCHEDHOUR:
-                entry->schedHour[ 0 ] = request->requestvb->val.string[ 0 ];
-                entry->schedHour[ 1 ] = request->requestvb->val.string[ 1 ];
-                entry->schedHour[ 2 ] = request->requestvb->val.string[ 2 ];
+                entry->schedHour[ 0 ] = request->requestvb->value.string[ 0 ];
+                entry->schedHour[ 1 ] = request->requestvb->value.string[ 1 ];
+                entry->schedHour[ 2 ] = request->requestvb->value.string[ 2 ];
                 recalculate = 1;
                 break;
             case COLUMN_SCHEDMINUTE:
                 memset( entry->schedMinute, 0, sizeof( entry->schedMinute ) );
-                memcpy( entry->schedMinute, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->schedMinute, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 recalculate = 1;
                 break;
             case COLUMN_SCHEDCONTEXTNAME:
                 memset( entry->schedContextName, 0, sizeof( entry->schedContextName ) );
                 memcpy( entry->schedContextName,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_SCHEDVARIABLE:
                 memset( entry->schedVariable, 0, sizeof( entry->schedVariable ) );
                 memcpy( entry->schedVariable,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
-                entry->schedVariable_len = request->requestvb->valLen / sizeof( oid );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
+                entry->schedVariable_len = request->requestvb->valueLength / sizeof( oid );
                 break;
             case COLUMN_SCHEDVALUE:
-                entry->schedValue = *request->requestvb->val.integer;
+                entry->schedValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_SCHEDTYPE:
-                entry->schedType = *request->requestvb->val.integer;
+                entry->schedType = *request->requestvb->value.integer;
                 break;
             case COLUMN_SCHEDADMINSTATUS:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= SCHEDULE_FLAG_ENABLED;
                 else
                     entry->flags &= ~SCHEDULE_FLAG_ENABLED;
                 break;
             case COLUMN_SCHEDSTORAGETYPE:
-                entry->schedStorageType = *request->requestvb->val.integer;
+                entry->schedStorageType = *request->requestvb->value.integer;
                 break;
             case COLUMN_SCHEDROWSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                     entry->flags |= SCHEDULE_FLAG_ACTIVE;
                     break;

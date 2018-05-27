@@ -2,10 +2,10 @@
 
 #include "System/Util/Assert.h"
 #include "System/Util/Assert.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "IPv4BaseDomain.h"
 #include "SocketBaseDomain.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
 #include "UDPBaseDomain.h"
 #include "UDPDomain.h"
@@ -103,7 +103,7 @@ Transport_Transport* UDPIPv4BaseDomain_transport( struct sockaddr_in* addr, int 
          * client address to send from, then bind to that.
          * Otherwise the send will use "something sensible".
          */
-        client_socket = ( char* )DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_CLIENT_ADDR );
+        client_socket = ( char* )DefaultStore_getString( DsStore_LIBRARY_ID, DsStr_CLIENT_ADDR );
 
         if ( client_socket ) {
             struct sockaddr_in client_addr;

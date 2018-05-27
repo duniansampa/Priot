@@ -10,10 +10,10 @@
 #include "snmpTargetParamsEntry.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
+#include "System/Util/Trace.h"
 
 #define snmpTargetParamsOIDLen 11 /*This is base+column, \
                                    * i.e. everything but index */
@@ -263,7 +263,7 @@ void init_snmpTargetParamsEntry( void )
     /*
      * we need to be called back later 
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_snmpTargetParamsEntry, NULL );
 } /*  init_snmpTargetParmsEntry  */
 

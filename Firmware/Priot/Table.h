@@ -57,7 +57,7 @@ typedef struct ColumnInfoT_s {
 */
 typedef struct TableRegistrationInfo_s {
 /** list of varbinds with only 'type' set */
-    Types_VariableList *indexes;
+    VariableList *indexes;
 /** calculated automatically */
     unsigned int    number_indexes;
 
@@ -89,7 +89,7 @@ typedef struct TableRequestInfo_s {
     /** 0 if failure to parse any */
     unsigned int    number_indexes;
 /** contents freed by helper upon exit */
-    Types_VariableList *indexes;
+    VariableList *indexes;
 
     oid    index_oid[ASN01_MAX_OID_LEN];
     size_t index_oid_len;
@@ -158,8 +158,8 @@ Table_helperAddIndexes( TableRegistrationInfo *tinfo, ...);
 int Table_checkGetnextReply( RequestInfo *request,
                              oid * prefix,
                              size_t prefix_len,
-                             Types_VariableList * newvar,
-                             Types_VariableList ** outvar );
+                             VariableList * newvar,
+                             VariableList ** outvar );
 
 TableRequestInfo*
 Table_extractTableInfo( RequestInfo * );

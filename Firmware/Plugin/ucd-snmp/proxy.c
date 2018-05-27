@@ -14,8 +14,8 @@
 #include "AgentRegistry.h"
 #include "BulkToNext.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
@@ -51,7 +51,7 @@ proxyOptProc( int argc, char* const* argv, int opt )
                 }
                 break;
             case 'c':
-                DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+                DefaultStore_setBoolean( DsStore_LIBRARY_ID,
                     DsBool_IGNORE_NO_COMMUNITY, 1 );
                 break;
             default:
@@ -106,7 +106,7 @@ void proxy_parse_config( const char* token, char* line )
         PARSEARGS_NOLOGGING | PARSEARGS_NOZERO );
 
     /* reset this in case we modified it */
-    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+    DefaultStore_setBoolean( DsStore_LIBRARY_ID,
         DsBool_IGNORE_NO_COMMUNITY, 0 );
 
     if ( arg < 0 ) {
@@ -408,8 +408,8 @@ int proxy_handler( MibHandler* handler,
 
         Api_pduAddVariable( pdu, ourname, ourlength,
             request->requestvb->type,
-            request->requestvb->val.string,
-            request->requestvb->valLen );
+            request->requestvb->value.string,
+            request->requestvb->valueLength );
         request->delegated = 1;
         request = request->next;
     }
@@ -444,7 +444,7 @@ int proxy_got_response( int operation, Types_Session* sess, int reqid,
 {
     DelegatedCache* cache = ( DelegatedCache* )cb_data;
     RequestInfo *requests, *request = NULL;
-    Types_VariableList *vars, *var = NULL;
+    VariableList *vars, *var = NULL;
 
     struct simple_proxy* sp;
     oid myname[ ASN01_MAX_OID_LEN ];
@@ -533,13 +533,13 @@ int proxy_got_response( int operation, Types_Session* sess, int reqid,
         } else
             for ( var = vars, request = requests;
                   request && var;
-                  request = request->next, var = var->nextVariable ) {
+                  request = request->next, var = var->next ) {
                 /*
              * XXX - should this be done here?
              *       Or wait until we know it's OK?
              */
                 Client_setVarTypedValue( request->requestvb, var->type,
-                    var->val.string, var->valLen );
+                    var->value.string, var->valueLength );
 
                 DEBUG_MSGTL( ( "proxy", "got response... " ) );
                 DEBUG_MSGOID( ( "proxy", var->name, var->nameLength ) );

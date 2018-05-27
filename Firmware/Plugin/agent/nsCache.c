@@ -1,9 +1,9 @@
 #include "nsCache.h"
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Scalar.h"
 
@@ -98,7 +98,7 @@ int handle_nsCacheTimeout( MibHandler* handler,
     AgentRequestInfo* reqinfo,
     RequestInfo* requests )
 {
-    long cache_default_timeout = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+    long cache_default_timeout = DefaultStore_getInt( DsStore_APPLICATION_ID,
         DsAgentInterger_CACHE_TIMEOUT );
     RequestInfo* request = NULL;
 
@@ -121,7 +121,7 @@ int handle_nsCacheTimeout( MibHandler* handler,
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
-            if ( *request->requestvb->val.integer < 0 ) {
+            if ( *request->requestvb->value.integer < 0 ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                 return PRIOT_ERR_WRONGVALUE;
             }
@@ -129,9 +129,9 @@ int handle_nsCacheTimeout( MibHandler* handler,
         break;
 
     case MODE_SET_COMMIT:
-        DefaultStore_setInt( DsStorage_APPLICATION_ID,
+        DefaultStore_setInt( DsStore_APPLICATION_ID,
             DsAgentInterger_CACHE_TIMEOUT,
-            *requests->requestvb->val.integer );
+            *requests->requestvb->value.integer );
         break;
     }
 
@@ -149,7 +149,7 @@ int handle_nsCacheEnabled( MibHandler* handler,
     switch ( reqinfo->mode ) {
 
     case MODE_GET:
-        enabled = ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        enabled = ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                         DsAgentBoolean_NO_CACHING )
                 ? NSCACHE_STATUS_ENABLED /* Actually True/False */
                 : NSCACHE_STATUS_DISABLED );
@@ -168,7 +168,7 @@ int handle_nsCacheEnabled( MibHandler* handler,
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
-            if ( ( *request->requestvb->val.integer != NSCACHE_STATUS_ENABLED ) && ( *request->requestvb->val.integer != NSCACHE_STATUS_DISABLED ) ) {
+            if ( ( *request->requestvb->value.integer != NSCACHE_STATUS_ENABLED ) && ( *request->requestvb->value.integer != NSCACHE_STATUS_DISABLED ) ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                 return PRIOT_ERR_WRONGVALUE;
             }
@@ -176,10 +176,10 @@ int handle_nsCacheEnabled( MibHandler* handler,
         break;
 
     case MODE_SET_COMMIT:
-        enabled = *requests->requestvb->val.integer;
+        enabled = *requests->requestvb->value.integer;
         if ( enabled == NSCACHE_STATUS_DISABLED )
             enabled = 0;
-        DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+        DefaultStore_setBoolean( DsStore_APPLICATION_ID,
             DsAgentBoolean_NO_CACHING, enabled );
         break;
     }
@@ -191,9 +191,9 @@ int handle_nsCacheEnabled( MibHandler* handler,
  * nsCacheTable handling
  */
 
-Types_VariableList*
+VariableList*
 get_first_cache_entry( void** loop_context, void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     Cache* cache_head = CacheHandler_getHead();
@@ -208,9 +208,9 @@ get_first_cache_entry( void** loop_context, void** data_context,
     return index;
 }
 
-Types_VariableList*
+VariableList*
 get_next_cache_entry( void** loop_context, void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     Cache* cache = ( Cache* )*loop_context;
@@ -262,7 +262,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_NOSUCHINSTANCE );
                     continue;
                 }
-                status = ( cache_entry->enabled ? ( cache_entry->timestampM ? ( cache_entry->timeout >= 0 && !Tools_readyMonotonic( cache_entry->timestampM, 1000 * cache_entry->timeout ) ? NSCACHE_STATUS_ACTIVE : NSCACHE_STATUS_EXPIRED ) : NSCACHE_STATUS_EMPTY ) : NSCACHE_STATUS_DISABLED );
+                status = ( cache_entry->enabled ? ( cache_entry->timestampM ? ( cache_entry->timeout >= 0 && !Time_readyMonotonic( cache_entry->timestampM, 1000 * cache_entry->timeout ) ? NSCACHE_STATUS_ACTIVE : NSCACHE_STATUS_EXPIRED ) : NSCACHE_STATUS_EMPTY ) : NSCACHE_STATUS_DISABLED );
                 Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
                     ( u_char* )&status, sizeof( status ) );
                 break;
@@ -294,7 +294,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                if ( *request->requestvb->val.integer < 0 ) {
+                if ( *request->requestvb->value.integer < 0 ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                     return PRIOT_ERR_WRONGVALUE;
                 }
@@ -309,7 +309,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                status = *request->requestvb->val.integer;
+                status = *request->requestvb->value.integer;
                 if ( !( ( status == NSCACHE_STATUS_ENABLED ) || ( status == NSCACHE_STATUS_DISABLED ) || ( status == NSCACHE_STATUS_EMPTY ) ) ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                     return PRIOT_ERR_WRONGVALUE;
@@ -339,19 +339,19 @@ int handle_nsCacheTable( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case NSCACHE_TIMEOUT:
-                cache_entry->timeout = *request->requestvb->val.integer;
+                cache_entry->timeout = *request->requestvb->value.integer;
                 /*
                  * check for auto repeat
                  */
                 if ( cache_entry->timer_id ) {
-                    struct Alarm_s* sa = Alarm_saFindSpecific( cache_entry->timer_id );
+                    struct Alarm_s* sa = Alarm_findSpecific( cache_entry->timer_id );
                     if ( NULL != sa )
-                        sa->t.tv_sec = cache_entry->timeout;
+                        sa->timeInterval.tv_sec = cache_entry->timeout;
                 }
                 break;
 
             case NSCACHE_STATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case NSCACHE_STATUS_ENABLED:
                     cache_entry->enabled = 1;
                     break;

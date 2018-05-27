@@ -1,6 +1,6 @@
 #include "LcdTime.h"
 #include "System/Util/Utilities.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Scapi.h"
 #include "Usm.h"
 #include "V3.h"

@@ -4,7 +4,7 @@
 #include "Generals.h"
 #include "Types.h"
 #include "Secmod.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "Priot.h"
 
 
@@ -249,7 +249,7 @@ void            Usm_saveUsersFromList(struct Usm_User_s *user,
 void            Usm_saveUser(struct Usm_User_s *user, const char *token,
                               const char *type);
 
-Callback_CallbackFT    Usm_storeUsers;
+Callback_f    Usm_storeUsers;
 
 struct Usm_User_s * Usm_readUser(const char *line);
 

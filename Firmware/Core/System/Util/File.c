@@ -1,5 +1,5 @@
 /** \file File.c
- *  \brief  File is a object type that identifies a FILE and contains the information
+ *  @brief  File is a object type that identifies a FILE and contains the information
  *          needed to control FILE, for example: name, descriptor, mode, stats, etc.
  *
  *  This is the implementation of the File.
@@ -13,7 +13,7 @@
 #include "File.h"
 #include "System/Util/Assert.h"
 #include "System/Containers/Map.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
 #include <ctype.h>

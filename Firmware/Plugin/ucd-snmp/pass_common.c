@@ -113,7 +113,7 @@ netsnmp_internal_pass_parse( char* buf,
         vp->type = ASN01_OCTET_STR;
         return ( ( unsigned char* )buf2 );
     } else if ( !strncasecmp( buf, "integer64", 9 ) ) {
-        static struct Asn01_Counter64_s c64;
+        static Counter64 c64;
         uint64_t v64 = strtoull( buf2, NULL, 10 );
         c64.high = ( unsigned long )( v64 >> 32 );
         c64.low = ( unsigned long )( v64 & 0xffffffff );
@@ -131,7 +131,7 @@ netsnmp_internal_pass_parse( char* buf,
         vp->type = ASN01_UNSIGNED;
         return ( ( unsigned char* )&long_ret );
     } else if ( !strncasecmp( buf, "counter64", 9 ) ) {
-        static struct Asn01_Counter64_s c64;
+        static Counter64 c64;
         uint64_t v64 = strtoull( buf2, NULL, 10 );
         c64.high = ( unsigned long )( v64 >> 32 );
         c64.low = ( unsigned long )( v64 & 0xffffffff );

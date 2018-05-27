@@ -3,6 +3,8 @@
 
 #include "Generals.h"
 
+#include "System/Numerics/Integer64.h"
+
 #define ASN01_PARSE_PACKET 0
 #define ASN01_DUMP_PACKET 1
 
@@ -42,14 +44,6 @@
 
 #define ASN01_IS_CONSTRUCTOR( byte ) ( ( byte )&ASN01_CONSTRUCTOR )
 #define ASN01_IS_EXTENSION_ID( byte ) ( ( ( byte )&ASN01_EXTENSION_ID ) == ASN01_EXTENSION_ID )
-
-typedef struct Asn01_Counter64_s {
-    uint high;
-    uint low;
-} Asn01_Counter64;
-
-typedef Asn01_Counter64 Asn01_Integer64;
-typedef Asn01_Counter64 Asn01_Unsigned64;
 
 /*
  * defined types (from the SMI, RFC 1157)
@@ -207,14 +201,14 @@ u_char* Asn01_parseBitstring( u_char*, size_t*, u_char*, u_char*, size_t* );
 
 u_char* Asn01_buildBitstring( u_char*, size_t*, u_char, const u_char*, size_t );
 
-u_char* Asn01_parseUnsignedInt64( u_char*, size_t*, u_char*, struct Asn01_Counter64_s*, size_t );
+u_char* Asn01_parseUnsignedInt64( u_char*, size_t*, u_char*, Counter64*, size_t );
 
 u_char* Asn01_buildUnsignedInt64( u_char*, size_t*, u_char,
-    const struct Asn01_Counter64_s*, size_t );
+    const Counter64*, size_t );
 
-u_char* Asn01_parseSignedInt64( u_char*, size_t*, u_char*, struct Asn01_Counter64_s*, size_t );
+u_char* Asn01_parseSignedInt64( u_char*, size_t*, u_char*, Counter64*, size_t );
 
-u_char* Asn01_buildSignedInt64( u_char*, size_t*, u_char, const struct Asn01_Counter64_s*, size_t );
+u_char* Asn01_buildSignedInt64( u_char*, size_t*, u_char, const Counter64*, size_t );
 
 u_char* Asn01_buildFloat( u_char*, size_t*, u_char, const float*, size_t );
 
@@ -401,14 +395,14 @@ int Asn01_reallocRbuildUnsignedInt64( u_char** pkt,
     size_t* offset,
     int allow_realloc,
     u_char type,
-    struct Asn01_Counter64_s const* data, size_t );
+    Counter64 const* data, size_t );
 
 int Asn01_reallocRbuildSignedInt64( u_char** pkt,
     size_t* pkt_len,
     size_t* offset,
     int allow_realloc,
     u_char type,
-    const struct Asn01_Counter64_s* data,
+    const Counter64* data,
     size_t );
 
 int Asn01_reallocRbuildFloat( u_char** pkt,

@@ -7,7 +7,7 @@
 #include "Vacm.h"
 #include "System.h"
 #include <stddef.h>
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "ReadConfig.h"
 #include "Impl.h"
 

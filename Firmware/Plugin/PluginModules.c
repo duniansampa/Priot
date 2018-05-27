@@ -1,10 +1,10 @@
 #include "PluginModules.h"
 #include "Api.h"
-#include "System/Util/Assert.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "ModuleConfig.h"
 #include "ModuleIncludes.h"
 #include "Priot.h"
+#include "System/Util/Assert.h"
 #include "Vars.h"
 
 static int _needShutdown = 0;
@@ -39,7 +39,7 @@ void PluginModules_initModules( void )
     if ( once == 0 ) {
         int rc;
         once = 1;
-        rc = Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_SHUTDOWN,
+        rc = Callback_register( CallbackMajor_LIBRARY, CallbackMinor_SHUTDOWN,
             _PluginModules_shutdownModules, NULL );
 
         if ( rc != PRIOT_ERR_NOERROR )

@@ -16,7 +16,7 @@
 #include "AgentReadConfig.h"
 #include "System/Util/Assert.h"
 #include "CacheHandler.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Trap.h"
 #include "ifTable_defs.h"
@@ -222,7 +222,7 @@ void send_linkUpDownNotifications( oid* notification_oid, size_t notification_oi
     /*
      * here is where we store the variables to be sent in the trap 
      */
-    Types_VariableList* notification_vars = NULL;
+    VariableList* notification_vars = NULL;
 
     DEBUG_MSGTL( ( "rsys:linkUpDownNotifications", "defining the trap\n" ) );
 

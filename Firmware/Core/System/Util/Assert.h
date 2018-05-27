@@ -1,8 +1,10 @@
-#ifndef ASSERT_H
-#define ASSERT_H
+#ifndef IOT_ASSERT_H
+#define IOT_ASSERT_H
 
 #include "Generals.h"
 #include "System/Util/Logger.h"
+
+/** ============================[ Macros ]============================ */
 
 /*
  *  if asserts weren't requested, just log, unless no debug flag is specified
@@ -59,4 +61,4 @@
 #define Assert_requirePtrLRV( ptr, val ) \
     Assert_assertOrReturn( ( ptr ) != NULL, val )
 
-#endif // ASSERT_H
+#endif // IOT_ASSERT_H

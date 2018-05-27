@@ -1,5 +1,5 @@
 #include "Priot.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Impl.h"
 
@@ -183,7 +183,7 @@ Priot_buildVarOp(u_char * data,
     case ASN01_OPAQUE_U64:
     case ASN01_COUNTER64:
         data = Asn01_buildUnsignedInt64(data, listlength, var_val_type,
-                                        (struct Asn01_Counter64_s *) var_val,
+                                        (Counter64 *) var_val,
                                         var_val_len);
         break;
     case ASN01_OCTET_STR:
@@ -219,7 +219,7 @@ Priot_buildVarOp(u_char * data,
         break;
     case ASN01_OPAQUE_I64:
         data = Asn01_buildSignedInt64(data, listlength, var_val_type,
-                                      (struct Asn01_Counter64_s *) var_val,
+                                      (Counter64 *) var_val,
                                       var_val_len);
         break;
     default:
@@ -280,7 +280,7 @@ Priot_reallocRbuildVarOp(u_char ** pkt, size_t * pkt_len,
     case ASN01_COUNTER64:
         rc = Asn01_reallocRbuildUnsignedInt64(pkt, pkt_len, offset,
                                                allow_realloc, var_val_type,
-                                               (struct Asn01_Counter64_s *)
+                                               (Counter64 *)
                                                var_val, var_val_len);
         break;
 
@@ -331,7 +331,7 @@ Priot_reallocRbuildVarOp(u_char ** pkt, size_t * pkt_len,
     case ASN01_OPAQUE_I64:
         rc = Asn01_reallocRbuildSignedInt64(pkt, pkt_len, offset,
                                              allow_realloc, var_val_type,
-                                             (struct Asn01_Counter64_s *) var_val,
+                                             (Counter64 *) var_val,
                                              var_val_len);
         break;
     default:

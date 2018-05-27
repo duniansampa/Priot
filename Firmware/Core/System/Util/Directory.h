@@ -1,7 +1,9 @@
-#ifndef DIRECTORY_H_
-#define DIRECTORY_H_
+#ifndef IOT_DIRECTORY_H
+#define IOT_DIRECTORY_H
 
 #include "System/Containers/Container.h"
+
+/** ============================[ Macros ]============================ */
 
 /** flags
 */
@@ -22,18 +24,22 @@
 
 #define Directory_read( c, d, f ) Directory_readSome( c, d, NULL, NULL, f );
 
+/** ============================[ Types ]================== */
+
 /** filter function; return 1 to include file, 0 to exclude */
 typedef int( DirectoryFilter_f )( const void* text, void* ctx );
 
-/** \brief Reads file names in a directory, with an optional filter
+/** =============================[ Functions Prototypes ]================== */
+
+/** @brief Reads file names in a directory, with an optional filter
  */
 Container_Container* Directory_readSome( Container_Container* userContainer,
     const char* dirName,
     DirectoryFilter_f* filterFunction,
     void* filterCtx, u_int directoryFlags );
 
-/** \brief  clear all containers
+/** @brief  clear all containers
  */
 void Directory_free( Container_Container* c );
 
-#endif // DIRECTORY_H_
+#endif // IOT_DIRECTORY_H

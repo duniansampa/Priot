@@ -5,8 +5,8 @@
 #include "setSerialNo.h"
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
-#include "Callback.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Callback.h"
+#include "System/Util/Trace.h"
 #include "Watcher.h"
 /*
  * A watched spinlock can be fully implemented by the spinlock helper,
@@ -51,7 +51,7 @@ void init_setSerialNo( void )
         "Initalizing SnmpSetSerialNo to %d\n", setserialno ) );
     AgentReadConfig_priotdRegisterConfigHandler( "setserialno", setserial_parse_config,
         NULL, "integer" );
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         setserial_store_config, NULL );
 
     /*

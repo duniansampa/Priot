@@ -1,5 +1,5 @@
-#ifndef MEMORY_H_
-#define MEMORY_H_
+#ifndef IOT_MEMORY_H_
+#define IOT_MEMORY_H_
 
 #include "Generals.h"
 
@@ -112,4 +112,4 @@ void* Memory_memdup( const void* from, size_t size );
  *  byte longer to account for this */
 char* Memory_strdupAndNull( const u_char* from, size_t fromLen );
 
-#endif // MEMORY_H_
+#endif // IOT_MEMORY_H_

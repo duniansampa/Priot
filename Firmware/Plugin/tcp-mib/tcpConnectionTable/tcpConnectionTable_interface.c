@@ -31,7 +31,7 @@
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
 #include "siglog/agent/mfd.h"
@@ -133,7 +133,7 @@ static NodeHandlerFT _mfd_tcpConnectionTable_check_dependencies;
 
 static inline int
 _tcpConnectionTable_undo_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList*
+    VariableList*
         var,
     int column );
 
@@ -355,27 +355,27 @@ int tcpConnectionTable_index_to_oid( Types_Index* oid_idx,
     /*
      * tcpConnectionLocalAddressType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_tcpConnectionLocalAddressType;
+    VariableList var_tcpConnectionLocalAddressType;
     /*
      * tcpConnectionLocalAddress(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_tcpConnectionLocalAddress;
+    VariableList var_tcpConnectionLocalAddress;
     /*
      * tcpConnectionLocalPort(3)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_tcpConnectionLocalPort;
+    VariableList var_tcpConnectionLocalPort;
     /*
      * tcpConnectionRemAddressType(4)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_tcpConnectionRemAddressType;
+    VariableList var_tcpConnectionRemAddressType;
     /*
      * tcpConnectionRemAddress(5)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_tcpConnectionRemAddress;
+    VariableList var_tcpConnectionRemAddress;
     /*
      * tcpConnectionRemPort(6)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_tcpConnectionRemPort;
+    VariableList var_tcpConnectionRemPort;
 
     /*
      * set up varbinds
@@ -402,12 +402,12 @@ int tcpConnectionTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_tcpConnectionLocalAddressType.nextVariable = &var_tcpConnectionLocalAddress;
-    var_tcpConnectionLocalAddress.nextVariable = &var_tcpConnectionLocalPort;
-    var_tcpConnectionLocalPort.nextVariable = &var_tcpConnectionRemAddressType;
-    var_tcpConnectionRemAddressType.nextVariable = &var_tcpConnectionRemAddress;
-    var_tcpConnectionRemAddress.nextVariable = &var_tcpConnectionRemPort;
-    var_tcpConnectionRemPort.nextVariable = NULL;
+    var_tcpConnectionLocalAddressType.next = &var_tcpConnectionLocalAddress;
+    var_tcpConnectionLocalAddress.next = &var_tcpConnectionLocalPort;
+    var_tcpConnectionLocalPort.next = &var_tcpConnectionRemAddressType;
+    var_tcpConnectionRemAddressType.next = &var_tcpConnectionRemAddress;
+    var_tcpConnectionRemAddress.next = &var_tcpConnectionRemPort;
+    var_tcpConnectionRemPort.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:tcpConnectionTable:tcpConnectionTable_index_to_oid", "called\n" ) );
 
@@ -483,27 +483,27 @@ int tcpConnectionTable_index_from_oid( Types_Index* oid_idx,
     /*
      * tcpConnectionLocalAddressType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_tcpConnectionLocalAddressType;
+    VariableList var_tcpConnectionLocalAddressType;
     /*
      * tcpConnectionLocalAddress(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_tcpConnectionLocalAddress;
+    VariableList var_tcpConnectionLocalAddress;
     /*
      * tcpConnectionLocalPort(3)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_tcpConnectionLocalPort;
+    VariableList var_tcpConnectionLocalPort;
     /*
      * tcpConnectionRemAddressType(4)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_tcpConnectionRemAddressType;
+    VariableList var_tcpConnectionRemAddressType;
     /*
      * tcpConnectionRemAddress(5)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_tcpConnectionRemAddress;
+    VariableList var_tcpConnectionRemAddress;
     /*
      * tcpConnectionRemPort(6)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_tcpConnectionRemPort;
+    VariableList var_tcpConnectionRemPort;
 
     /*
      * set up varbinds
@@ -530,12 +530,12 @@ int tcpConnectionTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_tcpConnectionLocalAddressType.nextVariable = &var_tcpConnectionLocalAddress;
-    var_tcpConnectionLocalAddress.nextVariable = &var_tcpConnectionLocalPort;
-    var_tcpConnectionLocalPort.nextVariable = &var_tcpConnectionRemAddressType;
-    var_tcpConnectionRemAddressType.nextVariable = &var_tcpConnectionRemAddress;
-    var_tcpConnectionRemAddress.nextVariable = &var_tcpConnectionRemPort;
-    var_tcpConnectionRemPort.nextVariable = NULL;
+    var_tcpConnectionLocalAddressType.next = &var_tcpConnectionLocalAddress;
+    var_tcpConnectionLocalAddress.next = &var_tcpConnectionLocalPort;
+    var_tcpConnectionLocalPort.next = &var_tcpConnectionRemAddressType;
+    var_tcpConnectionRemAddressType.next = &var_tcpConnectionRemAddress;
+    var_tcpConnectionRemAddress.next = &var_tcpConnectionRemPort;
+    var_tcpConnectionRemPort.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:tcpConnectionTable:tcpConnectionTable_index_from_oid", "called\n" ) );
 
@@ -548,32 +548,32 @@ int tcpConnectionTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->tcpConnectionLocalAddressType = *( ( u_long* )var_tcpConnectionLocalAddressType.val.string );
+        mib_idx->tcpConnectionLocalAddressType = *( ( u_long* )var_tcpConnectionLocalAddressType.value.string );
         /*
          * NOTE: val_len is in bytes, tcpConnectionLocalAddress_len might not be
          */
-        if ( var_tcpConnectionLocalAddress.valLen > sizeof( mib_idx->tcpConnectionLocalAddress ) )
+        if ( var_tcpConnectionLocalAddress.valueLength > sizeof( mib_idx->tcpConnectionLocalAddress ) )
             err = ErrorCode_GENERR;
         else {
             memcpy( mib_idx->tcpConnectionLocalAddress,
-                var_tcpConnectionLocalAddress.val.string,
-                var_tcpConnectionLocalAddress.valLen );
-            mib_idx->tcpConnectionLocalAddress_len = var_tcpConnectionLocalAddress.valLen / sizeof( mib_idx->tcpConnectionLocalAddress[ 0 ] );
+                var_tcpConnectionLocalAddress.value.string,
+                var_tcpConnectionLocalAddress.valueLength );
+            mib_idx->tcpConnectionLocalAddress_len = var_tcpConnectionLocalAddress.valueLength / sizeof( mib_idx->tcpConnectionLocalAddress[ 0 ] );
         }
-        mib_idx->tcpConnectionLocalPort = *( ( u_long* )var_tcpConnectionLocalPort.val.string );
-        mib_idx->tcpConnectionRemAddressType = *( ( u_long* )var_tcpConnectionRemAddressType.val.string );
+        mib_idx->tcpConnectionLocalPort = *( ( u_long* )var_tcpConnectionLocalPort.value.string );
+        mib_idx->tcpConnectionRemAddressType = *( ( u_long* )var_tcpConnectionRemAddressType.value.string );
         /*
          * NOTE: val_len is in bytes, tcpConnectionRemAddress_len might not be
          */
-        if ( var_tcpConnectionRemAddress.valLen > sizeof( mib_idx->tcpConnectionRemAddress ) )
+        if ( var_tcpConnectionRemAddress.valueLength > sizeof( mib_idx->tcpConnectionRemAddress ) )
             err = ErrorCode_GENERR;
         else {
             memcpy( mib_idx->tcpConnectionRemAddress,
-                var_tcpConnectionRemAddress.val.string,
-                var_tcpConnectionRemAddress.valLen );
-            mib_idx->tcpConnectionRemAddress_len = var_tcpConnectionRemAddress.valLen / sizeof( mib_idx->tcpConnectionRemAddress[ 0 ] );
+                var_tcpConnectionRemAddress.value.string,
+                var_tcpConnectionRemAddress.valueLength );
+            mib_idx->tcpConnectionRemAddress_len = var_tcpConnectionRemAddress.valueLength / sizeof( mib_idx->tcpConnectionRemAddress[ 0 ] );
         }
-        mib_idx->tcpConnectionRemPort = *( ( u_long* )var_tcpConnectionRemPort.val.string );
+        mib_idx->tcpConnectionRemPort = *( ( u_long* )var_tcpConnectionRemPort.value.string );
     }
 
     /*
@@ -799,7 +799,7 @@ _mfd_tcpConnectionTable_object_lookup( MibHandler* handler, HandlerRegistration*
  */
 static inline int
 _tcpConnectionTable_get_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -813,20 +813,20 @@ _tcpConnectionTable_get_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
          * tcpConnectionState(7)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_TCPCONNECTIONSTATE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = tcpConnectionState_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * tcpConnectionProcess(8)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_TCPCONNECTIONPROCESS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = tcpConnectionProcess_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -859,14 +859,14 @@ int _mfd_tcpConnectionTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -884,7 +884,7 @@ int _mfd_tcpConnectionTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = ErrorCode_GENERR;
         }
@@ -896,7 +896,7 @@ int _mfd_tcpConnectionTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -925,7 +925,7 @@ int _mfd_tcpConnectionTable_get_values( MibHandler* handler,
 static inline int
 _tcpConnectionTable_check_column( tcpConnectionTable_rowreq_ctx*
                                       rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -976,30 +976,30 @@ _tcpConnectionTable_check_column( tcpConnectionTable_rowreq_ctx*
          * tcpConnectionState(7)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_TCPCONNECTIONSTATE:
-        rc = CheckVarbind_type( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, ASN01_INTEGER );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_CLOSED )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_LISTEN )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_SYNSENT )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_SYNRECEIVED )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_ESTABLISHED )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_FINWAIT1 )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_FINWAIT2 )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_CLOSEWAIT )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_LASTACK )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_CLOSING )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_TIMEWAIT )
-            && ( *var->val.integer != TCPCONNECTIONSTATE_DELETETCB ) ) {
+            && ( *var->value.integer != TCPCONNECTIONSTATE_CLOSED )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_LISTEN )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_SYNSENT )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_SYNRECEIVED )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_ESTABLISHED )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_FINWAIT1 )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_FINWAIT2 )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_CLOSEWAIT )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_LASTACK )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_CLOSING )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_TIMEWAIT )
+            && ( *var->value.integer != TCPCONNECTIONSTATE_DELETETCB ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "tcpConnectionTable:_tcpConnectionTable_check_column:tcpConnectionState", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = tcpConnectionState_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1254,7 +1254,7 @@ int _mfd_tcpConnectionTable_undo_cleanup( MibHandler* handler,
  */
 static inline int
 _tcpConnectionTable_set_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1270,7 +1270,7 @@ _tcpConnectionTable_set_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
     case COLUMN_TCPCONNECTIONSTATE:
         rowreq_ctx->column_set_flags |= COLUMN_TCPCONNECTIONSTATE_FLAG;
         rc = tcpConnectionState_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     default:
@@ -1415,7 +1415,7 @@ int _mfd_tcpConnectionTable_undo_commit( MibHandler* handler,
  */
 static inline int
 _tcpConnectionTable_undo_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1645,7 +1645,7 @@ void _tcpConnectionTable_container_init( tcpConnectionTable_interface_ctx*
 
     tcpConnectionTable_container_init( &if_ctx->container, if_ctx->cache );
     if ( NULL == if_ctx->container ) {
-        if_ctx->container = Container_find( "tcpConnectionTable:table_container" );
+        if_ctx->container = Container_find( "tcpConnectionTable:tableContainer" );
         if ( if_ctx->container )
             if_ctx->container->containerName = strdup( "tcpConnectionTable" );
     }

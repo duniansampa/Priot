@@ -48,7 +48,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #define CACHE_TIME ( 120 ) /* Seconds */
 
 #include "var_route.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "PluginSettings.h"
 #include "System/String.h"
@@ -262,7 +262,7 @@ Route_Scan_Reload( void )
     static time_t Time_Of_Last_Reload;
     struct timeval now;
 
-    Tools_getMonotonicClock( &now );
+    Time_getMonotonicClock( &now );
     if ( Time_Of_Last_Reload + CACHE_TIME > now.tv_sec )
         return;
     Time_Of_Last_Reload = now.tv_sec;

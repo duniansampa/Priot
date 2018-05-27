@@ -1,7 +1,7 @@
 #include "Service.h"
 #include "System/Util/Utilities.h"
 #include "ReadConfig.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 static char** _Service_createWordArrayHelper(const char* cptr, size_t idx, char* tmp, size_t tmplen)
 {

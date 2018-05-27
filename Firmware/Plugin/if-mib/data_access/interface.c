@@ -8,10 +8,10 @@
 #include "AgentReadConfig.h"
 #include "System/Util/Assert.h"
 #include "CacheHandler.h"
-#include "Int64.h"
+#include "System/Numerics/Integer64.h"
 #include "ReadConfig.h"
 #include "System/Containers/MapList.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "if-mib/ifTable/ifTable.h"
 #include "if-mib/ifTable/ifTable_constants.h"
@@ -102,13 +102,13 @@ netsnmp_access_interface_container_init( u_int flags )
      * create the containers. one indexed by ifIndex, the other
      * indexed by ifName.
      */
-    container1 = Container_find( "access_interface:table_container" );
+    container1 = Container_find( "access_interface:tableContainer" );
     if ( NULL == container1 )
         return NULL;
 
     container1->containerName = strdup( "interface container" );
     if ( flags & NETSNMP_ACCESS_INTERFACE_INIT_ADDL_IDX_BY_NAME ) {
-        Container_Container* container2 = Container_find( "access_interface_by_name:access_interface:table_container" );
+        Container_Container* container2 = Container_find( "access_interface_by_name:access_interface:tableContainer" );
         if ( NULL == container2 )
             return NULL;
 
@@ -504,7 +504,7 @@ int netsnmp_access_interface_entry_update_stats( netsnmp_interface_entry* prev_v
         memcpy( prev_vals->old_stats, &prev_vals->stats, sizeof( prev_vals->stats ) );
     }
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.ibytes,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.ibytes,
                   &new_vals->stats.ibytes,
                   &prev_vals->old_stats->ibytes,
                   &need_wrap_check ) )
@@ -512,14 +512,14 @@ int netsnmp_access_interface_entry_update_stats( netsnmp_interface_entry* prev_v
             "Error expanding ifHCInOctets to 64bits\n" ) );
 
     if ( new_vals->ns_flags & NETSNMP_INTERFACE_FLAGS_CALCULATE_UCAST ) {
-        if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.iall,
+        if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.iall,
                       &new_vals->stats.iall,
                       &prev_vals->old_stats->iall,
                       &need_wrap_check ) )
             DEBUG_MSGTL( ( "access:interface",
                 "Error expanding packet count to 64bits\n" ) );
     } else {
-        if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.iucast,
+        if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.iucast,
                       &new_vals->stats.iucast,
                       &prev_vals->old_stats->iucast,
                       &need_wrap_check ) )
@@ -527,49 +527,49 @@ int netsnmp_access_interface_entry_update_stats( netsnmp_interface_entry* prev_v
                 "Error expanding ifHCInUcastPkts to 64bits\n" ) );
     }
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.iucast,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.iucast,
                   &new_vals->stats.iucast,
                   &prev_vals->old_stats->iucast,
                   &need_wrap_check ) )
         DEBUG_MSGTL( ( "access:interface",
             "Error expanding ifHCInUcastPkts to 64bits\n" ) );
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.imcast,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.imcast,
                   &new_vals->stats.imcast,
                   &prev_vals->old_stats->imcast,
                   &need_wrap_check ) )
         DEBUG_MSGTL( ( "access:interface",
             "Error expanding ifHCInMulticastPkts to 64bits\n" ) );
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.ibcast,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.ibcast,
                   &new_vals->stats.ibcast,
                   &prev_vals->old_stats->ibcast,
                   &need_wrap_check ) )
         DEBUG_MSGTL( ( "access:interface",
             "Error expanding ifHCInBroadcastPkts to 64bits\n" ) );
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.obytes,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.obytes,
                   &new_vals->stats.obytes,
                   &prev_vals->old_stats->obytes,
                   &need_wrap_check ) )
         DEBUG_MSGTL( ( "access:interface",
             "Error expanding ifHCOutOctets to 64bits\n" ) );
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.oucast,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.oucast,
                   &new_vals->stats.oucast,
                   &prev_vals->old_stats->oucast,
                   &need_wrap_check ) )
         DEBUG_MSGTL( ( "access:interface",
             "Error expanding ifHCOutUcastPkts to 64bits\n" ) );
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.omcast,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.omcast,
                   &new_vals->stats.omcast,
                   &prev_vals->old_stats->omcast,
                   &need_wrap_check ) )
         DEBUG_MSGTL( ( "access:interface",
             "Error expanding ifHCOutMulticastPkts to 64bits\n" ) );
 
-    if ( 0 != Int64_c64Check32AndUpdate( &prev_vals->stats.obcast,
+    if ( 0 != Integer64_check32AndUpdate( &prev_vals->stats.obcast,
                   &new_vals->stats.obcast,
                   &prev_vals->old_stats->obcast,
                   &need_wrap_check ) )
@@ -615,7 +615,7 @@ int netsnmp_access_interface_entry_calculate_stats( netsnmp_interface_entry* ent
 {
     DEBUG_MSGTL( ( "access:interface", "calculate_stats\n" ) );
     if ( entry->ns_flags & NETSNMP_INTERFACE_FLAGS_CALCULATE_UCAST ) {
-        Int64_u64Subtract( &entry->stats.iall, &entry->stats.imcast,
+        Integer64_subtract( &entry->stats.iall, &entry->stats.imcast,
             &entry->stats.iucast );
     }
     return 0;

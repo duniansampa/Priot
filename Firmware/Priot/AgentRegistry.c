@@ -1,14 +1,14 @@
 #include "AgentRegistry.h"
 #include "PriotSettings.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Assert.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "AgentCallbacks.h"
 #include "Vacm.h"
 #include "DsAgent.h"
 #include "Null.h"
 #include "Mib.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "OldApi.h"
 
 /** @defgroup agent_lookup_cache Lookup cache, storing the registered OIDs.
@@ -1182,7 +1182,7 @@ AgentRegistry_registerMib2(const char *moduleName,
     /*
      * mark the MIB as detached, if there's no master agent present as of now
      */
-    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
+    if (DefaultStore_getBoolean(DsStore_APPLICATION_ID,
                     DsAgentBoolean_ROLE) != MASTER_AGENT) {
         extern struct Types_Session_s *agent_mainSession;
         if (agent_mainSession == NULL) {
@@ -1203,7 +1203,7 @@ AgentRegistry_registerMib2(const char *moduleName,
         reg_parms.session = ss;
         reg_parms.reginfo = reginfo;
         reg_parms.contextName = context;
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                             PriotdCallback_REGISTER_OID, &reg_parms);
     }
 
@@ -1240,7 +1240,7 @@ _AgentRegistry_registerMibReattachNode(Subtree *s)
         /* XXX: missing in subtree: reg_parms.contextName = s->context; */
         if ((NULL != s->reginfo) && (NULL != s->reginfo->contextName))
             reg_parms.contextName = s->reginfo->contextName;
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                             PriotdCallback_REGISTER_OID, &reg_parms);
         s->flags |= SUBTREE_ATTACHED;
     }
@@ -1701,7 +1701,7 @@ AgentRegistry_unregisterMibContext(oid * name, size_t len, int priority,
     reg_parms.range_ubound = range_ubound;
     reg_parms.flags = 0x00;     /*  this is okay I think  */
     reg_parms.contextName = context;
-    Callback_callCallbacks(CALLBACK_APPLICATION,
+    Callback_call(CallbackMajor_APPLICATION,
                         PriotdCallback_UNREGISTER_OID, &reg_parms);
 
     AgentRegistry_subtreeFree(myptr);
@@ -1783,7 +1783,7 @@ AgentRegistry_unregisterMibTableRow(oid * name, size_t len, int priority,
     reg_parms.range_ubound = range_ubound;
     reg_parms.flags = 0x00;     /*  this is okay I think  */
     reg_parms.contextName = context;
-    Callback_callCallbacks(CALLBACK_APPLICATION,
+    Callback_call(CallbackMajor_APPLICATION,
                         PriotdCallback_UNREGISTER_OID, &reg_parms);
 
     return 0;
@@ -1931,7 +1931,7 @@ AgentRegistry_unregisterMibsBySession(Types_Session * ss)
                     AgentRegistry_subtreeUnload(child, prev, contextptr->context_name);
                     AgentRegistry_subtreeFree(child);
 
-                    Callback_callCallbacks(CALLBACK_APPLICATION,
+                    Callback_call(CallbackMajor_APPLICATION,
                                         PriotdCallback_UNREGISTER_OID, &rp);
             MEMORY_FREE(rp.name);
                 } else {
@@ -1980,7 +1980,7 @@ AgentRegistry_inAView(oid *name, size_t *namelen, Types_Pdu *pdu, int type)
 
     switch (pdu->version) {
     case PRIOT_VERSION_3:
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                             PriotdCallback_ACM_CHECK, &view_parms);
         return view_parms.errorcode;
     }
@@ -2014,7 +2014,7 @@ AgentRegistry_checkAccess(Types_Pdu *pdu)
 
     switch (pdu->version) {
     case PRIOT_VERSION_3:
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                             PriotdCallback_ACM_CHECK_INITIAL, &view_parms);
         return view_parms.errorcode;
     }
@@ -2052,7 +2052,7 @@ AgentRegistry_acmCheckSubtree(Types_Pdu *pdu, oid *name, size_t namelen)
 
     switch (pdu->version) {
     case PRIOT_VERSION_3:
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                             PriotdCallback_ACM_CHECK_SUBTREE, &view_parms);
         return view_parms.errorcode;
     }
@@ -2086,10 +2086,10 @@ AgentRegistry_setupTree(void)
     oid iso[1]             = { 1 };
     oid joint_ccitt_iso[1] = { 2 };
 
-    int role = DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
+    int role = DefaultStore_getBoolean(DsStore_APPLICATION_ID,
                        DsAgentBoolean_ROLE);
 
-    DefaultStore_setBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE,
+    DefaultStore_setBoolean(DsStore_APPLICATION_ID, DsAgentBoolean_ROLE,
                MASTER_AGENT);
 
     /*
@@ -2100,7 +2100,7 @@ AgentRegistry_setupTree(void)
     Null_registerNull(Api_duplicateObjid(iso, 1), 1);
     Null_registerNull(Api_duplicateObjid(joint_ccitt_iso, 1), 1);
 
-    DefaultStore_setBoolean(DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE,
+    DefaultStore_setBoolean(DsStore_APPLICATION_ID, DsAgentBoolean_ROLE,
                role);
 }
 

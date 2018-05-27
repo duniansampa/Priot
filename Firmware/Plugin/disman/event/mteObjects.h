@@ -50,10 +50,10 @@ TdataRow *mteObjects_createEntry(  const char *owner,
 struct mteObject * mteObjects_addOID(const char *owner, const char *oname, int index,
                                      const char *oid_name_buf, int wild );
 
-int  mteObjects_vblist(          Types_VariableList *vblist,
+int  mteObjects_vblist(          VariableList *vblist,
                                  char *owner,   char   *oname,
                                  oid  *suffix,  size_t  sfx_len );
-int  mteObjects_internal_vblist(  Types_VariableList *vblist,
+int  mteObjects_internal_vblist(  VariableList *vblist,
                                  char *oname,   struct mteTrigger *trigger,
                                  Types_Session *s);
 

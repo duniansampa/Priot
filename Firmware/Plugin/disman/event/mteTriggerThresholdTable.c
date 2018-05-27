@@ -7,9 +7,9 @@
  */
 
 #include "mteTriggerThresholdTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
 #include "mteTrigger.h"
 
@@ -198,7 +198,7 @@ int mteTriggerThresholdTable_handler( MibHandler* handler,
              */
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERTHRESHOLDSTARTUP:
-                ret = CheckVarbind_intRange( request->requestvb,
+                ret = VariableList_checkIntLengthAndRange( request->requestvb,
                     MTE_THRESH_START_RISE,
                     MTE_THRESH_START_RISEFALL );
                 if ( ret != PRIOT_ERR_NOERROR ) {
@@ -210,7 +210,7 @@ int mteTriggerThresholdTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERTHRESHOLDFALLING:
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISING:
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLING:
-                ret = CheckVarbind_int( request->requestvb );
+                ret = VariableList_checkIntLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -226,7 +226,7 @@ int mteTriggerThresholdTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISINGEVENT:
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENTOWNER:
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENT:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -296,69 +296,69 @@ int mteTriggerThresholdTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERTHRESHOLDSTARTUP:
-                entry->mteTThStartup = *request->requestvb->val.integer;
+                entry->mteTThStartup = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDRISING:
-                entry->mteTThRiseValue = *request->requestvb->val.integer;
+                entry->mteTThRiseValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDFALLING:
-                entry->mteTThFallValue = *request->requestvb->val.integer;
+                entry->mteTThFallValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISING:
-                entry->mteTThDRiseValue = *request->requestvb->val.integer;
+                entry->mteTThDRiseValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLING:
-                entry->mteTThDFallValue = *request->requestvb->val.integer;
+                entry->mteTThDFallValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDOBJECTSOWNER:
                 memset( entry->mteTThObjOwner, 0, sizeof( entry->mteTThObjOwner ) );
-                memcpy( entry->mteTThObjOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThObjOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDOBJECTS:
                 memset( entry->mteTThObjects, 0, sizeof( entry->mteTThObjects ) );
-                memcpy( entry->mteTThObjects, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThObjects, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDRISINGEVENTOWNER:
                 memset( entry->mteTThRiseOwner, 0, sizeof( entry->mteTThRiseOwner ) );
-                memcpy( entry->mteTThRiseOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThRiseOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDRISINGEVENT:
                 memset( entry->mteTThRiseEvent, 0, sizeof( entry->mteTThRiseEvent ) );
-                memcpy( entry->mteTThRiseEvent, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThRiseEvent, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDFALLINGEVENTOWNER:
                 memset( entry->mteTThFallOwner, 0, sizeof( entry->mteTThFallOwner ) );
-                memcpy( entry->mteTThFallOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThFallOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDFALLINGEVENT:
                 memset( entry->mteTThFallEvent, 0, sizeof( entry->mteTThFallEvent ) );
-                memcpy( entry->mteTThFallEvent, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThFallEvent, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISINGEVENTOWNER:
                 memset( entry->mteTThDRiseOwner, 0, sizeof( entry->mteTThDRiseOwner ) );
-                memcpy( entry->mteTThDRiseOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThDRiseOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISINGEVENT:
                 memset( entry->mteTThDRiseEvent, 0, sizeof( entry->mteTThDRiseEvent ) );
-                memcpy( entry->mteTThDRiseEvent, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThDRiseEvent, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENTOWNER:
                 memset( entry->mteTThDFallOwner, 0, sizeof( entry->mteTThDFallOwner ) );
-                memcpy( entry->mteTThDFallOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThDFallOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENT:
                 memset( entry->mteTThDFallEvent, 0, sizeof( entry->mteTThDFallEvent ) );
-                memcpy( entry->mteTThDFallEvent, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteTThDFallEvent, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             }
         }

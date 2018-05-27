@@ -31,7 +31,7 @@
  */
 typedef struct TdataRow_s {
     Types_Index   oid_index;      /* table_container index format */
-    Types_VariableList *indexes; /* stored permanently if store_indexes = 1 */
+    VariableList *indexes; /* stored permanently if store_indexes = 1 */
     void           *data;   /* the data to store */
 } TdataRow;
 
@@ -42,7 +42,7 @@ typedef struct TdataRow_s {
  *   and shouldn't be accessed directly.
  */
 typedef struct Tdata_s {
-    Types_VariableList *indexes_template;        /* containing only types */
+    VariableList *indexes_template;        /* containing only types */
     char           *name;   /* if !NULL, it's registered globally */
     int             flags;  /* This field may legitimately be accessed by external code */
     Container_Container *container;
@@ -148,7 +148,7 @@ TableTdata_rowNext( Tdata    * table,
 
 TdataRow *
 TableTdata_rowGetByidx( Tdata              * table,
-                        Types_VariableList * indexes );
+                        VariableList * indexes );
 TdataRow *
 TableTdata_rowGetByoid( Tdata  * table,
                         oid    * searchfor,
@@ -156,7 +156,7 @@ TableTdata_rowGetByoid( Tdata  * table,
 
 TdataRow *
 TableTdata_rowNextByidx( Tdata              * table,
-                         Types_VariableList * indexes );
+                         VariableList * indexes );
 
 TdataRow *
 TableTdata_rowNextByoid( Tdata  * table,
@@ -179,7 +179,7 @@ TableTdata_rowCount( Tdata * table );
 
 int
 TableTdata_compareIdx( TdataRow           * row,
-                       Types_VariableList * indexes );
+                       VariableList * indexes );
 
 int
 TableTdata_compareOid( TdataRow * row,
@@ -188,7 +188,7 @@ TableTdata_compareOid( TdataRow * row,
 
 int
 TableTdata_compareSubtreeIdx( TdataRow           * row,
-                              Types_VariableList * indexes);
+                              VariableList * indexes);
 
 int
 TableTdata_compareSubtreeOid( TdataRow * row,

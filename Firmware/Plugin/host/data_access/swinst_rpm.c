@@ -4,9 +4,9 @@
  */
 
 #include "swinst.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "siglog/data_access/swinst.h"
 #include <fcntl.h>
 #include <rpm/header.h>
@@ -41,7 +41,7 @@ void netsnmp_swinst_arch_init( void )
     MEMORY_FREE( rpmdbpath );
     dbpath = NULL;
     if ( -1 == stat( pkg_directory, &stat_buf ) ) {
-        Logger_log( LOGGER_PRIORITY_ERR, "Can't find directory of RPM packages" );
+        Logger_log( LOGGER_PRIORITY_ERR, "Can't find directory of RPM packages\n" );
         pkg_directory[ 0 ] = '\0';
     }
 }

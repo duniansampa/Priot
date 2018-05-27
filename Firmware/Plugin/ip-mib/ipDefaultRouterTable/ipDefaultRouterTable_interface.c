@@ -34,7 +34,7 @@
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
@@ -301,15 +301,15 @@ int ipDefaultRouterTable_index_to_oid( Types_Index* oid_idx,
     /*
      * ipDefaultRouterAddressType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipDefaultRouterAddressType;
+    VariableList var_ipDefaultRouterAddressType;
     /*
      * ipDefaultRouterAddress(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_ipDefaultRouterAddress;
+    VariableList var_ipDefaultRouterAddress;
     /*
      * ipDefaultRouterIfIndex(3)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipDefaultRouterIfIndex;
+    VariableList var_ipDefaultRouterIfIndex;
 
     /*
      * set up varbinds
@@ -327,9 +327,9 @@ int ipDefaultRouterTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipDefaultRouterAddressType.nextVariable = &var_ipDefaultRouterAddress;
-    var_ipDefaultRouterAddress.nextVariable = &var_ipDefaultRouterIfIndex;
-    var_ipDefaultRouterIfIndex.nextVariable = NULL;
+    var_ipDefaultRouterAddressType.next = &var_ipDefaultRouterAddress;
+    var_ipDefaultRouterAddress.next = &var_ipDefaultRouterIfIndex;
+    var_ipDefaultRouterIfIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipDefaultRouterTable:ipDefaultRouterTable_index_to_oid", "called\n" ) );
 
@@ -385,15 +385,15 @@ int ipDefaultRouterTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ipDefaultRouterAddressType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipDefaultRouterAddressType;
+    VariableList var_ipDefaultRouterAddressType;
     /*
      * ipDefaultRouterAddress(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_ipDefaultRouterAddress;
+    VariableList var_ipDefaultRouterAddress;
     /*
      * ipDefaultRouterIfIndex(3)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipDefaultRouterIfIndex;
+    VariableList var_ipDefaultRouterIfIndex;
 
     /*
      * set up varbinds
@@ -411,9 +411,9 @@ int ipDefaultRouterTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipDefaultRouterAddressType.nextVariable = &var_ipDefaultRouterAddress;
-    var_ipDefaultRouterAddress.nextVariable = &var_ipDefaultRouterIfIndex;
-    var_ipDefaultRouterIfIndex.nextVariable = NULL;
+    var_ipDefaultRouterAddressType.next = &var_ipDefaultRouterAddress;
+    var_ipDefaultRouterAddress.next = &var_ipDefaultRouterIfIndex;
+    var_ipDefaultRouterIfIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipDefaultRouterTable:ipDefaultRouterTable_index_from_oid", "called\n" ) );
 
@@ -426,19 +426,19 @@ int ipDefaultRouterTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ipDefaultRouterAddressType = *( ( u_long* )var_ipDefaultRouterAddressType.val.string );
+        mib_idx->ipDefaultRouterAddressType = *( ( u_long* )var_ipDefaultRouterAddressType.value.string );
         /*
          * NOTE: val_len is in bytes, ipDefaultRouterAddress_len might not be
          */
-        if ( var_ipDefaultRouterAddress.valLen > sizeof( mib_idx->ipDefaultRouterAddress ) )
+        if ( var_ipDefaultRouterAddress.valueLength > sizeof( mib_idx->ipDefaultRouterAddress ) )
             err = PRIOT_ERR_GENERR;
         else {
             memcpy( mib_idx->ipDefaultRouterAddress,
-                var_ipDefaultRouterAddress.val.string,
-                var_ipDefaultRouterAddress.valLen );
-            mib_idx->ipDefaultRouterAddress_len = var_ipDefaultRouterAddress.valLen / sizeof( mib_idx->ipDefaultRouterAddress[ 0 ] );
+                var_ipDefaultRouterAddress.value.string,
+                var_ipDefaultRouterAddress.valueLength );
+            mib_idx->ipDefaultRouterAddress_len = var_ipDefaultRouterAddress.valueLength / sizeof( mib_idx->ipDefaultRouterAddress[ 0 ] );
         }
-        mib_idx->ipDefaultRouterIfIndex = *( ( long* )var_ipDefaultRouterIfIndex.val.string );
+        mib_idx->ipDefaultRouterIfIndex = *( ( long* )var_ipDefaultRouterIfIndex.value.string );
     }
 
     /*
@@ -652,7 +652,7 @@ _mfd_ipDefaultRouterTable_object_lookup( MibHandler* handler,
 static inline int
 _ipDefaultRouterTable_get_column( ipDefaultRouterTable_rowreq_ctx*
                                       rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -667,20 +667,20 @@ _ipDefaultRouterTable_get_column( ipDefaultRouterTable_rowreq_ctx*
          * ipDefaultRouterLifetime(4)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/R/d/h 
          */
     case COLUMN_IPDEFAULTROUTERLIFETIME:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipDefaultRouterLifetime_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipDefaultRouterPreference(5)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IPDEFAULTROUTERPREFERENCE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ipDefaultRouterPreference_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -719,14 +719,14 @@ int _mfd_ipDefaultRouterTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -744,7 +744,7 @@ int _mfd_ipDefaultRouterTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = PRIOT_ERR_GENERR;
         }
@@ -756,7 +756,7 @@ int _mfd_ipDefaultRouterTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else

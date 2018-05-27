@@ -6,7 +6,7 @@
 #include "memory.h"
 #include "AgentReadConfig.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Scalar.h"
 #include "ScalarGroup.h"

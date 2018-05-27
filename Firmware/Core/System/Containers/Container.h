@@ -1,5 +1,5 @@
-#ifndef CONTAINER_H
-#define CONTAINER_H
+#ifndef IOT_CONTAINER_H
+#define IOT_CONTAINER_H
 
 #include "Types.h"
 
@@ -467,4 +467,4 @@ typedef struct Container_Iterator_s {
         x = NULL;                       \
     } while ( 0 )
 
-#endif // CONTAINER_H
+#endif // IOT_CONTAINER_H

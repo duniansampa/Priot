@@ -4,9 +4,9 @@
  */
 
 #include "mteTrigger.h"
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "TableData.h"
 #include "mteEvent.h"
@@ -64,8 +64,8 @@ void _mteTrigger_dump( void )
         DEBUG_MSGTL( ( "disman:event:dump", "TriggerTable entry %d: ", i ) );
         DEBUG_MSGOID( ( "disman:event:dump", row->oid_index.oids, row->oid_index.len ) );
         DEBUG_MSG( ( "disman:event:dump", "(%s, %s)",
-            row->indexes->val.string,
-            row->indexes->nextVariable->val.string ) );
+            row->indexes->value.string,
+            row->indexes->next->value.string ) );
         DEBUG_MSG( ( "disman:event:dump", ": %p, %p\n", row, entry ) );
         i++;
     }
@@ -183,12 +183,12 @@ void _mteTrigger_failure( /* int error, */ const char* msg )
 void mteTrigger_run( unsigned int reg, void* clientarg )
 {
     struct mteTrigger* entry = ( struct mteTrigger* )clientarg;
-    Types_VariableList *var, *vtmp;
-    Types_VariableList *vp1, *vp1_prev;
-    Types_VariableList *vp2, *vp2_prev;
-    Types_VariableList* dvar = NULL;
-    Types_VariableList *dv1 = NULL, *dv2 = NULL;
-    Types_VariableList sysUT_var;
+    VariableList *var, *vtmp;
+    VariableList *vp1, *vp1_prev;
+    VariableList *vp2, *vp2_prev;
+    VariableList* dvar = NULL;
+    VariableList *dv1 = NULL, *dv2 = NULL;
+    VariableList sysUT_var;
     int cmp = 0, n, n2;
     long value;
     const char* reason;
@@ -222,7 +222,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
      * Retrieve the requested MIB value(s)...
      */
     DEBUG_MSGTL( ( "disman:event:trigger:monitor", "Running trigger (%s)\n", entry->mteTName ) );
-    var = ( Types_VariableList* )MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+    var = ( VariableList* )MEMORY_MALLOC_TYPEDEF( VariableList );
     if ( !var ) {
         _mteTrigger_failure( "failed to create mteTrigger query varbind" );
         return;
@@ -281,7 +281,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *
                  * XXX - check how this is best done.
                  */
-                vtmp = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+                vtmp = MEMORY_MALLOC_TYPEDEF( VariableList );
                 if ( !vtmp ) {
                     _mteTrigger_failure(
                         "failed to create mteTrigger temp varbind" );
@@ -290,25 +290,25 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 }
                 vtmp->type = ASN01_NULL;
                 Client_setVarObjid( vtmp, vp1->name, vp1->nameLength );
-                vtmp->nextVariable = vp2;
+                vtmp->next = vp2;
                 if ( vp2_prev ) {
-                    vp2_prev->nextVariable = vtmp;
+                    vp2_prev->next = vtmp;
                 } else {
                     entry->old_results = vtmp;
                 }
                 vp2_prev = vtmp;
                 vp1->index = MTE_ARMED_ALL; /* XXX - plus a new flag */
                 vp1_prev = vp1;
-                vp1 = vp1->nextVariable;
+                vp1 = vp1->next;
             } else if ( cmp == 0 ) {
                 /*
                  * If it's a continuing entry, just copy across the armed flags
                  */
                 vp1->index = vp2->index;
                 vp1_prev = vp1;
-                vp1 = vp1->nextVariable;
+                vp1 = vp1->next;
                 vp2_prev = vp2;
-                vp2 = vp2->nextVariable;
+                vp2 = vp2->next;
             } else {
                 /*
                  * If a value has just disappeared, insert a
@@ -318,7 +318,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *
                  */
                 if ( vp2->type != ASN01_NULL ) {
-                    vtmp = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+                    vtmp = MEMORY_MALLOC_TYPEDEF( VariableList );
                     if ( !vtmp ) {
                         _mteTrigger_failure(
                             "failed to create mteTrigger temp varbind" );
@@ -327,15 +327,15 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                     }
                     vtmp->type = ASN01_NULL;
                     Client_setVarObjid( vtmp, vp2->name, vp2->nameLength );
-                    vtmp->nextVariable = vp1;
+                    vtmp->next = vp1;
                     if ( vp1_prev ) {
-                        vp1_prev->nextVariable = vtmp;
+                        vp1_prev->next = vtmp;
                     } else {
                         var = vtmp;
                     }
                     vp1_prev = vtmp;
                     vp2_prev = vp2;
-                    vp2 = vp2->nextVariable;
+                    vp2 = vp2->next;
                 } else {
                     /*
                      * But only if this entry has *just* disappeared.  If the
@@ -344,12 +344,12 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                      */
                     vtmp = vp2;
                     if ( vp2_prev ) {
-                        vp2_prev->nextVariable = vp2->nextVariable;
+                        vp2_prev->next = vp2->next;
                     } else {
-                        entry->old_results = vp2->nextVariable;
+                        entry->old_results = vp2->next;
                     }
-                    vp2 = vp2->nextVariable;
-                    vtmp->nextVariable = NULL;
+                    vp2 = vp2->next;
+                    vtmp->next = NULL;
                     Api_freeVarbind( vtmp );
                 }
             }
@@ -360,7 +360,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              *   (and we need to create dummy 'old' entries for them)
              */
             if ( vp2_prev ) {
-                vtmp = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+                vtmp = MEMORY_MALLOC_TYPEDEF( VariableList );
                 if ( !vtmp ) {
                     _mteTrigger_failure(
                         "failed to create mteTrigger temp varbind" );
@@ -369,8 +369,8 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 }
                 vtmp->type = ASN01_NULL;
                 Client_setVarObjid( vtmp, vp1->name, vp1->nameLength );
-                vtmp->nextVariable = vp2_prev->nextVariable;
-                vp2_prev->nextVariable = vtmp;
+                vtmp->next = vp2_prev->next;
+                vp2_prev->next = vtmp;
                 vp2_prev = vtmp;
             }
             /*
@@ -381,7 +381,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              * Note that we no longer need to maintain 'vp1_prev'
              */
             vp1->index = MTE_ARMED_ALL; /* XXX - plus a new flag */
-            vp1 = vp1->nextVariable;
+            vp1 = vp1->next;
         }
     }
 
@@ -406,7 +406,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              *   (whether the monitored value is wildcarded or not).
              */
             if ( entry->mteTExTest & entry->mteTExStartup & MTE_EXIST_PRESENT ) {
-                for ( vp1 = var; vp1; vp1 = vp1->nextVariable ) {
+                for ( vp1 = var; vp1; vp1 = vp1->next ) {
                     DEBUG_MSGTL( ( "disman:event:trigger:fire",
                         "Firing initial existence test: " ) );
                     DEBUG_MSGOID( ( "disman:event:trigger:fire",
@@ -460,7 +460,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
         else {
             for ( vp1 = var, vp2 = entry->old_results;
                   vp1;
-                  vp1 = vp1->nextVariable, vp2 = vp2->nextVariable ) {
+                  vp1 = vp1->next, vp2 = vp2->next ) {
 
                 /* Use this field to indicate that the trigger should fire */
                 entry->mteTriggerFired = NULL;
@@ -485,8 +485,8 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                     entry->mteTriggerFired = vp2;
                     reason = "(absent)";
 
-                } else if ( ( entry->mteTExTest & MTE_EXIST_CHANGED ) && ( ( vp1->valLen != vp2->valLen ) || ( memcmp( vp1->val.string, vp2->val.string,
-                                                                                                                   vp1->valLen )
+                } else if ( ( entry->mteTExTest & MTE_EXIST_CHANGED ) && ( ( vp1->valueLength != vp2->valueLength ) || ( memcmp( vp1->value.string, vp2->value.string,
+                                                                                                                   vp1->valueLength )
                                                                                                                  != 0 ) ) ) {
                     /*
                      * This comparison detects changes in *any* type
@@ -525,7 +525,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
      * We'll need sysUpTime.0 regardless...
      */
     DEBUG_MSGTL( ( "disman:event:delta", "retrieve sysUpTime.0\n" ) );
-    memset( &sysUT_var, 0, sizeof( Types_VariableList ) );
+    memset( &sysUT_var, 0, sizeof( VariableList ) );
     Client_setVarObjid( &sysUT_var, _sysUpTime_instance, _sysUpTime_inst_len );
     Client_queryGet( &sysUT_var, entry->session );
 
@@ -587,8 +587,8 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 DEBUG_MSG( ( "disman:event:delta", " %s\n",
                     ( entry->flags & MTE_TRIGGER_FLAG_DWILD ? " (wild)" : "" ) ) );
 
-                dvar = ( Types_VariableList* )
-                    MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+                dvar = ( VariableList* )
+                    MEMORY_MALLOC_TYPEDEF( VariableList );
                 if ( !dvar ) {
                     _mteTrigger_failure(
                         "failed to create mteTrigger delta query varbind" );
@@ -618,7 +618,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
             if ( !entry->old_results ) {
                 entry->old_results = var;
                 entry->old_deltaDs = dvar;
-                entry->sysUpTime = *sysUT_var.val.integer;
+                entry->sysUpTime = *sysUT_var.value.integer;
                 return;
             }
             /*
@@ -627,14 +627,14 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              *  there's no point in trying the remaining tests.
              */
 
-            if ( *sysUT_var.val.integer < entry->sysUpTime ) {
+            if ( *sysUT_var.value.integer < entry->sysUpTime ) {
                 DEBUG_MSGTL( ( "disman:event:delta",
                     "single discontinuity: (sysUT)\n" ) );
                 Api_freeVarbind( entry->old_results );
                 Api_freeVarbind( entry->old_deltaDs );
                 entry->old_results = var;
                 entry->old_deltaDs = dvar;
-                entry->sysUpTime = *sysUT_var.val.integer;
+                entry->sysUpTime = *sysUT_var.value.integer;
                 return;
             }
             /*
@@ -642,7 +642,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              *  marker has changed, then there's no
              *  point in trying to evaluate these tests either.
              */
-            if ( !( entry->flags & MTE_TRIGGER_FLAG_DWILD ) && !( entry->flags & MTE_TRIGGER_FLAG_SYSUPT ) && ( !entry->old_deltaDs || ( entry->old_deltaDs->val.integer != dvar->val.integer ) ) ) {
+            if ( !( entry->flags & MTE_TRIGGER_FLAG_DWILD ) && !( entry->flags & MTE_TRIGGER_FLAG_SYSUPT ) && ( !entry->old_deltaDs || ( entry->old_deltaDs->value.integer != dvar->value.integer ) ) ) {
                 DEBUG_MSGTL( ( "disman:event:delta", "single discontinuity: (" ) );
                 DEBUG_MSGOID( ( "disman:event:delta", entry->mteDeltaDiscontID,
                     entry->mteDeltaDiscontID_len ) );
@@ -651,7 +651,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 Api_freeVarbind( entry->old_deltaDs );
                 entry->old_results = var;
                 entry->old_deltaDs = dvar;
-                entry->sysUpTime = *sysUT_var.val.integer;
+                entry->sysUpTime = *sysUT_var.value.integer;
                 return;
             }
 
@@ -684,8 +684,8 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                          * The corresponding delta calculation will
                          *   fail, but this simplifies the later code.
                          */
-                        vtmp = ( Types_VariableList* )
-                            MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+                        vtmp = ( VariableList* )
+                            MEMORY_MALLOC_TYPEDEF( VariableList );
                         if ( !vtmp ) {
                             _mteTrigger_failure(
                                 "failed to create mteTrigger discontinuity varbind" );
@@ -695,25 +695,25 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                         Client_setVarObjid( vtmp, entry->mteDeltaDiscontID,
                             entry->mteDeltaDiscontID_len );
                         /* XXX - append instance subids */
-                        vtmp->nextVariable = vp2;
-                        vp2_prev->nextVariable = vtmp;
+                        vtmp->next = vp2;
+                        vp2_prev->next = vtmp;
                         vp2_prev = vtmp;
-                        vp1 = vp1->nextVariable;
+                        vp1 = vp1->next;
                     } else if ( cmp == 0 ) {
                         /*
                          * Matching discontinuity entry -  all OK.
                          */
                         vp2_prev = vp2;
-                        vp2 = vp2->nextVariable;
-                        vp1 = vp1->nextVariable;
+                        vp2 = vp2->next;
+                        vp1 = vp1->next;
                     } else {
                         /*
                          * Remove unneeded discontinuity entry
                          */
                         vtmp = vp2;
-                        vp2_prev->nextVariable = vp2->nextVariable;
-                        vp2 = vp2->nextVariable;
-                        vtmp->nextVariable = NULL;
+                        vp2_prev->next = vp2->next;
+                        vp2 = vp2->next;
+                        vtmp->next = NULL;
                         Api_freeVarbind( vtmp );
                     }
                 }
@@ -737,13 +737,13 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 dv2 = entry->old_deltaDs;
             }
         }
-        for ( vp1 = var; vp1; vp1 = vp1->nextVariable ) {
+        for ( vp1 = var; vp1; vp1 = vp1->next ) {
             /*
              * Determine the value to be monitored...
              */
-            if ( !vp1->val.integer ) { /* No value */
+            if ( !vp1->value.integer ) { /* No value */
                 if ( vp2 )
-                    vp2 = vp2->nextVariable;
+                    vp2 = vp2->next;
                 continue;
             }
             if ( entry->flags & MTE_TRIGGER_FLAG_DELTA ) {
@@ -754,7 +754,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                      * Validate this particular sample against
                      *   the relevant wildcarded marker...
                      */
-                    if ( ( dv1->type == ASN01_NULL ) || ( dv1->type != dv2->type ) || ( *dv1->val.integer != *dv2->val.integer ) ) {
+                    if ( ( dv1->type == ASN01_NULL ) || ( dv1->type != dv2->type ) || ( *dv1->value.integer != *dv2->value.integer ) ) {
                         /*
                          * Bogus or changed discontinuity marker.
                          * Need to skip this sample.
@@ -763,7 +763,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                         DEBUG_MSGOID( ( "disman:event:delta", vp1->name,
                             vp1->nameLength ) );
                         DEBUG_MSG( ( "disman:event:delta", " \n" ) );
-                        vp2 = vp2->nextVariable;
+                        vp2 = vp2->next;
                         continue;
                     }
                 }
@@ -777,18 +777,18 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                     DEBUG_MSGOID( ( "disman:event:delta", vp1->name,
                         vp1->nameLength ) );
                     DEBUG_MSG( ( "disman:event:delta", " \n" ) );
-                    vp2 = vp2->nextVariable;
+                    vp2 = vp2->next;
                     continue;
                 }
-                value = ( *vp1->val.integer - *vp2->val.integer );
+                value = ( *vp1->value.integer - *vp2->value.integer );
                 DEBUG_MSGTL( ( "disman:event:delta", "delta sample: " ) );
                 DEBUG_MSGOID( ( "disman:event:delta", vp1->name,
                     vp1->nameLength ) );
                 DEBUG_MSG( ( "disman:event:delta", " (%ld - %ld) = %ld\n",
-                    *vp1->val.integer, *vp2->val.integer, value ) );
-                vp2 = vp2->nextVariable;
+                    *vp1->value.integer, *vp2->value.integer, value ) );
+                vp2 = vp2->next;
             } else {
-                value = *vp1->val.integer;
+                value = *vp1->value.integer;
             }
 
             /*
@@ -875,13 +875,13 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 dv2 = entry->old_deltaDs;
             }
         }
-        for ( vp1 = var; vp1; vp1 = vp1->nextVariable ) {
+        for ( vp1 = var; vp1; vp1 = vp1->next ) {
             /*
              * Determine the value to be monitored...
              */
-            if ( !vp1->val.integer ) { /* No value */
+            if ( !vp1->value.integer ) { /* No value */
                 if ( vp2 )
-                    vp2 = vp2->nextVariable;
+                    vp2 = vp2->next;
                 continue;
             }
             if ( entry->flags & MTE_TRIGGER_FLAG_DELTA ) {
@@ -892,12 +892,12 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                      * Validate this particular sample against
                      *   the relevant wildcarded marker...
                      */
-                    if ( ( dv1->type == ASN01_NULL ) || ( dv1->type != dv2->type ) || ( *dv1->val.integer != *dv2->val.integer ) ) {
+                    if ( ( dv1->type == ASN01_NULL ) || ( dv1->type != dv2->type ) || ( *dv1->value.integer != *dv2->value.integer ) ) {
                         /*
                          * Bogus or changed discontinuity marker.
                          * Need to skip this sample.
                          */
-                        vp2 = vp2->nextVariable;
+                        vp2 = vp2->next;
                         continue;
                     }
                 }
@@ -907,13 +907,13 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *   discontinuity marker was wildcarded or not).
                  */
                 if ( vp2->type == ASN01_NULL ) {
-                    vp2 = vp2->nextVariable;
+                    vp2 = vp2->next;
                     continue;
                 }
-                value = ( *vp1->val.integer - *vp2->val.integer );
-                vp2 = vp2->nextVariable;
+                value = ( *vp1->value.integer - *vp2->value.integer );
+                vp2 = vp2->next;
             } else {
-                value = *vp1->val.integer;
+                value = *vp1->value.integer;
             }
 
             /*
@@ -1003,7 +1003,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
             DEBUG_MSGTL( ( "disman:event:trigger",
                 "Delta-threshold on delta-sample\n" ) );
         } else if ( vp2 != NULL ) {
-            for ( vp1 = var; vp1; vp1 = vp1->nextVariable ) {
+            for ( vp1 = var; vp1; vp1 = vp1->next ) {
                 /*
              * Determine the value to be monitored...
              *  (similar to previous delta-sample processing,
@@ -1012,12 +1012,12 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 if ( !vp2 ) {
                     break; /* Run out of 'old' values */
                 }
-                if ( ( !vp1->val.integer ) || ( vp2->type == ASN01_NULL ) ) {
-                    vp2 = vp2->nextVariable;
+                if ( ( !vp1->value.integer ) || ( vp2->type == ASN01_NULL ) ) {
+                    vp2 = vp2->next;
                     continue;
                 }
-                value = ( *vp1->val.integer - *vp2->val.integer );
-                vp2 = vp2->nextVariable;
+                value = ( *vp1->value.integer - *vp2->value.integer );
+                vp2 = vp2->next;
 
                 /*
              * ... evaluate the single-value comparisons,
@@ -1087,7 +1087,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
     if ( entry->flags & MTE_TRIGGER_FLAG_DELTA ) {
         Api_freeVarbind( entry->old_deltaDs );
         entry->old_deltaDs = dvar;
-        entry->sysUpTime = *sysUT_var.val.integer;
+        entry->sysUpTime = *sysUT_var.value.integer;
     }
 }
 
@@ -1109,7 +1109,7 @@ void mteTrigger_enable( struct mteTrigger* entry )
          */
         Alarm_register( 0, 0, mteTrigger_run, entry );
         entry->alarm = Alarm_register(
-            entry->mteTriggerFrequency, ALARM_SA_REPEAT,
+            entry->mteTriggerFrequency, AlarmFlag_REPEAT,
             mteTrigger_run, entry );
     }
 }

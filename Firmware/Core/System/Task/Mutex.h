@@ -1,5 +1,7 @@
-#ifndef MUTEX_H_
-#define MUTEX_H_
+#ifndef IOT_MUTEX_H
+#define IOT_MUTEX_H
+
+/** ============================[ Macros ]============================ */
 
 #define Mutex_Init() \
     do {             \
@@ -17,4 +19,4 @@
     do {                      \
     } while ( 0 )
 
-#endif // MUTEX_H_
+#endif // IOT_MUTEX_H

@@ -3,7 +3,7 @@
 
 #include "Config.h"
 
-/** \brief These are the default C++ includes.
+/** @brief These are the default C++ includes.
  */
 #include <ctype.h> /** isspace, toupper */
 #include <dirent.h> /** DIR */

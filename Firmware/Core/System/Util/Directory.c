@@ -1,11 +1,15 @@
 #include "Directory.h"
 #include "File.h"
 #include "System/String.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
 
+/** ==================[ Private Functions Prototypes ]================== */
+
 static int _Directory_insertPriotFile( Container_Container* c, const char* name, struct stat* stats, u_int flags );
+
+/** =============================[ Public Functions ]================== */
 
 Container_Container* Directory_readSome( Container_Container* userContainer,
     const char* dirName,
@@ -147,6 +151,8 @@ void Directory_free( Container_Container* container )
     CONTAINER_FREE_ALL( container, NULL );
     CONTAINER_FREE( container );
 }
+
+/** =============================[ Private Functions ]================== */
 
 static int _Directory_insertPriotFile( Container_Container* c, const char* name, struct stat* stats,
     u_int flags )

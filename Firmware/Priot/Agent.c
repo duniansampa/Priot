@@ -2,17 +2,17 @@
 #include "../Plugin/Agentx/Master.h"
 #include "AgentHandler.h"
 #include "AgentRegistry.h"
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "Api.h"
-#include "System/Util/Assert.h"
 #include "Client.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
 #include "Mib.h"
 #include "PriotSettings.h"
 #include "System/Containers/MapList.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
 #include "Trap.h"
@@ -187,7 +187,7 @@ typedef struct AgentSetCache_s {
 
     int vbcount;
     RequestInfo* requests;
-    Types_VariableList* saved_vars;
+    VariableList* saved_vars;
     Map* agent_data;
 
     /*
@@ -356,7 +356,7 @@ _Agent_reorderGetbulk( AgentSession* asp )
     int repeats = asp->pdu->errindex;
     int j, k;
     int all_eoMib;
-    Types_VariableList *prev = NULL, *curr;
+    VariableList *prev = NULL, *curr;
 
     if ( asp->vbcount == 0 ) /* Nothing to do! */
         return;
@@ -392,7 +392,7 @@ _Agent_reorderGetbulk( AgentSession* asp )
                     /* Use objid from original pdu. */
                     prev = asp->orig_pdu->variables;
                     for ( k = i; prev && k > 0; k-- )
-                        prev = prev->nextVariable;
+                        prev = prev->next;
                 }
                 if ( prev ) {
                     Client_setVarObjid( curr, prev->name, prev->nameLength );
@@ -411,7 +411,7 @@ _Agent_reorderGetbulk( AgentSession* asp )
     */
     for ( i = 0; i < r - 1; i++ ) {
         for ( j = 0; j < repeats; j++ ) {
-            asp->bulkcache[ i * repeats + j ]->nextVariable = asp->bulkcache[ ( i + 1 ) * repeats + j ];
+            asp->bulkcache[ i * repeats + j ]->next = asp->bulkcache[ ( i + 1 ) * repeats + j ];
         }
     }
 
@@ -424,7 +424,7 @@ _Agent_reorderGetbulk( AgentSession* asp )
     *  since it (correctly) points to the end of the list.
     */
     for ( j = 0; j < repeats - 1; j++ ) {
-        asp->bulkcache[ ( r - 1 ) * repeats + j ]->nextVariable = asp->bulkcache[ j + 1 ];
+        asp->bulkcache[ ( r - 1 ) * repeats + j ]->next = asp->bulkcache[ j + 1 ];
     }
 
     /*
@@ -445,7 +445,7 @@ _Agent_reorderGetbulk( AgentSession* asp )
             all_eoMib = 1;
             for ( j = 1, prev = asp->bulkcache[ i ];
                   j < r;
-                  j++, prev = prev->nextVariable ) {
+                  j++, prev = prev->next ) {
                 if ( prev->type != PRIOT_ENDOFMIBVIEW ) {
                     all_eoMib = 0;
                     break; /* Found a real value */
@@ -456,8 +456,8 @@ _Agent_reorderGetbulk( AgentSession* asp )
                 * This is indeed a full endOfMibView row.
                 * Terminate the list here & free the rest.
                 */
-                Api_freeVarbind( prev->nextVariable );
-                prev->nextVariable = NULL;
+                Api_freeVarbind( prev->next );
+                prev->next = NULL;
                 break;
             }
         }
@@ -472,13 +472,13 @@ _Agent_reorderGetbulk( AgentSession* asp )
 static inline void
 _Agent_fixEndofmibview( AgentSession* asp )
 {
-    Types_VariableList *vb, *ovb;
+    VariableList *vb, *ovb;
 
     if ( asp->vbcount == 0 ) /* Nothing to do! */
         return;
 
     for ( vb = asp->pdu->variables, ovb = asp->orig_pdu->variables;
-          vb && ovb; vb = vb->nextVariable, ovb = ovb->nextVariable ) {
+          vb && ovb; vb = vb->next, ovb = ovb->next ) {
         if ( vb->type == PRIOT_ENDOFMIBVIEW )
             Client_setVarObjid( vb, ovb->name, ovb->nameLength );
     }
@@ -618,7 +618,7 @@ int Agent_addrcacheAdd( const char* addr )
     /*
     * First get the current and oldest allowable timestamps
     */
-    Tools_getMonotonicClock( &now );
+    Time_getMonotonicClock( &now );
     aged.tv_sec = now.tv_sec - SNMP_ADDRCACHE_MAXAGE;
     aged.tv_usec = now.tv_usec;
 
@@ -684,7 +684,7 @@ int Agent_addrcacheAdd( const char* addr )
             _agent_addrCache[ unused ].status = SNMP_ADDRCACHE_USED;
             _agent_addrCache[ unused ].lastHitM = now;
         } else { /* Otherwise, replace oldest entry */
-            if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                      DsAgentBoolean_VERBOSE ) )
                 Logger_log( LOGGER_PRIORITY_INFO, "Purging address from address cache: %s",
                     _agent_addrCache[ oldest ].addr );
@@ -695,7 +695,7 @@ int Agent_addrcacheAdd( const char* addr )
         }
         rc = 1;
     }
-    if ( ( agent_logAddresses && ( 1 == rc ) ) || DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    if ( ( agent_logAddresses && ( 1 == rc ) ) || DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                                                       DsAgentBoolean_VERBOSE ) ) {
         Logger_log( LOGGER_PRIORITY_INFO, "Received SNMP packet(s) from %s\n", addr );
     }
@@ -765,9 +765,9 @@ int Agent_checkParse( Types_Session* session, Types_Pdu* pdu,
     int result )
 {
     if ( result == 0 ) {
-        if ( Logger_isDoLogging() && DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        if ( Logger_isDoLogging() && DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                                          DsAgentBoolean_VERBOSE ) ) {
-            Types_VariableList* var_ptr;
+            VariableList* var_ptr;
 
             switch ( pdu->command ) {
             case PRIOT_MSG_GET:
@@ -831,7 +831,7 @@ int Agent_checkParse( Types_Session* session, Types_Pdu* pdu,
             }
 
             for ( var_ptr = pdu->variables; var_ptr != NULL;
-                  var_ptr = var_ptr->nextVariable ) {
+                  var_ptr = var_ptr->next ) {
                 size_t c_oidlen = 256, c_outlen = 0;
                 u_char* c_oid = ( u_char* )malloc( c_oidlen );
 
@@ -904,7 +904,7 @@ int Agent_registerAgentNsap( Transport_Transport* t )
     s->version = API_DEFAULT_VERSION;
     s->callback = Agent_handlePriotPacket;
     s->authenticator = NULL;
-    s->flags = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+    s->flags = DefaultStore_getInt( DsStore_APPLICATION_ID,
         DsAgentInterger_FLAGS );
     s->isAuthoritative = API_SESS_AUTHORITATIVE;
 
@@ -1050,7 +1050,7 @@ int Agent_initMasterAgent( void )
     /* default to a default cache size */
     AgentRegistry_setLookupCacheSize( -1 );
 
-    if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
              DsAgentBoolean_ROLE )
         != MASTER_AGENT ) {
         DEBUG_MSGTL( ( "snmp_agent",
@@ -1064,7 +1064,7 @@ int Agent_initMasterAgent( void )
     /*
     * Have specific agent ports been specified?
     */
-    cptr = DefaultStore_getString( DsStorage_APPLICATION_ID,
+    cptr = DefaultStore_getString( DsStore_APPLICATION_ID,
         DsAgentString_PORTS );
 
     if ( cptr ) {
@@ -1133,7 +1133,7 @@ int Agent_initMasterAgent( void )
     } while ( st && *st != '\0' );
     MEMORY_FREE( buf );
 
-    if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
              DsAgentBoolean_AGENTX_MASTER )
         == 1 )
         Master_realInitMaster();
@@ -1473,10 +1473,10 @@ int Agent_wrapUpRequest( AgentSession* asp, int status )
         asp->pdu->errstat = asp->status;
         asp->pdu->errindex = asp->index;
         if ( !Api_send( asp->session, asp->pdu ) && asp->session->s_snmp_errno != ErrorCode_SUCCESS ) {
-            Types_VariableList* var_ptr;
+            VariableList* var_ptr;
             Api_perror( "send response" );
             for ( var_ptr = asp->pdu->variables; var_ptr != NULL;
-                  var_ptr = var_ptr->nextVariable ) {
+                  var_ptr = var_ptr->next ) {
                 size_t c_oidlen = 256, c_outlen = 0;
                 u_char* c_oid = ( u_char* )malloc( c_oidlen );
 
@@ -1644,7 +1644,7 @@ int Agent_handlePriotPacket( int op, Types_Session* session, int reqid,
 
 RequestInfo*
 Agent_addVarbindToCache( AgentSession* asp, int vbcount,
-    Types_VariableList* varbind_ptr,
+    VariableList* varbind_ptr,
     Subtree* tp )
 {
     RequestInfo* request = NULL;
@@ -1842,7 +1842,7 @@ int Agent_checkAcm( AgentSession* asp, u_char type )
     int i, j, k;
     RequestInfo* request;
     int ret = 0;
-    Types_VariableList *vb, *vb2, *vbc;
+    VariableList *vb, *vb2, *vbc;
     int earliest = 0;
 
     for ( i = 0; i <= asp->treecache_num; i++ ) {
@@ -1854,7 +1854,7 @@ int Agent_checkAcm( AgentSession* asp, u_char type )
             earliest = 0;
             for ( j = request->repeat, vb = request->requestvb_start;
                   vb && j > -1;
-                  j--, vb = vb->nextVariable ) {
+                  j--, vb = vb->next ) {
                 if ( vb->type != ASN01_NULL && vb->type != ASN01_PRIV_RETRY ) { /* not yet processed */
                     view = AgentRegistry_inAView( vb->name, &vb->nameLength,
                         asp->pdu, vb->type );
@@ -1876,13 +1876,13 @@ int Agent_checkAcm( AgentSession* asp, u_char type )
                               move the contents up the chain and fill
                               in at the end else we won't end up
                               lexographically sorted properly */
-                            if ( j > -1 && vb->nextVariable && vb->nextVariable->type != ASN01_NULL && vb->nextVariable->type != ASN01_PRIV_RETRY ) {
-                                for ( k = j, vbc = vb, vb2 = vb->nextVariable;
+                            if ( j > -1 && vb->next && vb->next->type != ASN01_NULL && vb->next->type != ASN01_PRIV_RETRY ) {
+                                for ( k = j, vbc = vb, vb2 = vb->next;
                                       k > -2 && vbc && vb2;
-                                      k--, vbc = vb2, vb2 = vb2->nextVariable ) {
+                                      k--, vbc = vb2, vb2 = vb2->next ) {
                                     /* clone next into the current */
                                     Client_cloneVar( vb2, vbc );
-                                    vbc->nextVariable = vb2;
+                                    vbc->next = vb2;
                                 }
                             }
                         }
@@ -1898,7 +1898,7 @@ int Agent_checkAcm( AgentSession* asp, u_char type )
 int Agent_createSubtreeCache( AgentSession* asp )
 {
     Subtree* tp;
-    Types_VariableList *varbind_ptr, *vbsave, *vbptr, **prevNext;
+    VariableList *varbind_ptr, *vbsave, *vbptr, **prevNext;
     int view;
     int vbcount = 0;
     int bulkcount = 0, bulkrep = 0;
@@ -1934,9 +1934,9 @@ int Agent_createSubtreeCache( AgentSession* asp )
             r = 0;
             asp->bulkcache = NULL;
         } else {
-            int maxbulk = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+            int maxbulk = DefaultStore_getInt( DsStore_APPLICATION_ID,
                 DsAgentInterger_MAX_GETBULKREPEATS );
-            int maxresponses = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+            int maxresponses = DefaultStore_getInt( DsStore_APPLICATION_ID,
                 DsAgentInterger_MAX_GETBULKRESPONSES );
 
             if ( maxresponses == 0 )
@@ -1962,7 +1962,7 @@ int Agent_createSubtreeCache( AgentSession* asp )
                     asp->pdu->errindex ) );
             }
 
-            asp->bulkcache = ( Types_VariableList** )malloc(
+            asp->bulkcache = ( VariableList** )malloc(
                 ( n + asp->pdu->errindex * r ) * sizeof( struct varbind_list* ) );
 
             if ( !asp->bulkcache ) {
@@ -1984,7 +1984,7 @@ int Agent_createSubtreeCache( AgentSession* asp )
         /*
         * getbulk mess with this pointer, so save it
         */
-        vbsave = varbind_ptr->nextVariable;
+        vbsave = varbind_ptr->next;
 
         if ( asp->pdu->command == PRIOT_MSG_GETBULK ) {
             if ( n > 0 ) {
@@ -2002,32 +2002,32 @@ int Agent_createSubtreeCache( AgentSession* asp )
                     asp->bulkcache[ bulkcount++ ] = vbptr;
 
                     for ( i = 1; i < asp->pdu->errindex; i++ ) {
-                        vbptr->nextVariable = MEMORY_MALLOC_STRUCT( Types_VariableList_s );
+                        vbptr->next = MEMORY_MALLOC_STRUCT( VariableList_s );
                         /*
                         * don't clone the oid as it's got to be
                         * overwritten anyway
                         */
-                        if ( !vbptr->nextVariable ) {
+                        if ( !vbptr->next ) {
                             /*
                             * XXXWWW: ack!!!
                             */
                             DEBUG_MSGTL( ( "snmp_agent", "NextVar malloc failed\n" ) );
                         } else {
-                            vbptr = vbptr->nextVariable;
+                            vbptr = vbptr->next;
                             vbptr->nameLength = 0;
                             vbptr->type = ASN01_NULL;
                             asp->bulkcache[ bulkcount++ ] = vbptr;
                         }
                     }
-                    vbptr->nextVariable = vbsave;
+                    vbptr->next = vbsave;
                 } else {
                     /*
                     * 0 repeats requested for this varbind, so take it off
                     * the list.
                     */
                     vbptr = varbind_ptr;
-                    *prevNext = vbptr->nextVariable;
-                    vbptr->nextVariable = NULL;
+                    *prevNext = vbptr->next;
+                    vbptr->next = NULL;
                     Api_freeVarbind( vbptr );
                     asp->vbcount--;
                     continue;
@@ -2083,7 +2083,7 @@ int Agent_createSubtreeCache( AgentSession* asp )
             }
         }
 
-        prevNext = &( varbind_ptr->nextVariable );
+        prevNext = &( varbind_ptr->next );
     }
 
     return ErrorCode_SUCCESS;
@@ -2641,7 +2641,7 @@ int Agent_checkGetnextResults( AgentSession* asp )
 int Agent_handleGetnextLoop( AgentSession* asp )
 {
     int status;
-    Types_VariableList* var_ptr;
+    VariableList* var_ptr;
 
     /*
     * loop
@@ -2686,7 +2686,7 @@ int Agent_handleGetnextLoop( AgentSession* asp )
             DEBUG_MSGTL( ( "results",
                 "getnext results, before next pass:\n" ) );
             for ( var_ptr = asp->pdu->variables; var_ptr;
-                  var_ptr = var_ptr->nextVariable ) {
+                  var_ptr = var_ptr->next ) {
                 DEBUG_MSGTL( ( "results", "\t" ) );
                 DEBUG_MSGVAR( ( "results", var_ptr ) );
                 DEBUG_MSG( ( "results", "\n" ) );
@@ -2851,11 +2851,11 @@ int Agent_handleRequest( AgentSession* asp, int status )
     */
     DEBUG_IF( "results" )
     {
-        Types_VariableList* var_ptr;
+        VariableList* var_ptr;
         DEBUG_MSGTL( ( "results", "request results (status = %d):\n",
             status ) );
         for ( var_ptr = asp->pdu->variables; var_ptr;
-              var_ptr = var_ptr->nextVariable ) {
+              var_ptr = var_ptr->next ) {
             DEBUG_MSGTL( ( "results", "\t" ) );
             DEBUG_MSGVAR( ( "results", var_ptr ) );
             DEBUG_MSG( ( "results", "\n" ) );
@@ -2883,7 +2883,7 @@ int Agent_handleRequest( AgentSession* asp, int status )
 int Agent_handlePdu( AgentSession* asp )
 {
     int status, inclusives = 0;
-    Types_VariableList* v = NULL;
+    VariableList* v = NULL;
 
     /*
     * for illegal requests, mark all nodes as ASN01_NULL
@@ -2903,7 +2903,7 @@ int Agent_handlePdu( AgentSession* asp )
     case PRIOT_MSG_GET:
     case PRIOT_MSG_GETNEXT:
     case PRIOT_MSG_GETBULK:
-        for ( v = asp->pdu->variables; v != NULL; v = v->nextVariable ) {
+        for ( v = asp->pdu->variables; v != NULL; v = v->next ) {
             if ( v->type == ASN01_PRIV_INCL_RANGE ) {
                 /*
                 * Leave the type for now (it gets set to
@@ -3216,7 +3216,7 @@ Agent_markerUptime( timeMarker pm )
     u_long res;
     timeMarkerConst start = Agent_getAgentStarttime();
 
-    res = Tools_uatimeHdiff( start, pm );
+    res = Time_uatimeHdiff( start, pm );
     return res;
 }
 
@@ -3262,7 +3262,7 @@ Agent_getAgentRuntime( void )
 {
     struct timeval now, delta;
 
-    Tools_getMonotonicClock( &now );
+    Time_getMonotonicClock( &now );
     TIME_SUB_TIME( &now, &_agent_starttimeM, &delta );
     return delta.tv_sec * ( uint64_t )100 + delta.tv_usec / 10000;
 }
@@ -3280,12 +3280,12 @@ void Agent_setAgentStarttime( timeMarker s )
 
         agent_starttime = *( struct timeval* )s;
         gettimeofday( &nowA, NULL );
-        Tools_getMonotonicClock( &nowM );
+        Time_getMonotonicClock( &nowM );
         TIME_SUB_TIME( &agent_starttime, &nowA, &_agent_starttimeM );
         TIME_ADD_TIME( &_agent_starttimeM, &nowM, &_agent_starttimeM );
     } else {
         gettimeofday( &agent_starttime, NULL );
-        Tools_getMonotonicClock( &_agent_starttimeM );
+        Time_getMonotonicClock( &_agent_starttimeM );
     }
 }
 
@@ -3297,7 +3297,7 @@ Agent_getAgentUptime( void )
 {
     struct timeval now, delta;
 
-    Tools_getMonotonicClock( &now );
+    Time_getMonotonicClock( &now );
     TIME_SUB_TIME( &now, &_agent_starttimeM, &delta );
     return delta.tv_sec * 100UL + delta.tv_usec / 10000;
 }
@@ -3315,7 +3315,7 @@ void Agent_setAgentUptime( u_long hsec )
     struct timeval new_uptime;
 
     gettimeofday( &nowA, NULL );
-    Tools_getMonotonicClock( &nowM );
+    Time_getMonotonicClock( &nowM );
     new_uptime.tv_sec = hsec / 100;
     new_uptime.tv_usec = ( uint32_t )( hsec - new_uptime.tv_sec * 100 ) * 10000L;
     TIME_SUB_TIME( &nowA, &new_uptime, &agent_starttime );

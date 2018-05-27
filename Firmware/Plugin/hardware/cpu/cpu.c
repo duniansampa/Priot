@@ -1,6 +1,6 @@
 #include "siglog/agent/hardware/cpu.h"
-#include "Alarm.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Alarm.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 
 extern CacheLoadFT netsnmp_cpu_arch_load;
@@ -32,7 +32,7 @@ void init_cpu( void )
     if ( _cpuAutoUpdate ) {
 
         _cpuHistoryLen = 60 / _cpuAutoUpdate;
-        Alarm_register( _cpuAutoUpdate, ALARM_SA_REPEAT, _cpu_update_stats,
+        Alarm_register( _cpuAutoUpdate, AlarmFlag_REPEAT, _cpu_update_stats,
             NULL );
         if ( _cpu_head )
             _cpu_update_stats( 0, NULL );

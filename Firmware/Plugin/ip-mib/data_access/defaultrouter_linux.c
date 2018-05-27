@@ -7,7 +7,7 @@
 #include "siglog/data_access/defaultrouter.h"
 #include "System/Util/Assert.h"
 #include "System/Containers/Container.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "ip-mib/ipDefaultRouterTable/ipDefaultRouterTable_enums.h"
 #include <arpa/inet.h>

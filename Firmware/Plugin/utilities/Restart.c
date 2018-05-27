@@ -1,5 +1,5 @@
 #include "Restart.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
 #include "Impl.h"
 #include "Api.h"
@@ -15,7 +15,7 @@ char *restart_argvrestart;
 
 void Restart_doit(int a)
 {
-    char * name = DefaultStore_getString(DsStorage_LIBRARY_ID, DsStr_APPTYPE);
+    char * name = DefaultStore_getString(DsStore_LIBRARY_ID, DsStr_APPTYPE);
     Api_shutdown(name);
 
     /*  This signal handler may run with SIGALARM blocked.

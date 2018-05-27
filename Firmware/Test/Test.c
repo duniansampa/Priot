@@ -1,6 +1,5 @@
 #include "Test.h"
 #include "System/String.h"
-#include "System/String.h"
 
 void printResult( const char* testName, bool ok )
 {
@@ -16,13 +15,13 @@ void Test_String()
     printf( "-----[ String ]----- \n\n" );
 
     if ( 1 ) { /** String_split */
-        Map* map = String_split( "Internet of Things (IoT)", " " );
-        Map* tmp = map;
+        List* list = String_split( "Internet of Things (IoT)", " " );
+        List* tmp = list;
         char* expected[] = { "Internet", "of", "Things", "(IoT)" };
         bool ok = false;
         int count = 0;
         while ( tmp ) {
-            if ( String_equals( tmp->key, String_setInt32( count ) ) && String_equals( tmp->value, expected[ count ] ) )
+            if ( String_equals( tmp->data, expected[ count ] ) )
                 ok = true;
             else {
                 ok = false;
@@ -33,7 +32,7 @@ void Test_String()
         }
         printResult( "String_split", ok );
 
-        Map_clear( map );
+        List_clear( list );
     }
     if ( 1 ) { /** String_appendLittle **/
         const char* expected = "Internet of Things";

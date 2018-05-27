@@ -1,5 +1,5 @@
 #include "Scalar.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "ReadOnly.h"
 #include "Instance.h"
 #include "Serialize.h"
@@ -103,7 +103,7 @@ Scalar_helperHandler(MibHandler *handler,
                                 RequestInfo *requests)
 {
 
-    Types_VariableList *var = requests->requestvb;
+    VariableList *var = requests->requestvb;
 
     int             ret, cmp;
     int             namelen;

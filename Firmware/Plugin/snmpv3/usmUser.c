@@ -5,7 +5,7 @@
 #include "VarStruct.h"
 #include "usmUser.h"
 #include "AgentRegistry.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "Keytools.h"
 #include "utilities/header_generic.h"
 

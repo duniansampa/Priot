@@ -7,11 +7,11 @@
  */
 
 #include "mteObjectsTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "mteObjects.h"
 
 static TableRegistrationInfo* table_info;
@@ -124,7 +124,7 @@ int mteObjectsTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSID:
-                ret = CheckVarbind_oid( request->requestvb );
+                ret = VariableList_checkOidMaxLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -140,7 +140,7 @@ int mteObjectsTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTEOBJECTSIDWILDCARD:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -156,14 +156,14 @@ int mteObjectsTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTEOBJECTSENTRYSTATUS:
-                ret = CheckVarbind_rowStatus( request->requestvb,
+                ret = VariableList_checkRowStatusTransition( request->requestvb,
                     ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 /* An active row can only be deleted */
-                if ( entry && entry->flags & MTE_OBJECT_FLAG_ACTIVE && *request->requestvb->val.integer == TC_RS_NOTINSERVICE ) {
+                if ( entry && entry->flags & MTE_OBJECT_FLAG_ACTIVE && *request->requestvb->value.integer == TC_RS_NOTINSERVICE ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_INCONSISTENTVALUE );
                     return PRIOT_ERR_NOERROR;
@@ -186,20 +186,20 @@ int mteObjectsTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
                     memset( mteOwner, 0, sizeof( mteOwner ) );
-                    memcpy( mteOwner, tinfo->indexes->val.string,
-                        tinfo->indexes->valLen );
+                    memcpy( mteOwner, tinfo->indexes->value.string,
+                        tinfo->indexes->valueLength );
                     memset( mteOName, 0, sizeof( mteOName ) );
                     memcpy( mteOName,
-                        tinfo->indexes->nextVariable->val.string,
-                        tinfo->indexes->nextVariable->valLen );
-                    ret = *tinfo->indexes->nextVariable->nextVariable->val.integer;
+                        tinfo->indexes->next->value.string,
+                        tinfo->indexes->next->valueLength );
+                    ret = *tinfo->indexes->next->next->value.integer;
 
                     row = mteObjects_createEntry( mteOwner, mteOName, ret, 0 );
                     if ( !row ) {
@@ -222,7 +222,7 @@ int mteObjectsTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
@@ -276,20 +276,20 @@ int mteObjectsTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSID:
                 memset( entry->mteObjectID, 0, sizeof( entry->mteObjectID ) );
-                memcpy( entry->mteObjectID, request->requestvb->val.objid,
-                    request->requestvb->valLen );
-                entry->mteObjectID_len = request->requestvb->valLen / sizeof( oid );
+                memcpy( entry->mteObjectID, request->requestvb->value.objectId,
+                    request->requestvb->valueLength );
+                entry->mteObjectID_len = request->requestvb->valueLength / sizeof( oid );
                 break;
 
             case COLUMN_MTEOBJECTSIDWILDCARD:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_OBJECT_FLAG_WILD;
                 else
                     entry->flags &= ~MTE_OBJECT_FLAG_WILD;
                 break;
 
             case COLUMN_MTEOBJECTSENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                     entry->flags |= MTE_OBJECT_FLAG_ACTIVE;
                     break;

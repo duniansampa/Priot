@@ -1,5 +1,5 @@
 #include "Null.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 
 int

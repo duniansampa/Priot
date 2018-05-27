@@ -48,7 +48,7 @@
                                             ipIfStatsInReceives_val_ptr);
     int             ipIfStatsHCInReceives_get(ipIfStatsTable_rowreq_ctx *
                                               rowreq_ctx,
-                                              Int64_U64 *
+                                              Integer64 *
                                               ipIfStatsHCInReceives_val_ptr);
     int             ipIfStatsInOctets_get(ipIfStatsTable_rowreq_ctx *
                                           rowreq_ctx,
@@ -56,7 +56,7 @@
                                           ipIfStatsInOctets_val_ptr);
     int             ipIfStatsHCInOctets_get(ipIfStatsTable_rowreq_ctx *
                                             rowreq_ctx,
-                                            Int64_U64 *
+                                            Integer64 *
                                             ipIfStatsHCInOctets_val_ptr);
     int             ipIfStatsInHdrErrors_get(ipIfStatsTable_rowreq_ctx *
                                              rowreq_ctx,
@@ -85,7 +85,7 @@
     int            
         ipIfStatsHCInForwDatagrams_get(ipIfStatsTable_rowreq_ctx *
                                        rowreq_ctx,
-                                       Int64_U64 *
+                                       Integer64 *
                                        ipIfStatsHCInForwDatagrams_val_ptr);
     int             ipIfStatsReasmReqds_get(ipIfStatsTable_rowreq_ctx *
                                             rowreq_ctx,
@@ -109,7 +109,7 @@
                                             ipIfStatsInDelivers_val_ptr);
     int             ipIfStatsHCInDelivers_get(ipIfStatsTable_rowreq_ctx *
                                               rowreq_ctx,
-                                              Int64_U64 *
+                                              Integer64 *
                                               ipIfStatsHCInDelivers_val_ptr);
     int             ipIfStatsOutRequests_get(ipIfStatsTable_rowreq_ctx *
                                              rowreq_ctx,
@@ -117,7 +117,7 @@
                                              ipIfStatsOutRequests_val_ptr);
     int             ipIfStatsHCOutRequests_get(ipIfStatsTable_rowreq_ctx *
                                                rowreq_ctx,
-                                               Int64_U64 *
+                                               Integer64 *
                                                ipIfStatsHCOutRequests_val_ptr);
     int             ipIfStatsOutForwDatagrams_get(ipIfStatsTable_rowreq_ctx
                                                   * rowreq_ctx,
@@ -126,7 +126,7 @@
     int            
         ipIfStatsHCOutForwDatagrams_get(ipIfStatsTable_rowreq_ctx *
                                         rowreq_ctx,
-                                        Int64_U64 *
+                                        Integer64 *
                                         ipIfStatsHCOutForwDatagrams_val_ptr);
     int             ipIfStatsOutDiscards_get(ipIfStatsTable_rowreq_ctx *
                                              rowreq_ctx,
@@ -154,7 +154,7 @@
                                               ipIfStatsOutTransmits_val_ptr);
     int             ipIfStatsHCOutTransmits_get(ipIfStatsTable_rowreq_ctx *
                                                 rowreq_ctx,
-                                                Int64_U64 *
+                                                Integer64 *
                                                 ipIfStatsHCOutTransmits_val_ptr);
     int             ipIfStatsOutOctets_get(ipIfStatsTable_rowreq_ctx *
                                            rowreq_ctx,
@@ -162,7 +162,7 @@
                                            ipIfStatsOutOctets_val_ptr);
     int             ipIfStatsHCOutOctets_get(ipIfStatsTable_rowreq_ctx *
                                              rowreq_ctx,
-                                             Int64_U64 *
+                                             Integer64 *
                                              ipIfStatsHCOutOctets_val_ptr);
     int             ipIfStatsInMcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                              rowreq_ctx,
@@ -170,7 +170,7 @@
                                              ipIfStatsInMcastPkts_val_ptr);
     int             ipIfStatsHCInMcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                                rowreq_ctx,
-                                               Int64_U64 *
+                                               Integer64 *
                                                ipIfStatsHCInMcastPkts_val_ptr);
     int             ipIfStatsInMcastOctets_get(ipIfStatsTable_rowreq_ctx *
                                                rowreq_ctx,
@@ -178,7 +178,7 @@
                                                ipIfStatsInMcastOctets_val_ptr);
     int             ipIfStatsHCInMcastOctets_get(ipIfStatsTable_rowreq_ctx
                                                  * rowreq_ctx,
-                                                 Int64_U64 *
+                                                 Integer64 *
                                                  ipIfStatsHCInMcastOctets_val_ptr);
     int             ipIfStatsOutMcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                               rowreq_ctx,
@@ -186,7 +186,7 @@
                                               ipIfStatsOutMcastPkts_val_ptr);
     int             ipIfStatsHCOutMcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                                 rowreq_ctx,
-                                                Int64_U64 *
+                                                Integer64 *
                                                 ipIfStatsHCOutMcastPkts_val_ptr);
     int             ipIfStatsOutMcastOctets_get(ipIfStatsTable_rowreq_ctx *
                                                 rowreq_ctx,
@@ -194,7 +194,7 @@
                                                 ipIfStatsOutMcastOctets_val_ptr);
     int             ipIfStatsHCOutMcastOctets_get(ipIfStatsTable_rowreq_ctx
                                                   * rowreq_ctx,
-                                                  Int64_U64 *
+                                                  Integer64 *
                                                   ipIfStatsHCOutMcastOctets_val_ptr);
     int             ipIfStatsInBcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                              rowreq_ctx,
@@ -202,7 +202,7 @@
                                              ipIfStatsInBcastPkts_val_ptr);
     int             ipIfStatsHCInBcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                                rowreq_ctx,
-                                               Int64_U64 *
+                                               Integer64 *
                                                ipIfStatsHCInBcastPkts_val_ptr);
     int             ipIfStatsOutBcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                               rowreq_ctx,
@@ -210,7 +210,7 @@
                                               ipIfStatsOutBcastPkts_val_ptr);
     int             ipIfStatsHCOutBcastPkts_get(ipIfStatsTable_rowreq_ctx *
                                                 rowreq_ctx,
-                                                Int64_U64 *
+                                                Integer64 *
                                                 ipIfStatsHCOutBcastPkts_val_ptr);
     int            
         ipIfStatsDiscontinuityTime_get(ipIfStatsTable_rowreq_ctx *

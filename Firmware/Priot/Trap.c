@@ -1,13 +1,13 @@
 #include "Trap.h"
 #include "Asn01.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "Priot.h"
 #include "AgentCallbacks.h"
 #include "Transport.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "Client.h"
 #include "Agent.h"
 #include "DsAgent.h"
@@ -94,7 +94,7 @@ int
 Trap_addTrapSession(Types_Session * ss, int pdutype, int confirm,
                  int version)
 {
-    if (Callback_available(CALLBACK_APPLICATION,
+    if (Callback_isRegistered(CallbackMajor_APPLICATION,
                                 PriotdCallback_REGISTER_NOTIFICATIONS) ==
         ErrorCode_SUCCESS) {
         /*
@@ -104,7 +104,7 @@ Trap_addTrapSession(Types_Session * ss, int pdutype, int confirm,
         DEBUG_MSGTL(("trap", "adding callback trap sink (%p)\n", ss));
         args.ss = ss;
         args.confirm = confirm;
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                              PriotdCallback_REGISTER_NOTIFICATIONS,
                             (void *) &args);
     } else {
@@ -184,8 +184,8 @@ Types_Pdu*
 Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
 {
     Types_Pdu           *template_v1pdu;
-    Types_VariableList *first_vb, *vblist;
-    Types_VariableList *var;
+    VariableList *first_vb, *vblist;
+    VariableList *var;
 
     /*
      * Make a copy of the v2 Trap PDU
@@ -213,8 +213,8 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
         Api_freePdu(template_v1pdu);
         return NULL;
     }
-    template_v1pdu->time = *vblist->val.integer;
-    vblist = vblist->nextVariable;
+    template_v1pdu->time = *vblist->value.integer;
+    vblist = vblist->next;
 
     /*
      * The second varbind should be the snmpTrapOID.
@@ -236,7 +236,7 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
      * RFC 2089 said to omit such varbinds from the list.
      * RFC 2576/3584 say to drop the trap completely.
      */
-    for (var = vblist->nextVariable; var; var = var->nextVariable) {
+    for (var = vblist->next; var; var = var->next) {
         if ( var->type == ASN01_COUNTER64 ) {
             Logger_log(LOGGER_PRIORITY_WARNING,
                      "send_trap: v1 traps can't carry Counter64 varbinds\n");
@@ -250,7 +250,7 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
      *    and the enterprise field from the v2 varbind list.
      * If there's an agentIPAddress varbind, set the agent_addr too
      */
-    if (!Api_oidCompare(vblist->val.objid, ASN01_OID_LENGTH(trap_trapPrefix),
+    if (!Api_oidCompare(vblist->value.objectId, ASN01_OID_LENGTH(trap_trapPrefix),
                           trap_trapPrefix,       ASN01_OID_LENGTH(trap_trapPrefix))) {
         /*
          * For 'standard' traps, extract the generic trap type
@@ -258,16 +258,16 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
          *   value from the 'snmpEnterprise' varbind.
          */
         template_v1pdu->trapType =
-            vblist->val.objid[ASN01_OID_LENGTH(trap_trapPrefix)] - 1;
+            vblist->value.objectId[ASN01_OID_LENGTH(trap_trapPrefix)] - 1;
         template_v1pdu->specificType = 0;
 
         var = Client_findVarbindInList( vblist,
                              trap_priottrapenterpriseOid,
                              trap_priottrapenterpriseOidLen);
         if (var) {
-            template_v1pdu->enterpriseLength = var->valLen/sizeof(oid);
+            template_v1pdu->enterpriseLength = var->valueLength/sizeof(oid);
             template_v1pdu->enterprise =
-                Api_duplicateObjid(var->val.objid,
+                Api_duplicateObjid(var->value.objectId,
                                      template_v1pdu->enterpriseLength);
         } else {
             template_v1pdu->enterprise        = NULL;
@@ -278,7 +278,7 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
          * For enterprise-specific traps, split the snmpTrapOID value
          *   into enterprise and specific trap
          */
-        size_t len = vblist->valLen / sizeof(oid);
+        size_t len = vblist->valueLength / sizeof(oid);
         if ( len <= 2 ) {
             Logger_log(LOGGER_PRIORITY_WARNING,
                      "send_trap: v2 trapOID too short (%d)\n", (int)len);
@@ -286,20 +286,20 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
             return NULL;
         }
         template_v1pdu->trapType     = PRIOT_TRAP_ENTERPRISESPECIFIC;
-        template_v1pdu->specificType = vblist->val.objid[len - 1];
+        template_v1pdu->specificType = vblist->value.objectId[len - 1];
         len--;
-        if (vblist->val.objid[len-1] == 0)
+        if (vblist->value.objectId[len-1] == 0)
             len--;
         MEMORY_FREE(template_v1pdu->enterprise);
         template_v1pdu->enterprise =
-            Api_duplicateObjid(vblist->val.objid, len);
+            Api_duplicateObjid(vblist->value.objectId, len);
         template_v1pdu->enterpriseLength = len;
     }
     var = Client_findVarbindInList( vblist, trap_agentaddrOid,
                                         trap_agentaddrOidLen);
     if (var) {
         memcpy(template_v1pdu->agentAddr,
-               var->val.string, 4);
+               var->value.string, 4);
     }
 
     /*
@@ -307,8 +307,8 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
      * as the v2 varbind list.  Update the PDU and
      * free the two redundant varbinds.
      */
-    template_v1pdu->variables = vblist->nextVariable;
-    vblist->nextVariable = NULL;
+    template_v1pdu->variables = vblist->next;
+    vblist->next = NULL;
     Api_freeVarbind( first_vb );
 
     return template_v1pdu;
@@ -318,7 +318,7 @@ Types_Pdu*
 Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
 {
     Types_Pdu           *template_v2pdu;
-    Types_VariableList *var;
+    VariableList *var;
     oid                    enterprise[TYPES_MAX_OID_LEN];
     size_t                 enterprise_len;
 
@@ -362,7 +362,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
         Api_freePdu(template_v2pdu);
         return NULL;
     }
-    var->nextVariable        = template_v2pdu->variables;
+    var->next        = template_v2pdu->variables;
     template_v2pdu->variables = var;
 
     /*
@@ -379,7 +379,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
         Api_freePdu(template_v2pdu);
         return NULL;
     }
-    var->nextVariable        = template_v2pdu->variables;
+    var->next        = template_v2pdu->variables;
     template_v2pdu->variables = var;
 
     /*
@@ -474,14 +474,14 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
 int
 Trap_sendTraps(int trap, int specific,
                           const oid * enterprise, int enterprise_length,
-                          Types_VariableList * vars,
+                          VariableList * vars,
                           const char * context, int flags)
 {
     Types_Pdu           *template_v1pdu;
     Types_Pdu           *template_v2pdu;
-    Types_VariableList *vblist = NULL;
-    Types_VariableList *trap_vb;
-    Types_VariableList *var;
+    VariableList *vblist = NULL;
+    VariableList *trap_vb;
+    VariableList *var;
     in_addr_t             *pdu_in_addr_t;
     u_long                 uptime;
     struct TrapSink *sink;
@@ -526,7 +526,7 @@ Trap_sendTraps(int trap, int specific,
         if (!Api_oidCompare( vblist->name,    vblist->nameLength,
                                trap_sysuptimeOid, trap_sysuptimeOidLen )) {
             template_v2pdu->variables = vblist;
-            trap_vb  = vblist->nextVariable;
+            trap_vb  = vblist->next;
         } else {
             uptime   = Agent_getAgentUptime();
             var = NULL;
@@ -541,7 +541,7 @@ Trap_sendTraps(int trap, int specific,
                 return -1;
             }
             template_v2pdu->variables = var;
-            var->nextVariable        = vblist;
+            var->next        = vblist;
             trap_vb  = vblist;
         }
 
@@ -559,7 +559,7 @@ Trap_sendTraps(int trap, int specific,
             Api_freePdu(template_v2pdu);
             return -1;
         }
-        if (!Api_oidCompare(vblist->val.objid, ASN01_OID_LENGTH(trap_trapPrefix),
+        if (!Api_oidCompare(vblist->value.objectId, ASN01_OID_LENGTH(trap_trapPrefix),
                               trap_trapPrefix,       ASN01_OID_LENGTH(trap_trapPrefix))) {
             var = Client_findVarbindInList( template_v2pdu->variables,
                                         trap_priottrapenterpriseOid,
@@ -640,7 +640,7 @@ Trap_sendTraps(int trap, int specific,
      * Ensure that the v1 trap PDU includes the local IP address
      */
        pdu_in_addr_t = (in_addr_t *) template_v1pdu->agentAddr;
-       v1trapaddress = DefaultStore_getString(DsStorage_APPLICATION_ID,
+       v1trapaddress = DefaultStore_getString(DsStore_APPLICATION_ID,
                                              DsAgentString_TRAP_ADDR);
        if (v1trapaddress != NULL) {
            /* "v1trapaddress" was specified in config, try to resolve it */
@@ -677,10 +677,10 @@ Trap_sendTraps(int trap, int specific,
           }
     }
     if (template_v1pdu)
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                          PriotdCallback_SEND_TRAP1, template_v1pdu);
     if (template_v2pdu)
-        Callback_callCallbacks(CALLBACK_APPLICATION,
+        Callback_call(CallbackMajor_APPLICATION,
                          PriotdCallback_SEND_TRAP2, template_v2pdu);
     Api_freePdu(template_v1pdu);
     Api_freePdu(template_v2pdu);
@@ -692,7 +692,7 @@ void
 Trap_sendEnterpriseTrapVars(int trap,
                           int specific,
                           const oid * enterprise, int enterprise_length,
-                          Types_VariableList * vars)
+                          VariableList * vars)
 {
     Trap_sendTraps(trap, specific,
                        enterprise, enterprise_length,
@@ -789,7 +789,7 @@ Trap_sendTrapToSess(Types_Session * sess, Types_Pdu *template_pdu)
 }
 
 void
-Trap_sendTrapVars(int trap, int specific, Types_VariableList * vars)
+Trap_sendTrapVars(int trap, int specific, VariableList * vars)
 {
     if (trap == PRIOT_TRAP_ENTERPRISESPECIFIC)
         Trap_sendEnterpriseTrapVars(trap, specific, trap_objidEnterprisetrap,
@@ -801,7 +801,7 @@ Trap_sendTrapVars(int trap, int specific, Types_VariableList * vars)
 
 /* Send a trap under a context */
 void Trap_sendTrapVarsWithContext(int trap, int specific,
-              Types_VariableList *vars, const char *context)
+              VariableList *vars, const char *context)
 {
     if (trap == PRIOT_TRAP_ENTERPRISESPECIFIC)
         Trap_sendTraps(trap, specific, trap_objidEnterprisetrap,
@@ -867,7 +867,7 @@ Trap_sendEasyTrap(int trap, int specific)
  */
 
 void
-Trap_sendV2trap(Types_VariableList * vars)
+Trap_sendV2trap(VariableList * vars)
 {
     Trap_sendTrapVars(-1, -1, vars);
 }
@@ -884,7 +884,7 @@ Trap_sendV2trap(Types_VariableList * vars)
  *
  * @see Trap_sendV2trap
  */
-void Trap_sendV3trap(Types_VariableList *vars, const char *context)
+void Trap_sendV3trap(VariableList *vars, const char *context)
 {
     Trap_sendTraps(-1, -1,
                        trap_trapVersionId, ASN01_OID_LENGTH(trap_trapVersionId),

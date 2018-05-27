@@ -16,8 +16,8 @@
 
 #include "ipAddressTable.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "TextualConvention.h"
 #include "Vars.h"
 #include "ipAddressTable_constants.h"
 #include "ipAddressTable_interface.h"

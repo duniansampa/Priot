@@ -11,8 +11,8 @@
 #include "logmatch.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Alarm.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Alarm.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
@@ -422,8 +422,8 @@ logmatch_parse_config( const char* token, char* cptr )
                 logmatchTable[ logmatchCount ].regEx, regexErrorString );
         } else if ( logmatchTable[ logmatchCount ].frequency > 0 ) {
             Alarm_register( logmatchTable[ logmatchCount ].frequency,
-                ALARM_SA_REPEAT,
-                ( Alarm_CallbackFT* )updateLogmatch_Scheduled,
+                AlarmFlag_REPEAT,
+                ( AlarmCallback_f* )updateLogmatch_Scheduled,
                 &logmatchTable[ logmatchCount ] );
         }
 

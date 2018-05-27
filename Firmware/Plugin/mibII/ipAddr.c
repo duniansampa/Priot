@@ -15,7 +15,7 @@
  */
 
 #include "ipAddr.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "PluginSettings.h"
 #include "Vars.h"
 #include "interfaces.h"

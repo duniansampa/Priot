@@ -17,7 +17,7 @@
 #include "udpTable.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "System/Util/Logger.h"
 #include "tcpTable.h"
@@ -110,7 +110,7 @@ int udpTable_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     TableRequestInfo* table_info;
     struct inpcb* entry;
     oid subid;
@@ -170,10 +170,10 @@ int udpTable_handler( MibHandler* handler,
     return PRIOT_ERR_NOERROR;
 }
 
-Types_VariableList*
+VariableList*
 udpTable_first_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     /*
@@ -191,10 +191,10 @@ udpTable_first_entry( void** loop_context,
     return udpTable_next_entry( loop_context, data_context, index, data );
 }
 
-Types_VariableList*
+VariableList*
 udpTable_next_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     struct inpcb* entry = ( struct inpcb* )*loop_context;
@@ -212,7 +212,7 @@ udpTable_next_entry( void** loop_context,
     Client_setVarValue( index, ( u_char* )&addr,
         sizeof( addr ) );
     port = UDP_PORT_TO_HOST_ORDER( entry->UDPTABLE_LOCALPORT );
-    Client_setVarValue( index->nextVariable,
+    Client_setVarValue( index->next,
         ( u_char* )&port, sizeof( port ) );
 
     /*

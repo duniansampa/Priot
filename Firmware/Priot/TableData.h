@@ -17,7 +17,7 @@
 #define TABLE_DATA_TABLE "tableDataTable"
 
 typedef struct TableRow_s {
-    Types_VariableList* indexes; /* stored permanently if store_indexes = 1 */
+    VariableList* indexes; /* stored permanently if store_indexes = 1 */
     oid*                index_oid;
     size_t              index_oid_len;
     void*               data;   /* the data to store */
@@ -27,7 +27,7 @@ typedef struct TableRow_s {
 } TableRow;
 
 typedef struct TableData_s {
-    Types_VariableList* indexes_template;        /* containing only types */
+    VariableList* indexes_template;        /* containing only types */
     char*               name;   /* if !NULL, it's registered globally */
     int                 flags;  /* not currently used */
     int                 store_indexes;
@@ -129,7 +129,7 @@ TableData_getNextRow( TableData* table,
 
 TableRow*
 TableData_get( TableData*          table,
-               Types_VariableList* indexes);
+               VariableList* indexes);
 
 TableRow*
 TableData_getFromOid( TableData* table,

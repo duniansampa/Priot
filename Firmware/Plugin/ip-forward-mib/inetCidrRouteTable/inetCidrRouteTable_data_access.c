@@ -10,7 +10,7 @@
 
 #include "inetCidrRouteTable_data_access.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "inetCidrRouteTable.h"
 #include "inetCidrRouteTable_constants.h"

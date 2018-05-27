@@ -2,8 +2,8 @@
 #define SUBAGENT_H
 
 #include "Types.h"
-#include "Callback.h"
-#include "Alarm.h"
+#include "System/Util/Callback.h"
+#include "System/Util/Alarm.h"
 
 int
 Subagent_init(void);
@@ -12,11 +12,11 @@ int
 Subagent_handleAgentxPacket( int,
                              Types_Session *, int,
                              Types_Pdu *, void *);
-Callback_CallbackFT
+Callback_f
 Subagent_registerCallback;
 
 
-Alarm_CallbackFT
+AlarmCallback_f
 Subagent_checkSession;
 
 #endif // SUBAGENT_H

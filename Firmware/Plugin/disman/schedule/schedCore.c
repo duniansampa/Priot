@@ -4,9 +4,9 @@
  */
 
 #include "schedCore.h"
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 Tdata* schedule_table;
 
@@ -43,7 +43,7 @@ _sched_callback( unsigned int reg, void* magic )
 {
     struct schedTable_entry* entry = ( struct schedTable_entry* )magic;
     int ret;
-    Types_VariableList assign;
+    VariableList assign;
 
     if ( !entry ) {
         DEBUG_MSGTL( ( "disman:schedule:callback", "missing entry\n" ) );
@@ -57,7 +57,7 @@ _sched_callback( unsigned int reg, void* magic )
         entry->schedVariable_len ) );
     DEBUG_MSG( ( "disman:schedule:callback", " = %ld\n", entry->schedValue ) );
 
-    memset( &assign, 0, sizeof( Types_VariableList ) );
+    memset( &assign, 0, sizeof( VariableList ) );
     Client_setVarObjid( &assign, entry->schedVariable, entry->schedVariable_len );
     Client_setVarTypedValue( &assign, ASN01_INTEGER,
         ( u_char* )&entry->schedValue,

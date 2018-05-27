@@ -19,8 +19,8 @@
 #include "AgentHandler.h"
 #include "System/Util/Assert.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
 #include "Priot.h"
 #include "Scalar.h"
@@ -249,7 +249,7 @@ int ifTable_post_request( ifTable_registration* user_context, int rc )
             /*
              * notify library to save changed rows
              */
-            Api_storeNeeded( DefaultStore_getString( DsStorage_LIBRARY_ID,
+            Api_storeNeeded( DefaultStore_getString( DsStore_LIBRARY_ID,
                 DsStr_APPTYPE ) );
         }
 

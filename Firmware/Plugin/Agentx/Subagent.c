@@ -3,27 +3,27 @@
 #include "AgentCallbacks.h"
 #include "AgentRegistry.h"
 #include "Agentx/XClient.h"
-#include "Alarm.h"
 #include "Api.h"
-#include "System/Util/Assert.h"
-#include "Callback.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
+#include "System/Util/Callback.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
-#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "PriotSettings.h"
 #include "Protocol.h"
 #include "SysORTable.h"
+#include "System/Util/Alarm.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
+#include "System/Version.h"
 #include "Transports/CallbackDomain.h"
 #include "Trap.h"
 #include "Vars.h"
-#include "Version.h"
 
-static Callback_CallbackFT _Subagent_registerPingAlarm;
-static Alarm_CallbackFT _Subagent_reopenSession;
+static Callback_f _Subagent_registerPingAlarm;
+static AlarmCallback_f _Subagent_reopenSession;
 
 void Subagent_registerCallbacks( Types_Session* s );
 void Subagent_unregisterCallbacks( Types_Session* ss );
@@ -42,7 +42,7 @@ int Subagent_openMasterSession( void );
 typedef struct NsSubagentMagic_s {
     int original_command;
     Types_Session* session;
-    Types_VariableList* ovars;
+    VariableList* ovars;
 } NsSubagentMagic;
 
 struct AgentSetInfo_s {
@@ -51,7 +51,7 @@ struct AgentSetInfo_s {
     int errstat;
     time_t uptime;
     Types_Session* sess;
-    Types_VariableList* var_list;
+    VariableList* var_list;
 
     struct AgentSetInfo_s* next;
 };
@@ -71,7 +71,7 @@ int Subagent_startup( int majorID, int minorID,
      * to try to connect to master or setup a ping alarm if it couldn't
      * succeed. if no ping interval was set up, just try to connect once.
      */
-    if ( DefaultStore_getInt( DsStorage_APPLICATION_ID,
+    if ( DefaultStore_getInt( DsStore_APPLICATION_ID,
              DsAgentInterger_AGENTX_PING_INTERVAL )
         > 0 )
         _Subagent_reopenSession( 0, NULL );
@@ -108,7 +108,7 @@ int Subagent_init( void )
     if ( ++_subagent_initInit != 1 )
         return 0;
 
-    Assert_assert( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    Assert_assert( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                        DsAgentBoolean_ROLE )
         == SUB_AGENT );
 
@@ -119,8 +119,8 @@ int Subagent_init( void )
     if ( NULL == subagent_agentxCallbackSess )
         return -1;
 
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_POST_READ_CONFIG,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_READ_CONFIG,
         Subagent_startup, NULL );
 
     DEBUG_MSGTL( ( "agentx/subagent", "initializing....  DONE\n" ) );
@@ -130,7 +130,7 @@ int Subagent_init( void )
 
 void Subagent_enableSubagent( void )
 {
-    DefaultStore_setBoolean( DsStorage_APPLICATION_ID, DsAgentBoolean_ROLE,
+    DefaultStore_setBoolean( DsStore_APPLICATION_ID, DsAgentBoolean_ROLE,
         SUB_AGENT );
 }
 
@@ -231,7 +231,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
 
     if ( operation == API_CALLBACK_OP_DISCONNECT ) {
         struct Client_SynchState_s* state = ( struct Client_SynchState_s* )magic;
-        int period = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+        int period = DefaultStore_getInt( DsStore_APPLICATION_ID,
             DsAgentInterger_AGENTX_PING_INTERVAL );
         DEBUG_MSGTL( ( "agentx/subagent",
             "transport disconnect indication\n" ) );
@@ -259,7 +259,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
         if ( session->securityModel != API_DEFAULT_SECMODEL ) {
             Alarm_unregister( session->securityModel );
         }
-        Callback_callCallbacks( CALLBACK_APPLICATION,
+        Callback_call( CallbackMajor_APPLICATION,
             PriotdCallback_INDEX_STOP, ( void* )session );
         Subagent_unregisterCallbacks( session );
         Trap_removeTrapSession( session );
@@ -272,7 +272,7 @@ int Subagent_handleAgentxPacket( int operation, Types_Session* session, int reqi
              * _Subagent_reopenSession unregisters itself if it succeeds in talking
              * to the master agent.
              */
-            Alarm_register( period, ALARM_SA_REPEAT, _Subagent_reopenSession, NULL );
+            Alarm_register( period, AlarmFlag_REPEAT, _Subagent_reopenSession, NULL );
             Logger_log( LOGGER_PRIORITY_INFO, "AgentX master disconnected us, reconnecting in %d\n", period );
         } else {
             Logger_log( LOGGER_PRIORITY_INFO, "AgentX master disconnected us, not reconnecting\n" );
@@ -491,7 +491,7 @@ int Subagent_handleSubagentResponse( int op, Types_Session* session, int reqid,
     Types_Pdu* pdu, void* magic )
 {
     NsSubagentMagic* smagic = ( NsSubagentMagic* )magic;
-    Types_VariableList *u = NULL, *v = NULL;
+    VariableList *u = NULL, *v = NULL;
     int rc = 0;
 
     if ( _Subagent_invalidOpAndMagic( op, ( NsSubagentMagic* )magic ) ) {
@@ -515,21 +515,21 @@ int Subagent_handleSubagentResponse( int op, Types_Session* session, int reqid,
             "do getNext scope processing %p %p\n", smagic->ovars,
             pdu->variables ) );
         for ( u = smagic->ovars, v = pdu->variables; u != NULL && v != NULL;
-              u = u->nextVariable, v = v->nextVariable ) {
-            if ( Api_oidCompare( u->val.objid, u->valLen / sizeof( oid ), vars_nullOid,
+              u = u->next, v = v->next ) {
+            if ( Api_oidCompare( u->value.objectId, u->valueLength / sizeof( oid ), vars_nullOid,
                      vars_nullOidLen / sizeof( oid ) )
                 != 0 ) {
                 /*
                  * The master agent requested scoping for this variable.
                  */
                 rc = Api_oidCompare( v->name, v->nameLength,
-                    u->val.objid,
-                    u->valLen / sizeof( oid ) );
+                    u->value.objectId,
+                    u->valueLength / sizeof( oid ) );
                 DEBUG_MSGTL( ( "agentx/subagent", "result " ) );
                 DEBUG_MSGOID( ( "agentx/subagent", v->name, v->nameLength ) );
                 DEBUG_MSG( ( "agentx/subagent", " scope to " ) );
                 DEBUG_MSGOID( ( "agentx/subagent",
-                    u->val.objid, u->valLen / sizeof( oid ) ) );
+                    u->value.objectId, u->valueLength / sizeof( oid ) ) );
                 DEBUG_MSG( ( "agentx/subagent", " result %d\n", rc ) );
 
                 if ( rc >= 0 ) {
@@ -706,18 +706,18 @@ void Subagent_registerCallbacks( Types_Session* s )
     s->myvoid = sess_p;
     if ( !sess_p )
         return;
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_SHUTDOWN,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_SHUTDOWN,
         Subagent_shutdown, sess_p );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_REGISTER_OID,
         Subagent_registrationCallback, sess_p );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_UNREGISTER_OID,
         Subagent_registrationCallback, sess_p );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_REG_SYSOR,
         Subagent_sysORCallback, sess_p );
-    Callback_registerCallback( CALLBACK_APPLICATION,
+    Callback_register( CallbackMajor_APPLICATION,
         PriotdCallback_UNREG_SYSOR,
         Subagent_sysORCallback, sess_p );
 }
@@ -730,18 +730,18 @@ void Subagent_unregisterCallbacks( Types_Session* ss )
 {
     DEBUG_MSGTL( ( "agentx/subagent",
         "unregistering callbacks for session %p\n", ss ) );
-    Callback_unregisterCallback( CALLBACK_LIBRARY, CALLBACK_SHUTDOWN,
+    Callback_unregister( CallbackMajor_LIBRARY, CallbackMinor_SHUTDOWN,
         Subagent_shutdown, ss->myvoid, 1 );
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_REGISTER_OID,
         Subagent_registrationCallback, ss->myvoid, 1 );
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_UNREGISTER_OID,
         Subagent_registrationCallback, ss->myvoid, 1 );
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_REG_SYSOR,
         Subagent_sysORCallback, ss->myvoid, 1 );
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_UNREG_SYSOR,
         Subagent_sysORCallback, ss->myvoid, 1 );
     MEMORY_FREE( ss->myvoid );
@@ -772,7 +772,7 @@ int Subagent_openMasterSession( void )
     sess.callback = Subagent_handleAgentxPacket;
     sess.authenticator = NULL;
 
-    agentx_socket = DefaultStore_getString( DsStorage_APPLICATION_ID,
+    agentx_socket = DefaultStore_getString( DsStore_APPLICATION_ID,
         DsAgentString_X_SOCKET );
     t = Transport_openClient( "agentx", agentx_socket );
     if ( t == NULL ) {
@@ -780,13 +780,13 @@ int Subagent_openMasterSession( void )
          * Diagnose snmp_open errors with the input
          * Types_Session pointer.
          */
-        if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                  DsAgentBoolean_NO_CONNECTION_WARNINGS ) ) {
             char buf[ 1024 ];
             snprintf( buf, sizeof( buf ), "Warning: "
                                           "Failed to connect to the agentx master agent (%s)",
                 agentx_socket ? agentx_socket : "[NIL]" );
-            if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                      DsAgentBoolean_NO_ROOT_ACCESS ) ) {
                 Api_sessLogError( LOGGER_PRIORITY_WARNING, buf, &sess );
             } else {
@@ -800,7 +800,7 @@ int Subagent_openMasterSession( void )
         Protocol_reallocBuild, Protocol_checkPacket, NULL );
 
     if ( agent_mainSession == NULL ) {
-        if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                  DsAgentBoolean_NO_CONNECTION_WARNINGS ) ) {
             char buf[ 1024 ];
             snprintf( buf, sizeof( buf ), "Error: "
@@ -845,7 +845,7 @@ int Subagent_openMasterSession( void )
 
     Subagent_registerCallbacks( agent_mainSession );
 
-    Callback_callCallbacks( CALLBACK_APPLICATION,
+    Callback_call( CallbackMajor_APPLICATION,
         PriotdCallback_INDEX_START, ( void* )agent_mainSession );
 
     Logger_log( LOGGER_PRIORITY_INFO, "PRIOT version %s AgentX subagent connected\n",
@@ -921,7 +921,7 @@ _Subagent_registerPingAlarm( int majorID, int minorID,
 {
 
     Types_Session* ss = ( Types_Session* )clientarg;
-    int ping_interval = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+    int ping_interval = DefaultStore_getInt( DsStore_APPLICATION_ID,
         DsAgentInterger_AGENTX_PING_INTERVAL );
 
     if ( !ping_interval ) /* don't do anything if not setup properly */
@@ -945,7 +945,7 @@ _Subagent_registerPingAlarm( int majorID, int minorID,
          * we re-use the securityModel parameter for an alarm stash,
          * since agentx doesn't need it
          */
-        ss->securityModel = Alarm_register( ping_interval, ALARM_SA_REPEAT,
+        ss->securityModel = Alarm_register( ping_interval, AlarmFlag_REPEAT,
             Subagent_checkSession, ss );
     } else {
         /*
@@ -953,7 +953,7 @@ _Subagent_registerPingAlarm( int majorID, int minorID,
          */
         DEBUG_MSGTL( ( "agentx/subagent",
             "subagent not properly attached, postponing registration till later....\n" ) );
-        Alarm_register( ping_interval, ALARM_SA_REPEAT,
+        Alarm_register( ping_interval, AlarmFlag_REPEAT,
             _Subagent_reopenSession, NULL );
     }
     return 0;
@@ -983,7 +983,7 @@ void Subagent_checkSession( unsigned int clientreg, void* clientarg )
         Subagent_unregisterCallbacks( ss );
         XClient_closeSession( ss, AGENTX_CLOSE_TIMEOUT );
         Alarm_unregister( clientreg ); /* delete ping alarm timer */
-        Callback_callCallbacks( CALLBACK_APPLICATION,
+        Callback_call( CallbackMajor_APPLICATION,
             PriotdCallback_INDEX_STOP, ( void* )ss );
         AgentRegistry_registerMibDetach();
         if ( agent_mainSession != NULL ) {

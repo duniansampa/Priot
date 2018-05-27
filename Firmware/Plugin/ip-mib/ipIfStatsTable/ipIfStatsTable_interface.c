@@ -31,7 +31,7 @@
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
@@ -320,11 +320,11 @@ int ipIfStatsTable_index_to_oid( Types_Index* oid_idx,
     /*
      * ipIfStatsIPVersion(1)/InetVersion/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipIfStatsIPVersion;
+    VariableList var_ipIfStatsIPVersion;
     /*
      * ipIfStatsIfIndex(2)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipIfStatsIfIndex;
+    VariableList var_ipIfStatsIfIndex;
 
     /*
      * set up varbinds
@@ -337,8 +337,8 @@ int ipIfStatsTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipIfStatsIPVersion.nextVariable = &var_ipIfStatsIfIndex;
-    var_ipIfStatsIfIndex.nextVariable = NULL;
+    var_ipIfStatsIPVersion.next = &var_ipIfStatsIfIndex;
+    var_ipIfStatsIfIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipIfStatsTable:ipIfStatsTable_index_to_oid",
         "called\n" ) );
@@ -387,11 +387,11 @@ int ipIfStatsTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ipIfStatsIPVersion(1)/InetVersion/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipIfStatsIPVersion;
+    VariableList var_ipIfStatsIPVersion;
     /*
      * ipIfStatsIfIndex(2)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipIfStatsIfIndex;
+    VariableList var_ipIfStatsIfIndex;
 
     /*
      * set up varbinds
@@ -404,8 +404,8 @@ int ipIfStatsTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipIfStatsIPVersion.nextVariable = &var_ipIfStatsIfIndex;
-    var_ipIfStatsIfIndex.nextVariable = NULL;
+    var_ipIfStatsIPVersion.next = &var_ipIfStatsIfIndex;
+    var_ipIfStatsIfIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipIfStatsTable:ipIfStatsTable_index_from_oid",
         "called\n" ) );
@@ -419,8 +419,8 @@ int ipIfStatsTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ipIfStatsIPVersion = *( ( u_long* )var_ipIfStatsIPVersion.val.string );
-        mib_idx->ipIfStatsIfIndex = *( ( long* )var_ipIfStatsIfIndex.val.string );
+        mib_idx->ipIfStatsIPVersion = *( ( u_long* )var_ipIfStatsIPVersion.value.string );
+        mib_idx->ipIfStatsIfIndex = *( ( long* )var_ipIfStatsIfIndex.value.string );
     }
 
     /*
@@ -636,7 +636,7 @@ _mfd_ipIfStatsTable_object_lookup( MibHandler* handler,
  */
 static inline int
 _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -651,436 +651,436 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          * ipIfStatsInReceives(3)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINRECEIVES:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInReceives_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInReceives(4)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINRECEIVES:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCInReceives_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsInOctets(5)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINOCTETS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ipIfStatsInOctets_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ipIfStatsInOctets_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInOctets(6)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINOCTETS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ipIfStatsHCInOctets_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ipIfStatsHCInOctets_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsInHdrErrors(7)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINHDRERRORS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInHdrErrors_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInNoRoutes(8)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINNOROUTES:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInNoRoutes_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInAddrErrors(9)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINADDRERRORS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInAddrErrors_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInUnknownProtos(10)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINUNKNOWNPROTOS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInUnknownProtos_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInTruncatedPkts(11)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINTRUNCATEDPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInTruncatedPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInForwDatagrams(12)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINFORWDATAGRAMS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInForwDatagrams_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInForwDatagrams(13)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINFORWDATAGRAMS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCInForwDatagrams_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsReasmReqds(14)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSREASMREQDS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsReasmReqds_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsReasmOKs(15)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSREASMOKS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ipIfStatsReasmOKs_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ipIfStatsReasmOKs_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsReasmFails(16)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSREASMFAILS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsReasmFails_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInDiscards(17)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINDISCARDS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInDiscards_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsInDelivers(18)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINDELIVERS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInDelivers_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInDelivers(19)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINDELIVERS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCInDelivers_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutRequests(20)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTREQUESTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutRequests_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutRequests(21)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTREQUESTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCOutRequests_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutForwDatagrams(23)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTFORWDATAGRAMS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutForwDatagrams_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutForwDatagrams(24)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTFORWDATAGRAMS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCOutForwDatagrams_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutDiscards(25)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTDISCARDS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutDiscards_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutFragReqds(26)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTFRAGREQDS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutFragReqds_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutFragOKs(27)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTFRAGOKS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutFragOKs_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutFragFails(28)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTFRAGFAILS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutFragFails_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutFragCreates(29)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTFRAGCREATES:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutFragCreates_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutTransmits(30)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTTRANSMITS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutTransmits_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutTransmits(31)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTTRANSMITS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCOutTransmits_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutOctets(32)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTOCTETS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutOctets_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutOctets(33)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTOCTETS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ipIfStatsHCOutOctets_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ipIfStatsHCOutOctets_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsInMcastPkts(34)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINMCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInMcastPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInMcastPkts(35)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINMCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCInMcastPkts_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsInMcastOctets(36)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINMCASTOCTETS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInMcastOctets_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInMcastOctets(37)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINMCASTOCTETS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCInMcastOctets_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutMcastPkts(38)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTMCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutMcastPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutMcastPkts(39)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTMCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCOutMcastPkts_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutMcastOctets(40)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTMCASTOCTETS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutMcastOctets_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutMcastOctets(41)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTMCASTOCTETS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCOutMcastOctets_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsInBcastPkts(42)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSINBCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsInBcastPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCInBcastPkts(43)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCINBCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCInBcastPkts_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsOutBcastPkts(44)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSOUTBCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ipIfStatsOutBcastPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsHCOutBcastPkts(45)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSHCOUTBCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
         rc = ipIfStatsHCOutBcastPkts_get( rowreq_ctx,
-            ( Int64_U64* )var->val.string );
+            ( Integer64* )var->value.string );
         break;
 
     /*
          * ipIfStatsDiscontinuityTime(46)/TimeStamp/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSDISCONTINUITYTIME:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_TIMETICKS;
         rc = ipIfStatsDiscontinuityTime_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipIfStatsRefreshRate(47)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPIFSTATSREFRESHRATE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipIfStatsRefreshRate_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -1120,14 +1120,14 @@ int _mfd_ipIfStatsTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -1144,7 +1144,7 @@ int _mfd_ipIfStatsTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = PRIOT_ERR_GENERR;
         }
@@ -1156,7 +1156,7 @@ int _mfd_ipIfStatsTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else

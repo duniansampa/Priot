@@ -10,7 +10,7 @@
  */
 #include "ipIfStatsTable.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "ipIfStatsTable_interface.h"
 #include "siglog/agent/mfd.h"
@@ -256,7 +256,7 @@ The total number of input IP datagrams received, including
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInReceives_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInReceives_val_ptr )
+    Integer64* ipIfStatsHCInReceives_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInReceives_val_ptr );
@@ -375,7 +375,7 @@ The total number of octets received in input IP datagrams,
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInOctets_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInOctets_val_ptr )
+    Integer64* ipIfStatsHCInOctets_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInOctets_val_ptr );
@@ -821,7 +821,7 @@ The number of input datagrams for which this entity was not
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInForwDatagrams_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInForwDatagrams_val_ptr )
+    Integer64* ipIfStatsHCInForwDatagrams_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInForwDatagrams_val_ptr );
@@ -1208,7 +1208,7 @@ The total number of datagrams successfully delivered to IP
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInDelivers_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInDelivers_val_ptr )
+    Integer64* ipIfStatsHCInDelivers_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInDelivers_val_ptr );
@@ -1331,7 +1331,7 @@ The total number of IP datagrams that local IP user-
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutRequests_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutRequests_val_ptr )
+    Integer64* ipIfStatsHCOutRequests_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutRequests_val_ptr );
@@ -1461,7 +1461,7 @@ The number of datagrams for which this entity was not their
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutForwDatagrams_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutForwDatagrams_val_ptr )
+    Integer64* ipIfStatsHCOutForwDatagrams_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutForwDatagrams_val_ptr );
@@ -1907,7 +1907,7 @@ The total number of IP datagrams that this entity supplied
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutTransmits_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutTransmits_val_ptr )
+    Integer64* ipIfStatsHCOutTransmits_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutTransmits_val_ptr );
@@ -2025,7 +2025,7 @@ The total number of octets in IP datagrams delivered to the
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutOctets_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutOctets_val_ptr )
+    Integer64* ipIfStatsHCOutOctets_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutOctets_val_ptr );
@@ -2141,7 +2141,7 @@ The number of IP multicast datagrams received.  This object
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInMcastPkts_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInMcastPkts_val_ptr )
+    Integer64* ipIfStatsHCInMcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInMcastPkts_val_ptr );
@@ -2262,7 +2262,7 @@ The total number of octets received in IP multicast
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInMcastOctets_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInMcastOctets_val_ptr )
+    Integer64* ipIfStatsHCInMcastOctets_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInMcastOctets_val_ptr );
@@ -2381,7 +2381,7 @@ The number of IP multicast datagrams transmitted.  This
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutMcastPkts_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutMcastPkts_val_ptr )
+    Integer64* ipIfStatsHCOutMcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutMcastPkts_val_ptr );
@@ -2499,7 +2499,7 @@ The total number of octets transmitted in IP multicast
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutMcastOctets_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutMcastOctets_val_ptr )
+    Integer64* ipIfStatsHCOutMcastOctets_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutMcastOctets_val_ptr );
@@ -2615,7 +2615,7 @@ The number of IP broadcast datagrams received.  This object
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCInBcastPkts_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCInBcastPkts_val_ptr )
+    Integer64* ipIfStatsHCInBcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCInBcastPkts_val_ptr );
@@ -2731,7 +2731,7 @@ The number of IP broadcast datagrams transmitted.  This
  * @retval MFD_ERROR           : Any other error
  */
 int ipIfStatsHCOutBcastPkts_get( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
-    Int64_U64* ipIfStatsHCOutBcastPkts_val_ptr )
+    Integer64* ipIfStatsHCOutBcastPkts_val_ptr )
 {
     /** we should have a non-NULL pointer */
     Assert_assert( NULL != ipIfStatsHCOutBcastPkts_val_ptr );

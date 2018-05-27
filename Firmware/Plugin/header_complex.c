@@ -3,10 +3,10 @@
  */
 
 #include "header_complex.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 
-int header_complex_generate_varoid( Types_VariableList* var )
+int header_complex_generate_varoid( VariableList* var )
 {
     int i;
 
@@ -23,50 +23,50 @@ int header_complex_generate_varoid( Types_VariableList* var )
             var->name = ( oid* )malloc( sizeof( oid ) );
             if ( var->name == NULL )
                 return ErrorCode_GENERR;
-            var->name[ 0 ] = *( var->val.integer );
+            var->name[ 0 ] = *( var->value.integer );
             break;
 
         case ASN01_PRIV_IMPLIED_OBJECT_ID:
-            var->nameLength = var->valLen / sizeof( oid );
+            var->nameLength = var->valueLength / sizeof( oid );
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
                 return ErrorCode_GENERR;
 
             for ( i = 0; i < ( int )var->nameLength; i++ )
-                var->name[ i ] = var->val.objid[ i ];
+                var->name[ i ] = var->value.objectId[ i ];
             break;
 
         case ASN01_OBJECT_ID:
-            var->nameLength = var->valLen / sizeof( oid ) + 1;
+            var->nameLength = var->valueLength / sizeof( oid ) + 1;
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
                 return ErrorCode_GENERR;
 
             var->name[ 0 ] = var->nameLength - 1;
             for ( i = 0; i < ( int )var->nameLength - 1; i++ )
-                var->name[ i + 1 ] = var->val.objid[ i ];
+                var->name[ i + 1 ] = var->value.objectId[ i ];
             break;
 
         case ASN01_PRIV_IMPLIED_OCTET_STR:
-            var->nameLength = var->valLen;
+            var->nameLength = var->valueLength;
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
                 return ErrorCode_GENERR;
 
-            for ( i = 0; i < ( int )var->valLen; i++ )
-                var->name[ i ] = ( oid )var->val.string[ i ];
+            for ( i = 0; i < ( int )var->valueLength; i++ )
+                var->name[ i ] = ( oid )var->value.string[ i ];
             break;
 
         case ASN01_OPAQUE:
         case ASN01_OCTET_STR:
-            var->nameLength = var->valLen + 1;
+            var->nameLength = var->valueLength + 1;
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
                 return ErrorCode_GENERR;
 
-            var->name[ 0 ] = ( oid )var->valLen;
-            for ( i = 0; i < ( int )var->valLen; i++ )
-                var->name[ i + 1 ] = ( oid )var->val.string[ i ];
+            var->name[ 0 ] = ( oid )var->valueLength;
+            for ( i = 0; i < ( int )var->valueLength; i++ )
+                var->name[ i + 1 ] = ( oid )var->value.string[ i ];
             break;
 
         default:
@@ -94,9 +94,9 @@ int header_complex_generate_varoid( Types_VariableList* var )
  * returns 1 if an error is encountered, or 0 if successful.
  */
 int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
-    Types_VariableList* data )
+    VariableList* data )
 {
-    Types_VariableList* var = data;
+    VariableList* var = data;
     int i, itmp;
 
     while ( var && oidLen > 0 ) {
@@ -105,16 +105,16 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
         case ASN01_COUNTER:
         case ASN01_GAUGE:
         case ASN01_TIMETICKS:
-            var->val.integer = ( long* )calloc( 1, sizeof( long ) );
-            if ( var->val.string == NULL )
+            var->value.integer = ( long* )calloc( 1, sizeof( long ) );
+            if ( var->value.string == NULL )
                 return ErrorCode_GENERR;
 
-            *var->val.integer = ( long )*oidIndex++;
-            var->valLen = sizeof( long );
+            *var->value.integer = ( long )*oidIndex++;
+            var->valueLength = sizeof( long );
             oidLen--;
             DEBUG_MSGTL( ( "header_complex_parse_oid",
                 "Parsed int(%d): %ld\n", var->type,
-                *var->val.integer ) );
+                *var->value.integer ) );
             break;
 
         case ASN01_OBJECT_ID:
@@ -131,18 +131,18 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
             if ( itmp == 0 )
                 break; /* zero length strings shouldn't malloc */
 
-            var->valLen = itmp * sizeof( oid );
-            var->val.objid = ( oid* )calloc( 1, var->valLen );
-            if ( var->val.objid == NULL )
+            var->valueLength = itmp * sizeof( oid );
+            var->value.objectId = ( oid* )calloc( 1, var->valueLength );
+            if ( var->value.objectId == NULL )
                 return ErrorCode_GENERR;
 
             for ( i = 0; i < itmp; i++ )
-                var->val.objid[ i ] = ( u_char )*oidIndex++;
+                var->value.objectId[ i ] = ( u_char )*oidIndex++;
             oidLen -= itmp;
 
             DEBUG_MSGTL( ( "header_complex_parse_oid", "Parsed oid: " ) );
-            DEBUG_MSGOID( ( "header_complex_parse_oid", var->val.objid,
-                var->valLen / sizeof( oid ) ) );
+            DEBUG_MSGOID( ( "header_complex_parse_oid", var->value.objectId,
+                var->valueLength / sizeof( oid ) ) );
             DEBUG_MSG( ( "header_complex_parse_oid", "\n" ) );
             break;
 
@@ -164,19 +164,19 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
             /*
              * malloc by size+1 to allow a null to be appended. 
              */
-            var->valLen = itmp;
-            var->val.string = ( u_char* )calloc( 1, itmp + 1 );
-            if ( var->val.string == NULL )
+            var->valueLength = itmp;
+            var->value.string = ( u_char* )calloc( 1, itmp + 1 );
+            if ( var->value.string == NULL )
                 return ErrorCode_GENERR;
 
             for ( i = 0; i < itmp; i++ )
-                var->val.string[ i ] = ( u_char )*oidIndex++;
-            var->val.string[ itmp ] = '\0';
+                var->value.string[ i ] = ( u_char )*oidIndex++;
+            var->value.string[ itmp ] = '\0';
             oidLen -= itmp;
 
             DEBUG_MSGTL( ( "header_complex_parse_oid",
                 "Parsed str(%d): %s\n", var->type,
-                var->val.string ) );
+                var->value.string ) );
             break;
 
         default:
@@ -184,7 +184,7 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
                 "invalid asn type: %d\n", var->type ) );
             return ErrorCode_GENERR;
         }
-        var = var->nextVariable;
+        var = var->next;
     }
     if ( var != NULL || oidLen > 0 )
         return ErrorCode_GENERR;
@@ -195,11 +195,11 @@ void header_complex_generate_oid( oid* name, /* out */
     size_t* length, /* out */
     oid* prefix,
     size_t prefix_len,
-    Types_VariableList* data )
+    VariableList* data )
 {
 
     oid* oidptr;
-    Types_VariableList* var;
+    VariableList* var;
 
     if ( prefix ) {
         memcpy( name, prefix, prefix_len * sizeof( oid ) );
@@ -210,7 +210,7 @@ void header_complex_generate_oid( oid* name, /* out */
         *length = 0;
     }
 
-    for ( var = data; var != NULL; var = var->nextVariable ) {
+    for ( var = data; var != NULL; var = var->next ) {
         header_complex_generate_varoid( var );
         memcpy( oidptr, var->name, sizeof( oid ) * var->nameLength );
         oidptr = oidptr + var->nameLength;
@@ -226,7 +226,7 @@ void header_complex_generate_oid( oid* name, /* out */
  * finds the data in "datalist" stored at "index" 
  */
 void* header_complex_get( struct header_complex_index* datalist,
-    Types_VariableList* index )
+    VariableList* index )
 {
     oid searchfor[ ASN01_MAX_OID_LEN ];
     size_t searchfor_len;
@@ -319,7 +319,7 @@ void* header_complex( struct header_complex_index* datalist,
 
 struct header_complex_index*
 header_complex_maybe_add_data( struct header_complex_index** thedata,
-    Types_VariableList* var, void* data,
+    VariableList* var, void* data,
     int dont_allow_duplicates )
 {
     oid newoid[ ASN01_MAX_OID_LEN ];
@@ -341,7 +341,7 @@ header_complex_maybe_add_data( struct header_complex_index** thedata,
 
 struct header_complex_index*
 header_complex_add_data( struct header_complex_index** thedata,
-    Types_VariableList* var, void* data )
+    VariableList* var, void* data )
 {
     return header_complex_maybe_add_data( thedata, var, data, 0 );
 }

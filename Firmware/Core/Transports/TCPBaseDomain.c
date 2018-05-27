@@ -1,5 +1,5 @@
 #include "TCPBaseDomain.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 /*
  * You can write something into opaque that will subsequently get passed back

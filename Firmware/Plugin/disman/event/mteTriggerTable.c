@@ -7,11 +7,11 @@
  */
 
 #include "mteTriggerTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "mteTrigger.h"
 #include "utilities/Iquery.h"
 
@@ -169,7 +169,7 @@ int mteTriggerTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERCOMMENT:
             case COLUMN_MTETRIGGERTARGETTAG:
             case COLUMN_MTETRIGGERCONTEXTNAME:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR2_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -177,7 +177,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTETRIGGERTEST:
-                ret = CheckVarbind_typeAndSize(
+                ret = VariableList_checkTypeAndLength(
                     request->requestvb, ASN01_OCTET_STR, 1 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -185,7 +185,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTETRIGGERSAMPLETYPE:
-                ret = CheckVarbind_intRange( request->requestvb,
+                ret = VariableList_checkIntLengthAndRange( request->requestvb,
                     MTE_SAMPLE_ABSOLUTE, MTE_SAMPLE_DELTA );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -193,7 +193,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTETRIGGERVALUEID:
-                ret = CheckVarbind_oid( request->requestvb );
+                ret = VariableList_checkOidMaxLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -202,7 +202,7 @@ int mteTriggerTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERVALUEIDWILDCARD:
             case COLUMN_MTETRIGGERCONTEXTNAMEWILDCARD:
             case COLUMN_MTETRIGGERENABLED:
-                ret = CheckVarbind_truthValue( request->requestvb );
+                ret = VariableList_checkBoolLengthAndValue( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -210,7 +210,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 break;
 
             case COLUMN_MTETRIGGERFREQUENCY:
-                ret = CheckVarbind_uint( request->requestvb );
+                ret = VariableList_checkUIntLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -218,7 +218,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTETRIGGEROBJECTSOWNER:
             case COLUMN_MTETRIGGEROBJECTS:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -226,7 +226,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTETRIGGERENTRYSTATUS:
-                ret = CheckVarbind_rowStatus( request->requestvb,
+                ret = VariableList_checkRowStatusTransition( request->requestvb,
                     ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -251,7 +251,7 @@ int mteTriggerTable_handler( MibHandler* handler,
              */
             if ( entry && entry->flags & MTE_TRIGGER_FLAG_ACTIVE ) {
                 /* check for the acceptable assignments */
-                if ( ( tinfo->colnum == COLUMN_MTETRIGGERENABLED ) || ( tinfo->colnum == COLUMN_MTETRIGGERENTRYSTATUS && *request->requestvb->val.integer != TC_RS_NOTINSERVICE ) )
+                if ( ( tinfo->colnum == COLUMN_MTETRIGGERENABLED ) || ( tinfo->colnum == COLUMN_MTETRIGGERENTRYSTATUS && *request->requestvb->value.integer != TC_RS_NOTINSERVICE ) )
                     continue;
 
                 /* Otherwise, reject this request */
@@ -271,19 +271,19 @@ int mteTriggerTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
                     memset( mteOwner, 0, sizeof( mteOwner ) );
-                    memcpy( mteOwner, tinfo->indexes->val.string,
-                        tinfo->indexes->valLen );
+                    memcpy( mteOwner, tinfo->indexes->value.string,
+                        tinfo->indexes->valueLength );
                     memset( mteTName, 0, sizeof( mteTName ) );
                     memcpy( mteTName,
-                        tinfo->indexes->nextVariable->val.string,
-                        tinfo->indexes->nextVariable->valLen );
+                        tinfo->indexes->next->value.string,
+                        tinfo->indexes->next->valueLength );
 
                     row = mteTrigger_createEntry( mteOwner, mteTName, 0 );
                     if ( !row ) {
@@ -306,7 +306,7 @@ int mteTriggerTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     /*
@@ -363,14 +363,14 @@ int mteTriggerTable_handler( MibHandler* handler,
                 memset( entry->mteTriggerComment, 0,
                     sizeof( entry->mteTriggerComment ) );
                 memcpy( entry->mteTriggerComment,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERTEST:
-                entry->mteTriggerTest = request->requestvb->val.string[ 0 ];
+                entry->mteTriggerTest = request->requestvb->value.string[ 0 ];
                 break;
             case COLUMN_MTETRIGGERSAMPLETYPE:
-                if ( *request->requestvb->val.integer == MTE_SAMPLE_DELTA )
+                if ( *request->requestvb->value.integer == MTE_SAMPLE_DELTA )
                     entry->flags |= MTE_TRIGGER_FLAG_DELTA;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_DELTA;
@@ -379,12 +379,12 @@ int mteTriggerTable_handler( MibHandler* handler,
                 memset( entry->mteTriggerValueID, 0,
                     sizeof( entry->mteTriggerValueID ) );
                 memcpy( entry->mteTriggerValueID,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
-                entry->mteTriggerValueID_len = request->requestvb->valLen / sizeof( oid );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
+                entry->mteTriggerValueID_len = request->requestvb->valueLength / sizeof( oid );
                 break;
             case COLUMN_MTETRIGGERVALUEIDWILDCARD:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_VWILD;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_VWILD;
@@ -393,47 +393,47 @@ int mteTriggerTable_handler( MibHandler* handler,
                 memset( entry->mteTriggerTarget, 0,
                     sizeof( entry->mteTriggerTarget ) );
                 memcpy( entry->mteTriggerTarget,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERCONTEXTNAME:
                 memset( entry->mteTriggerContext, 0,
                     sizeof( entry->mteTriggerContext ) );
                 memcpy( entry->mteTriggerContext,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERCONTEXTNAMEWILDCARD:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_CWILD;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_CWILD;
                 break;
             case COLUMN_MTETRIGGERFREQUENCY:
-                entry->mteTriggerFrequency = *request->requestvb->val.integer;
+                entry->mteTriggerFrequency = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGEROBJECTSOWNER:
                 memset( entry->mteTriggerOOwner, 0,
                     sizeof( entry->mteTriggerOOwner ) );
                 memcpy( entry->mteTriggerOOwner,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGEROBJECTS:
                 memset( entry->mteTriggerObjects, 0,
                     sizeof( entry->mteTriggerObjects ) );
                 memcpy( entry->mteTriggerObjects,
-                    request->requestvb->val.string,
-                    request->requestvb->valLen );
+                    request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERENABLED:
-                if ( *request->requestvb->val.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == TC_TV_TRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_ENABLED;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_ENABLED;
                 break;
             case COLUMN_MTETRIGGERENTRYSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                     entry->flags |= MTE_TRIGGER_FLAG_ACTIVE;
                     mteTrigger_enable( entry );

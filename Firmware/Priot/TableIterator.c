@@ -3,7 +3,7 @@
 #include "System/Util/Assert.h"
 #include "Client.h"
 #include "System/Containers/Map.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "Mib.h"
 #include "StashCache.h"
@@ -101,7 +101,7 @@ IteratorInfo*
 TableIterator_createTable( FirstDataPointFT* firstDP,
     NextDataPointFT* nextDP,
     FirstDataPointFT* getidx,
-    Types_VariableList* indexes )
+    VariableList* indexes )
 {
     IteratorInfo* iinfo = MEMORY_MALLOC_TYPEDEF( IteratorInfo );
 
@@ -255,8 +255,8 @@ void TableIterator_insertIteratorContext( RequestInfo* request, void* data )
 {
     RequestInfo* req;
     TableRequestInfo* table_info = NULL;
-    Types_VariableList* this_index = NULL;
-    Types_VariableList* that_index = NULL;
+    VariableList* this_index = NULL;
+    VariableList* that_index = NULL;
     oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
     oid this_oid[ ASN01_MAX_OID_LEN ];
     oid that_oid[ ASN01_MAX_OID_LEN ];
@@ -322,7 +322,7 @@ typedef struct TiCacheInfo_s {
     void* data_context;
     FreeDataContextFT* free_context;
     IteratorInfo* iinfo;
-    Types_VariableList* results;
+    VariableList* results;
 } TiCacheInfo;
 
 static void
@@ -407,14 +407,14 @@ int TableIterator_helperHandler( MibHandler* handler,
     int notdone;
     int hintok = 0;
     RequestInfo *request, *reqtmp = NULL;
-    Types_VariableList* index_search = NULL;
-    Types_VariableList* free_this_index_search = NULL;
+    VariableList* index_search = NULL;
+    VariableList* free_this_index_search = NULL;
     void *callback_loop_context = NULL, *last_loop_context;
     void* callback_data_context = NULL;
     TiCacheInfo* ti_info = NULL;
     int request_count = 0;
     OidStash_Node** cinfo = NULL;
-    Types_VariableList *old_indexes = NULL, *vb;
+    VariableList *old_indexes = NULL, *vb;
     TableRegistrationInfo* table_reg_info = NULL;
     int i;
     Map* ldata = NULL;
@@ -657,7 +657,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                               i <= ( int )table_reg_info->max_column; i++ ) {
                             myname[ reginfo->rootoid_len + 1 ] = i;
                             table_info->colnum = i;
-                            vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+                            vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( VariableList );
                             if ( vb == NULL ) {
                                 /*
                                  * Cleanup
@@ -871,7 +871,7 @@ int TableIterator_helperHandler( MibHandler* handler,
 
 void* TableIterator_rowFirst( IteratorInfo* iinfo )
 {
-    Types_VariableList *vp1, *vp2;
+    VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
 
     if ( !iinfo )
@@ -890,7 +890,7 @@ void* TableIterator_rowFirst( IteratorInfo* iinfo )
 
 void* TableIterator_rowGet( IteratorInfo* iinfo, void* row )
 {
-    Types_VariableList *vp1, *vp2;
+    VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
 
     if ( !iinfo || !row )
@@ -918,7 +918,7 @@ void* TableIterator_rowGet( IteratorInfo* iinfo, void* row )
 
 void* TableIterator_rowNext( IteratorInfo* iinfo, void* row )
 {
-    Types_VariableList *vp1, *vp2;
+    VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
 
     if ( !iinfo || !row )
@@ -945,7 +945,7 @@ void* TableIterator_rowNext( IteratorInfo* iinfo, void* row )
 }
 
 void* TableIterator_rowGetByidx( IteratorInfo* iinfo,
-    Types_VariableList* indexes )
+    VariableList* indexes )
 {
     oid dummy[] = { 0, 0 }; /* Keep 'build_oid' happy */
     oid instance[ ASN01_MAX_OID_LEN ];
@@ -960,7 +960,7 @@ void* TableIterator_rowGetByidx( IteratorInfo* iinfo,
 }
 
 void* TableIterator_rowNextByidx( IteratorInfo* iinfo,
-    Types_VariableList* indexes )
+    VariableList* indexes )
 {
     oid dummy[] = { 0, 0 };
     oid instance[ ASN01_MAX_OID_LEN ];
@@ -980,7 +980,7 @@ void* TableIterator_rowGetByoid( IteratorInfo* iinfo,
     oid dummy[] = { 0, 0 };
     oid this_inst[ ASN01_MAX_OID_LEN ];
     size_t this_len;
-    Types_VariableList *vp1, *vp2;
+    VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
     int n;
 
@@ -1030,7 +1030,7 @@ void* TableIterator_rowNextByoid( IteratorInfo* iinfo,
     size_t this_len;
     oid best_inst[ ASN01_MAX_OID_LEN ];
     size_t best_len = 0;
-    Types_VariableList *vp1, *vp2;
+    VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
     int n;
 
@@ -1090,7 +1090,7 @@ void* TableIterator_rowNextByoid( IteratorInfo* iinfo,
 
 int TableIterator_rowCount( IteratorInfo* iinfo )
 {
-    Types_VariableList *vp1, *vp2;
+    VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
     int i = 0;
 

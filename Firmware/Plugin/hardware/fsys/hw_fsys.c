@@ -1,8 +1,8 @@
 
 
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "CacheHandler.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/String.h"
 #include "siglog/agent/hardware/fsys.h"
@@ -49,7 +49,7 @@ void init_hw_fsys( void )
     if ( _fsysAutoUpdate ) {
         DEBUG_MSGTL( ( "fsys", "Reloading Hardware FileSystems automatically (%d)\n",
             _fsysAutoUpdate ) );
-        Alarm_register( _fsysAutoUpdate, ALARM_SA_REPEAT,
+        Alarm_register( _fsysAutoUpdate, AlarmFlag_REPEAT,
             _fsys_update_stats, NULL );
     } else {
         _fsys_cache = CacheHandler_create( 5, netsnmp_fsys_load,

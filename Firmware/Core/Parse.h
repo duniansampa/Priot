@@ -71,10 +71,10 @@ struct Parse_Tree_s {
     char           *hint;
     char           *units;
     int             (*printomat) (u_char **, size_t *, size_t *, int,
-                                  const Types_VariableList *,
+                                  const VariableList *,
                                   const struct Parse_EnumList_s *, const char *,
                                   const char *);
-    void            (*printer) (char *, const Types_VariableList *, const struct Parse_EnumList_s *, const char *, const char *);   /* Value printing function */
+    void            (*printer) (char *, const VariableList *, const struct Parse_EnumList_s *, const char *, const char *);   /* Value printing function */
     char           *description;    /* description (a quoted string) */
     char           *reference;    /* references (a quoted string) */
     int             reported;       /* 1=report started in print_subtree... */

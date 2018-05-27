@@ -3,7 +3,7 @@
 #include "Client.h"
 #include "Api.h"
 #include "System/Util/Logger.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/Container.h"
 #include "System/Util/Assert.h"
 #include "TableContainer.h"
@@ -470,7 +470,7 @@ TableTdata_rowNext( Tdata      *table,
 /** finds a row in the 'tdata' table given the index values */
 TdataRow *
 TableTdata_rowGetByidx(Tdata         *table,
-                            Types_VariableList *indexes)
+                            VariableList *indexes)
 {
     oid             searchfor[      ASN01_MAX_OID_LEN];
     size_t          searchfor_len = ASN01_MAX_OID_LEN;
@@ -498,7 +498,7 @@ TableTdata_rowGetByoid(Tdata *table,
     given the index values */
 TdataRow *
 TableTdata_rowNextByidx(Tdata         *table,
-                             Types_VariableList *indexes)
+                             VariableList *indexes)
 {
     oid             searchfor[      ASN01_MAX_OID_LEN];
     size_t          searchfor_len = ASN01_MAX_OID_LEN;
@@ -541,7 +541,7 @@ TableTdata_rowCount(Tdata *table)
 /** compare a row with the given index values */
 int
 TableTdata_compareIdx(TdataRow     *row,
-                          Types_VariableList *indexes)
+                          VariableList *indexes)
 {
     oid             searchfor[      ASN01_MAX_OID_LEN];
     size_t          searchfor_len = ASN01_MAX_OID_LEN;
@@ -563,7 +563,7 @@ TableTdata_compareOid(TdataRow     *row,
 
 int
 TableTdata_compareSubtreeIdx(TdataRow     *row,
-                                  Types_VariableList *indexes)
+                                  VariableList *indexes)
 {
     oid             searchfor[      ASN01_MAX_OID_LEN];
     size_t          searchfor_len = ASN01_MAX_OID_LEN;

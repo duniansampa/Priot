@@ -1,13 +1,8 @@
 #include "Api.h"
 #include "Agentx/Protocol.h"
-#include "Alarm.h"
 #include "Auth.h"
-#include "Callback.h"
-#include "Callback.h"
 #include "Client.h"
-#include "DefaultStore.h"
 #include "Impl.h"
-#include "Int64.h"
 #include "LargeFdSet.h"
 #include "Mib.h"
 #include "Parse.h"
@@ -18,10 +13,15 @@
 #include "Session.h"
 #include "System/Containers/Container.h"
 #include "System/Containers/MapList.h"
+#include "System/Numerics/Integer64.h"
 #include "System/String.h"
 #include "System/Task/Mutex.h"
+#include "System/Util/Alarm.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Callback.h"
+#include "System/Util/Callback.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
 #include "Usm.h"
 #include "V3.h"
@@ -272,7 +272,7 @@ long Api_getNextReqid( void )
     if ( !retVal )
         retVal = 2;
     _api_reqid = retVal;
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
         retVal &= 0x7fff; /* mask to 15 bits */
     else
         retVal &= 0x7fffffff; /* mask to 31 bits */
@@ -292,7 +292,7 @@ long Api_getNextMsgid( void )
     if ( !retVal )
         retVal = 2;
     _api_msgid = retVal;
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
         retVal &= 0x7fff; /* mask to 15 bits */
     else
         retVal &= 0x7fffffff; /* mask to 31 bits */
@@ -312,7 +312,7 @@ long Api_getNextSessid( void )
     if ( !retVal )
         retVal = 2;
     _api_sessid = retVal;
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
         retVal &= 0x7fff; /* mask to 15 bits */
     else
         retVal &= 0x7fffffff; /* mask to 31 bits */
@@ -332,7 +332,7 @@ long Api_getNextTransid( void )
     if ( !retVal )
         retVal = 2;
     _api_transid = retVal;
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_LIB_16BIT_IDS ) )
         retVal &= 0x7fff; /* mask to 15 bits */
     else
         retVal &= 0x7fffffff; /* mask to 31 bits */
@@ -542,12 +542,12 @@ _Api_init( void )
     Service_registerDefaultTarget( "priottrap", "tlstcp", ":10162" );
     Service_registerDefaultTarget( "priottrap", "ipx", "/36880" );
 
-    DefaultStore_setInt( DsStorage_LIBRARY_ID,
+    DefaultStore_setInt( DsStore_LIBRARY_ID,
         DsInt_HEX_OUTPUT_LENGTH, 16 );
-    DefaultStore_setInt( DsStorage_LIBRARY_ID, DsInt_RETRIES,
+    DefaultStore_setInt( DsStore_LIBRARY_ID, DsInt_RETRIES,
         DEFAULT_RETRIES );
 
-    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+    DefaultStore_setBoolean( DsStore_LIBRARY_ID,
         DsBool_REVERSE_ENCODE,
         DEFAULT_ASNENCODING_DIRECTION );
 }
@@ -579,46 +579,46 @@ static void
 _Api_registerDefaultHandlers( void )
 {
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "dumpPacket",
-        DsStorage_LIBRARY_ID, DsBool_DUMP_PACKET );
+        DsStore_LIBRARY_ID, DsBool_DUMP_PACKET );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "reverseEncodeBER",
-        DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE );
+        DsStore_LIBRARY_ID, DsBool_REVERSE_ENCODE );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "defaultPort",
-        DsStorage_LIBRARY_ID, DsInt_DEFAULT_PORT );
+        DsStore_LIBRARY_ID, DsInt_DEFAULT_PORT );
 
     DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "noTokenWarnings",
-        DsStorage_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS );
+        DsStore_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noRangeCheck",
-        DsStorage_LIBRARY_ID, DsBool_DONT_CHECK_RANGE );
+        DsStore_LIBRARY_ID, DsBool_DONT_CHECK_RANGE );
     DefaultStore_registerPremib( ASN01_OCTET_STR, "priot", "persistentDir",
-        DsStorage_LIBRARY_ID, DsStr_PERSISTENT_DIR );
+        DsStore_LIBRARY_ID, DsStr_PERSISTENT_DIR );
     DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "tempFilePattern",
-        DsStorage_LIBRARY_ID, DsStr_TEMP_FILE_PATTERN );
+        DsStore_LIBRARY_ID, DsStr_TEMP_FILE_PATTERN );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noDisplayHint",
-        DsStorage_LIBRARY_ID, DsBool_NO_DISPLAY_HINT );
+        DsStore_LIBRARY_ID, DsBool_NO_DISPLAY_HINT );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "16bitIDs",
-        DsStorage_LIBRARY_ID, DsBool_LIB_16BIT_IDS );
+        DsStore_LIBRARY_ID, DsBool_LIB_16BIT_IDS );
     DefaultStore_registerPremib( ASN01_OCTET_STR, "priot", "clientaddr",
-        DsStorage_LIBRARY_ID, DsStr_CLIENT_ADDR );
+        DsStore_LIBRARY_ID, DsStr_CLIENT_ADDR );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "serverSendBuf",
-        DsStorage_LIBRARY_ID, DsInt_SERVERSENDBUF );
+        DsStore_LIBRARY_ID, DsInt_SERVERSENDBUF );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "serverRecvBuf",
-        DsStorage_LIBRARY_ID, DsInt_SERVERRECVBUF );
+        DsStore_LIBRARY_ID, DsInt_SERVERRECVBUF );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "clientSendBuf",
-        DsStorage_LIBRARY_ID, DsInt_CLIENTSENDBUF );
+        DsStore_LIBRARY_ID, DsInt_CLIENTSENDBUF );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "clientRecvBuf",
-        DsStorage_LIBRARY_ID, DsInt_CLIENTRECVBUF );
+        DsStore_LIBRARY_ID, DsInt_CLIENTRECVBUF );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noPersistentLoad",
-        DsStorage_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_LOAD );
+        DsStore_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_LOAD );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noPersistentSave",
-        DsStorage_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_SAVE );
+        DsStore_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_SAVE );
     DefaultStore_registerConfig( ASN01_BOOLEAN, "priot",
         "noContextEngineIDDiscovery",
-        DsStorage_LIBRARY_ID,
+        DsStore_LIBRARY_ID,
         DsBool_NO_DISCOVERY );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "timeout",
-        DsStorage_LIBRARY_ID, DsInt_TIMEOUT );
+        DsStore_LIBRARY_ID, DsInt_TIMEOUT );
     DefaultStore_registerConfig( ASN01_INTEGER, "priot", "retries",
-        DsStorage_LIBRARY_ID, DsInt_RETRIES );
+        DsStore_LIBRARY_ID, DsInt_RETRIES );
 
     Service_registerServiceHandlers();
 }
@@ -645,8 +645,8 @@ void Api_init( const char* type )
     /*
      * make the type available everywhere else
      */
-    if ( type && !DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_APPTYPE ) ) {
-        DefaultStore_setString( DsStorage_LIBRARY_ID,
+    if ( type && !DefaultStore_getString( DsStore_LIBRARY_ID, DsStr_APPTYPE ) ) {
+        DefaultStore_setString( DsStore_LIBRARY_ID,
             DsStr_APPTYPE, type );
     }
 
@@ -659,7 +659,7 @@ void Api_init( const char* type )
 
     Debug_debugInit(); /* should be done first, to turn on debugging ASAP */
     Container_initList();
-    Callback_initCallbacks();
+    Callback_init();
     Logger_initLogger();
     Api_initStatistics();
     Mib_registerMibHandlers();
@@ -692,7 +692,7 @@ void Api_storeIfNeeded( void )
         return;
 
     DEBUG_MSGTL( ( "priotStore", "store needed...\n" ) );
-    Api_store( DefaultStore_getString( DsStorage_LIBRARY_ID,
+    Api_store( DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE ) );
     _api_priotStoreNeeded = 0;
 }
@@ -701,7 +701,7 @@ void Api_store( const char* type )
 {
     DEBUG_MSGTL( ( "priotStore", "storing stuff...\n" ) );
     ReadConfig_savePersistent( type );
-    Callback_callCallbacks( CALLBACK_LIBRARY, CALLBACK_STORE_DATA, NULL );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA, NULL );
     ReadConfig_cleanPersistent( type );
 }
 
@@ -716,7 +716,7 @@ void Api_store( const char* type )
 void Api_shutdown( const char* type )
 {
     Api_store( type );
-    Callback_callCallbacks( CALLBACK_LIBRARY, CALLBACK_SHUTDOWN, NULL );
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_SHUTDOWN, NULL );
     Logger_shutdownLogger();
     Alarm_unregisterAll();
     Api_closeSessions();
@@ -727,8 +727,8 @@ void Api_shutdown( const char* type )
     Secmod_clear();
     MapList_clear();
     Transport_clearTdomainList();
-    Callback_clearCallback();
-    DefaultStore_shutdown();
+    Callback_clear();
+    DefaultStore_clear();
     Service_clearDefaultTarget();
     Service_clearDefaultDomain();
     Secmod_shutdown();
@@ -866,7 +866,7 @@ _Api_sessCopy2( Types_Session* in_session )
     }
 
     if ( session->securityLevel <= 0 ) {
-        session->securityLevel = DefaultStore_getInt( DsStorage_LIBRARY_ID, DsInt_SECLEVEL );
+        session->securityLevel = DefaultStore_getInt( DsStore_LIBRARY_ID, DsInt_SECLEVEL );
     }
 
     if ( in_session->securityEngineIDLen > 0 ) {
@@ -915,7 +915,7 @@ _Api_sessCopy2( Types_Session* in_session )
         }
         session->contextNameLen = in_session->contextNameLen;
     } else {
-        if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+        if ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                    DsStr_CONTEXT ) )
             != NULL )
             cp = strdup( cp );
@@ -935,7 +935,7 @@ _Api_sessCopy2( Types_Session* in_session )
             Api_sessClose( slp );
             return ( NULL );
         }
-    } else if ( ( cp = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    } else if ( ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                       DsStr_SECNAME ) )
         != NULL ) {
         cp = strdup( cp );
@@ -948,7 +948,7 @@ _Api_sessCopy2( Types_Session* in_session )
     }
 
     if ( session->retries == API_DEFAULT_RETRIES ) {
-        int retry = DefaultStore_getInt( DsStorage_LIBRARY_ID,
+        int retry = DefaultStore_getInt( DsStore_LIBRARY_ID,
             DsInt_RETRIES );
         if ( retry < 0 )
             session->retries = DEFAULT_RETRIES;
@@ -956,7 +956,7 @@ _Api_sessCopy2( Types_Session* in_session )
             session->retries = retry;
     }
     if ( session->timeout == API_DEFAULT_TIMEOUT ) {
-        int timeout = DefaultStore_getInt( DsStorage_LIBRARY_ID,
+        int timeout = DefaultStore_getInt( DsStore_LIBRARY_ID,
             DsInt_TIMEOUT );
         if ( timeout <= 0 )
             session->timeout = DEFAULT_TIMEOUT;
@@ -965,7 +965,7 @@ _Api_sessCopy2( Types_Session* in_session )
     }
     session->sessid = Api_getNextSessid();
 
-    Callback_callCallbacks( CALLBACK_LIBRARY, CALLBACK_SESSION_INIT,
+    Callback_call( CallbackMajor_LIBRARY, CallbackMinor_SESSION_INIT,
         session );
 
     if ( ( sptr = Secmod_find( session->securityModel ) ) != NULL ) {
@@ -1064,9 +1064,9 @@ int Api_v3ProbeContextEngineIDRfc5343( void* slp, Types_Session* session )
     }
 
     /* check that the response makes sense */
-    if ( NULL != response->variables && NULL != response->variables->name && Api_oidCompare( response->variables->name, response->variables->nameLength, snmpEngineIDoid, snmpEngineIDoid_len ) == 0 && ASN01_OCTET_STR == response->variables->type && NULL != response->variables->val.string && response->variables->valLen > 0 ) {
-        session->contextEngineID = ( u_char* )Memory_memdup( response->variables->val.string,
-            response->variables->valLen );
+    if ( NULL != response->variables && NULL != response->variables->name && Api_oidCompare( response->variables->name, response->variables->nameLength, snmpEngineIDoid, snmpEngineIDoid_len ) == 0 && ASN01_OCTET_STR == response->variables->type && NULL != response->variables->value.string && response->variables->valueLength > 0 ) {
+        session->contextEngineID = ( u_char* )Memory_memdup( response->variables->value.string,
+            response->variables->valueLength );
         if ( !session->contextEngineID ) {
             Logger_log( LOGGER_PRIORITY_ERR, "failed rfc5343 contextEngineID probing: memory allocation failed\n" );
             return PRIOT_ERR_GENERR;
@@ -1074,14 +1074,14 @@ int Api_v3ProbeContextEngineIDRfc5343( void* slp, Types_Session* session )
 
         /* technically there likely isn't a securityEngineID but just
            in case anyone goes looking we might as well have one */
-        session->securityEngineID = ( u_char* )Memory_memdup( response->variables->val.string,
-            response->variables->valLen );
+        session->securityEngineID = ( u_char* )Memory_memdup( response->variables->value.string,
+            response->variables->valueLength );
         if ( !session->securityEngineID ) {
             Logger_log( LOGGER_PRIORITY_ERR, "failed rfc5343 securityEngineID probing: memory allocation failed\n" );
             return PRIOT_ERR_GENERR;
         }
 
-        session->securityEngineIDLen = session->contextEngineIDLen = response->variables->valLen;
+        session->securityEngineIDLen = session->contextEngineIDLen = response->variables->valueLength;
 
         if ( Debug_getDoDebugging() ) {
             size_t i;
@@ -1291,9 +1291,9 @@ _Api_sessOpen( Types_Session* in_session )
         char* clientaddr_save = NULL;
 
         if ( NULL != in_session->localname ) {
-            clientaddr_save = DefaultStore_getString( DsStorage_LIBRARY_ID,
+            clientaddr_save = DefaultStore_getString( DsStore_LIBRARY_ID,
                 DsStr_CLIENT_ADDR );
-            DefaultStore_setString( DsStorage_LIBRARY_ID,
+            DefaultStore_setString( DsStore_LIBRARY_ID,
                 DsStr_CLIENT_ADDR,
                 in_session->localname );
         }
@@ -1309,7 +1309,7 @@ _Api_sessOpen( Types_Session* in_session )
         }
 
         if ( NULL != clientaddr_save )
-            DefaultStore_setString( DsStorage_LIBRARY_ID,
+            DefaultStore_setString( DsStore_LIBRARY_ID,
                 DsStr_CLIENT_ADDR, clientaddr_save );
     }
 
@@ -1549,7 +1549,7 @@ _Api_freeSession( Types_Session* s )
         /*
          * clear session from any callbacks
          */
-        Callback_clearClientArg( s, 0, 0 );
+        Callback_clearCallbackFuncArg( s, 0, 0 );
 
         free( ( char* )s );
     }
@@ -1832,7 +1832,7 @@ _Api_v3Build( u_char** pkt, size_t* pkt_len, size_t* offset,
     if ( pdu->securityModel == API_DEFAULT_SECMODEL ) {
         pdu->securityModel = session->securityModel;
         if ( pdu->securityModel == API_DEFAULT_SECMODEL ) {
-            pdu->securityModel = MapList_findValue( "priotSecmods", DefaultStore_getString( DsStorage_LIBRARY_ID, DsStr_SECMODEL ) );
+            pdu->securityModel = MapList_findValue( "priotSecmods", DefaultStore_getString( DsStore_LIBRARY_ID, DsStr_SECMODEL ) );
 
             if ( pdu->securityModel <= 0 ) {
                 pdu->securityModel = PRIOT_SEC_MODEL_USM;
@@ -1868,7 +1868,7 @@ _Api_v3Build( u_char** pkt, size_t* pkt_len, size_t* offset,
         ( ( session->securityName ) ? ( char* )session->securityName : ( ( pdu->securityName ) ? ( char* )pdu->securityName : "ERROR: undefined" ) ), _api_secLevelName[ pdu->securityLevel ] ) );
 
     DEBUG_DUMPSECTION( "send", "PRIOTv3 Message" );
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE ) ) {
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_REVERSE_ENCODE ) ) {
         ret = Api_v3PacketReallocRbuild( pkt, pkt_len, offset,
             session, pdu, NULL, 0 );
     } else {
@@ -2532,7 +2532,7 @@ u_char*
 Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
 {
     u_char *h1, *h1e, *h2, *h2e;
-    Types_VariableList* vp;
+    VariableList* vp;
     size_t length;
 
     length = *out_length;
@@ -2666,10 +2666,10 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
      * Store variable-bindings
      */
     DEBUG_DUMPSECTION( "send", "VarBindList" );
-    for ( vp = pdu->variables; vp; vp = vp->nextVariable ) {
+    for ( vp = pdu->variables; vp; vp = vp->next ) {
         DEBUG_DUMPSECTION( "send", "VarBind" );
         cp = Priot_buildVarOp( cp, vp->name, &vp->nameLength, vp->type,
-            vp->valLen, ( u_char* )vp->val.string,
+            vp->valueLength, ( u_char* )vp->value.string,
             out_length );
         DEBUG_INDENTLESS();
         if ( cp == NULL )
@@ -2699,14 +2699,14 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
     Types_Pdu* pdu )
 {
 #define VPCACHE_SIZE 50
-    Types_VariableList* vpcache[ VPCACHE_SIZE ];
-    Types_VariableList *vp, *tmpvp;
+    VariableList* vpcache[ VPCACHE_SIZE ];
+    VariableList *vp, *tmpvp;
     size_t start_offset = *offset;
     int i, wrapped = 0, notdone, final, rc = 0;
 
     DEBUG_MSGTL( ( "priotPduReallocRbuild", "starting\n" ) );
     for ( vp = pdu->variables, i = VPCACHE_SIZE - 1; vp;
-          vp = vp->nextVariable, i-- ) {
+          vp = vp->next, i-- ) {
         if ( i < 0 ) {
             wrapped = notdone = 1;
             i = VPCACHE_SIZE - 1;
@@ -2723,8 +2723,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
             rc = Priot_reallocRbuildVarOp( pkt, pkt_len, offset, 1,
                 vp->name, &vp->nameLength,
                 vp->type,
-                ( u_char* )vp->val.string,
-                vp->valLen );
+                ( u_char* )vp->value.string,
+                vp->valueLength );
             DEBUG_INDENTLESS();
             if ( rc == 0 ) {
                 return 0;
@@ -2740,8 +2740,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
                 rc = Priot_reallocRbuildVarOp( pkt, pkt_len, offset, 1,
                     vp->name, &vp->nameLength,
                     vp->type,
-                    ( u_char* )vp->val.string,
-                    vp->valLen );
+                    ( u_char* )vp->value.string,
+                    vp->valueLength );
                 DEBUG_INDENTLESS();
                 if ( rc == 0 ) {
                     return 0;
@@ -2756,7 +2756,7 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
             wrapped = 0;
 
             for ( vp = pdu->variables, i = VPCACHE_SIZE - 1;
-                  vp && vp != tmpvp; vp = vp->nextVariable, i-- ) {
+                  vp && vp != tmpvp; vp = vp->next, i-- ) {
                 if ( i < 0 ) {
                     wrapped = 1;
                     i = VPCACHE_SIZE - 1;
@@ -3371,7 +3371,7 @@ int Api_v3GetReportType( Types_Pdu* pdu )
     static oid snmpMPDStats[] = { 1, 3, 6, 1, 6, 3, 11, 2, 1 };
     static oid targetStats[] = { 1, 3, 6, 1, 6, 3, 12, 1 };
     static oid usmStats[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1 };
-    Types_VariableList* vp;
+    VariableList* vp;
     int rpt_type = ErrorCode_UNKNOWN_REPORT;
 
     if ( pdu == NULL || pdu->variables == NULL )
@@ -3536,7 +3536,7 @@ _Api_parse2( void* sessp,
         */
 
         /* special RFC5343 engineID discovery engineID check */
-        if ( !DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+        if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                  DsBool_NO_DISCOVERY )
             && PRIOT_MSG_RESPONSE != pdu->command && NULL != pdu->contextEngineID && pdu->contextEngineIDLen == 5 && pdu->contextEngineID[ 0 ] == 0x80 && pdu->contextEngineID[ 1 ] == 0x00 && pdu->contextEngineID[ 2 ] == 0x00 && pdu->contextEngineID[ 3 ] == 0x00 && pdu->contextEngineID[ 4 ] == 0x06 ) {
 
@@ -3546,7 +3546,7 @@ _Api_parse2( void* sessp,
 
             DEBUG_MSGTL( ( "priotv3Contextid", "starting context ID discovery\n" ) );
             /* ensure exactly one variable */
-            if ( NULL != pdu->variables && NULL == pdu->variables->nextVariable &&
+            if ( NULL != pdu->variables && NULL == pdu->variables->next &&
 
                 /* if it's a GET, match it exactly */
                 ( ( PRIOT_MSG_GET == pdu->command && Api_oidCompare( snmpEngineIDoid, snmpEngineIDoid_len, pdu->variables->name, pdu->variables->nameLength ) == 0 )
@@ -3648,7 +3648,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
     int badtype = 0;
     size_t len;
     size_t four;
-    Types_VariableList* vp = NULL;
+    VariableList* vp = NULL;
     oid objid[ TYPES_MAX_OID_LEN ];
     u_char* p;
 
@@ -3788,20 +3788,20 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
      * get each varBind sequence
      */
     while ( ( int )*length > 0 ) {
-        Types_VariableList* vptemp;
-        vptemp = ( Types_VariableList* )malloc( sizeof( *vptemp ) );
+        VariableList* vptemp;
+        vptemp = ( VariableList* )malloc( sizeof( *vptemp ) );
         if ( NULL == vptemp ) {
             return -1;
         }
         if ( NULL == vp ) {
             pdu->variables = vptemp;
         } else {
-            vp->nextVariable = vptemp;
+            vp->next = vptemp;
         }
         vp = vptemp;
 
-        vp->nextVariable = NULL;
-        vp->val.string = NULL;
+        vp->next = NULL;
+        vp->value.string = NULL;
         vp->nameLength = TYPES_MAX_OID_LEN;
         vp->name = NULL;
         vp->index = 0;
@@ -3809,7 +3809,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         vp->dataFreeHook = NULL;
         DEBUG_DUMPSECTION( "recv", "VarBind" );
         data = Priot_parseVarOp( data, objid, &vp->nameLength, &vp->type,
-            &vp->valLen, &var_val, length );
+            &vp->valueLength, &var_val, length );
         if ( data == NULL )
             return -1;
         if ( Client_setVarObjid( vp, objid, vp->nameLength ) )
@@ -3819,11 +3819,11 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         DEBUG_DUMPHEADER( "recv", "Value" );
         switch ( ( short )vp->type ) {
         case ASN01_INTEGER:
-            vp->val.integer = ( long* )vp->buf;
-            vp->valLen = sizeof( long );
+            vp->value.integer = ( long* )vp->buffer;
+            vp->valueLength = sizeof( long );
             p = Asn01_parseInt( var_val, &len, &vp->type,
-                ( long* )vp->val.integer,
-                sizeof( *vp->val.integer ) );
+                ( long* )vp->value.integer,
+                sizeof( *vp->value.integer ) );
             if ( !p )
                 return -1;
             break;
@@ -3831,81 +3831,81 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         case ASN01_GAUGE:
         case ASN01_TIMETICKS:
         case ASN01_UINTEGER:
-            vp->val.integer = ( long* )vp->buf;
-            vp->valLen = sizeof( u_long );
+            vp->value.integer = ( long* )vp->buffer;
+            vp->valueLength = sizeof( u_long );
             p = Asn01_parseUnsignedInt( var_val, &len, &vp->type,
-                ( u_long* )vp->val.integer,
-                vp->valLen );
+                ( u_long* )vp->value.integer,
+                vp->valueLength );
             if ( !p )
                 return -1;
             break;
         case ASN01_OPAQUE_COUNTER64:
         case ASN01_OPAQUE_U64:
         case ASN01_COUNTER64:
-            vp->val.counter64 = ( struct Asn01_Counter64_s* )vp->buf;
-            vp->valLen = sizeof( struct Asn01_Counter64_s );
+            vp->value.counter64 = ( Counter64* )vp->buffer;
+            vp->valueLength = sizeof( Counter64 );
             p = Asn01_parseUnsignedInt64( var_val, &len, &vp->type,
-                ( struct Asn01_Counter64_s* )vp->val.counter64, vp->valLen );
+                ( Counter64* )vp->value.counter64, vp->valueLength );
             if ( !p )
                 return -1;
             break;
         case ASN01_OPAQUE_FLOAT:
-            vp->val.floatVal = ( float* )vp->buf;
-            vp->valLen = sizeof( float );
+            vp->value.floatValue = ( float* )vp->buffer;
+            vp->valueLength = sizeof( float );
             p = Asn01_parseFloat( var_val, &len, &vp->type,
-                vp->val.floatVal, vp->valLen );
+                vp->value.floatValue, vp->valueLength );
             if ( !p )
                 return -1;
             break;
         case ASN01_OPAQUE_DOUBLE:
-            vp->val.doubleVal = ( double* )vp->buf;
-            vp->valLen = sizeof( double );
+            vp->value.doubleValue = ( double* )vp->buffer;
+            vp->valueLength = sizeof( double );
             p = Asn01_parseDouble( var_val, &len, &vp->type,
-                vp->val.doubleVal, vp->valLen );
+                vp->value.doubleValue, vp->valueLength );
             if ( !p )
                 return -1;
             break;
         case ASN01_OPAQUE_I64:
-            vp->val.counter64 = ( struct Asn01_Counter64_s* )vp->buf;
-            vp->valLen = sizeof( struct Asn01_Counter64_s );
+            vp->value.counter64 = ( Counter64* )vp->buffer;
+            vp->valueLength = sizeof( Counter64 );
             p = Asn01_parseSignedInt64( var_val, &len, &vp->type,
-                ( struct Asn01_Counter64_s* )vp->val.counter64,
-                sizeof( *vp->val.counter64 ) );
+                ( Counter64* )vp->value.counter64,
+                sizeof( *vp->value.counter64 ) );
 
             if ( !p )
                 return -1;
             break;
         case ASN01_IPADDRESS:
-            if ( vp->valLen != 4 )
+            if ( vp->valueLength != 4 )
                 return -1;
         /* fallthrough */
         case ASN01_OCTET_STR:
         case ASN01_OPAQUE:
         case ASN01_NSAP:
-            if ( vp->valLen < sizeof( vp->buf ) ) {
-                vp->val.string = ( u_char* )vp->buf;
+            if ( vp->valueLength < sizeof( vp->buffer ) ) {
+                vp->value.string = ( u_char* )vp->buffer;
             } else {
-                vp->val.string = ( u_char* )malloc( vp->valLen );
+                vp->value.string = ( u_char* )malloc( vp->valueLength );
             }
-            if ( vp->val.string == NULL ) {
+            if ( vp->value.string == NULL ) {
                 return -1;
             }
-            p = Asn01_parseString( var_val, &len, &vp->type, vp->val.string,
-                &vp->valLen );
+            p = Asn01_parseString( var_val, &len, &vp->type, vp->value.string,
+                &vp->valueLength );
             if ( !p )
                 return -1;
             break;
         case ASN01_OBJECT_ID:
-            vp->valLen = TYPES_MAX_OID_LEN;
-            p = Asn01_parseObjid( var_val, &len, &vp->type, objid, &vp->valLen );
+            vp->valueLength = TYPES_MAX_OID_LEN;
+            p = Asn01_parseObjid( var_val, &len, &vp->type, objid, &vp->valueLength );
             if ( !p )
                 return -1;
-            vp->valLen *= sizeof( oid );
-            vp->val.objid = ( oid* )malloc( vp->valLen );
-            if ( vp->val.objid == NULL ) {
+            vp->valueLength *= sizeof( oid );
+            vp->value.objectId = ( oid* )malloc( vp->valueLength );
+            if ( vp->value.objectId == NULL ) {
                 return -1;
             }
-            memmove( vp->val.objid, objid, vp->valLen );
+            memmove( vp->value.objectId, objid, vp->valueLength );
             break;
         case PRIOT_NOSUCHOBJECT:
         case PRIOT_NOSUCHINSTANCE:
@@ -3913,12 +3913,12 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         case ASN01_NULL:
             break;
         case ASN01_BIT_STR:
-            vp->val.bitstring = ( u_char* )malloc( vp->valLen );
-            if ( vp->val.bitstring == NULL ) {
+            vp->value.bitString = ( u_char* )malloc( vp->valueLength );
+            if ( vp->value.bitString == NULL ) {
                 return -1;
             }
             p = Asn01_parseBitstring( var_val, &len, &vp->type,
-                vp->val.bitstring, &vp->valLen );
+                vp->value.bitString, &vp->valueLength );
             if ( !p )
                 return -1;
             break;
@@ -4153,7 +4153,7 @@ _Api_sessAsyncSend( void* sessp,
         length = pktbuf_len;
         result = isp->hook_build( session, pdu, pktbuf, &length );
     } else {
-        if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE ) ) {
+        if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_REVERSE_ENCODE ) ) {
             result = Api_build( &pktbuf, &pktbuf_len, &offset, session, pdu );
             packet = pktbuf + pktbuf_len - offset;
             length = offset;
@@ -4234,7 +4234,7 @@ _Api_sessAsyncSend( void* sessp,
             return 0;
         }
 
-        Tools_getMonotonicClock( &tv );
+        Time_getMonotonicClock( &tv );
         rp->pdu = pdu;
         rp->request_id = pdu->reqid;
         rp->message_id = pdu->msgid;
@@ -4308,15 +4308,15 @@ int Api_sessAsyncSend( void* sessp,
 /*
  * Frees the variable and any malloc'd data associated with it.
  */
-void Api_freeVarInternals( Types_VariableList* var )
+void Api_freeVarInternals( VariableList* var )
 {
     if ( !var )
         return;
 
     if ( var->name != var->nameLoc )
         MEMORY_FREE( var->name );
-    if ( var->val.string != var->buf )
-        MEMORY_FREE( var->val.string );
+    if ( var->value.string != var->buffer )
+        MEMORY_FREE( var->value.string );
     if ( var->data ) {
         if ( var->dataFreeHook ) {
             var->dataFreeHook( var->data );
@@ -4327,17 +4327,17 @@ void Api_freeVarInternals( Types_VariableList* var )
     }
 }
 
-void Api_freeVar( Types_VariableList* var )
+void Api_freeVar( VariableList* var )
 {
     Api_freeVarInternals( var );
     free( ( char* )var );
 }
 
-void Api_freeVarbind( Types_VariableList* var )
+void Api_freeVarbind( VariableList* var )
 {
-    Types_VariableList* ptr;
+    VariableList* ptr;
     while ( var ) {
-        ptr = var->nextVariable;
+        ptr = var->next;
         Api_freeVar( var );
         var = ptr;
     }
@@ -4434,7 +4434,7 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
         "session %p fd %d pkt %p length %d\n", sessp,
         transport->sock, packetptr, length ) );
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_DUMP_PACKET ) ) {
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_DUMP_PACKET ) ) {
         char* addrtxt = Transport_peerString( transport, opaque, olength );
         Logger_log( LOGGER_PRIORITY_DEBUG, "\nReceived %d byte packet from %s\n",
             length, addrtxt );
@@ -5340,10 +5340,10 @@ int Api_sessSelectInfo2Flags( void* sessp, int* numfds,
     }
     DEBUG_MSG( ( "sessSelect", "\n" ) );
 
-    Tools_getMonotonicClock( &now );
+    Time_getMonotonicClock( &now );
 
-    if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
-             DsBool_ALARM_DONT_USE_SIG )
+    if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID,
+             DsBool_ALARM_DONT_USE_SIGNAL )
         && !( flags & SESSION_SELECT_NOALARMS ) ) {
         next_alarm = Alarm_getNextAlarmTime( &alarm_tm, &now );
         if ( next_alarm )
@@ -5454,7 +5454,7 @@ _Api_resendRequest( struct Api_SessionList_s* slp, Api_RequestList* rp,
         length = pktbuf_len;
         result = isp->hook_build( sp, rp->pdu, pktbuf, &length );
     } else {
-        if ( DefaultStore_getBoolean( DsStorage_LIBRARY_ID, DsBool_REVERSE_ENCODE ) ) {
+        if ( DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_REVERSE_ENCODE ) ) {
             result = Api_build( &pktbuf, &pktbuf_len, &offset, sp, rp->pdu );
             packet = pktbuf + pktbuf_len - offset;
             length = offset;
@@ -5499,7 +5499,7 @@ _Api_resendRequest( struct Api_SessionList_s* slp, Api_RequestList* rp,
         Api_setDetail( strerror( errno ) );
         return -1;
     } else {
-        Tools_getMonotonicClock( &now );
+        Time_getMonotonicClock( &now );
         tv = now;
         rp->timeM = tv;
         tv.tv_usec += rp->timeout;
@@ -5528,7 +5528,7 @@ void Api_sessTimeout( void* sessp )
         return;
     }
 
-    Tools_getMonotonicClock( &now );
+    Time_getMonotonicClock( &now );
 
     /*
      * For each request outstanding, check to see if it has expired.
@@ -5878,7 +5878,7 @@ static int _Api_checkRange( struct Parse_Tree_s* tp, long ltmp, int* resptr,
     char* cp = NULL;
     char* temp = NULL;
     int temp_len = 0;
-    int check = !DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    int check = !DefaultStore_getBoolean( DsStore_LIBRARY_ID,
         DsBool_DONT_CHECK_RANGE );
 
     if ( check && tp && tp->ranges ) {
@@ -5920,7 +5920,7 @@ static int _Api_checkRange( struct Parse_Tree_s* tp, long ltmp, int* resptr,
  * Add a variable with the requested name to the end of the list of
  * variables for this pdu.
  */
-Types_VariableList*
+VariableList*
 Api_pduAddVariable( Types_Pdu* pdu,
     const oid* name,
     size_t name_length,
@@ -5934,19 +5934,19 @@ Api_pduAddVariable( Types_Pdu* pdu,
  * Add a variable with the requested name to the end of the list of
  * variables for this pdu.
  */
-Types_VariableList*
-Api_varlistAddVariable( Types_VariableList** varlist,
+VariableList*
+Api_varlistAddVariable( VariableList** varlist,
     const oid* name,
     size_t name_length,
     u_char type, const void* value, size_t len )
 {
-    Types_VariableList *vars, *vtmp;
+    VariableList *vars, *vtmp;
     int rc;
 
     if ( varlist == NULL )
         return NULL;
 
-    vars = MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+    vars = MEMORY_MALLOC_TYPEDEF( VariableList );
     if ( vars == NULL )
         return NULL;
 
@@ -5964,11 +5964,11 @@ Api_varlistAddVariable( Types_VariableList** varlist,
     if ( *varlist == NULL ) {
         *varlist = vars;
     } else {
-        for ( vtmp = *varlist; vtmp->nextVariable;
-              vtmp = vtmp->nextVariable )
+        for ( vtmp = *varlist; vtmp->next;
+              vtmp = vtmp->next )
             ;
 
-        vtmp->nextVariable = vars;
+        vtmp->next = vars;
     }
 
     return vars;
@@ -5993,9 +5993,9 @@ int Api_addVar( Types_Pdu* pdu,
     const char* cp;
     char *ecp, *vp;
     int result = ErrorCode_SUCCESS;
-    int check = !DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    int check = !DefaultStore_getBoolean( DsStore_LIBRARY_ID,
         DsBool_DONT_CHECK_RANGE );
-    int do_hint = !DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+    int do_hint = !DefaultStore_getBoolean( DsStore_LIBRARY_ID,
         DsBool_NO_DISPLAY_HINT );
     u_char* hintptr;
     struct Parse_Tree_s* tp;
@@ -6008,7 +6008,7 @@ int Api_addVar( Types_Pdu* pdu,
     struct Parse_EnumList_s* ep;
     double dtmp;
     float ftmp;
-    struct Asn01_Counter64_s c64tmp;
+    Counter64 c64tmp;
 
     tp = Mib_getTree( name, name_length, Mib_getTreeHead() );
     if ( !tp || !tp->type || tp->type > PARSE_TYPE_SIMPLE_LAST ) {
@@ -6138,7 +6138,7 @@ int Api_addVar( Types_Pdu* pdu,
             result = ErrorCode_VALUE;
             goto type_error;
         }
-        if ( Int64_read64( &c64tmp, value ) )
+        if ( Integer64_stringToInt64( &c64tmp, value ) )
             Api_pduAddVariable( pdu, name, name_length, ASN01_COUNTER64,
                 &c64tmp, sizeof( c64tmp ) );
         else
@@ -6299,7 +6299,7 @@ int Api_addVar( Types_Pdu* pdu,
         break;
 
     case 'U':
-        if ( Int64_read64( &c64tmp, value ) )
+        if ( Integer64_stringToInt64( &c64tmp, value ) )
             Api_pduAddVariable( pdu, name, name_length, ASN01_OPAQUE_U64,
                 &c64tmp, sizeof( c64tmp ) );
         else
@@ -6307,7 +6307,7 @@ int Api_addVar( Types_Pdu* pdu,
         break;
 
     case 'I':
-        if ( Int64_read64( &c64tmp, value ) )
+        if ( Integer64_stringToInt64( &c64tmp, value ) )
             Api_pduAddVariable( pdu, name, name_length, ASN01_OPAQUE_I64,
                 &c64tmp, sizeof( c64tmp ) );
         else

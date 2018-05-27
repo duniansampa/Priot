@@ -1,5 +1,5 @@
-#ifndef LOGGER_H_
-#define LOGGER_H_
+#ifndef IOT_LOGGER_H
+#define IOT_LOGGER_H
 
 #include <stdio.h>
 
@@ -106,4 +106,4 @@ void Logger_logString( int priority, const char* str );
 Logger_LogHandler* Logger_findLoghandler( const char* token );
 Logger_LogHandler* Logger_registerLoghandler( int type, int priority );
 
-#endif // LOGGER_H_
+#endif // IOT_LOGGER_H

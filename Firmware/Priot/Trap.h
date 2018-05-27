@@ -26,29 +26,29 @@ void
 Trap_sendTrapPdu(Types_Pdu *);
 
 void
-Trap_sendV2trap(Types_VariableList *);
+Trap_sendV2trap(VariableList *);
 
 void
-Trap_sendV3trap(Types_VariableList *vars, const char *context);
+Trap_sendV3trap(VariableList *vars, const char *context);
 
 void
-Trap_sendTrapVars(int, int, Types_VariableList *);
+Trap_sendTrapVars(int, int, VariableList *);
 
 void
 Trap_sendTrapVarsWithContext(int trap, int specific,
-                                            Types_VariableList *vars,
+                                            VariableList *vars,
                                             const char *context);
 void
 Trap_sendEnterpriseTrapVars(int trap, int specific,
                           const oid * enterprise,
                           int enterprise_length,
-                          Types_VariableList * vars);
+                          VariableList * vars);
 int
 Trap_sendTraps( int                 trap,
                 int                 specific,
                 const oid*         enterprise,
                 int                 enterprise_length,
-                Types_VariableList* vars,
+                VariableList* vars,
                 /* flags are currently unused */
                 const char*         context,
                 int                 flags );

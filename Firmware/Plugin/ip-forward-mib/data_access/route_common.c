@@ -7,7 +7,7 @@
 #include "siglog/data_access/route.h"
 #include "System/Util/Assert.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Priot.h"
 

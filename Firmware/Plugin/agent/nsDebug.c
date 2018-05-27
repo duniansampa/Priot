@@ -1,10 +1,10 @@
 
 #include "nsDebug.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "Scalar.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 
 #define nsConfigDebug 1, 3, 6, 1, 4, 1, 8072, 1, 7, 1
 
@@ -121,7 +121,7 @@ int handle_nsDebugEnabled( MibHandler* handler,
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
-            if ( ( *request->requestvb->val.integer != 1 ) && ( *request->requestvb->val.integer != 2 ) ) {
+            if ( ( *request->requestvb->value.integer != 1 ) && ( *request->requestvb->value.integer != 2 ) ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                 return PRIOT_ERR_WRONGVALUE;
             }
@@ -129,7 +129,7 @@ int handle_nsDebugEnabled( MibHandler* handler,
         break;
 
     case MODE_SET_COMMIT:
-        enabled = *requests->requestvb->val.integer;
+        enabled = *requests->requestvb->value.integer;
         if ( enabled == 2 ) /* false */
             enabled = 0;
         Debug_setDoDebugging( enabled );
@@ -172,7 +172,7 @@ int handle_nsDebugOutputAll( MibHandler* handler,
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
-            if ( ( *request->requestvb->val.integer != 1 ) && ( *request->requestvb->val.integer != 2 ) ) {
+            if ( ( *request->requestvb->value.integer != 1 ) && ( *request->requestvb->value.integer != 2 ) ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                 return PRIOT_ERR_WRONGVALUE;
             }
@@ -180,7 +180,7 @@ int handle_nsDebugOutputAll( MibHandler* handler,
         break;
 
     case MODE_SET_COMMIT:
-        enabled = *requests->requestvb->val.integer;
+        enabled = *requests->requestvb->value.integer;
         if ( enabled == 2 ) /* false */
             enabled = 0;
         Debug_setDoDebugging( enabled );
@@ -201,7 +201,7 @@ int handle_nsDebugDumpPdu( MibHandler* handler,
     switch ( reqinfo->mode ) {
 
     case MODE_GET:
-        enabled = DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+        enabled = DefaultStore_getBoolean( DsStore_LIBRARY_ID,
             DsBool_DUMP_PACKET );
         if ( enabled == 0 )
             enabled = 2; /* false */
@@ -224,7 +224,7 @@ int handle_nsDebugDumpPdu( MibHandler* handler,
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
-            if ( ( *request->requestvb->val.integer != 1 ) && ( *request->requestvb->val.integer != 2 ) ) {
+            if ( ( *request->requestvb->value.integer != 1 ) && ( *request->requestvb->value.integer != 2 ) ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                 return PRIOT_ERR_WRONGVALUE;
             }
@@ -232,10 +232,10 @@ int handle_nsDebugDumpPdu( MibHandler* handler,
         break;
 
     case MODE_SET_COMMIT:
-        enabled = *requests->requestvb->val.integer;
+        enabled = *requests->requestvb->value.integer;
         if ( enabled == 2 ) /* false */
             enabled = 0;
-        DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+        DefaultStore_setBoolean( DsStore_LIBRARY_ID,
             DsBool_DUMP_PACKET, enabled );
         break;
     }
@@ -249,9 +249,9 @@ int handle_nsDebugDumpPdu( MibHandler* handler,
  *    with the timezone offset hardwired to be the same as the index.
  */
 
-Types_VariableList*
+VariableList*
 get_first_debug_entry( void** loop_context, void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     int i;
@@ -271,9 +271,9 @@ get_first_debug_entry( void** loop_context, void** data_context,
     return index;
 }
 
-Types_VariableList*
+VariableList*
 get_next_debug_entry( void** loop_context, void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     int i = ( int )( intptr_t )*loop_context;
@@ -333,7 +333,7 @@ int handle_nsDebugTable( MibHandler* handler,
 
             debug_entry = ( Debug_tokenDescr* )
                 TableIterator_extractIteratorContext( request );
-            switch ( *request->requestvb->val.integer ) {
+            switch ( *request->requestvb->value.integer ) {
             case TC_RS_ACTIVE:
             case TC_RS_NOTINSERVICE:
                 /*
@@ -381,7 +381,7 @@ int handle_nsDebugTable( MibHandler* handler,
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
 
-            switch ( *request->requestvb->val.integer ) {
+            switch ( *request->requestvb->value.integer ) {
             case TC_RS_ACTIVE:
             case TC_RS_NOTINSERVICE:
                 /*
@@ -390,7 +390,7 @@ int handle_nsDebugTable( MibHandler* handler,
                 debug_entry = ( Debug_tokenDescr* )
                     TableIterator_extractIteratorContext( request );
                 if ( debug_entry )
-                    debug_entry->enabled = ( *request->requestvb->val.integer == TC_RS_ACTIVE );
+                    debug_entry->enabled = ( *request->requestvb->value.integer == TC_RS_ACTIVE );
                 break;
 
             case TC_RS_CREATEANDWAIT:
@@ -399,7 +399,7 @@ int handle_nsDebugTable( MibHandler* handler,
 		 * Create the entry, and set the enabled field appropriately
 		 */
                 table_info = Table_extractTableInfo( request );
-                Debug_registerTokens( ( char* )table_info->indexes->val.string );
+                Debug_registerTokens( ( char* )table_info->indexes->value.string );
 
                 break;
 

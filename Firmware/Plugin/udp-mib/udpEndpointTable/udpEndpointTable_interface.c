@@ -27,14 +27,14 @@
  */
 
 #include "udpEndpointTable.h"
-#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "TableContainer.h"
 #include "siglog/agent/mfd.h"
 #include "udpEndpointTable_constants.h"
@@ -305,31 +305,31 @@ int udpEndpointTable_index_to_oid( Types_Index* oid_idx,
     /*
      * udpEndpointLocalAddressType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_udpEndpointLocalAddressType;
+    VariableList var_udpEndpointLocalAddressType;
     /*
      * udpEndpointLocalAddress(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_udpEndpointLocalAddress;
+    VariableList var_udpEndpointLocalAddress;
     /*
      * udpEndpointLocalPort(3)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_udpEndpointLocalPort;
+    VariableList var_udpEndpointLocalPort;
     /*
      * udpEndpointRemoteAddressType(4)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_udpEndpointRemoteAddressType;
+    VariableList var_udpEndpointRemoteAddressType;
     /*
      * udpEndpointRemoteAddress(5)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_udpEndpointRemoteAddress;
+    VariableList var_udpEndpointRemoteAddress;
     /*
      * udpEndpointRemotePort(6)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_udpEndpointRemotePort;
+    VariableList var_udpEndpointRemotePort;
     /*
      * udpEndpointInstance(7)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/h
      */
-    Types_VariableList var_udpEndpointInstance;
+    VariableList var_udpEndpointInstance;
 
     /*
      * set up varbinds
@@ -359,13 +359,13 @@ int udpEndpointTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_udpEndpointLocalAddressType.nextVariable = &var_udpEndpointLocalAddress;
-    var_udpEndpointLocalAddress.nextVariable = &var_udpEndpointLocalPort;
-    var_udpEndpointLocalPort.nextVariable = &var_udpEndpointRemoteAddressType;
-    var_udpEndpointRemoteAddressType.nextVariable = &var_udpEndpointRemoteAddress;
-    var_udpEndpointRemoteAddress.nextVariable = &var_udpEndpointRemotePort;
-    var_udpEndpointRemotePort.nextVariable = &var_udpEndpointInstance;
-    var_udpEndpointInstance.nextVariable = NULL;
+    var_udpEndpointLocalAddressType.next = &var_udpEndpointLocalAddress;
+    var_udpEndpointLocalAddress.next = &var_udpEndpointLocalPort;
+    var_udpEndpointLocalPort.next = &var_udpEndpointRemoteAddressType;
+    var_udpEndpointRemoteAddressType.next = &var_udpEndpointRemoteAddress;
+    var_udpEndpointRemoteAddress.next = &var_udpEndpointRemotePort;
+    var_udpEndpointRemotePort.next = &var_udpEndpointInstance;
+    var_udpEndpointInstance.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:udpEndpointTable:udpEndpointTable_index_to_oid",
         "called\n" ) );
@@ -449,31 +449,31 @@ int udpEndpointTable_index_from_oid( Types_Index* oid_idx,
     /*
      * udpEndpointLocalAddressType(1)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_udpEndpointLocalAddressType;
+    VariableList var_udpEndpointLocalAddressType;
     /*
      * udpEndpointLocalAddress(2)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_udpEndpointLocalAddress;
+    VariableList var_udpEndpointLocalAddress;
     /*
      * udpEndpointLocalPort(3)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_udpEndpointLocalPort;
+    VariableList var_udpEndpointLocalPort;
     /*
      * udpEndpointRemoteAddressType(4)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_udpEndpointRemoteAddressType;
+    VariableList var_udpEndpointRemoteAddressType;
     /*
      * udpEndpointRemoteAddress(5)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_udpEndpointRemoteAddress;
+    VariableList var_udpEndpointRemoteAddress;
     /*
      * udpEndpointRemotePort(6)/InetPortNumber/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_udpEndpointRemotePort;
+    VariableList var_udpEndpointRemotePort;
     /*
      * udpEndpointInstance(7)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/h
      */
-    Types_VariableList var_udpEndpointInstance;
+    VariableList var_udpEndpointInstance;
 
     /*
      * set up varbinds
@@ -503,13 +503,13 @@ int udpEndpointTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_udpEndpointLocalAddressType.nextVariable = &var_udpEndpointLocalAddress;
-    var_udpEndpointLocalAddress.nextVariable = &var_udpEndpointLocalPort;
-    var_udpEndpointLocalPort.nextVariable = &var_udpEndpointRemoteAddressType;
-    var_udpEndpointRemoteAddressType.nextVariable = &var_udpEndpointRemoteAddress;
-    var_udpEndpointRemoteAddress.nextVariable = &var_udpEndpointRemotePort;
-    var_udpEndpointRemotePort.nextVariable = &var_udpEndpointInstance;
-    var_udpEndpointInstance.nextVariable = NULL;
+    var_udpEndpointLocalAddressType.next = &var_udpEndpointLocalAddress;
+    var_udpEndpointLocalAddress.next = &var_udpEndpointLocalPort;
+    var_udpEndpointLocalPort.next = &var_udpEndpointRemoteAddressType;
+    var_udpEndpointRemoteAddressType.next = &var_udpEndpointRemoteAddress;
+    var_udpEndpointRemoteAddress.next = &var_udpEndpointRemotePort;
+    var_udpEndpointRemotePort.next = &var_udpEndpointInstance;
+    var_udpEndpointInstance.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:udpEndpointTable:udpEndpointTable_index_from_oid",
         "called\n" ) );
@@ -523,33 +523,33 @@ int udpEndpointTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->udpEndpointLocalAddressType = *( ( u_long* )var_udpEndpointLocalAddressType.val.string );
+        mib_idx->udpEndpointLocalAddressType = *( ( u_long* )var_udpEndpointLocalAddressType.value.string );
         /*
          * NOTE: val_len is in bytes, udpEndpointLocalAddress_len might not be
          */
-        if ( var_udpEndpointLocalAddress.valLen > sizeof( mib_idx->udpEndpointLocalAddress ) )
+        if ( var_udpEndpointLocalAddress.valueLength > sizeof( mib_idx->udpEndpointLocalAddress ) )
             err = ErrorCode_GENERR;
         else {
             memcpy( mib_idx->udpEndpointLocalAddress,
-                var_udpEndpointLocalAddress.val.string,
-                var_udpEndpointLocalAddress.valLen );
-            mib_idx->udpEndpointLocalAddress_len = var_udpEndpointLocalAddress.valLen / sizeof( mib_idx->udpEndpointLocalAddress[ 0 ] );
+                var_udpEndpointLocalAddress.value.string,
+                var_udpEndpointLocalAddress.valueLength );
+            mib_idx->udpEndpointLocalAddress_len = var_udpEndpointLocalAddress.valueLength / sizeof( mib_idx->udpEndpointLocalAddress[ 0 ] );
         }
-        mib_idx->udpEndpointLocalPort = *( ( u_long* )var_udpEndpointLocalPort.val.string );
-        mib_idx->udpEndpointRemoteAddressType = *( ( u_long* )var_udpEndpointRemoteAddressType.val.string );
+        mib_idx->udpEndpointLocalPort = *( ( u_long* )var_udpEndpointLocalPort.value.string );
+        mib_idx->udpEndpointRemoteAddressType = *( ( u_long* )var_udpEndpointRemoteAddressType.value.string );
         /*
          * NOTE: val_len is in bytes, udpEndpointRemoteAddress_len might not be
          */
-        if ( var_udpEndpointRemoteAddress.valLen > sizeof( mib_idx->udpEndpointRemoteAddress ) )
+        if ( var_udpEndpointRemoteAddress.valueLength > sizeof( mib_idx->udpEndpointRemoteAddress ) )
             err = ErrorCode_GENERR;
         else {
             memcpy( mib_idx->udpEndpointRemoteAddress,
-                var_udpEndpointRemoteAddress.val.string,
-                var_udpEndpointRemoteAddress.valLen );
-            mib_idx->udpEndpointRemoteAddress_len = var_udpEndpointRemoteAddress.valLen / sizeof( mib_idx->udpEndpointRemoteAddress[ 0 ] );
+                var_udpEndpointRemoteAddress.value.string,
+                var_udpEndpointRemoteAddress.valueLength );
+            mib_idx->udpEndpointRemoteAddress_len = var_udpEndpointRemoteAddress.valueLength / sizeof( mib_idx->udpEndpointRemoteAddress[ 0 ] );
         }
-        mib_idx->udpEndpointRemotePort = *( ( u_long* )var_udpEndpointRemotePort.val.string );
-        mib_idx->udpEndpointInstance = *( ( u_long* )var_udpEndpointInstance.val.string );
+        mib_idx->udpEndpointRemotePort = *( ( u_long* )var_udpEndpointRemotePort.value.string );
+        mib_idx->udpEndpointInstance = *( ( u_long* )var_udpEndpointInstance.value.string );
     }
 
     /*
@@ -730,7 +730,7 @@ _mfd_udpEndpointTable_object_lookup( MibHandler* handler,
  */
 static inline int
 _udpEndpointTable_get_column( udpEndpointTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -744,10 +744,10 @@ _udpEndpointTable_get_column( udpEndpointTable_rowreq_ctx* rowreq_ctx,
          * udpEndpointProcess(8)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_UDPENDPOINTPROCESS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = udpEndpointProcess_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -780,14 +780,14 @@ int _mfd_udpEndpointTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -804,7 +804,7 @@ int _mfd_udpEndpointTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = ErrorCode_GENERR;
         }
@@ -816,7 +816,7 @@ int _mfd_udpEndpointTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -955,7 +955,7 @@ void _udpEndpointTable_container_init( udpEndpointTable_interface_ctx* if_ctx )
 
     udpEndpointTable_container_init( &if_ctx->container, if_ctx->cache );
     if ( NULL == if_ctx->container )
-        if_ctx->container = Container_find( "udpEndpointTable:table_container" );
+        if_ctx->container = Container_find( "udpEndpointTable:tableContainer" );
     if ( NULL == if_ctx->container ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error creating container in "
                                          "udpEndpointTable_container_init\n" );

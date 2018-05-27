@@ -7,7 +7,7 @@
 #include "AgentHandler.h"
 #include "Client.h"
 #include "System/Containers/Map.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Scalar.h"
 #include "ip_scalars.h"
@@ -150,7 +150,7 @@ handle_ipForwarding( MibHandler* handler,
 
     case MODE_SET_ACTION:
         /* XXX: perform the value change here */
-        value = *( requests->requestvb->val.integer );
+        value = *( requests->requestvb->value.integer );
         rc = netsnmp_arch_ip_scalars_ipForwarding_set( value );
         if ( 0 != rc ) {
             Agent_setRequestError( reqinfo, requests, rc );
@@ -243,7 +243,7 @@ handle_ipDefaultTTL( MibHandler* handler,
 
     case MODE_SET_ACTION:
         /* XXX: perform the value change here */
-        value = *( requests->requestvb->val.integer );
+        value = *( requests->requestvb->value.integer );
         rc = netsnmp_arch_ip_scalars_ipDefaultTTL_set( value );
         if ( 0 != rc ) {
             Agent_setRequestError( reqinfo, requests, rc );
@@ -339,7 +339,7 @@ handle_ipv6IpForwarding( MibHandler* handler,
         break;
 
     case MODE_SET_ACTION:
-        value = *( requests->requestvb->val.integer );
+        value = *( requests->requestvb->value.integer );
         rc = netsnmp_arch_ip_scalars_ipv6IpForwarding_set( value );
         if ( 0 != rc ) {
             Agent_setRequestError( reqinfo, requests, rc );
@@ -401,7 +401,7 @@ handle_ipAddressSpinLock( MibHandler* handler,
     case MODE_SET_RESERVE1:
     case MODE_SET_RESERVE2:
         /* just check the value */
-        value = *( requests->requestvb->val.integer );
+        value = *( requests->requestvb->value.integer );
         if ( value != ipAddressSpinLockValue )
             Agent_setRequestError( reqinfo, requests, PRIOT_ERR_INCONSISTENTVALUE );
         break;
@@ -411,7 +411,7 @@ handle_ipAddressSpinLock( MibHandler* handler,
 
     case MODE_SET_ACTION:
         /* perform the final spinlock check and increase its value */
-        value = *( requests->requestvb->val.integer );
+        value = *( requests->requestvb->value.integer );
         if ( value != ipAddressSpinLockValue ) {
             Agent_setRequestError( reqinfo, requests, PRIOT_ERR_INCONSISTENTVALUE );
         } else {

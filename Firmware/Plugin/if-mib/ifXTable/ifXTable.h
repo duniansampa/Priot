@@ -12,7 +12,7 @@
  *
  * @{
  */
-#include "Int64.h"
+#include "System/Numerics/Integer64.h"
 #include "if-mib/ifTable/ifTable.h"
 
     /*
@@ -121,28 +121,28 @@
                                            u_long *
                                            ifOutBroadcastPkts_val_ptr);
     int             ifHCInOctets_get(ifXTable_rowreq_ctx * rowreq_ctx,
-                                     Int64_U64 * ifHCInOctets_val_ptr);
+                                     Integer64 * ifHCInOctets_val_ptr);
     int             ifHCInUcastPkts_get(ifXTable_rowreq_ctx * rowreq_ctx,
-                                        Int64_U64 * ifHCInUcastPkts_val_ptr);
+                                        Integer64 * ifHCInUcastPkts_val_ptr);
     int             ifHCInMulticastPkts_get(ifXTable_rowreq_ctx *
                                             rowreq_ctx,
-                                            Int64_U64 *
+                                            Integer64 *
                                             ifHCInMulticastPkts_val_ptr);
     int             ifHCInBroadcastPkts_get(ifXTable_rowreq_ctx *
                                             rowreq_ctx,
-                                            Int64_U64 *
+                                            Integer64 *
                                             ifHCInBroadcastPkts_val_ptr);
     int             ifHCOutOctets_get(ifXTable_rowreq_ctx * rowreq_ctx,
-                                      Int64_U64 * ifHCOutOctets_val_ptr);
+                                      Integer64 * ifHCOutOctets_val_ptr);
     int             ifHCOutUcastPkts_get(ifXTable_rowreq_ctx * rowreq_ctx,
-                                         Int64_U64 * ifHCOutUcastPkts_val_ptr);
+                                         Integer64 * ifHCOutUcastPkts_val_ptr);
     int             ifHCOutMulticastPkts_get(ifXTable_rowreq_ctx *
                                              rowreq_ctx,
-                                             Int64_U64 *
+                                             Integer64 *
                                              ifHCOutMulticastPkts_val_ptr);
     int             ifHCOutBroadcastPkts_get(ifXTable_rowreq_ctx *
                                              rowreq_ctx,
-                                             Int64_U64 *
+                                             Integer64 *
                                              ifHCOutBroadcastPkts_val_ptr);
     int             ifLinkUpDownTrapEnable_get(ifXTable_rowreq_ctx *
                                                rowreq_ctx,
@@ -261,86 +261,86 @@
 
     int             ifHCInOctets_check_value(ifXTable_rowreq_ctx *
                                              rowreq_ctx,
-                                             Int64_U64 ifHCInOctets_val);
+                                             Integer64 ifHCInOctets_val);
     int             ifHCInOctets_undo_setup(ifXTable_rowreq_ctx *
                                             rowreq_ctx);
     int             ifHCInOctets_set(ifXTable_rowreq_ctx * rowreq_ctx,
-                                     Int64_U64 ifHCInOctets_val);
+                                     Integer64 ifHCInOctets_val);
     int             ifHCInOctets_undo(ifXTable_rowreq_ctx * rowreq_ctx);
 
     int             ifHCInUcastPkts_check_value(ifXTable_rowreq_ctx *
                                                 rowreq_ctx,
-                                                Int64_U64 ifHCInUcastPkts_val);
+                                                Integer64 ifHCInUcastPkts_val);
     int             ifHCInUcastPkts_undo_setup(ifXTable_rowreq_ctx *
                                                rowreq_ctx);
     int             ifHCInUcastPkts_set(ifXTable_rowreq_ctx * rowreq_ctx,
-                                        Int64_U64 ifHCInUcastPkts_val);
+                                        Integer64 ifHCInUcastPkts_val);
     int             ifHCInUcastPkts_undo(ifXTable_rowreq_ctx * rowreq_ctx);
 
     int             ifHCInMulticastPkts_check_value(ifXTable_rowreq_ctx *
                                                     rowreq_ctx,
-                                                    Int64_U64
+                                                    Integer64
                                                     ifHCInMulticastPkts_val);
     int             ifHCInMulticastPkts_undo_setup(ifXTable_rowreq_ctx *
                                                    rowreq_ctx);
     int             ifHCInMulticastPkts_set(ifXTable_rowreq_ctx *
                                             rowreq_ctx,
-                                            Int64_U64 ifHCInMulticastPkts_val);
+                                            Integer64 ifHCInMulticastPkts_val);
     int             ifHCInMulticastPkts_undo(ifXTable_rowreq_ctx *
                                              rowreq_ctx);
 
     int             ifHCInBroadcastPkts_check_value(ifXTable_rowreq_ctx *
                                                     rowreq_ctx,
-                                                    Int64_U64
+                                                    Integer64
                                                     ifHCInBroadcastPkts_val);
     int             ifHCInBroadcastPkts_undo_setup(ifXTable_rowreq_ctx *
                                                    rowreq_ctx);
     int             ifHCInBroadcastPkts_set(ifXTable_rowreq_ctx *
                                             rowreq_ctx,
-                                            Int64_U64 ifHCInBroadcastPkts_val);
+                                            Integer64 ifHCInBroadcastPkts_val);
     int             ifHCInBroadcastPkts_undo(ifXTable_rowreq_ctx *
                                              rowreq_ctx);
 
     int             ifHCOutOctets_check_value(ifXTable_rowreq_ctx *
                                               rowreq_ctx,
-                                              Int64_U64 ifHCOutOctets_val);
+                                              Integer64 ifHCOutOctets_val);
     int             ifHCOutOctets_undo_setup(ifXTable_rowreq_ctx *
                                              rowreq_ctx);
     int             ifHCOutOctets_set(ifXTable_rowreq_ctx * rowreq_ctx,
-                                      Int64_U64 ifHCOutOctets_val);
+                                      Integer64 ifHCOutOctets_val);
     int             ifHCOutOctets_undo(ifXTable_rowreq_ctx * rowreq_ctx);
 
     int             ifHCOutUcastPkts_check_value(ifXTable_rowreq_ctx *
                                                  rowreq_ctx,
-                                                 Int64_U64 ifHCOutUcastPkts_val);
+                                                 Integer64 ifHCOutUcastPkts_val);
     int             ifHCOutUcastPkts_undo_setup(ifXTable_rowreq_ctx *
                                                 rowreq_ctx);
     int             ifHCOutUcastPkts_set(ifXTable_rowreq_ctx * rowreq_ctx,
-                                         Int64_U64 ifHCOutUcastPkts_val);
+                                         Integer64 ifHCOutUcastPkts_val);
     int             ifHCOutUcastPkts_undo(ifXTable_rowreq_ctx *
                                           rowreq_ctx);
 
     int             ifHCOutMulticastPkts_check_value(ifXTable_rowreq_ctx *
                                                      rowreq_ctx,
-                                                     Int64_U64
+                                                     Integer64
                                                      ifHCOutMulticastPkts_val);
     int             ifHCOutMulticastPkts_undo_setup(ifXTable_rowreq_ctx *
                                                     rowreq_ctx);
     int             ifHCOutMulticastPkts_set(ifXTable_rowreq_ctx *
                                              rowreq_ctx,
-                                             Int64_U64 ifHCOutMulticastPkts_val);
+                                             Integer64 ifHCOutMulticastPkts_val);
     int             ifHCOutMulticastPkts_undo(ifXTable_rowreq_ctx *
                                               rowreq_ctx);
 
     int             ifHCOutBroadcastPkts_check_value(ifXTable_rowreq_ctx *
                                                      rowreq_ctx,
-                                                     Int64_U64
+                                                     Integer64
                                                      ifHCOutBroadcastPkts_val);
     int             ifHCOutBroadcastPkts_undo_setup(ifXTable_rowreq_ctx *
                                                     rowreq_ctx);
     int             ifHCOutBroadcastPkts_set(ifXTable_rowreq_ctx *
                                              rowreq_ctx,
-                                             Int64_U64 ifHCOutBroadcastPkts_val);
+                                             Integer64 ifHCOutBroadcastPkts_val);
     int             ifHCOutBroadcastPkts_undo(ifXTable_rowreq_ctx *
                                               rowreq_ctx);
 

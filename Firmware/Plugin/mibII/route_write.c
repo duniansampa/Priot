@@ -11,7 +11,7 @@
 
 #include "route_write.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "ip.h"

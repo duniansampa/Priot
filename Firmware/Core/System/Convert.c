@@ -1,11 +1,10 @@
-//! \brief This is the include for the Byte entity.
 #include "Convert.h"
 #include "Numerics/Double.h"
 #include "Numerics/Float.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Memory.h"
 
-/** ============================= Public Functions ================== */
+/** =============================[ Public Functions ]================== */
 
 /** ==> String to... */
 

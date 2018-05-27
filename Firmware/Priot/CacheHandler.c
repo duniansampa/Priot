@@ -1,24 +1,22 @@
 #include "CacheHandler.h"
+#include "System/Util/Alarm.h"
 #include "Api.h"
-#include "System/Util/Debug.h"
-#include "System/Util/Utilities.h"
-#include "System/Util/Logger.h"
-#include "System/Util/Assert.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Mib.h"
-#include "Alarm.h"
 #include "System/Containers/Map.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Utilities.h"
 
-static Cache*   _cacheHandler_head = NULL;
-static int      _cacheHandler_outstandingValid = 0;
-static int      _CacheHandler_load( Cache *cache );
+static Cache* _cacheHandler_head = NULL;
+static int _cacheHandler_outstandingValid = 0;
+static int _CacheHandler_load( Cache* cache );
 
+#define CACHE_RELEASE_FREQUENCY 60 /* Check for expired caches every 60s */
 
-#define CACHE_RELEASE_FREQUENCY 60      /* Check for expired caches every 60s */
-
-void
-CacheHandler_releaseCachedResources(unsigned int regNo, void* clientargs);
+void CacheHandler_releaseCachedResources( unsigned int regNo, void* clientargs );
 
 /** @defgroup cache_handler cache_handler
  *  Maintains a cache of data for use by lower level handlers.
@@ -119,29 +117,29 @@ CacheHandler_releaseCachedResources(unsigned int regNo, void* clientargs);
  */
 
 static void
-_CacheHandler_free2( Cache *cache );
+_CacheHandler_free2( Cache* cache );
 
 /** get cache head
  * @internal
  * unadvertised function to get cache head. You really should not
  * do this, since the internal storage mechanism might change.
  */
-Cache *
-CacheHandler_getHead(void)
+Cache*
+CacheHandler_getHead( void )
 {
     return _cacheHandler_head;
 }
 
 /** find existing cache
  */
-Cache *
-CacheHandler_findByOid(const oid * rootoid, int rootoid_len)
+Cache*
+CacheHandler_findByOid( const oid* rootoid, int rootoid_len )
 {
-    Cache  *cache;
+    Cache* cache;
 
-    for (cache = _cacheHandler_head; cache; cache = cache->next) {
-        if (0 == Api_oidEquals(cache->rootoid, cache->rootoid_len,
-                                    rootoid, rootoid_len))
+    for ( cache = _cacheHandler_head; cache; cache = cache->next ) {
+        if ( 0 == Api_oidEquals( cache->rootoid, cache->rootoid_len,
+                      rootoid, rootoid_len ) )
             return cache;
     }
 
@@ -150,16 +148,16 @@ CacheHandler_findByOid(const oid * rootoid, int rootoid_len)
 
 /** returns a cache
  */
-Cache *
-CacheHandler_create(int timeout, CacheLoadFT * load_hook,
-                     CacheFreeFT * free_hook,
-                     const oid * rootoid, int rootoid_len)
+Cache*
+CacheHandler_create( int timeout, CacheLoadFT* load_hook,
+    CacheFreeFT* free_hook,
+    const oid* rootoid, int rootoid_len )
 {
-    Cache  *cache = NULL;
+    Cache* cache = NULL;
 
-    cache = MEMORY_MALLOC_TYPEDEF(Cache);
-    if (NULL == cache) {
-        Logger_log(LOGGER_PRIORITY_ERR,"malloc error in CacheHandler_create\n");
+    cache = MEMORY_MALLOC_TYPEDEF( Cache );
+    if ( NULL == cache ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "malloc error in CacheHandler_create\n" );
         return NULL;
     }
     cache->timeout = timeout;
@@ -167,10 +165,9 @@ CacheHandler_create(int timeout, CacheLoadFT * load_hook,
     cache->free_cache = free_hook;
     cache->enabled = 1;
 
-    if(0 == cache->timeout)
-        cache->timeout = DefaultStore_getInt(DsStorage_APPLICATION_ID,
-                                             DsAgentInterger_CACHE_TIMEOUT);
-
+    if ( 0 == cache->timeout )
+        cache->timeout = DefaultStore_getInt( DsStore_APPLICATION_ID,
+            DsAgentInterger_CACHE_TIMEOUT );
 
     /*
      * Add the registered OID information, and tack
@@ -179,11 +176,11 @@ CacheHandler_create(int timeout, CacheLoadFT * load_hook,
      * Note that this list is not ordered.
      *    table_iterator rules again!
      */
-    if (rootoid) {
-        cache->rootoid = Api_duplicateObjid(rootoid, rootoid_len);
+    if ( rootoid ) {
+        cache->rootoid = Api_duplicateObjid( rootoid, rootoid_len );
         cache->rootoid_len = rootoid_len;
         cache->next = _cacheHandler_head;
-        if (_cacheHandler_head)
+        if ( _cacheHandler_head )
             _cacheHandler_head->prev = cache;
         _cacheHandler_head = cache;
     }
@@ -191,88 +188,86 @@ CacheHandler_create(int timeout, CacheLoadFT * load_hook,
     return cache;
 }
 
-static Cache *
-_CacheHandler_ref(Cache *cache)
+static Cache*
+_CacheHandler_ref( Cache* cache )
 {
     cache->refcnt++;
     return cache;
 }
 
 static void
-_CacheHandler_deref(Cache *cache)
+_CacheHandler_deref( Cache* cache )
 {
-    if (--cache->refcnt == 0) {
-        CacheHandler_remove(cache);
-        CacheHandler_free(cache);
+    if ( --cache->refcnt == 0 ) {
+        CacheHandler_remove( cache );
+        CacheHandler_free( cache );
     }
 }
 
 /** frees a cache
  */
-int
-CacheHandler_free(Cache *cache)
+int CacheHandler_free( Cache* cache )
 {
-    Cache  *pos;
+    Cache* pos;
 
-    if (NULL == cache)
+    if ( NULL == cache )
         return ErrorCode_SUCCESS;
 
-    for (pos = _cacheHandler_head; pos; pos = pos->next) {
-        if (pos == cache) {
-            size_t          out_len = 0;
-            size_t          buf_len = 0;
-            char           *buf = NULL;
+    for ( pos = _cacheHandler_head; pos; pos = pos->next ) {
+        if ( pos == cache ) {
+            size_t out_len = 0;
+            size_t buf_len = 0;
+            char* buf = NULL;
 
-            Mib_sprintReallocObjid2((u_char **) &buf, &buf_len, &out_len,
-                                 1, pos->rootoid, pos->rootoid_len);
-            Logger_log(LOGGER_PRIORITY_WARNING,
-                     "not freeing cache with root OID %s (still in list)\n",
-                     buf);
-            free(buf);
+            Mib_sprintReallocObjid2( ( u_char** )&buf, &buf_len, &out_len,
+                1, pos->rootoid, pos->rootoid_len );
+            Logger_log( LOGGER_PRIORITY_WARNING,
+                "not freeing cache with root OID %s (still in list)\n",
+                buf );
+            free( buf );
             return PRIOT_ERR_GENERR;
         }
     }
 
-    if(0 != cache->timer_id)
-        CacheHandler_timerStop(cache);
+    if ( 0 != cache->timer_id )
+        CacheHandler_timerStop( cache );
 
-    if (cache->valid)
-        _CacheHandler_free2(cache);
+    if ( cache->valid )
+        _CacheHandler_free2( cache );
 
-    if (cache->timestampM)
-    free(cache->timestampM);
+    if ( cache->timestampM )
+        free( cache->timestampM );
 
-    if (cache->rootoid)
-        free(cache->rootoid);
+    if ( cache->rootoid )
+        free( cache->rootoid );
 
-    free(cache);
+    free( cache );
 
     return ErrorCode_SUCCESS;
 }
 
 /** removes a cache
  */
-int
-CacheHandler_remove(Cache *cache)
+int CacheHandler_remove( Cache* cache )
 {
-    Cache  *cur,*prev;
+    Cache *cur, *prev;
 
-    if (!cache || !_cacheHandler_head)
+    if ( !cache || !_cacheHandler_head )
         return -1;
 
-    if (cache == _cacheHandler_head) {
+    if ( cache == _cacheHandler_head ) {
         _cacheHandler_head = _cacheHandler_head->next;
-        if (_cacheHandler_head)
+        if ( _cacheHandler_head )
             _cacheHandler_head->prev = NULL;
         return 0;
     }
 
     prev = _cacheHandler_head;
     cur = _cacheHandler_head->next;
-    for (; cur; prev = cur, cur = cur->next) {
-        if (cache == cur) {
+    for ( ; cur; prev = cur, cur = cur->next ) {
+        if ( cache == cur ) {
             prev->next = cur->next;
-            if (cur->next)
+            if ( cur->next )
                 cur->next->prev = cur->prev;
             return 0;
         }
@@ -282,96 +277,93 @@ CacheHandler_remove(Cache *cache)
 
 /** callback function to call cache load function */
 static void
-_CacheHandler_timerReload(unsigned int regNo, void *clientargs)
+_CacheHandler_timerReload( unsigned int regNo, void* clientargs )
 {
-    Cache *cache = (Cache *)clientargs;
+    Cache* cache = ( Cache* )clientargs;
 
-    DEBUG_MSGT(("cache_timer:start", "loading cache %p\n", cache));
+    DEBUG_MSGT( ( "cache_timer:start", "loading cache %p\n", cache ) );
 
     cache->expired = 1;
 
-    _CacheHandler_load(cache);
+    _CacheHandler_load( cache );
 }
 
 /** starts the recurring cache_load callback */
 unsigned int
-CacheHandler_timerStart(Cache *cache)
+CacheHandler_timerStart( Cache* cache )
 {
-    if(NULL == cache)
+    if ( NULL == cache )
         return 0;
 
-    DEBUG_MSGTL(( "cache_timer:start", "OID: "));
-    DEBUG_MSGOID(("cache_timer:start", cache->rootoid, cache->rootoid_len));
-    DEBUG_MSG((   "cache_timer:start", "\n"));
+    DEBUG_MSGTL( ( "cache_timer:start", "OID: " ) );
+    DEBUG_MSGOID( ( "cache_timer:start", cache->rootoid, cache->rootoid_len ) );
+    DEBUG_MSG( ( "cache_timer:start", "\n" ) );
 
-    if(0 != cache->timer_id) {
-        Logger_log(LOGGER_PRIORITY_WARNING, "cache has existing timer id.\n");
+    if ( 0 != cache->timer_id ) {
+        Logger_log( LOGGER_PRIORITY_WARNING, "cache has existing timer id.\n" );
         return cache->timer_id;
     }
 
-    if(! (cache->flags & CacheOperation_AUTO_RELOAD)) {
-        Logger_log(LOGGER_PRIORITY_ERR,
-                 "cache_timer_start called but auto_reload not set.\n");
+    if ( !( cache->flags & CacheOperation_AUTO_RELOAD ) ) {
+        Logger_log( LOGGER_PRIORITY_ERR,
+            "cache_timer_start called but auto_reload not set.\n" );
         return 0;
     }
 
-    cache->timer_id = Alarm_register(cache->timeout, ALARM_SA_REPEAT,
-                                          _CacheHandler_timerReload, cache);
-    if(0 == cache->timer_id) {
-        Logger_log(LOGGER_PRIORITY_ERR,"could not register alarm\n");
+    cache->timer_id = Alarm_register( cache->timeout, AlarmFlag_REPEAT,
+        _CacheHandler_timerReload, cache );
+    if ( 0 == cache->timer_id ) {
+        Logger_log( LOGGER_PRIORITY_ERR, "could not register alarm\n" );
         return 0;
     }
 
     cache->flags &= ~CacheOperation_AUTO_RELOAD;
-    DEBUG_MSGT(("cache_timer:start",
-               "starting timer %lu for cache %p\n", cache->timer_id, cache));
+    DEBUG_MSGT( ( "cache_timer:start",
+        "starting timer %lu for cache %p\n", cache->timer_id, cache ) );
     return cache->timer_id;
 }
 
 /** stops the recurring cache_load callback */
-void
-CacheHandler_timerStop(Cache *cache)
+void CacheHandler_timerStop( Cache* cache )
 {
-    if(NULL == cache)
+    if ( NULL == cache )
         return;
 
-    if(0 == cache->timer_id) {
-        Logger_log(LOGGER_PRIORITY_WARNING, "cache has no timer id.\n");
+    if ( 0 == cache->timer_id ) {
+        Logger_log( LOGGER_PRIORITY_WARNING, "cache has no timer id.\n" );
         return;
     }
 
-    DEBUG_MSGT(("cache_timer:stop",
-               "stopping timer %lu for cache %p\n", cache->timer_id, cache));
+    DEBUG_MSGT( ( "cache_timer:stop",
+        "stopping timer %lu for cache %p\n", cache->timer_id, cache ) );
 
-    Alarm_unregister(cache->timer_id);
+    Alarm_unregister( cache->timer_id );
     cache->flags |= CacheOperation_AUTO_RELOAD;
 }
 
-
 /** returns a cache handler that can be injected into a given handler chain.
  */
-MibHandler *
-CacheHandler_handlerGet(Cache* cache)
+MibHandler*
+CacheHandler_handlerGet( Cache* cache )
 {
-    MibHandler *ret = NULL;
+    MibHandler* ret = NULL;
 
-    ret = AgentHandler_createHandler("cacheHandler",
-                                 CacheHandler_helperHandler);
-    if (ret) {
+    ret = AgentHandler_createHandler( "cacheHandler",
+        CacheHandler_helperHandler );
+    if ( ret ) {
         ret->flags |= MIB_HANDLER_AUTO_NEXT;
-        ret->myvoid = (void *) cache;
+        ret->myvoid = ( void* )cache;
 
-        if(NULL != cache) {
-            if ((cache->flags & CacheOperation_PRELOAD) && ! cache->valid) {
+        if ( NULL != cache ) {
+            if ( ( cache->flags & CacheOperation_PRELOAD ) && !cache->valid ) {
                 /*
                  * load cache, ignore rc
                  * (failed load doesn't affect registration)
                  */
-                (void)_CacheHandler_load(cache);
+                ( void )_CacheHandler_load( cache );
             }
-            if (cache->flags & CacheOperation_AUTO_RELOAD)
-                CacheHandler_timerStart(cache);
-
+            if ( cache->flags & CacheOperation_AUTO_RELOAD )
+                CacheHandler_timerStart( cache );
         }
     }
     return ret;
@@ -380,194 +372,185 @@ CacheHandler_handlerGet(Cache* cache)
 /** Makes sure that memory allocated for the cache is freed when the handler
  *  is unregistered.
  */
-void CacheHandler_handlerOwnsCache(MibHandler *handler)
+void CacheHandler_handlerOwnsCache( MibHandler* handler )
 {
-    Assert_assert(handler->myvoid);
-    ((Cache *)handler->myvoid)->refcnt++;
-    handler->data_clone = (void *(*)(void *))_CacheHandler_ref;
-    handler->data_free = (void(*)(void*))_CacheHandler_deref;
+    Assert_assert( handler->myvoid );
+    ( ( Cache* )handler->myvoid )->refcnt++;
+    handler->data_clone = ( void* ( * )( void* ))_CacheHandler_ref;
+    handler->data_free = ( void ( * )( void* ) )_CacheHandler_deref;
 }
 
 /** returns a cache handler that can be injected into a given handler chain.
  */
-MibHandler *
-CacheHandler_getCacheHandler(int timeout, CacheLoadFT * load_hook,
-                          CacheFreeFT * free_hook,
-                          const oid * rootoid, int rootoid_len)
+MibHandler*
+CacheHandler_getCacheHandler( int timeout, CacheLoadFT* load_hook,
+    CacheFreeFT* free_hook,
+    const oid* rootoid, int rootoid_len )
 {
-    MibHandler *ret = NULL;
-    Cache  *cache = NULL;
+    MibHandler* ret = NULL;
+    Cache* cache = NULL;
 
-    ret = CacheHandler_handlerGet(NULL);
-    if (ret) {
-        cache = CacheHandler_create(timeout, load_hook, free_hook,
-                                     rootoid, rootoid_len);
-        ret->myvoid = (void *) cache;
-        CacheHandler_handlerOwnsCache(ret);
+    ret = CacheHandler_handlerGet( NULL );
+    if ( ret ) {
+        cache = CacheHandler_create( timeout, load_hook, free_hook,
+            rootoid, rootoid_len );
+        ret->myvoid = ( void* )cache;
+        CacheHandler_handlerOwnsCache( ret );
     }
     return ret;
 }
 
 /** functionally the same as calling AgentHandler_registerHandler() but also
  * injects a cache handler at the same time for you. */
-int
-CacheHandler_handlerRegister(HandlerRegistration * reginfo,
-                               Cache* cache)
+int CacheHandler_handlerRegister( HandlerRegistration* reginfo,
+    Cache* cache )
 {
-    MibHandler *handler = NULL;
-    handler = CacheHandler_handlerGet(cache);
+    MibHandler* handler = NULL;
+    handler = CacheHandler_handlerGet( cache );
 
-    AgentHandler_injectHandler(reginfo, handler);
-    return AgentHandler_registerHandler(reginfo);
+    AgentHandler_injectHandler( reginfo, handler );
+    return AgentHandler_registerHandler( reginfo );
 }
 
 /** functionally the same as calling AgentHandler_registerHandler() but also
  * injects a cache handler at the same time for you. */
-int
-CacheHandler_registerCacheHandler(HandlerRegistration * reginfo,
-                               int timeout, CacheLoadFT * load_hook,
-                               CacheFreeFT * free_hook)
+int CacheHandler_registerCacheHandler( HandlerRegistration* reginfo,
+    int timeout, CacheLoadFT* load_hook,
+    CacheFreeFT* free_hook )
 {
-    MibHandler *handler = NULL;
-    handler = CacheHandler_getCacheHandler(timeout, load_hook, free_hook,
-                                        reginfo->rootoid,
-                                        reginfo->rootoid_len);
+    MibHandler* handler = NULL;
+    handler = CacheHandler_getCacheHandler( timeout, load_hook, free_hook,
+        reginfo->rootoid,
+        reginfo->rootoid_len );
 
-    AgentHandler_injectHandler(reginfo, handler);
-    return AgentHandler_registerHandler(reginfo);
+    AgentHandler_injectHandler( reginfo, handler );
+    return AgentHandler_registerHandler( reginfo );
 }
 
-static char *
-_CacheHandler_buildCacheName(const char *name)
+static char*
+_CacheHandler_buildCacheName( const char* name )
 {
-    char *dup = (char*)malloc(strlen(name) + strlen(CACHE_NAME) + 2);
-    if (NULL == dup)
+    char* dup = ( char* )malloc( strlen( name ) + strlen( CACHE_NAME ) + 2 );
+    if ( NULL == dup )
         return NULL;
-    sprintf(dup, "%s:%s", CACHE_NAME, name);
+    sprintf( dup, "%s:%s", CACHE_NAME, name );
     return dup;
 }
 
 /** Insert the cache information for a given request (PDU) */
-void
-CacheHandler_reqinfoInsert(Cache* cache,
-                             AgentRequestInfo * reqinfo,
-                             const char *name)
+void CacheHandler_reqinfoInsert( Cache* cache,
+    AgentRequestInfo* reqinfo,
+    const char* name )
 {
-    char *cache_name = _CacheHandler_buildCacheName(name);
-    if (NULL == Agent_getListData(reqinfo, cache_name)) {
-        DEBUG_MSGTL(("verbose:helper:cache_handler", " adding '%s' to %p\n",
-                    cache_name, reqinfo));
-        Agent_addListData(reqinfo,
-                                    Map_newElement(cache_name,
-                                                             cache, NULL));
+    char* cache_name = _CacheHandler_buildCacheName( name );
+    if ( NULL == Agent_getListData( reqinfo, cache_name ) ) {
+        DEBUG_MSGTL( ( "verbose:helper:cache_handler", " adding '%s' to %p\n",
+            cache_name, reqinfo ) );
+        Agent_addListData( reqinfo,
+            Map_newElement( cache_name,
+                               cache, NULL ) );
     }
-    MEMORY_FREE(cache_name);
+    MEMORY_FREE( cache_name );
 }
 
 /** Extract the cache information for a given request (PDU) */
-Cache  *
-CacheHandler_reqinfoExtract(AgentRequestInfo * reqinfo,
-                              const char *name)
+Cache*
+CacheHandler_reqinfoExtract( AgentRequestInfo* reqinfo,
+    const char* name )
 {
-    Cache  *result;
-    char *cache_name = _CacheHandler_buildCacheName(name);
-    result = (Cache*)Agent_getListData(reqinfo, cache_name);
-    MEMORY_FREE(cache_name);
+    Cache* result;
+    char* cache_name = _CacheHandler_buildCacheName( name );
+    result = ( Cache* )Agent_getListData( reqinfo, cache_name );
+    MEMORY_FREE( cache_name );
     return result;
 }
 
 /** Extract the cache information for a given request (PDU) */
-Cache  *
-CacheHandler_extractCacheInfo(AgentRequestInfo * reqinfo)
+Cache*
+CacheHandler_extractCacheInfo( AgentRequestInfo* reqinfo )
 {
-    return CacheHandler_reqinfoExtract(reqinfo, CACHE_NAME);
+    return CacheHandler_reqinfoExtract( reqinfo, CACHE_NAME );
 }
 
-
 /** Check if the cache timeout has passed. Sets and return the expired flag. */
-int
-CacheHandler_checkExpired(Cache *cache)
+int CacheHandler_checkExpired( Cache* cache )
 {
-    if(NULL == cache)
+    if ( NULL == cache )
         return 0;
-    if (cache->expired)
+    if ( cache->expired )
         return 1;
-    if(!cache->valid || (NULL == cache->timestampM) || (-1 == cache->timeout))
+    if ( !cache->valid || ( NULL == cache->timestampM ) || ( -1 == cache->timeout ) )
         cache->expired = 1;
     else
-        cache->expired = Tools_readyMonotonic(cache->timestampM,
-                                                 1000 * cache->timeout);
+        cache->expired = Time_readyMonotonic( cache->timestampM,
+            1000 * cache->timeout );
 
     return cache->expired;
 }
 
 /** Reload the cache if required */
-int
-CacheHandler_checkAndReload(Cache * cache)
+int CacheHandler_checkAndReload( Cache* cache )
 {
-    if (!cache) {
-        DEBUG_MSGT(("helper:cache_handler", " no cache\n"));
-        return 0;	/* ?? or -1 */
+    if ( !cache ) {
+        DEBUG_MSGT( ( "helper:cache_handler", " no cache\n" ) );
+        return 0; /* ?? or -1 */
     }
-    if (!cache->valid || CacheHandler_checkExpired(cache))
+    if ( !cache->valid || CacheHandler_checkExpired( cache ) )
         return _CacheHandler_load( cache );
     else {
-        DEBUG_MSGT(("helper:cache_handler", " cached (%d)\n",
-                   cache->timeout));
+        DEBUG_MSGT( ( "helper:cache_handler", " cached (%d)\n",
+            cache->timeout ) );
         return 0;
     }
 }
 
 /** Is the cache valid for a given request? */
-int
-CacheHandler_isValid(AgentRequestInfo * reqinfo,
-                       const char* name)
+int CacheHandler_isValid( AgentRequestInfo* reqinfo,
+    const char* name )
 {
-    Cache  *cache = CacheHandler_reqinfoExtract(reqinfo, name);
-    return (cache && cache->valid);
+    Cache* cache = CacheHandler_reqinfoExtract( reqinfo, name );
+    return ( cache && cache->valid );
 }
 
 /** Is the cache valid for a given request?
  * for backwards compatability. CacheHandler_isValid() is preferred.
  */
-int
-CacheHandler_isCacheValid(AgentRequestInfo * reqinfo)
+int CacheHandler_isCacheValid( AgentRequestInfo* reqinfo )
 {
-    return CacheHandler_isValid(reqinfo, CACHE_NAME);
+    return CacheHandler_isValid( reqinfo, CACHE_NAME );
 }
 
 /** Implements the cache handler */
-int
-CacheHandler_helperHandler(MibHandler * handler,
-                             HandlerRegistration * reginfo,
-                             AgentRequestInfo * reqinfo,
-                             RequestInfo * requests)
+int CacheHandler_helperHandler( MibHandler* handler,
+    HandlerRegistration* reginfo,
+    AgentRequestInfo* reqinfo,
+    RequestInfo* requests )
 {
-    char addrstr[32];
+    char addrstr[ 32 ];
 
-    Cache  *cache = NULL;
+    Cache* cache = NULL;
     HandlerArgs cache_hint;
 
-    DEBUG_MSGTL(("helper:cache_handler", "Got request (%d) for %s: ",
-                reqinfo->mode, reginfo->handlerName));
-    DEBUG_MSGOID(("helper:cache_handler", reginfo->rootoid,
-                 reginfo->rootoid_len));
-    DEBUG_MSG(("helper:cache_handler", "\n"));
+    DEBUG_MSGTL( ( "helper:cache_handler", "Got request (%d) for %s: ",
+        reqinfo->mode, reginfo->handlerName ) );
+    DEBUG_MSGOID( ( "helper:cache_handler", reginfo->rootoid,
+        reginfo->rootoid_len ) );
+    DEBUG_MSG( ( "helper:cache_handler", "\n" ) );
 
-    Assert_assert(handler->flags & MIB_HANDLER_AUTO_NEXT);
+    Assert_assert( handler->flags & MIB_HANDLER_AUTO_NEXT );
 
-    cache = (Cache *) handler->myvoid;
-    if (DefaultStore_getBoolean(DsStorage_APPLICATION_ID,
-                               DsAgentBoolean_NO_CACHING) ||
-        !cache || !cache->enabled || !cache->load_cache) {
-        DEBUG_MSGT(("helper:cache_handler", " caching disabled or "
-                   "cache not found, disabled or had no load method\n"));
+    cache = ( Cache* )handler->myvoid;
+    if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
+             DsAgentBoolean_NO_CACHING )
+        || !cache || !cache->enabled || !cache->load_cache ) {
+        DEBUG_MSGT( ( "helper:cache_handler", " caching disabled or "
+                                              "cache not found, disabled or had no load method\n" ) );
         return PRIOT_ERR_NOERROR;
     }
-    snprintf(addrstr,sizeof(addrstr), "%ld", (long int)cache);
-    DEBUG_MSGTL(("helper:cache_handler", "using cache %s: ", addrstr));
-    DEBUG_MSGOID(("helper:cache_handler", cache->rootoid, cache->rootoid_len));
-    DEBUG_MSG(("helper:cache_handler", "\n"));
+    snprintf( addrstr, sizeof( addrstr ), "%ld", ( long int )cache );
+    DEBUG_MSGTL( ( "helper:cache_handler", "using cache %s: ", addrstr ) );
+    DEBUG_MSGOID( ( "helper:cache_handler", cache->rootoid, cache->rootoid_len ) );
+    DEBUG_MSG( ( "helper:cache_handler", "\n" ) );
 
     /*
      * Make the handler-chain parameters available to
@@ -579,7 +562,7 @@ CacheHandler_helperHandler(MibHandler * handler,
     cache_hint.requests = requests;
     cache->cache_hint = &cache_hint;
 
-    switch (reqinfo->mode) {
+    switch ( reqinfo->mode ) {
 
     case MODE_GET:
     case MODE_GETNEXT:
@@ -594,15 +577,15 @@ CacheHandler_helperHandler(MibHandler * handler,
          * a previous (delegated) request is still using the cache.
          * maybe use a reference counter?
          */
-        if (CacheHandler_isValid(reqinfo, addrstr))
+        if ( CacheHandler_isValid( reqinfo, addrstr ) )
             break;
 
         /*
          * call the load hook, and update the cache timestamp.
          * If it's not already there, add to reqinfo
          */
-        CacheHandler_checkAndReload(cache);
-        CacheHandler_reqinfoInsert(cache, reqinfo, addrstr);
+        CacheHandler_checkAndReload( cache );
+        CacheHandler_reqinfoInsert( cache, reqinfo, addrstr );
         /** next handler called automatically - 'AUTO_NEXT' */
         break;
 
@@ -610,60 +593,58 @@ CacheHandler_helperHandler(MibHandler * handler,
     case MODE_SET_FREE:
     case MODE_SET_ACTION:
     case MODE_SET_UNDO:
-        Assert_assert(CacheHandler_isValid(reqinfo, addrstr));
+        Assert_assert( CacheHandler_isValid( reqinfo, addrstr ) );
         /** next handler called automatically - 'AUTO_NEXT' */
         break;
 
-        /*
+    /*
          * A (successful) SET request wouldn't typically trigger a reload of
          *  the cache, but might well invalidate the current contents.
          * Only do this on the last pass through.
          */
     case MODE_SET_COMMIT:
-        if (cache->valid &&
-            ! (cache->flags & CacheOperation_DONT_INVALIDATE_ON_SET) ) {
-            cache->free_cache(cache, cache->magic);
+        if ( cache->valid && !( cache->flags & CacheOperation_DONT_INVALIDATE_ON_SET ) ) {
+            cache->free_cache( cache, cache->magic );
             cache->valid = 0;
         }
         /** next handler called automatically - 'AUTO_NEXT' */
         break;
 
     default:
-        Logger_log(LOGGER_PRIORITY_WARNING, "cache_handler: Unrecognised mode (%d)\n",
-                 reqinfo->mode);
-        Agent_requestSetErrorAll(requests, PRIOT_ERR_GENERR);
+        Logger_log( LOGGER_PRIORITY_WARNING, "cache_handler: Unrecognised mode (%d)\n",
+            reqinfo->mode );
+        Agent_requestSetErrorAll( requests, PRIOT_ERR_GENERR );
         return PRIOT_ERR_GENERR;
     }
-    if (cache->flags & CacheOperation_RESET_TIMER_ON_USE)
-        Tools_setMonotonicMarker(&cache->timestampM);
+    if ( cache->flags & CacheOperation_RESET_TIMER_ON_USE )
+        Time_setMonotonicMarker( &cache->timestampM );
     return PRIOT_ERR_NOERROR;
 }
 
 static void
-_CacheHandler_free2( Cache *cache )
+_CacheHandler_free2( Cache* cache )
 {
-    if (NULL != cache->free_cache) {
-        cache->free_cache(cache, cache->magic);
+    if ( NULL != cache->free_cache ) {
+        cache->free_cache( cache, cache->magic );
         cache->valid = 0;
     }
 }
 
 static int
-_CacheHandler_load( Cache *cache )
+_CacheHandler_load( Cache* cache )
 {
     int ret = -1;
 
     /*
      * If we've got a valid cache, then release it before reloading
      */
-    if (cache->valid &&
-        (! (cache->flags & CacheOperation_DONT_FREE_BEFORE_LOAD)))
-        _CacheHandler_free2(cache);
+    if ( cache->valid && ( !( cache->flags & CacheOperation_DONT_FREE_BEFORE_LOAD ) ) )
+        _CacheHandler_free2( cache );
 
-    if ( cache->load_cache)
-        ret = cache->load_cache(cache, cache->magic);
-    if (ret < 0) {
-        DEBUG_MSGT(("helper:cache_handler", " load failed (%d)\n", ret));
+    if ( cache->load_cache )
+        ret = cache->load_cache( cache, cache->magic );
+    if ( ret < 0 ) {
+        DEBUG_MSGT( ( "helper:cache_handler", " load failed (%d)\n", ret ) );
         cache->valid = 0;
         return ret;
     }
@@ -674,19 +655,16 @@ _CacheHandler_load( Cache *cache )
      * If we didn't previously have any valid caches outstanding,
      *   then schedule a pass of the auto-release routine.
      */
-    if ((!_cacheHandler_outstandingValid) &&
-        (! (cache->flags & CacheOperation_DONT_FREE_EXPIRED))) {
-        Alarm_register(CACHE_RELEASE_FREQUENCY,
-                            0, CacheHandler_releaseCachedResources, NULL);
+    if ( ( !_cacheHandler_outstandingValid ) && ( !( cache->flags & CacheOperation_DONT_FREE_EXPIRED ) ) ) {
+        Alarm_register( CACHE_RELEASE_FREQUENCY,
+            0, CacheHandler_releaseCachedResources, NULL );
         _cacheHandler_outstandingValid = 1;
     }
-    Tools_setMonotonicMarker(&cache->timestampM);
-    DEBUG_MSGT(("helper:cache_handler", " loaded (%d)\n", cache->timeout));
+    Time_setMonotonicMarker( &cache->timestampM );
+    DEBUG_MSGT( ( "helper:cache_handler", " loaded (%d)\n", cache->timeout ) );
 
     return ret;
 }
-
-
 
 /** run regularly to automatically release cached resources.
  * xxx - method to prevent cache from expiring while a request
@@ -695,28 +673,26 @@ _CacheHandler_load( Cache *cache )
  *     (which could be acomplished by a dummy data list item in
  *     agent req info & custom free function).
  */
-void
-CacheHandler_releaseCachedResources(unsigned int regNo, void *clientargs)
+void CacheHandler_releaseCachedResources( unsigned int regNo, void* clientargs )
 {
-    Cache  *cache = NULL;
+    Cache* cache = NULL;
 
     _cacheHandler_outstandingValid = 0;
-    DEBUG_MSGTL(("helper:cache_handler", "running auto-release\n"));
-    for (cache = _cacheHandler_head; cache; cache = cache->next) {
-        DEBUG_MSGTL(("helper:cache_handler"," checking %p (flags 0x%x)\n",
-                     cache, cache->flags));
-        if (cache->valid &&
-            ! (cache->flags & CacheOperation_DONT_AUTO_RELEASE)) {
-            DEBUG_MSGTL(("helper:cache_handler","  releasing %p\n", cache));
+    DEBUG_MSGTL( ( "helper:cache_handler", "running auto-release\n" ) );
+    for ( cache = _cacheHandler_head; cache; cache = cache->next ) {
+        DEBUG_MSGTL( ( "helper:cache_handler", " checking %p (flags 0x%x)\n",
+            cache, cache->flags ) );
+        if ( cache->valid && !( cache->flags & CacheOperation_DONT_AUTO_RELEASE ) ) {
+            DEBUG_MSGTL( ( "helper:cache_handler", "  releasing %p\n", cache ) );
             /*
              * Check to see if this cache has timed out.
              * If so, release the cached resources.
              * Otherwise, note that we still have at
              *   least one active cache.
              */
-            if (CacheHandler_checkExpired(cache)) {
-                if(! (cache->flags & CacheOperation_DONT_FREE_EXPIRED))
-                    _CacheHandler_free2(cache);
+            if ( CacheHandler_checkExpired( cache ) ) {
+                if ( !( cache->flags & CacheOperation_DONT_FREE_EXPIRED ) )
+                    _CacheHandler_free2( cache );
             } else {
                 _cacheHandler_outstandingValid = 1;
             }
@@ -726,8 +702,8 @@ CacheHandler_releaseCachedResources(unsigned int regNo, void *clientargs)
      * If there are any caches still valid & active,
      *   then schedule another pass.
      */
-    if (_cacheHandler_outstandingValid) {
-        Alarm_register(CACHE_RELEASE_FREQUENCY,
-                            0, CacheHandler_releaseCachedResources, NULL);
+    if ( _cacheHandler_outstandingValid ) {
+        Alarm_register( CACHE_RELEASE_FREQUENCY,
+            0, CacheHandler_releaseCachedResources, NULL );
     }
 }

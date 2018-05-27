@@ -36,9 +36,9 @@
 #include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
@@ -142,7 +142,7 @@ static NodeHandlerFT _mfd_inetNetToMediaTable_check_dependencies;
 static inline int
 _inetNetToMediaTable_undo_column( inetNetToMediaTable_rowreq_ctx*
                                       rowreq_ctx,
-    Types_VariableList*
+    VariableList*
         var,
     int column );
 
@@ -360,15 +360,15 @@ int inetNetToMediaTable_index_to_oid( Types_Index* oid_idx,
     /*
      * inetNetToMediaIfIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_inetNetToMediaIfIndex;
+    VariableList var_inetNetToMediaIfIndex;
     /*
      * inetNetToMediaNetAddressType(2)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_inetNetToMediaNetAddressType;
+    VariableList var_inetNetToMediaNetAddressType;
     /*
      * inetNetToMediaNetAddress(3)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_inetNetToMediaNetAddress;
+    VariableList var_inetNetToMediaNetAddress;
 
     /*
      * set up varbinds
@@ -386,9 +386,9 @@ int inetNetToMediaTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_inetNetToMediaIfIndex.nextVariable = &var_inetNetToMediaNetAddressType;
-    var_inetNetToMediaNetAddressType.nextVariable = &var_inetNetToMediaNetAddress;
-    var_inetNetToMediaNetAddress.nextVariable = NULL;
+    var_inetNetToMediaIfIndex.next = &var_inetNetToMediaNetAddressType;
+    var_inetNetToMediaNetAddressType.next = &var_inetNetToMediaNetAddress;
+    var_inetNetToMediaNetAddress.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:inetNetToMediaTable:inetNetToMediaTable_index_to_oid", "called\n" ) );
 
@@ -443,15 +443,15 @@ int inetNetToMediaTable_index_from_oid( Types_Index* oid_idx,
     /*
      * inetNetToMediaIfIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_inetNetToMediaIfIndex;
+    VariableList var_inetNetToMediaIfIndex;
     /*
      * inetNetToMediaNetAddressType(2)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_inetNetToMediaNetAddressType;
+    VariableList var_inetNetToMediaNetAddressType;
     /*
      * inetNetToMediaNetAddress(3)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_inetNetToMediaNetAddress;
+    VariableList var_inetNetToMediaNetAddress;
 
     /*
      * set up varbinds
@@ -469,9 +469,9 @@ int inetNetToMediaTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_inetNetToMediaIfIndex.nextVariable = &var_inetNetToMediaNetAddressType;
-    var_inetNetToMediaNetAddressType.nextVariable = &var_inetNetToMediaNetAddress;
-    var_inetNetToMediaNetAddress.nextVariable = NULL;
+    var_inetNetToMediaIfIndex.next = &var_inetNetToMediaNetAddressType;
+    var_inetNetToMediaNetAddressType.next = &var_inetNetToMediaNetAddress;
+    var_inetNetToMediaNetAddress.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:inetNetToMediaTable:inetNetToMediaTable_index_from_oid", "called\n" ) );
 
@@ -484,18 +484,18 @@ int inetNetToMediaTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->inetNetToMediaIfIndex = *( ( long* )var_inetNetToMediaIfIndex.val.string );
-        mib_idx->inetNetToMediaNetAddressType = *( ( u_long* )var_inetNetToMediaNetAddressType.val.string );
+        mib_idx->inetNetToMediaIfIndex = *( ( long* )var_inetNetToMediaIfIndex.value.string );
+        mib_idx->inetNetToMediaNetAddressType = *( ( u_long* )var_inetNetToMediaNetAddressType.value.string );
         /*
          * NOTE: val_len is in bytes, inetNetToMediaNetAddress_len might not be
          */
-        if ( var_inetNetToMediaNetAddress.valLen > sizeof( mib_idx->inetNetToMediaNetAddress ) )
+        if ( var_inetNetToMediaNetAddress.valueLength > sizeof( mib_idx->inetNetToMediaNetAddress ) )
             err = PRIOT_ERR_GENERR;
         else {
             memcpy( mib_idx->inetNetToMediaNetAddress,
-                var_inetNetToMediaNetAddress.val.string,
-                var_inetNetToMediaNetAddress.valLen );
-            mib_idx->inetNetToMediaNetAddress_len = var_inetNetToMediaNetAddress.valLen / sizeof( mib_idx->inetNetToMediaNetAddress[ 0 ] );
+                var_inetNetToMediaNetAddress.value.string,
+                var_inetNetToMediaNetAddress.valueLength );
+            mib_idx->inetNetToMediaNetAddress_len = var_inetNetToMediaNetAddress.valueLength / sizeof( mib_idx->inetNetToMediaNetAddress[ 0 ] );
         }
     }
 
@@ -805,7 +805,7 @@ _mfd_inetNetToMediaTable_object_lookup( MibHandler* handler, HandlerRegistration
 static inline int
 _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
                                      rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -822,48 +822,48 @@ _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
     case COLUMN_INETNETTOMEDIAPHYSADDRESS:
         var->type = ASN01_OCTET_STR;
         rc = inetNetToMediaPhysAddress_get( rowreq_ctx,
-            ( char** )&var->val.string,
-            &var->valLen );
+            ( char** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * inetNetToMediaLastUpdated(5)/TimeStamp/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_INETNETTOMEDIALASTUPDATED:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_TIMETICKS;
         rc = inetNetToMediaLastUpdated_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * inetNetToMediaType(6)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_INETNETTOMEDIATYPE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = inetNetToMediaType_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * inetNetToMediaState(7)/INTEGER/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_INETNETTOMEDIASTATE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = inetNetToMediaState_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * inetNetToMediaRowStatus(8)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_INETNETTOMEDIAROWSTATUS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = inetNetToMediaRowStatus_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -896,14 +896,14 @@ int _mfd_inetNetToMediaTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -921,7 +921,7 @@ int _mfd_inetNetToMediaTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = PRIOT_ERR_GENERR;
         }
@@ -933,7 +933,7 @@ int _mfd_inetNetToMediaTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -1033,7 +1033,7 @@ _inetNetToMediaTable_check_indexes( inetNetToMediaTable_rowreq_ctx*
 static inline int
 _inetNetToMediaTable_check_column( inetNetToMediaTable_rowreq_ctx*
                                        rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -1066,20 +1066,20 @@ _inetNetToMediaTable_check_column( inetNetToMediaTable_rowreq_ctx*
          * inetNetToMediaPhysAddress(4)/PhysAddress/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H 
          */
     case COLUMN_INETNETTOMEDIAPHYSADDRESS:
-        rc = CheckVarbind_type( var, ASN01_OCTET_STR );
+        rc = VariableList_checkType( var, ASN01_OCTET_STR );
         /*
          * check defined range(s). 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( ( var->valLen < 0 ) || ( var->valLen > 65535 ) ) ) {
+            && ( ( var->valueLength < 0 ) || ( var->valueLength > 65535 ) ) ) {
             rc = PRIOT_ERR_WRONGLENGTH;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "inetNetToMediaTable:_inetNetToMediaTable_check_column:inetNetToMediaPhysAddress", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = inetNetToMediaPhysAddress_check_value( rowreq_ctx,
-                ( char* )var->val.string,
-                var->valLen );
+                ( char* )var->value.string,
+                var->valueLength );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1101,23 +1101,23 @@ _inetNetToMediaTable_check_column( inetNetToMediaTable_rowreq_ctx*
          * inetNetToMediaType(6)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_INETNETTOMEDIATYPE:
-        rc = CheckVarbind_type( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, ASN01_INTEGER );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != INETNETTOMEDIATYPE_OTHER )
-            && ( *var->val.integer != INETNETTOMEDIATYPE_INVALID )
-            && ( *var->val.integer != INETNETTOMEDIATYPE_DYNAMIC )
-            && ( *var->val.integer != INETNETTOMEDIATYPE_STATIC )
-            && ( *var->val.integer != INETNETTOMEDIATYPE_LOCAL ) ) {
+            && ( *var->value.integer != INETNETTOMEDIATYPE_OTHER )
+            && ( *var->value.integer != INETNETTOMEDIATYPE_INVALID )
+            && ( *var->value.integer != INETNETTOMEDIATYPE_DYNAMIC )
+            && ( *var->value.integer != INETNETTOMEDIATYPE_STATIC )
+            && ( *var->value.integer != INETNETTOMEDIATYPE_LOCAL ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "inetNetToMediaTable:_inetNetToMediaTable_check_column:inetNetToMediaType", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = inetNetToMediaType_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1139,12 +1139,12 @@ _inetNetToMediaTable_check_column( inetNetToMediaTable_rowreq_ctx*
          * inetNetToMediaRowStatus(8)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_INETNETTOMEDIAROWSTATUS:
-        rc = CheckVarbind_rowStatusValue( var );
+        rc = VariableList_checkRowStatusLengthAndRange( var );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "inetNetToMediaTable:_inetNetToMediaTable_check_column:inetNetToMediaRowStatus", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = inetNetToMediaRowStatus_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1407,7 +1407,7 @@ int _mfd_inetNetToMediaTable_undo_cleanup( MibHandler* handler, HandlerRegistrat
 static inline int
 _inetNetToMediaTable_set_column( inetNetToMediaTable_rowreq_ctx*
                                      rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -1424,8 +1424,8 @@ _inetNetToMediaTable_set_column( inetNetToMediaTable_rowreq_ctx*
     case COLUMN_INETNETTOMEDIAPHYSADDRESS:
         rowreq_ctx->column_set_flags |= COLUMN_INETNETTOMEDIAPHYSADDRESS_FLAG;
         rc = inetNetToMediaPhysAddress_set( rowreq_ctx,
-            ( char* )var->val.string,
-            var->valLen );
+            ( char* )var->value.string,
+            var->valueLength );
         break;
 
     /*
@@ -1434,7 +1434,7 @@ _inetNetToMediaTable_set_column( inetNetToMediaTable_rowreq_ctx*
     case COLUMN_INETNETTOMEDIATYPE:
         rowreq_ctx->column_set_flags |= COLUMN_INETNETTOMEDIATYPE_FLAG;
         rc = inetNetToMediaType_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1443,7 +1443,7 @@ _inetNetToMediaTable_set_column( inetNetToMediaTable_rowreq_ctx*
     case COLUMN_INETNETTOMEDIAROWSTATUS:
         rowreq_ctx->column_set_flags |= COLUMN_INETNETTOMEDIAROWSTATUS_FLAG;
         rc = inetNetToMediaRowStatus_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     default:
@@ -1589,7 +1589,7 @@ int _mfd_inetNetToMediaTable_undo_commit( MibHandler* handler,
 static inline int
 _inetNetToMediaTable_undo_column( inetNetToMediaTable_rowreq_ctx*
                                       rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;

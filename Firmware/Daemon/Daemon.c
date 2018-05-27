@@ -1,5 +1,5 @@
 /** \file App.c
- *  \brief IoT application firmware
+ *  @brief IoT application firmware
  *
  *  This file contains the App's
  *  main() function.
@@ -13,7 +13,7 @@
 #include "Agent.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "Alarm.h"
+#include "System/Util/Alarm.h"
 #include "DsAgent.h"
 #include "FdEventManager.h"
 #include "System/Util/Logger.h"
@@ -24,7 +24,7 @@
 #include "ReadConfig.h"
 #include "System.h"
 #include "Trap.h"
-#include "Version.h"
+#include "System/Version.h"
 #include <grp.h>
 #include <pwd.h>
 #include <signal.h>
@@ -153,14 +153,14 @@ _Daemon_TrapNodeDown( void )
 }
 
 /** \fn     int main(int argc, char *argv[])
- *  \brief  main function.
+ *  @brief  main function.
  *
  * Setup and start the IoT application firmware.
  * Also successfully EXITs with zero for some options.
  *
- * \param   argc
- * \param   *argv[]
- * \return  0 Always succeeds.  (?)
+ * @param   argc
+ * @param   *argv[]
+ * @return  0 Always succeeds.  (?)
  */
 
 int main( int argc, char* argv[] )
@@ -201,14 +201,14 @@ int main( int argc, char* argv[] )
     /*
      * Default to NOT running an AgentX master.
      */
-    DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+    DefaultStore_setBoolean( DsStore_APPLICATION_ID,
         DsAgentBoolean_AGENTX_MASTER, 0 );
-    DefaultStore_setInt( DsStorage_APPLICATION_ID,
+    DefaultStore_setInt( DsStore_APPLICATION_ID,
         DsAgentInterger_AGENTX_TIMEOUT, -1 );
-    DefaultStore_setInt( DsStorage_APPLICATION_ID,
+    DefaultStore_setInt( DsStore_APPLICATION_ID,
         DsAgentInterger_AGENTX_RETRIES, -1 );
 
-    DefaultStore_setInt( DsStorage_APPLICATION_ID,
+    DefaultStore_setInt( DsStore_APPLICATION_ID,
         DsAgentInterger_CACHE_TIMEOUT, 5 );
     /*
      * Add some options if they are available.
@@ -228,7 +228,7 @@ int main( int argc, char* argv[] )
 
     Logger_logSyslogname( _daemon_appName );
 
-    DefaultStore_setString( DsStorage_LIBRARY_ID,
+    DefaultStore_setString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE, _daemon_appName );
 
     /*
@@ -252,13 +252,13 @@ int main( int argc, char* argv[] )
             break;
 
         case 'A':
-            DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+            DefaultStore_setBoolean( DsStore_LIBRARY_ID,
                 DsBool_APPEND_LOGFILES, 1 );
             break;
 
         case 'c':
             if ( optarg != NULL ) {
-                DefaultStore_setString( DsStorage_LIBRARY_ID,
+                DefaultStore_setString( DsStore_LIBRARY_ID,
                     DsStr_OPTIONALCONFIG, optarg );
             } else {
                 _Daemon_usage( argv[ 0 ] );
@@ -266,12 +266,12 @@ int main( int argc, char* argv[] )
             break;
 
         case 'C':
-            DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+            DefaultStore_setBoolean( DsStore_LIBRARY_ID,
                 DsBool_DONT_READ_CONFIGS, 1 );
             break;
 
         case 'd':
-            DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+            DefaultStore_setBoolean( DsStore_LIBRARY_ID,
                 DsBool_DUMP_PACKET,
                 ++daemon_dumpPacket );
             break;
@@ -303,7 +303,7 @@ int main( int argc, char* argv[] )
                     fprintf( stderr, "Bad group id: %s\n", optarg );
                     exit( 1 );
                 }
-                DefaultStore_setInt( DsStorage_APPLICATION_ID,
+                DefaultStore_setInt( DsStore_APPLICATION_ID,
                     DsAgentInterger_GROUPID, gid );
             } else {
                 _Daemon_usage( argv[ 0 ] );
@@ -336,7 +336,7 @@ int main( int argc, char* argv[] )
                     exit( 1 );
                 }
                 Logger_enableFilelog2( optarg,
-                    DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+                    DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                                            DsBool_APPEND_LOGFILES ) );
                 log_set = 1;
             } else {
@@ -370,7 +370,7 @@ int main( int argc, char* argv[] )
         case 'n':
             if ( optarg != NULL ) {
                 _daemon_appName = optarg;
-                DefaultStore_setString( DsStorage_LIBRARY_ID,
+                DefaultStore_setString( DsStore_LIBRARY_ID,
                     DsStr_APPTYPE, _daemon_appName );
             } else {
                 _Daemon_usage( argv[ 0 ] );
@@ -388,12 +388,12 @@ int main( int argc, char* argv[] )
             break;
 
         case 'q':
-            DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
+            DefaultStore_setBoolean( DsStore_LIBRARY_ID,
                 DsBool_QUICK_PRINT, 1 );
             break;
 
         case 'r':
-            DefaultStore_toggleBoolean( DsStorage_APPLICATION_ID,
+            DefaultStore_toggleBoolean( DsStore_APPLICATION_ID,
                 DsAgentBoolean_NO_ROOT_ACCESS );
             break;
 
@@ -452,7 +452,7 @@ int main( int argc, char* argv[] )
             break;
 
         case 'U':
-            DefaultStore_toggleBoolean( DsStorage_APPLICATION_ID,
+            DefaultStore_toggleBoolean( DsStore_APPLICATION_ID,
                 DsAgentBoolean_LEAVE_PIDFILE );
             break;
 
@@ -473,7 +473,7 @@ int main( int argc, char* argv[] )
                     fprintf( stderr, "Bad user id: %s\n", optarg );
                     exit( 1 );
                 }
-                DefaultStore_setInt( DsStorage_APPLICATION_ID,
+                DefaultStore_setInt( DsStore_APPLICATION_ID,
                     DsAgentInterger_USERID, uid );
             } else {
                 _Daemon_usage( argv[ 0 ] );
@@ -484,18 +484,18 @@ int main( int argc, char* argv[] )
             _Daemon_version();
 
         case 'V':
-            DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+            DefaultStore_setBoolean( DsStore_APPLICATION_ID,
                 DsAgentBoolean_VERBOSE, 1 );
             break;
 
         case 'x':
             if ( optarg != NULL ) {
-                DefaultStore_setString( DsStorage_APPLICATION_ID,
+                DefaultStore_setString( DsStore_APPLICATION_ID,
                     DsAgentString_X_SOCKET, optarg );
             } else {
                 _Daemon_usage( argv[ 0 ] );
             }
-            DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+            DefaultStore_setBoolean( DsStore_APPLICATION_ID,
                 DsAgentBoolean_AGENTX_MASTER, 1 );
             break;
 
@@ -515,7 +515,7 @@ int main( int argc, char* argv[] )
     }
 
     if ( do_help ) {
-        DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+        DefaultStore_setBoolean( DsStore_APPLICATION_ID,
             DsAgentBoolean_NO_ROOT_ACCESS, 1 );
         Vars_initAgent( _daemon_appName ); /* register our .conf handlers */
         PluginModules_initModules();
@@ -532,7 +532,7 @@ int main( int argc, char* argv[] )
         DEBUG_MSGTL( ( "priotd/main", "optind %d, argc %d\n", optind, argc ) );
         for ( i = optind; i < argc; i++ ) {
             char *c, *astring;
-            if ( ( c = DefaultStore_getString( DsStorage_APPLICATION_ID,
+            if ( ( c = DefaultStore_getString( DsStore_APPLICATION_ID,
                        DsAgentString_PORTS ) ) ) {
                 astring = ( char* )malloc( strlen( c ) + 2 + strlen( argv[ i ] ) );
                 if ( astring == NULL ) {
@@ -540,22 +540,22 @@ int main( int argc, char* argv[] )
                     exit( 1 );
                 }
                 sprintf( astring, "%s,%s", c, argv[ i ] );
-                DefaultStore_setString( DsStorage_APPLICATION_ID,
+                DefaultStore_setString( DsStore_APPLICATION_ID,
                     DsAgentString_PORTS, astring );
                 MEMORY_FREE( astring );
             } else {
-                DefaultStore_setString( DsStorage_APPLICATION_ID,
+                DefaultStore_setString( DsStore_APPLICATION_ID,
                     DsAgentString_PORTS, argv[ i ] );
             }
         }
         DEBUG_MSGTL( ( "snmpd/main", "port spec: %s\n",
-            DefaultStore_getString( DsStorage_APPLICATION_ID,
+            DefaultStore_getString( DsStore_APPLICATION_ID,
                            DsAgentString_PORTS ) ) );
     }
 
     if ( 0 == log_set )
         Logger_enableFilelog( LOGFILE,
-            DefaultStore_getBoolean( DsStorage_LIBRARY_ID,
+            DefaultStore_getBoolean( DsStore_LIBRARY_ID,
                                   DsBool_APPEND_LOGFILES ) );
 
     {
@@ -586,14 +586,14 @@ int main( int argc, char* argv[] )
 
     if ( agent_mode == -1 ) {
         if ( strstr( argv[ 0 ], "agentxd" ) != NULL ) {
-            DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+            DefaultStore_setBoolean( DsStore_APPLICATION_ID,
                 DsAgentBoolean_ROLE, daemon_SUB_AGENT );
         } else {
-            DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+            DefaultStore_setBoolean( DsStore_APPLICATION_ID,
                 DsAgentBoolean_ROLE, daemon_MASTER_AGENT );
         }
     } else {
-        DefaultStore_setBoolean( DsStorage_APPLICATION_ID,
+        DefaultStore_setBoolean( DsStore_APPLICATION_ID,
             DsAgentBoolean_ROLE, agent_mode );
     }
 
@@ -620,7 +620,7 @@ int main( int argc, char* argv[] )
      * Initialize the world.  Detach from the shell.  Create initial user.
      */
     if ( !dont_fork ) {
-        int quit = !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+        int quit = !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
             DsAgentBoolean_QUIT_IMMEDIATELY );
         ret = System_daemonize( quit,
             Logger_stderrlogStatus() );
@@ -643,7 +643,7 @@ int main( int argc, char* argv[] )
         fd = open( pid_file, O_CREAT | O_EXCL | O_WRONLY, 0600 );
         if ( fd == -1 ) {
             Logger_logPerror( pid_file );
-            if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+            if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                      DsAgentBoolean_NO_ROOT_ACCESS ) ) {
                 exit( 1 );
             }
@@ -668,26 +668,26 @@ int main( int argc, char* argv[] )
         persistent_dir = ReadConfig_getPersistentDirectory();
         System_mkdirhier( persistent_dir, AGENT_DIRECTORY_MODE, 0 );
 
-        uid = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+        uid = DefaultStore_getInt( DsStore_APPLICATION_ID,
             DsAgentInterger_USERID );
-        gid = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+        gid = DefaultStore_getInt( DsStore_APPLICATION_ID,
             DsAgentInterger_GROUPID );
 
         if ( uid != 0 || gid != 0 )
             chown( persistent_dir, uid, gid );
 
-        if ( ( gid = DefaultStore_getInt( DsStorage_APPLICATION_ID, DsAgentInterger_GROUPID ) ) > 0 ) {
+        if ( ( gid = DefaultStore_getInt( DsStore_APPLICATION_ID, DsAgentInterger_GROUPID ) ) > 0 ) {
             DEBUG_MSGTL( ( "snmpd/main", "Changing gid to %d.\n", gid ) );
             if ( setgid( gid ) == -1
                 || setgroups( 1, ( gid_t* )&gid ) == -1 ) {
                 Logger_logPerror( "setgid failed" );
-                if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID, DsAgentBoolean_NO_ROOT_ACCESS ) ) {
+                if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID, DsAgentBoolean_NO_ROOT_ACCESS ) ) {
                     exit( 1 );
                 }
             }
         }
 
-        if ( ( uid = DefaultStore_getInt( DsStorage_APPLICATION_ID, DsAgentInterger_USERID ) ) > 0 ) {
+        if ( ( uid = DefaultStore_getInt( DsStore_APPLICATION_ID, DsAgentInterger_USERID ) ) > 0 ) {
             struct passwd* info;
 
             /*
@@ -699,7 +699,7 @@ int main( int argc, char* argv[] )
                 DEBUG_MSGTL( ( "snmpd/main", "Supplementary groups for %s.\n", info->pw_name ) );
                 if ( initgroups( info->pw_name, ( gid != 0 ? ( gid_t )gid : info->pw_gid ) ) == -1 ) {
                     Logger_logPerror( "initgroups failed" );
-                    if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+                    if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                              DsAgentBoolean_NO_ROOT_ACCESS ) ) {
                         exit( 1 );
                     }
@@ -709,7 +709,7 @@ int main( int argc, char* argv[] )
             DEBUG_MSGTL( ( "snmpd/main", "Changing uid to %d.\n", uid ) );
             if ( setuid( uid ) == -1 ) {
                 Logger_logPerror( "setuid failed" );
-                if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+                if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID,
                          DsAgentBoolean_NO_ROOT_ACCESS ) ) {
                     exit( 1 );
                 }
@@ -741,7 +741,7 @@ int main( int argc, char* argv[] )
      * Forever monitor the dest_port for incoming PDUs.
      */
     DEBUG_MSGTL( ( "priotd/main", "We're up.  Starting to process data.\n" ) );
-    if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID, DsAgentBoolean_QUIT_IMMEDIATELY ) )
+    if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID, DsAgentBoolean_QUIT_IMMEDIATELY ) )
         _Daemon_receive();
     DEBUG_MSGTL( ( "priotd/main", "sending shutdown trap\n" ) );
     _Daemon_TrapNodeDown();
@@ -750,7 +750,7 @@ int main( int argc, char* argv[] )
     Agent_shutdownMasterAgent();
     Vars_shutdownAgent();
 
-    if ( !DefaultStore_getBoolean( DsStorage_APPLICATION_ID, DsAgentBoolean_LEAVE_PIDFILE ) && ( pid_file != NULL ) ) {
+    if ( !DefaultStore_getBoolean( DsStore_APPLICATION_ID, DsAgentBoolean_LEAVE_PIDFILE ) && ( pid_file != NULL ) ) {
         unlink( pid_file );
     }
 

@@ -1,15 +1,15 @@
 #include "String.h"
 #include "Util/Memory.h"
 
-/** ================== Prototypes of Private Functions =============== */
+/** ==================[ Private Functions Prototypes ]================== */
 
 static void _String_freeFunction( void* value );
 
-/** ============================= Public Functions ================== */
+/** =============================[ Public Functions ]================== */
 
 char* String_new( const char* s )
 {
-    return strdup( s );
+    return Memory_strdup( s );
 }
 
 bool String_beginsWith( const char* s, const char* prefix )
@@ -78,7 +78,7 @@ char* String_appendAlloc( const char* s1, const char* s2, int num )
     newSize = String_length( s1 ) + num + 1;
 
     /** Allocate new buffer */
-    char* newBuffer = ( char* )malloc( newSize );
+    char* newBuffer = ( char* )Memory_malloc( newSize );
 
     /** do the copy and concat */
     strcpy( newBuffer, s1 );
@@ -240,7 +240,7 @@ char* String_subString( const char* s, int beginIndex, int length )
     length = length < ( l - beginIndex ) ? length : ( l - beginIndex );
 
     /** Allocate new buffer */
-    char* newBuffer = ( char* )malloc( length + 1 );
+    char* newBuffer = ( char* )Memory_malloc( length + 1 );
     const char* ptr = s + beginIndex;
     l = length;
     while ( ( *ptr ) != 0 && length > 0 ) {
@@ -298,7 +298,7 @@ char* String_replace( const char* s, const char* target, const char* replacement
     /** computes the size of the new string and allocs the memory space for it */
     size = ls - lt * count + lr * count + 1;
     printf( "==> %d\n", size );
-    char* newString = ( char* )malloc( size );
+    char* newString = ( char* )Memory_malloc( size );
     tmp = ( char* )s;
 
     /** makes the replaces. */
@@ -331,7 +331,7 @@ char* String_setInt8( int8_t b )
 
 char* String_setDouble( double d )
 {
-    return String_format( "%f", d );
+    return String_format( "%lf", d );
 }
 
 char* String_setFloat( float f )
@@ -375,21 +375,21 @@ int String_indexOfChar( const char* s, const char ch, int fromIndex )
     return ( ptr ) ? ( ptr - s ) : -1;
 }
 
-Map* String_split( const char* s, const char* delimiters )
+List* String_split( const char* s, const char* delimiters )
 {
     int count = 0;
     char *pch, *tmp;
-    Map* map = NULL;
+    List* list = NULL;
     tmp = String_new( s );
     pch = strtok( tmp, delimiters );
 
     while ( pch != NULL ) {
-        Map_emplace( &map, String_setInt32( count ), String_new( pch ), _String_freeFunction );
+        List_emplace( &list, String_new( pch ), _String_freeFunction );
         pch = strtok( NULL, delimiters );
         count++;
     }
-    free( tmp );
-    return map;
+    Memory_free( tmp );
+    return list;
 }
 
 char* String_fill( char* s, char ch, int num )
@@ -398,9 +398,9 @@ char* String_fill( char* s, char ch, int num )
     return s;
 }
 
-/** ============================= Private Functions ================== */
+/** =============================[ Private Functions ]================== */
 
-static void _String_freeFunction( void* value )
+static void _String_freeFunction( void* data )
 {
-    free( value );
+    Memory_free( data );
 }

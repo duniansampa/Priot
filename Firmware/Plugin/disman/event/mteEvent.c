@@ -5,8 +5,8 @@
 
 #include "mteEvent.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "TableData.h"
 #include "Trap.h"
@@ -124,8 +124,8 @@ void _mteEvent_dump( void )
         DEBUG_MSGTL( ( "disman:event:dump", "EventTable entry %d: ", i ) );
         DEBUG_MSGOID( ( "disman:event:dump", row->oid_index.oids, row->oid_index.len ) );
         DEBUG_MSG( ( "disman:event:dump", "(%s, %s)",
-            row->indexes->val.string,
-            row->indexes->nextVariable->val.string ) );
+            row->indexes->value.string,
+            row->indexes->next->value.string ) );
         DEBUG_MSG( ( "disman:event:dump", ": %p, %p\n", row, entry ) );
         i++;
     }
@@ -218,7 +218,7 @@ int mteEvent_fire( char* owner, char* event, /* Event to invoke    */
 {
     struct mteEvent* entry;
     int fired = 0;
-    Types_VariableList owner_var, event_var;
+    VariableList owner_var, event_var;
 
     DEBUG_MSGTL( ( "disman:event:fire", "Event fired (%s, %s)\n",
         owner, event ) );
@@ -231,7 +231,7 @@ int mteEvent_fire( char* owner, char* event, /* Event to invoke    */
     Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR, owner, strlen( owner ) );
     Client_setVarTypedValue( &event_var, ASN01_PRIV_IMPLIED_OCTET_STR,
         event, strlen( event ) );
-    owner_var.nextVariable = &event_var;
+    owner_var.next = &event_var;
     entry = ( struct mteEvent* )
         TableTdata_rowEntry(
             TableTdata_rowGetByidx( event_table_data, &owner_var ) );
@@ -261,7 +261,7 @@ int _mteEvent_fire_notify( struct mteEvent* entry, /* The event to fire  */
     struct mteTrigger* trigger, /* Trigger that fired */
     oid* suffix, size_t sfx_len ) /* Matching instance  */
 {
-    Types_VariableList *var, *v2;
+    VariableList *var, *v2;
     extern const oid trap_priotTrapOid[];
     extern const size_t trap_priotTrapOidLen;
     Types_Session* s;
@@ -273,17 +273,17 @@ int _mteEvent_fire_notify( struct mteEvent* entry, /* The event to fire  */
           * Allow the agent to be configured either way.
           */
     int strictOrdering = DefaultStore_getBoolean(
-        DsStorage_APPLICATION_ID,
+        DsStore_APPLICATION_ID,
         DsAgentBoolean_STRICT_DISMAN );
 
-    var = ( Types_VariableList* )MEMORY_MALLOC_TYPEDEF( Types_VariableList );
+    var = ( VariableList* )MEMORY_MALLOC_TYPEDEF( VariableList );
     if ( !var )
         return -1;
 
     /*
      * Set the basic notification OID...
      */
-    memset( var, 0, sizeof( Types_VariableList ) );
+    memset( var, 0, sizeof( VariableList ) );
     Client_setVarObjid( var, trap_priotTrapOid, trap_priotTrapOidLen );
     Client_setVarTypedValue( var, ASN01_OBJECT_ID,
         ( u_char* )entry->mteNotification,
@@ -327,7 +327,7 @@ int _mteEvent_fire_notify( struct mteEvent* entry, /* The event to fire  */
      * Query the agent to retrieve the necessary values...
      *   (skipping the initial snmpTrapOID varbind)
      */
-    v2 = var->nextVariable;
+    v2 = var->next;
     if ( entry->session )
         s = entry->session;
     else
@@ -343,7 +343,7 @@ int _mteEvent_fire_notify( struct mteEvent* entry, /* The event to fire  */
         if ( !strictOrdering ) {
             mteObjects_internal_vblist( var, entry->mteNotifyObjects, trigger, s );
         } else {
-            for ( v2 = var; v2 && v2->nextVariable; v2 = v2->nextVariable )
+            for ( v2 = var; v2 && v2->next; v2 = v2->next )
                 ;
             mteObjects_internal_vblist( v2, entry->mteNotifyObjects, trigger, s );
         }
@@ -361,7 +361,7 @@ int _mteEvent_fire_set( struct mteEvent* entry, /* The event to fire */
     struct mteTrigger* trigger, /* Trigger that fired */
     oid* suffix, size_t sfx_len ) /* Matching instance */
 {
-    Types_VariableList var;
+    VariableList var;
     oid set_oid[ ASN01_MAX_OID_LEN ];
     size_t set_len;
 

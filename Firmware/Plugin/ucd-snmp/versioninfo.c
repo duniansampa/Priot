@@ -3,12 +3,12 @@
 #include "versioninfo.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "System/String.h"
 #include "VarStruct.h"
-#include "Version.h"
+#include "System/Version.h"
 #include "struct.h"
 #include "util_funcs.h" /* clear_cache */
 #include "utilities/Restart.h"
@@ -180,7 +180,7 @@ int save_persistent( int action,
         return PRIOT_ERR_WRONGTYPE;
     }
     if ( action == IMPL_COMMIT ) {
-        Api_store( DefaultStore_getString( DsStorage_LIBRARY_ID,
+        Api_store( DefaultStore_getString( DsStore_LIBRARY_ID,
             DsStr_APPTYPE ) );
     }
     return PRIOT_ERR_NOERROR;

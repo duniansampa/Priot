@@ -10,12 +10,12 @@
 #include "snmpTargetAddrEntry.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
 #include "Impl.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "System/String.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "TextualConvention.h"
 #include "utilities/header_generic.h"
 
 #define snmpTargetAddrOIDLen 11 /*This is base+column, \
@@ -304,7 +304,7 @@ void init_snmpTargetAddrEntry( void )
     /*
      * we need to be called back later 
      */
-    Callback_registerCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_register( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_snmpTargetAddrEntry, NULL );
 
 } /* init_snmpTargetAddrEntry */
@@ -320,7 +320,7 @@ void shutdown_snmpTargetAddrEntry( void )
     }
     aAddrTable = NULL;
 
-    Callback_unregisterCallback( CALLBACK_LIBRARY, CALLBACK_STORE_DATA,
+    Callback_unregister( CallbackMajor_LIBRARY, CallbackMinor_STORE_DATA,
         store_snmpTargetAddrEntry, NULL, FALSE );
 }
 

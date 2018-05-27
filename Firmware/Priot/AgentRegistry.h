@@ -4,7 +4,7 @@
 #include "Generals.h"
 #include "Types.h"
 #include "VarStruct.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 
 #define MIB_REGISTERED_OK 0
 #define MIB_DUPLICATE_REGISTRATION -1

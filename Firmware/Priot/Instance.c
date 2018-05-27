@@ -1,6 +1,6 @@
 #include "Instance.h"
 #include "System/Util/Utilities.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Assert.h"
 #include "AgentHandler.h"
 #include "Watcher.h"
@@ -595,8 +595,8 @@ Instance_numFileHandler(MibHandler *handler,
          * update current
          */
         DEBUG_MSGTL(("helper:instance", "updated %s -> %ld\n", nfi->file_name,
-                    *(requests->requestvb->val.integer)));
-        it = *(requests->requestvb->val.integer);
+                    *(requests->requestvb->value.integer)));
+        it = *(requests->requestvb->value.integer);
         rewind(nfi->filep); /* rewind to make sure we are at the beginning */
         rc = fprintf(nfi->filep, (nfi->type == ASN01_INTEGER) ? "%ld" : "%lu",
                      it);
@@ -644,7 +644,7 @@ Instance_helperHandler(MibHandler *handler,
                                 RequestInfo *requests)
 {
 
-    Types_VariableList *var = requests->requestvb;
+    VariableList *var = requests->requestvb;
 
     int             ret, cmp;
 

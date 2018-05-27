@@ -1,10 +1,10 @@
 #include "XClient.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Client.h"
 #include "../Plugin/Agentx/Subagent.h"
 #include "../Plugin/Agentx/Protocol.h"
 #include "Agent.h"
-#include "DefaultStore.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "VarStruct.h"
 #include "System/Util/Logger.h"
@@ -84,7 +84,7 @@ XClient_openSession(Types_Session * ss)
     pdu = Client_pduCreate(AGENTX_MSG_OPEN);
     if (pdu == NULL)
         return 0;
-    timeout = DefaultStore_getInt( DsStorage_APPLICATION_ID,
+    timeout = DefaultStore_getInt( DsStore_APPLICATION_ID,
                                    DsAgentInterger_AGENTX_TIMEOUT);
     if (timeout < 0)
         pdu->time = 0;
@@ -174,7 +174,7 @@ XClient_register(Types_Session * ss, oid start[], size_t startlen,
     if (range_subid) {
         Api_pduAddVariable(pdu, start, startlen, ASN01_OBJECT_ID,
                               (u_char *) start, startlen * sizeof(oid));
-        pdu->variables->val.objid[range_subid - 1] = range_ubound;
+        pdu->variables->value.objectId[range_subid - 1] = range_ubound;
     } else {
         Client_addNullVar(pdu, start, startlen);
     }
@@ -227,7 +227,7 @@ XClient_unregister(Types_Session * ss, oid start[], size_t startlen,
     if (range_subid) {
         Api_pduAddVariable(pdu, start, startlen, ASN01_OBJECT_ID,
                               (u_char *) start, startlen * sizeof(oid));
-        pdu->variables->val.objid[range_subid - 1] = range_ubound;
+        pdu->variables->value.objectId[range_subid - 1] = range_ubound;
     } else {
         Client_addNullVar(pdu, start, startlen);
     }
@@ -245,12 +245,12 @@ XClient_unregister(Types_Session * ss, oid start[], size_t startlen,
     return 1;
 }
 
-Types_VariableList *
+VariableList *
 XClient_registerIndex(Types_Session * ss,
-                      Types_VariableList * varbind, int flags)
+                      VariableList * varbind, int flags)
 {
     Types_Pdu    *pdu, *response;
-    Types_VariableList *varbind2;
+    VariableList *varbind2;
 
     if (ss == NULL || !IS_AGENTX_VERSION(ss->version)) {
         return NULL;
@@ -262,15 +262,15 @@ XClient_registerIndex(Types_Session * ss,
 *    (since the pdu structure will be freed)
 */
     varbind2 =
-            (Types_VariableList *) malloc(sizeof(Types_VariableList));
+            (VariableList *) malloc(sizeof(VariableList));
     if (varbind2 == NULL)
         return NULL;
     if (Client_cloneVar(varbind, varbind2)) {
         Api_freeVarbind(varbind2);
         return NULL;
     }
-    if (varbind2->val.string == NULL)
-        varbind2->val.string = varbind2->buf;   /* ensure it points somewhere */
+    if (varbind2->value.string == NULL)
+        varbind2->value.string = varbind2->buffer;   /* ensure it points somewhere */
 
     pdu = Client_pduCreate(AGENTX_MSG_INDEX_ALLOCATE);
     if (pdu == NULL) {
@@ -324,10 +324,10 @@ XClient_registerIndex(Types_Session * ss,
 
 int
 XClient_unregisterIndex(Types_Session * ss,
-                        Types_VariableList * varbind)
+                        VariableList * varbind)
 {
     Types_Pdu    *pdu, *response;
-    Types_VariableList *varbind2;
+    VariableList *varbind2;
 
     if (ss == NULL || !IS_AGENTX_VERSION(ss->version)) {
         return -1;
@@ -339,7 +339,7 @@ XClient_unregisterIndex(Types_Session * ss,
 *    (since the pdu structure will be freed)
 */
     varbind2 =
-            (Types_VariableList *) malloc(sizeof(Types_VariableList));
+            (VariableList *) malloc(sizeof(VariableList));
     if (varbind2 == NULL)
         return -1;
     if (Client_cloneVar(varbind, varbind2)) {

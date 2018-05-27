@@ -5,8 +5,8 @@
 #include "Agentx/AgentxConfig.h"
 #include "Agentx/Subagent.h"
 #include "AllHelpers.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "System/Containers/MapList.h"
 #include "System/Util/Logger.h"
@@ -143,8 +143,8 @@ int Vars_initAgent( const char* app )
     /*
      * we handle alarm signals ourselves in the select loop
      */
-    DefaultStore_setBoolean( DsStorage_LIBRARY_ID,
-        DsBool_ALARM_DONT_USE_SIG, 1 );
+    DefaultStore_setBoolean( DsStore_LIBRARY_ID,
+        DsBool_ALARM_DONT_USE_SIGNAL, 1 );
 
     AgentRegistry_setupTree();
 
@@ -161,7 +161,7 @@ int Vars_initAgent( const char* app )
      * initialize agentx configs
      */
     AgentxConfig_init();
-    if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
              DsAgentBoolean_ROLE )
         == SUB_AGENT )
         Subagent_init();
@@ -176,7 +176,7 @@ int Vars_initAgent( const char* app )
     /*
      * don't init agent modules for a sub-agent
      */
-    if ( DefaultStore_getBoolean( DsStorage_APPLICATION_ID,
+    if ( DefaultStore_getBoolean( DsStore_APPLICATION_ID,
              DsAgentBoolean_ROLE )
         == SUB_AGENT )
         return r;
@@ -202,7 +202,7 @@ void Vars_shutdownAgent( void )
     Container_freeList();
     Secmod_clear();
     MapList_clear();
-    Callback_clearCallback();
+    Callback_clear();
     Secmod_shutdown();
     Agent_addrcacheDestroy();
 

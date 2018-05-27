@@ -100,29 +100,29 @@ typedef struct netsnmp_interface_stats_s {
     /*
      *  "Dynamic" fields
      *  Cached versions of byte/packet counters, etc
-     *  (saved as a 'struct Asn01_Counter64_s' even if the
+     *  (saved as a 'Asn01_Counter64' even if the
      *   high order half isn't actually used)
      *
      */
    /** input */
-    struct Asn01_Counter64_s ibytes;
+    Counter64 ibytes;
     /*
      * nr. of all packets (to calculate iucast, when underlying platform does
      * not provide it)
      */
-    struct Asn01_Counter64_s iall;
-    struct Asn01_Counter64_s iucast;
-    struct Asn01_Counter64_s imcast;
-    struct Asn01_Counter64_s ibcast;
+    Counter64 iall;
+    Counter64 iucast;
+    Counter64 imcast;
+    Counter64 ibcast;
     unsigned int     ierrors;
     unsigned int     idiscards;
     unsigned int     iunknown_protos;
     unsigned int     inucast;
    /** output */
-    struct Asn01_Counter64_s obytes;
-    struct Asn01_Counter64_s oucast;
-    struct Asn01_Counter64_s omcast;
-    struct Asn01_Counter64_s obcast;
+    Counter64 obytes;
+    Counter64 oucast;
+    Counter64 omcast;
+    Counter64 obcast;
     unsigned int     oerrors;
     unsigned int     odiscards;
     unsigned int     oqlen;

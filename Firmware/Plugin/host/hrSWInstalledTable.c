@@ -17,7 +17,7 @@
 #include "System/Util/Assert.h"
 #include "CacheHandler.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Table.h"
 #include "TableContainer.h"

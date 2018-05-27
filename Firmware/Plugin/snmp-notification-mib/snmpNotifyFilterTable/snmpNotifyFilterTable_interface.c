@@ -27,16 +27,16 @@
  */
 
 #include "snmpNotifyFilterTable_interface.h"
-#include "System/Util/Assert.h"
 #include "BabySteps.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
-#include "System/Util/Logger.h"
+#include "System/Util/DefaultStore.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "RowMerge.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "TableContainer.h"
 #include "siglog/agent/mfd.h"
 #include "snmpNotifyFilterTable_constants.h"
@@ -136,7 +136,7 @@ static NodeHandlerFT _mfd_snmpNotifyFilterTable_check_dependencies;
 static inline int
 _snmpNotifyFilterTable_undo_column( snmpNotifyFilterTable_rowreq_ctx*
                                         rowreq_ctx,
-    Types_VariableList*
+    VariableList*
         var,
     int column );
 
@@ -356,11 +356,11 @@ int snmpNotifyFilterTable_index_to_oid( Types_Index* oid_idx,
     /*
      * snmpNotifyFilterProfileName(1)/SnmpAdminString/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
      */
-    Types_VariableList var_snmpNotifyFilterProfileName;
+    VariableList var_snmpNotifyFilterProfileName;
     /*
      * snmpNotifyFilterSubtree(1)/OBJECTID/ASN_OBJECT_ID/oid(oid)//L/a/w/e/r/d/h
      */
-    Types_VariableList var_snmpNotifyFilterSubtree;
+    VariableList var_snmpNotifyFilterSubtree;
 
     /*
      * set up varbinds
@@ -375,8 +375,8 @@ int snmpNotifyFilterTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_snmpNotifyFilterProfileName.nextVariable = &var_snmpNotifyFilterSubtree;
-    var_snmpNotifyFilterSubtree.nextVariable = NULL;
+    var_snmpNotifyFilterProfileName.next = &var_snmpNotifyFilterSubtree;
+    var_snmpNotifyFilterSubtree.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:snmpNotifyFilterTable:snmpNotifyFilterTable_index_to_oid", "called\n" ) );
 
@@ -425,11 +425,11 @@ int snmpNotifyFilterTable_index_from_oid( Types_Index* oid_idx,
     /*
      * snmpNotifyFilterProfileName(1)/SnmpAdminString/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H
      */
-    Types_VariableList var_snmpNotifyFilterProfileName;
+    VariableList var_snmpNotifyFilterProfileName;
     /*
      * snmpNotifyFilterSubtree(1)/OBJECTID/ASN_OBJECT_ID/oid(oid)//L/a/w/e/r/d/h
      */
-    Types_VariableList var_snmpNotifyFilterSubtree;
+    VariableList var_snmpNotifyFilterSubtree;
 
     /*
      * set up varbinds
@@ -444,8 +444,8 @@ int snmpNotifyFilterTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_snmpNotifyFilterProfileName.nextVariable = &var_snmpNotifyFilterSubtree;
-    var_snmpNotifyFilterSubtree.nextVariable = NULL;
+    var_snmpNotifyFilterProfileName.next = &var_snmpNotifyFilterSubtree;
+    var_snmpNotifyFilterSubtree.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:snmpNotifyFilterTable:snmpNotifyFilterTable_index_from_oid", "called\n" ) );
 
@@ -461,24 +461,24 @@ int snmpNotifyFilterTable_index_from_oid( Types_Index* oid_idx,
         /*
          * NOTE: val_len is in bytes, snmpNotifyFilterProfileName_len might not be
          */
-        if ( var_snmpNotifyFilterProfileName.valLen > sizeof( mib_idx->snmpNotifyFilterProfileName ) )
+        if ( var_snmpNotifyFilterProfileName.valueLength > sizeof( mib_idx->snmpNotifyFilterProfileName ) )
             err = ErrorCode_GENERR;
         else {
             memcpy( mib_idx->snmpNotifyFilterProfileName,
-                var_snmpNotifyFilterProfileName.val.string,
-                var_snmpNotifyFilterProfileName.valLen );
-            mib_idx->snmpNotifyFilterProfileName_len = var_snmpNotifyFilterProfileName.valLen / sizeof( mib_idx->snmpNotifyFilterProfileName[ 0 ] );
+                var_snmpNotifyFilterProfileName.value.string,
+                var_snmpNotifyFilterProfileName.valueLength );
+            mib_idx->snmpNotifyFilterProfileName_len = var_snmpNotifyFilterProfileName.valueLength / sizeof( mib_idx->snmpNotifyFilterProfileName[ 0 ] );
         }
         /*
          * NOTE: val_len is in bytes, snmpNotifyFilterSubtree_len might not be
          */
-        if ( var_snmpNotifyFilterSubtree.valLen > sizeof( mib_idx->snmpNotifyFilterSubtree ) )
+        if ( var_snmpNotifyFilterSubtree.valueLength > sizeof( mib_idx->snmpNotifyFilterSubtree ) )
             err = ErrorCode_GENERR;
         else {
             memcpy( mib_idx->snmpNotifyFilterSubtree,
-                var_snmpNotifyFilterSubtree.val.string,
-                var_snmpNotifyFilterSubtree.valLen );
-            mib_idx->snmpNotifyFilterSubtree_len = var_snmpNotifyFilterSubtree.valLen / sizeof( mib_idx->snmpNotifyFilterSubtree[ 0 ] );
+                var_snmpNotifyFilterSubtree.value.string,
+                var_snmpNotifyFilterSubtree.valueLength );
+            mib_idx->snmpNotifyFilterSubtree_len = var_snmpNotifyFilterSubtree.valueLength / sizeof( mib_idx->snmpNotifyFilterSubtree[ 0 ] );
         }
     }
 
@@ -796,7 +796,7 @@ _mfd_snmpNotifyFilterTable_object_lookup( MibHandler* handler, HandlerRegistrati
 static inline int
 _snmpNotifyFilterTable_get_column( snmpNotifyFilterTable_rowreq_ctx*
                                        rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -813,38 +813,38 @@ _snmpNotifyFilterTable_get_column( snmpNotifyFilterTable_rowreq_ctx*
     case COLUMN_SNMPNOTIFYFILTERMASK:
         var->type = ASN01_OCTET_STR;
         rc = snmpNotifyFilterMask_get( rowreq_ctx,
-            ( char** )&var->val.string,
-            &var->valLen );
+            ( char** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * snmpNotifyFilterType(3)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERTYPE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = snmpNotifyFilterType_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * snmpNotifyFilterStorageType(4)/StorageType/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERSTORAGETYPE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = snmpNotifyFilterStorageType_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * snmpNotifyFilterRowStatus(5)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_SNMPNOTIFYFILTERROWSTATUS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = snmpNotifyFilterRowStatus_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -875,14 +875,14 @@ int _mfd_snmpNotifyFilterTable_get_values( MibHandler* handler, HandlerRegistrat
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -900,7 +900,7 @@ int _mfd_snmpNotifyFilterTable_get_values( MibHandler* handler, HandlerRegistrat
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = ErrorCode_GENERR;
         }
@@ -912,7 +912,7 @@ int _mfd_snmpNotifyFilterTable_get_values( MibHandler* handler, HandlerRegistrat
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -977,7 +977,7 @@ _snmpNotifyFilterTable_check_indexes( snmpNotifyFilterTable_rowreq_ctx*
 static inline int
 _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
                                          rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -998,21 +998,21 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterMask(2)/OCTETSTR/ASN_OCTET_STR/char(char)//L/A/W/e/R/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERMASK:
-        rc = CheckVarbind_typeAndMaxSize( var, ASN01_OCTET_STR,
+        rc = VariableList_checkTypeAndMaxLength( var, ASN01_OCTET_STR,
             sizeof( rowreq_ctx->data.snmpNotifyFilterMask ) );
         /*
          * check defined range(s). 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( ( var->valLen < 0 ) || ( var->valLen > 16 ) ) ) {
+            && ( ( var->valueLength < 0 ) || ( var->valueLength > 16 ) ) ) {
             rc = PRIOT_ERR_WRONGLENGTH;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "snmpNotifyFilterTable:_snmpNotifyFilterTable_check_column:snmpNotifyFilterMask", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = snmpNotifyFilterMask_check_value( rowreq_ctx,
-                ( char* )var->val.string,
-                var->valLen );
+                ( char* )var->value.string,
+                var->valueLength );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1027,21 +1027,21 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterType(3)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERTYPE:
-        rc = CheckVarbind_typeAndSize( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
             sizeof( rowreq_ctx->data.snmpNotifyFilterType ) );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != SNMPNOTIFYFILTERTYPE_INCLUDED )
-            && ( *var->val.integer != SNMPNOTIFYFILTERTYPE_EXCLUDED ) ) {
+            && ( *var->value.integer != SNMPNOTIFYFILTERTYPE_INCLUDED )
+            && ( *var->value.integer != SNMPNOTIFYFILTERTYPE_EXCLUDED ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "snmpNotifyFilterTable:_snmpNotifyFilterTable_check_column:snmpNotifyFilterType", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = snmpNotifyFilterType_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1056,24 +1056,24 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterStorageType(4)/StorageType/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERSTORAGETYPE:
-        rc = CheckVarbind_typeAndSize( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
             sizeof( rowreq_ctx->data.snmpNotifyFilterStorageType ) );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != STORAGETYPE_OTHER )
-            && ( *var->val.integer != STORAGETYPE_VOLATILE )
-            && ( *var->val.integer != STORAGETYPE_NONVOLATILE )
-            && ( *var->val.integer != STORAGETYPE_PERMANENT )
-            && ( *var->val.integer != STORAGETYPE_READONLY ) ) {
+            && ( *var->value.integer != STORAGETYPE_OTHER )
+            && ( *var->value.integer != STORAGETYPE_VOLATILE )
+            && ( *var->value.integer != STORAGETYPE_NONVOLATILE )
+            && ( *var->value.integer != STORAGETYPE_PERMANENT )
+            && ( *var->value.integer != STORAGETYPE_READONLY ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "snmpNotifyFilterTable:_snmpNotifyFilterTable_check_column:snmpNotifyFilterStorageType", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = snmpNotifyFilterStorageType_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1088,12 +1088,12 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterRowStatus(5)/RowStatus/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_SNMPNOTIFYFILTERROWSTATUS:
-        rc = CheckVarbind_rowStatusValue( var );
+        rc = VariableList_checkRowStatusLengthAndRange( var );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "snmpNotifyFilterTable:_snmpNotifyFilterTable_check_column:snmpNotifyFilterRowStatus", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = snmpNotifyFilterRowStatus_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1361,7 +1361,7 @@ int _mfd_snmpNotifyFilterTable_undo_cleanup( MibHandler* handler, HandlerRegistr
 static inline int
 _snmpNotifyFilterTable_set_column( snmpNotifyFilterTable_rowreq_ctx*
                                        rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -1377,8 +1377,8 @@ _snmpNotifyFilterTable_set_column( snmpNotifyFilterTable_rowreq_ctx*
          */
     case COLUMN_SNMPNOTIFYFILTERMASK:
         rowreq_ctx->column_set_flags |= COLUMN_SNMPNOTIFYFILTERMASK_FLAG;
-        rc = snmpNotifyFilterMask_set( rowreq_ctx, ( char* )var->val.string,
-            var->valLen );
+        rc = snmpNotifyFilterMask_set( rowreq_ctx, ( char* )var->value.string,
+            var->valueLength );
         break;
 
     /*
@@ -1387,7 +1387,7 @@ _snmpNotifyFilterTable_set_column( snmpNotifyFilterTable_rowreq_ctx*
     case COLUMN_SNMPNOTIFYFILTERTYPE:
         rowreq_ctx->column_set_flags |= COLUMN_SNMPNOTIFYFILTERTYPE_FLAG;
         rc = snmpNotifyFilterType_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1396,7 +1396,7 @@ _snmpNotifyFilterTable_set_column( snmpNotifyFilterTable_rowreq_ctx*
     case COLUMN_SNMPNOTIFYFILTERSTORAGETYPE:
         rowreq_ctx->column_set_flags |= COLUMN_SNMPNOTIFYFILTERSTORAGETYPE_FLAG;
         rc = snmpNotifyFilterStorageType_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1405,7 +1405,7 @@ _snmpNotifyFilterTable_set_column( snmpNotifyFilterTable_rowreq_ctx*
     case COLUMN_SNMPNOTIFYFILTERROWSTATUS:
         rowreq_ctx->column_set_flags |= COLUMN_SNMPNOTIFYFILTERROWSTATUS_FLAG;
         rc = snmpNotifyFilterRowStatus_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     default:
@@ -1547,7 +1547,7 @@ int _mfd_snmpNotifyFilterTable_undo_commit( MibHandler* handler, HandlerRegistra
 static inline int
 _snmpNotifyFilterTable_undo_column( snmpNotifyFilterTable_rowreq_ctx*
                                         rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -1745,7 +1745,7 @@ void _snmpNotifyFilterTable_container_init( snmpNotifyFilterTable_interface_ctx*
      */
     snmpNotifyFilterTable_container_init( &if_ctx->container );
     if ( NULL == if_ctx->container )
-        if_ctx->container = Container_find( "snmpNotifyFilterTable:table_container" );
+        if_ctx->container = Container_find( "snmpNotifyFilterTable:tableContainer" );
     if ( NULL == if_ctx->container ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error creating container in "
                                          "snmpNotifyFilterTable_container_init\n" );
@@ -1815,8 +1815,8 @@ void snmpNotifyFilterTable_container_init_persistence( Container_Container* cont
         NULL, NULL );
     container_p = ( Container_Container** )Memory_memdup( &container, sizeof( container ) );
     Assert_assert( container_p );
-    rc = Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_STORE_DATA,
+    rc = Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_STORE_DATA,
         _snmpNotifyFilterTable_container_save_rows,
         container_p );
 
@@ -1834,7 +1834,7 @@ _snmpNotifyFilterTable_container_save_rows( int majorID, int minorID,
     char buf[] = "#\n"
                  "# snmpNotifyFilterTable persistent data\n"
                  "#";
-    char* type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    char* type = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
     Container_Container* c = *( Container_Container** )clientarg;
 

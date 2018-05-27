@@ -15,10 +15,10 @@ DEPENDPATH += $$PWD/../Plugin/
 #DESTDIR = $$PWD/../../bin/lib
 
 SOURCES += \
-    DefaultStore.c \
     System/Numerics/Double.c \
     System/Numerics/Float.c \
     System/Convert.c \
+    System/Version.c \
     System/Containers/Map.c \
     System/Containers/Container.c \
     System/Containers/ContainerBinaryArray.c \
@@ -27,8 +27,10 @@ SOURCES += \
     System/Containers/ContainerNull.c \
     System/Containers/MapList.c \
     System/Util/Logger.c \
-    System/Util/Debug.c \
     System/Util/Utilities.c \
+    System/Util/Alarm.c \
+    System/Util/Callback.c \
+    System/Util/DefaultStore.c \
     Transports/AliasDomain.c \
     Transports/IPv4BaseDomain.c \
     Transports/SocketBaseDomain.c \
@@ -42,9 +44,7 @@ SOURCES += \
     System/String.c \
     Api.c \
     Asn01.c \
-    Callback.c \
     Client.c \
-    Int64.c \
     Keytools.c \
     LargeFdSet.c \
     LcdTime.c \
@@ -60,28 +60,29 @@ SOURCES += \
     Service.c \
     Session.c \
     System.c \
-    Tc.c \
-    TextUtils.c \
     Transport.c \
-    UcdCompat.c \
     Usm.c \
     V3.c \
     Vacm.c \
-    Version.c \
     FdEventManager.c \
-    Alarm.c \
-    CheckVarbind.c \
     System/Util/Directory.c \
     System/Util/File.c \
     System/Numerics/Integer.c \
     System/Util/Memory.c \
     System/Util/Time.c \
-    System/Task/Mutex.c
+    System/Numerics/Integer64.c \
+    System/Task/Mutex.c \
+    System/Containers/List.c \
+    System/Util/VariableList.c \
+    System/Util/FileParser.c \
+    TextualConvention.c \
+    System/Util/Trace.c
 
 HEADERS += \
     Config.h \
     Generals.h \
     System/String.h \
+    System/Version.h \
     System/Numerics/Double.h \
     System/Numerics/Float.h \
     System/Containers/Map.h \
@@ -91,7 +92,6 @@ HEADERS += \
     System/Containers/ContainerListSsll.h \
     System/Containers/ContainerNull.h \
     System/Containers/MapList.h \
-    System/Util/Debug.h \
     System/Util/Logger.h \
     System/Util/Utilities.h \
     System/Util/Assert.h \
@@ -99,6 +99,10 @@ HEADERS += \
     System/Util/File.h \
     System/Util/Memory.h \
     System/Util/Time.h \
+    System/Util/Alarm.h \
+    System/Util/Callback.h \
+    System/Util/DefaultStore.h \
+    System/Numerics/Integer64.h \
     Transports/IPv4BaseDomain.h \
     Transports/SocketBaseDomain.h \
     Transports/TCPBaseDomain.h \
@@ -110,14 +114,11 @@ HEADERS += \
     Transports/AliasDomain.h \
     Transports/CallbackDomain.h \
     DataType.h \
-    DefaultStore.h \
     Transport.h \
     System.h \
     Types.h \
     Priot.h \
-    Callback.h \
     LargeFdSet.h \
-    Int64.h \
     Keytools.h \
     LcdTime.h \
     Md5.h \
@@ -127,17 +128,12 @@ HEADERS += \
     OidStash.h \
     ReadConfig.h \
     Scapi.h \
-    Alarm.h \
-    Tc.h \
     Api.h \
     ParseArgs.h \
     Secmod.h \
     Service.h \
-    Version.h \
     Usm.h \
     V3.h \
-    TextUtils.h \
-    UcdCompat.h \
     Vacm.h \
     Client.h \
     Impl.h \
@@ -145,9 +141,13 @@ HEADERS += \
     ../Plugin/Agentx/Protocol.h \
     System/Convert.h \
     FdEventManager.h \
-    CheckVarbind.h \
     System/Numerics/Integer.h \
-    System/Task/Mutex.h
+    System/Task/Mutex.h \
+    System/Containers/List.h \
+    System/Util/VariableList.h \
+    System/Util/FileParser.h \
+    TextualConvention.h \
+    System/Util/Trace.h
 
 
 

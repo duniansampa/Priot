@@ -10,7 +10,7 @@
 
 #include "ipCidrRouteTable_data_access.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "ipCidrRouteTable_constants.h"
 #include "ipCidrRouteTable_interface.h"

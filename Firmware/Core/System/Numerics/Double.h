@@ -1,8 +1,8 @@
-#ifndef DOUBLE_H_
-#define DOUBLE_H_
+#ifndef IOT_DOUBLE_H
+#define IOT_DOUBLE_H
 
 /**
- * \brief     Double class.
+ * @brief     Double class.
  * \details   A class to define Double operations.
  * \author    Dunian Coutinho Sampa
  * \version   1.0
@@ -17,6 +17,8 @@
 #include "Generals.h"
 #include "System/String.h"
 
+/** ============================[ Macros ]============================ */
+
 /** A constant holding the largest positive finite value of type double. */
 #define DOUBLE_MAXVALUE DBL_MAX
 
@@ -28,6 +30,8 @@
 
 /** Difference between 1 and the least value greater than 1 that is representable. */
 #define DOUBLE_EPSILON DBL_EPSILON
+
+/** =============================[ Functions Prototypes ]================== */
 
 /** Compares the two specified double values. */
 int Double_compare( double d1, double d2 );
@@ -41,4 +45,4 @@ bool Double_isInfinite( double d1 );
 /** Returns true if the specified number is a Not-a-Number (NaN) value, false otherwise. */
 bool Double_isNaN( double v );
 
-#endif /* DOUBLE_H_ */
+#endif /* IOT_DOUBLE_H */

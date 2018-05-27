@@ -4,7 +4,7 @@
  */
 
 #include "kernel_linux.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/String.h"
 #include <errno.h>
 #include <string.h>

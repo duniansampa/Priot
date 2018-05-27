@@ -17,7 +17,7 @@
 #include "tcpTable.h"
 #include "Api.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "System/Util/Logger.h"
 #include "siglog/system/generic.h"
@@ -107,7 +107,7 @@ int tcpTable_handler( MibHandler* handler,
     RequestInfo* requests )
 {
     RequestInfo* request;
-    Types_VariableList* requestvb;
+    VariableList* requestvb;
     TableRequestInfo* table_info;
     TCPTABLE_ENTRY_TYPE* entry;
     oid subid;
@@ -190,10 +190,10 @@ int TCP_Count_Connections( void )
     return tcp_estab;
 }
 
-Types_VariableList*
+VariableList*
 tcpTable_first_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     /*
@@ -211,14 +211,14 @@ tcpTable_first_entry( void** loop_context,
     return tcpTable_next_entry( loop_context, data_context, index, data );
 }
 
-Types_VariableList*
+VariableList*
 tcpTable_next_entry( void** loop_context,
     void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     TCPTABLE_ENTRY_TYPE* entry = ( TCPTABLE_ENTRY_TYPE* )*loop_context;
-    Types_VariableList* idx;
+    VariableList* idx;
     long addr, port;
 
     if ( !entry )
@@ -233,16 +233,16 @@ tcpTable_next_entry( void** loop_context,
     Client_setVarValue( idx, ( u_char* )&addr, sizeof( addr ) );
 
     port = TCP_PORT_TO_HOST_ORDER( entry->TCPTABLE_LOCALPORT );
-    idx = idx->nextVariable;
+    idx = idx->next;
     Client_setVarValue( idx, ( u_char* )&port, sizeof( port ) );
 
-    idx = idx->nextVariable;
+    idx = idx->next;
 
     addr = ntohl( entry->TCPTABLE_REMOTEADDRESS );
     Client_setVarValue( idx, ( u_char* )&addr, sizeof( addr ) );
 
     port = TCP_PORT_TO_HOST_ORDER( entry->TCPTABLE_REMOTEPORT );
-    idx = idx->nextVariable;
+    idx = idx->next;
     Client_setVarValue( idx, ( u_char* )&port, sizeof( port ) );
 
     /*

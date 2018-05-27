@@ -2,16 +2,16 @@
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
 #include "Api.h"
-#include "System/Util/Assert.h"
 #include "BulkToNext.h"
-#include "System/Containers/Map.h"
-#include "System/Util/Debug.h"
-#include "System/Containers/MapList.h"
-#include "System/Util/Logger.h"
 #include "Priot.h"
 #include "PriotSettings.h"
 #include "ReadConfig.h"
 #include "ReadConfig.h"
+#include "System/Containers/Map.h"
+#include "System/Containers/MapList.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "System/Util/Utilities.h"
 
 static MibHandler*
@@ -228,7 +228,7 @@ AgentHandler_createHandlerRegistration( const char* name,
  *  Checks given registation handler for sanity, then
  *  @link AgentRegistry_registerMib() performs registration @endlink
  *  in the MIB tree, as defined by the HandlerRegistration
- *  pointer. On success, CALLBACK_APPLICATION is called.
+ *  pointer. On success, CallbackMajor_APPLICATION is called.
  *  The registration struct may be created by call of
  *  AgentHandler_createHandlerRegistration().
  *
@@ -328,7 +328,7 @@ int AgentHandler_unregisterHandler( HandlerRegistration* reginfo )
  *  Checks given registation handler for sanity, then
  *  @link AgentRegistry_registerMib() performs registration @endlink
  *  in the MIB tree, as defined by the HandlerRegistration
- *  pointer. Never calls CALLBACK_APPLICATION.
+ *  pointer. Never calls CallbackMajor_APPLICATION.
  *  The registration struct may be created by call of
  *  AgentHandler_createHandlerRegistration().
  *
@@ -1222,8 +1222,8 @@ void AgentHandler_initHandlerConf( void )
         AgentHandler_parseInjectHandlerConf,
         NULL, "injectHandler NAME INTONAME [BEFORE_OTHER_NAME]" );
 
-    Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_POST_READ_CONFIG,
+    Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_POST_READ_CONFIG,
         _AgentHandler_handlerMarkInjectHandlerDone, NULL );
 
     MapList_addPair( "agentMode", strdup( "GET" ), MODE_GET );

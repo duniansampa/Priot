@@ -2,7 +2,7 @@
 #include "AgentHandler.h"
 #include "Client.h"
 #include "System/Containers/Container.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "SysORTable.h"
 #include "Table.h"
@@ -237,9 +237,9 @@ void init_sysORTable( void )
     /*
    * Register callbacks
    */
-    Callback_registerCallback( CALLBACK_APPLICATION, PriotdCallback_REG_SYSOR,
+    Callback_register( CallbackMajor_APPLICATION, PriotdCallback_REG_SYSOR,
         register_cb, NULL );
-    Callback_registerCallback( CALLBACK_APPLICATION, PriotdCallback_UNREG_SYSOR,
+    Callback_register( CallbackMajor_APPLICATION, PriotdCallback_UNREG_SYSOR,
         unregister_cb, NULL );
 
     if ( ++systemMib_systemModuleCount == 3 )
@@ -252,10 +252,10 @@ void shutdown_sysORTable( void )
     if ( systemMib_systemModuleCount-- == 3 )
         UNREGISTER_SYSOR_TABLE( systemMib_systemModuleOid, systemMib_systemModuleOidLen );
 
-    Callback_unregisterCallback( CALLBACK_APPLICATION,
+    Callback_unregister( CallbackMajor_APPLICATION,
         PriotdCallback_UNREG_SYSOR, unregister_cb, NULL,
         1 );
-    Callback_unregisterCallback( CALLBACK_APPLICATION, PriotdCallback_REG_SYSOR,
+    Callback_unregister( CallbackMajor_APPLICATION, PriotdCallback_REG_SYSOR,
         register_cb, NULL, 1 );
 
     if ( table )

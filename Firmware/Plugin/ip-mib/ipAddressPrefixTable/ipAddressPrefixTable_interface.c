@@ -33,7 +33,7 @@
 #include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "Mib.h"
 #include "RowMerge.h"
@@ -300,19 +300,19 @@ int ipAddressPrefixTable_index_to_oid( Types_Index* oid_idx,
     /*
      * ipAddressPrefixIfIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipAddressPrefixIfIndex;
+    VariableList var_ipAddressPrefixIfIndex;
     /*
      * ipAddressPrefixType(2)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipAddressPrefixType;
+    VariableList var_ipAddressPrefixType;
     /*
      * ipAddressPrefixPrefix(3)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_ipAddressPrefixPrefix;
+    VariableList var_ipAddressPrefixPrefix;
     /*
      * ipAddressPrefixLength(4)/InetAddressPrefixLength/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipAddressPrefixLength;
+    VariableList var_ipAddressPrefixLength;
 
     /*
      * set up varbinds
@@ -333,10 +333,10 @@ int ipAddressPrefixTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipAddressPrefixIfIndex.nextVariable = &var_ipAddressPrefixType;
-    var_ipAddressPrefixType.nextVariable = &var_ipAddressPrefixPrefix;
-    var_ipAddressPrefixPrefix.nextVariable = &var_ipAddressPrefixLength;
-    var_ipAddressPrefixLength.nextVariable = NULL;
+    var_ipAddressPrefixIfIndex.next = &var_ipAddressPrefixType;
+    var_ipAddressPrefixType.next = &var_ipAddressPrefixPrefix;
+    var_ipAddressPrefixPrefix.next = &var_ipAddressPrefixLength;
+    var_ipAddressPrefixLength.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipAddressPrefixTable:ipAddressPrefixTable_index_to_oid", "called\n" ) );
 
@@ -399,19 +399,19 @@ int ipAddressPrefixTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ipAddressPrefixIfIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipAddressPrefixIfIndex;
+    VariableList var_ipAddressPrefixIfIndex;
     /*
      * ipAddressPrefixType(2)/InetAddressType/ASN_INTEGER/long(u_long)//l/a/w/E/r/d/h
      */
-    Types_VariableList var_ipAddressPrefixType;
+    VariableList var_ipAddressPrefixType;
     /*
      * ipAddressPrefixPrefix(3)/InetAddress/ASN_OCTET_STR/char(char)//L/a/w/e/R/d/h
      */
-    Types_VariableList var_ipAddressPrefixPrefix;
+    VariableList var_ipAddressPrefixPrefix;
     /*
      * ipAddressPrefixLength(4)/InetAddressPrefixLength/ASN_UNSIGNED/u_long(u_long)//l/a/w/e/R/d/H
      */
-    Types_VariableList var_ipAddressPrefixLength;
+    VariableList var_ipAddressPrefixLength;
 
     /*
      * set up varbinds
@@ -432,10 +432,10 @@ int ipAddressPrefixTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ipAddressPrefixIfIndex.nextVariable = &var_ipAddressPrefixType;
-    var_ipAddressPrefixType.nextVariable = &var_ipAddressPrefixPrefix;
-    var_ipAddressPrefixPrefix.nextVariable = &var_ipAddressPrefixLength;
-    var_ipAddressPrefixLength.nextVariable = NULL;
+    var_ipAddressPrefixIfIndex.next = &var_ipAddressPrefixType;
+    var_ipAddressPrefixType.next = &var_ipAddressPrefixPrefix;
+    var_ipAddressPrefixPrefix.next = &var_ipAddressPrefixLength;
+    var_ipAddressPrefixLength.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ipAddressPrefixTable:ipAddressPrefixTable_index_from_oid", "called\n" ) );
 
@@ -448,20 +448,20 @@ int ipAddressPrefixTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ipAddressPrefixIfIndex = *( ( long* )var_ipAddressPrefixIfIndex.val.string );
-        mib_idx->ipAddressPrefixType = *( ( u_long* )var_ipAddressPrefixType.val.string );
+        mib_idx->ipAddressPrefixIfIndex = *( ( long* )var_ipAddressPrefixIfIndex.value.string );
+        mib_idx->ipAddressPrefixType = *( ( u_long* )var_ipAddressPrefixType.value.string );
         /*
          * NOTE: val_len is in bytes, ipAddressPrefixPrefix_len might not be
          */
-        if ( var_ipAddressPrefixPrefix.valLen > sizeof( mib_idx->ipAddressPrefixPrefix ) )
+        if ( var_ipAddressPrefixPrefix.valueLength > sizeof( mib_idx->ipAddressPrefixPrefix ) )
             err = PRIOT_ERR_GENERR;
         else {
             memcpy( mib_idx->ipAddressPrefixPrefix,
-                var_ipAddressPrefixPrefix.val.string,
-                var_ipAddressPrefixPrefix.valLen );
-            mib_idx->ipAddressPrefixPrefix_len = var_ipAddressPrefixPrefix.valLen / sizeof( mib_idx->ipAddressPrefixPrefix[ 0 ] );
+                var_ipAddressPrefixPrefix.value.string,
+                var_ipAddressPrefixPrefix.valueLength );
+            mib_idx->ipAddressPrefixPrefix_len = var_ipAddressPrefixPrefix.valueLength / sizeof( mib_idx->ipAddressPrefixPrefix[ 0 ] );
         }
-        mib_idx->ipAddressPrefixLength = *( ( u_long* )var_ipAddressPrefixLength.val.string );
+        mib_idx->ipAddressPrefixLength = *( ( u_long* )var_ipAddressPrefixLength.value.string );
     }
 
     /*
@@ -649,7 +649,7 @@ _mfd_ipAddressPrefixTable_object_lookup( MibHandler* handler, HandlerRegistratio
 static inline int
 _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
                                       rowreq_ctx,
-    Types_VariableList* var,
+    VariableList* var,
     int column )
 {
     int rc = ErrorCode_SUCCESS;
@@ -664,50 +664,50 @@ _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
          * ipAddressPrefixOrigin(5)/IpAddressPrefixOriginTC/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IPADDRESSPREFIXORIGIN:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ipAddressPrefixOrigin_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressPrefixOnLinkFlag(6)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IPADDRESSPREFIXONLINKFLAG:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ipAddressPrefixOnLinkFlag_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressPrefixAutonomousFlag(7)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IPADDRESSPREFIXAUTONOMOUSFLAG:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ipAddressPrefixAutonomousFlag_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressPrefixAdvPreferredLifetime(8)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPADDRESSPREFIXADVPREFERREDLIFETIME:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipAddressPrefixAdvPreferredLifetime_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ipAddressPrefixAdvValidLifetime(9)/UNSIGNED32/ASN_UNSIGNED/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPADDRESSPREFIXADVVALIDLIFETIME:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_UNSIGNED;
         rc = ipAddressPrefixAdvValidLifetime_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -740,14 +740,14 @@ int _mfd_ipAddressPrefixTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -765,7 +765,7 @@ int _mfd_ipAddressPrefixTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = PRIOT_ERR_GENERR;
         }
@@ -777,7 +777,7 @@ int _mfd_ipAddressPrefixTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else

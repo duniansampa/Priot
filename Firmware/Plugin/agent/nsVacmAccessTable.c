@@ -4,12 +4,12 @@
  */
 
 #include "nsVacmAccessTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Containers/MapList.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "Vacm.h"
 
 /** Initializes the nsVacmAccessTable module */
@@ -63,10 +63,10 @@ static int nsViewIdx; /* This should really be handled via the 'loop_context'
                            parameter, but it's easier (read lazier) to use a
                            global variable as well.  Bad David! */
 
-Types_VariableList*
+VariableList*
 nsVacmAccessTable_get_first_data_point( void** my_loop_context,
     void** my_data_context,
-    Types_VariableList* put_index_data,
+    VariableList* put_index_data,
     IteratorInfo* mydata )
 {
     Vacm_scanAccessInit();
@@ -77,14 +77,14 @@ nsVacmAccessTable_get_first_data_point( void** my_loop_context,
         put_index_data, mydata );
 }
 
-Types_VariableList*
+VariableList*
 nsVacmAccessTable_get_next_data_point( void** my_loop_context,
     void** my_data_context,
-    Types_VariableList* put_index_data,
+    VariableList* put_index_data,
     IteratorInfo* mydata )
 {
     struct Vacm_AccessEntry_s* entry = ( struct Vacm_AccessEntry_s* )*my_loop_context;
-    Types_VariableList* idx;
+    VariableList* idx;
     int len;
     char* cp;
 
@@ -97,19 +97,19 @@ newView:
     if ( entry ) {
         len = entry->groupName[ 0 ];
         Client_setVarValue( idx, ( u_char* )entry->groupName + 1, len );
-        idx = idx->nextVariable;
+        idx = idx->next;
         len = entry->contextPrefix[ 0 ];
         Client_setVarValue( idx, ( u_char* )entry->contextPrefix + 1, len );
-        idx = idx->nextVariable;
+        idx = idx->next;
         Client_setVarValue( idx, ( u_char* )&entry->securityModel,
             sizeof( entry->securityModel ) );
-        idx = idx->nextVariable;
+        idx = idx->next;
         Client_setVarValue( idx, ( u_char* )&entry->securityLevel,
             sizeof( entry->securityLevel ) );
         /*
          * Find the next valid authType view - skipping unused entries
          */
-        idx = idx->nextVariable;
+        idx = idx->next;
         for ( ; nsViewIdx < VACM_MAX_VIEWS; nsViewIdx++ ) {
             if ( entry->views[ nsViewIdx ][ 0 ] )
                 break;
@@ -119,7 +119,7 @@ newView:
         cp = MapList_findLabel( VACM_VIEW_ENUM_NAME, nsViewIdx++ );
         DEBUG_MSGTL( ( "nsVacm", "nextDP %s:%s (%d)\n", entry->groupName + 1, cp, nsViewIdx - 1 ) );
         Client_setVarValue( idx, ( u_char* )cp, strlen( cp ) );
-        idx = idx->nextVariable;
+        idx = idx->next;
         *my_data_context = ( void* )entry;
         *my_loop_context = ( void* )entry;
         return put_index_data;
@@ -137,7 +137,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
 
     RequestInfo* request;
     TableRequestInfo* table_info;
-    Types_VariableList* idx;
+    VariableList* idx;
     struct Vacm_AccessEntry_s* entry;
     char atype[ 20 ];
     int viewIdx, ret;
@@ -155,11 +155,11 @@ int nsVacmAccessTable_handler( MibHandler* handler,
             table_info = Table_extractTableInfo( request );
 
             /* Extract the authType token from the list of indexes */
-            idx = table_info->indexes->nextVariable->nextVariable->nextVariable->nextVariable;
+            idx = table_info->indexes->next->next->next->next;
             memset( atype, 0, sizeof( atype ) );
-            memcpy( atype, ( char* )idx->val.string, idx->valLen );
+            memcpy( atype, ( char* )idx->value.string, idx->valueLength );
             viewIdx = MapList_findValue( VACM_VIEW_ENUM_NAME, atype );
-            DEBUG_MSGTL( ( "nsVacm", "GET %s (%d)\n", idx->val.string, viewIdx ) );
+            DEBUG_MSGTL( ( "nsVacm", "GET %s (%d)\n", idx->value.string, viewIdx ) );
 
             if ( !entry || viewIdx < 0 )
                 continue;
@@ -198,15 +198,15 @@ int nsVacmAccessTable_handler( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case COLUMN_NSVACMCONTEXTMATCH:
-                ret = CheckVarbind_intRange( request->requestvb, 1, 2 );
+                ret = VariableList_checkIntLengthAndRange( request->requestvb, 1, 2 );
                 break;
             case COLUMN_NSVACMVIEWNAME:
-                ret = CheckVarbind_typeAndMaxSize( request->requestvb,
+                ret = VariableList_checkTypeAndMaxLength( request->requestvb,
                     ASN01_OCTET_STR,
                     VACM_MAX_STRING );
                 break;
             case COLUMN_VACMACCESSSTORAGETYPE:
-                ret = CheckVarbind_storageType( request->requestvb,
+                ret = VariableList_checkStorageType( request->requestvb,
                     ( /*entry ? entry->storageType :*/ PRIOT_STORAGE_NONE ) );
                 break;
             case COLUMN_NSVACMACCESSSTATUS:
@@ -221,22 +221,22 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                  *   for a RowStatus syntax object, but the transition
                  *   checks need to be done explicitly.
                  */
-                ret = CheckVarbind_rowStatusValue( request->requestvb );
+                ret = VariableList_checkRowStatusLengthAndRange( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR )
                     break;
 
                 /*
                  * Extract the authType token from the list of indexes
                  */
-                idx = table_info->indexes->nextVariable->nextVariable->nextVariable->nextVariable;
+                idx = table_info->indexes->next->next->next->next;
                 memset( atype, 0, sizeof( atype ) );
-                memcpy( atype, ( char* )idx->val.string, idx->valLen );
+                memcpy( atype, ( char* )idx->value.string, idx->valueLength );
                 viewIdx = MapList_findValue( VACM_VIEW_ENUM_NAME, atype );
                 if ( viewIdx < 0 ) {
                     ret = PRIOT_ERR_NOCREATION;
                     break;
                 }
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_NOTINSERVICE:
                     /* Check that this particular view is already set */
@@ -267,18 +267,18 @@ int nsVacmAccessTable_handler( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case COLUMN_NSVACMACCESSSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_CREATEANDGO:
                 case TC_RS_CREATEANDWAIT:
                     if ( !entry ) {
                         idx = table_info->indexes;
-                        gName = ( char* )idx->val.string;
-                        idx = idx->nextVariable;
-                        cPrefix = ( char* )idx->val.string;
-                        idx = idx->nextVariable;
-                        model = *idx->val.integer;
-                        idx = idx->nextVariable;
-                        level = *idx->val.integer;
+                        gName = ( char* )idx->value.string;
+                        idx = idx->next;
+                        cPrefix = ( char* )idx->value.string;
+                        idx = idx->next;
+                        model = *idx->value.integer;
+                        idx = idx->next;
+                        level = *idx->value.integer;
                         entry = Vacm_createAccessEntry( gName, cPrefix, model, level );
                         entry->storageType = TC_ST_NONVOLATILE;
                         TableIterator_insertIteratorContext( request, ( void* )entry );
@@ -306,27 +306,27 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                 continue; /* Shouldn't happen */
 
             /* Extract the authType token from the list of indexes */
-            idx = table_info->indexes->nextVariable->nextVariable->nextVariable->nextVariable;
+            idx = table_info->indexes->next->next->next->next;
             memset( atype, 0, sizeof( atype ) );
-            memcpy( atype, ( char* )idx->val.string, idx->valLen );
+            memcpy( atype, ( char* )idx->value.string, idx->valueLength );
             viewIdx = MapList_findValue( VACM_VIEW_ENUM_NAME, atype );
             if ( viewIdx < 0 )
                 continue;
 
             switch ( table_info->colnum ) {
             case COLUMN_NSVACMCONTEXTMATCH:
-                entry->contextMatch = *request->requestvb->val.integer;
+                entry->contextMatch = *request->requestvb->value.integer;
                 break;
             case COLUMN_NSVACMVIEWNAME:
                 memset( entry->views[ viewIdx ], 0, VACM_VACMSTRINGLEN );
-                memcpy( entry->views[ viewIdx ], request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->views[ viewIdx ], request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_VACMACCESSSTORAGETYPE:
-                entry->storageType = *request->requestvb->val.integer;
+                entry->storageType = *request->requestvb->value.integer;
                 break;
             case COLUMN_NSVACMACCESSSTATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_DESTROY:
                     memset( entry->views[ viewIdx ], 0, VACM_VACMSTRINGLEN );
                     break;

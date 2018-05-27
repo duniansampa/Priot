@@ -1,6 +1,6 @@
 #include "OidStash.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
+#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "System/Util/Utilities.h"
@@ -333,7 +333,7 @@ void OidStash_store( OidStash_Node* root,
     char buf[ UTILITIES_MAX_BUFFER ];
     OidStash_Node* tmpp;
     char* cp;
-    char* appname = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    char* appname = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
     int i;
 

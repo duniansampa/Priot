@@ -1,7 +1,7 @@
 
 #include "vmstat.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "ScalarGroup.h"
 #include "Vars.h"

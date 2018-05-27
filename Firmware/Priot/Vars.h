@@ -57,7 +57,7 @@ typedef u_char*
  */
 typedef int
 (AddVarMethod) ( AgentSession*        asp,
-                 Types_VariableList*  vbp );
+                 VariableList*  vbp );
 
 
 extern long     vars_longReturn;

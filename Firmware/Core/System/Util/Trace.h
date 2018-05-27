@@ -1,5 +1,5 @@
-#ifndef DEBUG_H_
-#define DEBUG_H_
+#ifndef IOT_TRACE_H
+#define IOT_TRACE_H
 
 #include "Api.h"
 
@@ -59,7 +59,7 @@ void Debug_msgOid( const char* token, const oid* theoid, size_t len );
 
 void Debug_msgSuboid( const char* token, const oid* theoid, size_t len );
 
-void Debug_msgVar( const char* token, Types_VariableList* var );
+void Debug_msgVar( const char* token, VariableList* var );
 
 void Debug_msgOidRange( const char* token, const oid* theoid, size_t len,
     size_t var_subid, oid range_ubound );
@@ -328,4 +328,4 @@ void Debug_debugInit( void );
     } while ( 0 )
 /******************* End   public macros ************************/
 
-#endif //DEBUG_H_
+#endif //IOT_TRACE_H

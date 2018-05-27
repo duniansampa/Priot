@@ -6,7 +6,7 @@
 
 #include "siglog/data_access/systemstats.h"
 #include "System/Util/Assert.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 
 static int _systemstats_v4( Container_Container* container, u_int load_flags );

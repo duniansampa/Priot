@@ -6,7 +6,7 @@
 
 #include "ipaddress_linux.h"
 #include "System/Containers/Container.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "ipaddress_ioctl.h"
 #include "siglog/data_access/ipaddress.h"
 

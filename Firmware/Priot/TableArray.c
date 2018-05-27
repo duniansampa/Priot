@@ -1,8 +1,8 @@
 #include "TableArray.h"
 #include "PriotSettings.h"
 #include "System/Util/Logger.h"
-#include "System/Util/Debug.h"
-#include "Tc.h"
+#include "System/Util/Trace.h"
+#include "TextualConvention.h"
 #include "Client.h"
 #include "System/Util/Assert.h"
 #include "TableContainer.h"
@@ -384,7 +384,7 @@ TableArray_processGetRequests(HandlerRegistration *reginfo,
     RequestInfo *current;
     Types_Index *row = NULL;
     TableRequestInfo *tblreq_info;
-    Types_VariableList *var;
+    VariableList *var;
 
     /*
      * Loop through each of the requests, and

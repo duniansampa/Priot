@@ -2,7 +2,7 @@
 #define AGENTSYSORTABLE_H
 
 #include "AgentCallbacks.h"
-#include "Callback.h"
+#include "System/Util/Callback.h"
 #include "Generals.h"
 #include "Types.h"
 
@@ -25,38 +25,38 @@ struct RegisterSysORParameters_s {
 #define SYS_ORTABLE_UNREGISTERED_OK 0
 #define SYS_ORTABLE_NO_SUCH_REGISTRATION -1
 
-#define REGISTER_SYSOR_TABLE( theoid, len, descr )                                  \
-    do {                                                                            \
-        struct SysORTable_s t;                                                      \
-        t.OR_descr = UTILITIES_REMOVE_CONST( char*, descr );                        \
-        t.OR_oid = theoid;                                                          \
-        t.OR_oidlen = len;                                                          \
-        t.OR_sess = NULL;                                                           \
-        t.OR_uptime = 0;                                                            \
-        Callback_callCallbacks( CALLBACK_APPLICATION, PriotdCallback_REQ_REG_SYSOR, \
-            &t );                                                                   \
+#define REGISTER_SYSOR_TABLE( theoid, len, descr )                              \
+    do {                                                                        \
+        struct SysORTable_s t;                                                  \
+        t.OR_descr = UTILITIES_REMOVE_CONST( char*, descr );                    \
+        t.OR_oid = theoid;                                                      \
+        t.OR_oidlen = len;                                                      \
+        t.OR_sess = NULL;                                                       \
+        t.OR_uptime = 0;                                                        \
+        Callback_call( CallbackMajor_APPLICATION, PriotdCallback_REQ_REG_SYSOR, \
+            &t );                                                               \
     } while ( 0 );
 
 #define REGISTER_SYSOR_ENTRY( theoid, descr ) \
     REGISTER_SYSOR_TABLE( theoid, sizeof( theoid ) / sizeof( oid ), descr )
 
-#define UNREGISTER_SYSOR_TABLE( theoid, len )         \
-    do {                                              \
-        struct SysORTable_s t;                        \
-        t.OR_descr = NULL;                            \
-        t.OR_oid = theoid;                            \
-        t.OR_oidlen = len;                            \
-        t.OR_sess = NULL;                             \
-        t.OR_uptime = 0;                              \
-        Callback_callCallbacks( CALLBACK_APPLICATION, \
-            PriotdCallback_REQ_UNREG_SYSOR, &t );     \
+#define UNREGISTER_SYSOR_TABLE( theoid, len )     \
+    do {                                          \
+        struct SysORTable_s t;                    \
+        t.OR_descr = NULL;                        \
+        t.OR_oid = theoid;                        \
+        t.OR_oidlen = len;                        \
+        t.OR_sess = NULL;                         \
+        t.OR_uptime = 0;                          \
+        Callback_call( CallbackMajor_APPLICATION, \
+            PriotdCallback_REQ_UNREG_SYSOR, &t ); \
     } while ( 0 );
 
 #define UNREGISTER_SYSOR_ENTRY( theoid ) \
     UNREGISTER_SYSOR_TABLE( theoid, sizeof( theoid ) / sizeof( oid ) )
 
-#define UNREGISTER_SYSOR_SESS( sess )             \
-    Callback_callCallbacks( CALLBACK_APPLICATION, \
+#define UNREGISTER_SYSOR_SESS( sess )                  \
+    Callback_callCallbacks( CallbackMajor_APPLICATION, \
         PriotdCallback_REQ_UNREG_SYSOR_SESS, sess );
 
 void SysORTable_initAgentSysORTable( void );

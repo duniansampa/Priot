@@ -6,7 +6,7 @@
 #include "nsModuleTable.h"
 #include "AgentRegistry.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "VarStruct.h"
 
@@ -106,14 +106,14 @@ typedef struct context_tree_ptr_s {
     SubtreeContextCache* context_ptr;
 } context_tree_ptr;
 
-Types_VariableList*
+VariableList*
 nsModuleTable_get_first_data_point( void** my_loop_context,
     void** my_data_context,
-    Types_VariableList* put_index_data,
+    VariableList* put_index_data,
     IteratorInfo* otherstuff )
 {
 
-    struct Types_VariableList_s* vptr;
+    struct VariableList_s* vptr;
     u_long ultmp;
     context_tree_ptr* ctree;
 
@@ -137,13 +137,13 @@ nsModuleTable_get_first_data_point( void** my_loop_context,
     Client_setVarValue( vptr, ctree->context_ptr->context_name,
         strlen( ctree->context_ptr->context_name ) );
 
-    vptr = vptr->nextVariable;
+    vptr = vptr->next;
     Client_setVarValue( vptr,
         ctree->context_ptr->first_subtree->name_a,
         ctree->context_ptr->first_subtree->namelen * sizeof( oid ) );
 
     ultmp = ctree->context_ptr->first_subtree->priority;
-    vptr = vptr->nextVariable;
+    vptr = vptr->next;
     Client_setVarValue( vptr, &ultmp, sizeof( ultmp ) );
 
     return put_index_data;
@@ -157,14 +157,14 @@ nsModuleTable_get_first_data_point( void** my_loop_context,
    to something you need later and the indexes in put_index_data
    updated again. */
 
-struct Types_VariableList_s*
+struct VariableList_s*
 nsModuleTable_get_next_data_point( void** my_loop_context,
     void** my_data_context,
-    struct Types_VariableList_s* put_index_data,
+    struct VariableList_s* put_index_data,
     IteratorInfo* otherstuff )
 {
 
-    struct Types_VariableList_s* vptr;
+    struct VariableList_s* vptr;
     context_tree_ptr* ctree = ( context_tree_ptr* )*my_loop_context;
     u_long ultmp;
 
@@ -184,12 +184,12 @@ nsModuleTable_get_next_data_point( void** my_loop_context,
     Client_setVarValue( vptr, ctree->context_ptr->context_name,
         strlen( ctree->context_ptr->context_name ) );
 
-    vptr = vptr->nextVariable;
+    vptr = vptr->next;
     Client_setVarValue( vptr, ctree->tree->name_a,
         ctree->tree->namelen * sizeof( oid ) );
 
     ultmp = ctree->tree->priority;
-    vptr = vptr->nextVariable;
+    vptr = vptr->next;
     Client_setVarValue( vptr, &ultmp, sizeof( ultmp ) );
 
     return put_index_data;
@@ -204,7 +204,7 @@ int nsModuleTable_handler( MibHandler* handler,
 
     TableRequestInfo* table_info;
     RequestInfo* request;
-    Types_VariableList* var;
+    VariableList* var;
     Subtree* tree;
     u_long ultmp;
     u_char modes[ 1 ];

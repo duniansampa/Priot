@@ -16,11 +16,11 @@
 
 #include "hr_system.h"
 #include "AgentRegistry.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
 #include "System.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 #include "host_res.h"
 #include <utmpx.h>
 

@@ -4,7 +4,7 @@
  * $Id: ipv6scopezone_common.c 14170 2007-04-29 02:22:12Z varun_c $
  */
 
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
 #include "siglog/data_access/scopezone.h"
 /*

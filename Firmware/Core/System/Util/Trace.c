@@ -1,4 +1,4 @@
-#include "Debug.h"
+#include "Trace.h"
 #include "Impl.h"
 #include "Mib.h"
 #include "ReadConfig.h"
@@ -235,7 +235,7 @@ void Debug_msgSuboid( const char* token, const oid* theoid, size_t len )
     }
 }
 
-void Debug_msgVar( const char* token, Types_VariableList* var )
+void Debug_msgVar( const char* token, VariableList* var )
 {
     u_char* buf = NULL;
     size_t buf_len = 0, out_len = 0;

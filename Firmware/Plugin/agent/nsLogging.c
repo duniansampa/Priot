@@ -4,7 +4,7 @@
 #include "Client.h"
 #include "System/Util/Logger.h"
 #include "Table.h"
-#include "Tc.h"
+#include "TextualConvention.h"
 
 /*
  * OID and columns for the logging table.
@@ -61,9 +61,9 @@ void init_nsLogging( void )
  * nsLoggingTable handling
  */
 
-Types_VariableList*
+VariableList*
 get_first_logging_entry( void** loop_context, void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     long temp;
@@ -75,18 +75,18 @@ get_first_logging_entry( void** loop_context, void** data_context,
     Client_setVarValue( index, ( u_char* )&temp,
         sizeof( temp ) );
     if ( logh_head->token )
-        Client_setVarValue( index->nextVariable, ( const u_char* )logh_head->token,
+        Client_setVarValue( index->next, ( const u_char* )logh_head->token,
             strlen( logh_head->token ) );
     else
-        Client_setVarValue( index->nextVariable, NULL, 0 );
+        Client_setVarValue( index->next, NULL, 0 );
     *loop_context = ( void* )logh_head;
     *data_context = ( void* )logh_head;
     return index;
 }
 
-Types_VariableList*
+VariableList*
 get_next_logging_entry( void** loop_context, void** data_context,
-    Types_VariableList* index,
+    VariableList* index,
     IteratorInfo* data )
 {
     long temp;
@@ -100,10 +100,10 @@ get_next_logging_entry( void** loop_context, void** data_context,
     Client_setVarValue( index, ( u_char* )&temp,
         sizeof( temp ) );
     if ( logh->token )
-        Client_setVarValue( index->nextVariable, ( const u_char* )logh->token,
+        Client_setVarValue( index->next, ( const u_char* )logh->token,
             strlen( logh->token ) );
     else
-        Client_setVarValue( index->nextVariable, NULL, 0 );
+        Client_setVarValue( index->next, NULL, 0 );
     *loop_context = ( void* )logh;
     *data_context = ( void* )logh;
     return index;
@@ -118,7 +118,7 @@ int handle_nsLoggingTable( MibHandler* handler,
     RequestInfo* request = NULL;
     TableRequestInfo* table_info = NULL;
     Logger_LogHandler* logh = NULL;
-    Types_VariableList* idx = NULL;
+    VariableList* idx = NULL;
 
     switch ( reqinfo->mode ) {
 
@@ -184,7 +184,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                if ( *request->requestvb->val.integer < 0 ) {
+                if ( *request->requestvb->value.integer < 0 ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                     return PRIOT_ERR_WRONGVALUE;
                 }
@@ -205,7 +205,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                if ( *request->requestvb->val.integer < 0 || *request->requestvb->val.integer > 7 ) {
+                if ( *request->requestvb->value.integer < 0 || *request->requestvb->value.integer > 7 ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGVALUE );
                     return PRIOT_ERR_WRONGVALUE;
                 }
@@ -216,7 +216,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_NOTINSERVICE:
                     /*
@@ -258,15 +258,15 @@ int handle_nsLoggingTable( MibHandler* handler,
                     logh = Logger_registerLoghandler(
                         /* not really, but we need a valid type */
                         LOGGER_LOG_TO_STDOUT,
-                        *idx->val.integer );
+                        *idx->value.integer );
                     if ( !logh ) {
                         Agent_setRequestError( reqinfo, request,
                             PRIOT_ERR_GENERR ); /* ??? */
                         return PRIOT_ERR_GENERR;
                     }
-                    idx = idx->nextVariable;
+                    idx = idx->next;
                     logh->type = 0;
-                    logh->token = strdup( ( char* )idx->val.string );
+                    logh->token = strdup( ( char* )idx->value.string );
                     TableIterator_insertIteratorContext( request, ( void* )logh );
                     break;
 
@@ -309,7 +309,7 @@ int handle_nsLoggingTable( MibHandler* handler,
 		 * Remember that we need to be able to reverse this
 		 */
                 if ( logh )
-                    logh->type = *request->requestvb->val.integer;
+                    logh->type = *request->requestvb->value.integer;
                 break;
                 /*
 	     * Don't need to handle nsLogToken or nsLogStatus in this pass
@@ -335,7 +335,7 @@ int handle_nsLoggingTable( MibHandler* handler,
 		 * of the request.  Basically, for a row to be marked
 		 * 'active', then there needs to be a valid type value.
 		 */
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_CREATEANDGO:
                     if ( !logh || !logh->type ) {
@@ -384,12 +384,12 @@ int handle_nsLoggingTable( MibHandler* handler,
 		 * and the failure was elsewhere, so we need to undo it.
 		 *  (Or else there was an attempt to write the same value!)
 		 */
-                if ( logh && logh->type == *request->requestvb->val.integer )
+                if ( logh && logh->type == *request->requestvb->value.integer )
                     logh->type = 0;
                 break;
 
             case NSLOGGING_STATUS:
-                temp = *request->requestvb->val.integer;
+                temp = *request->requestvb->value.integer;
                 if ( logh && ( temp == TC_RS_CREATEANDGO || temp == TC_RS_CREATEANDWAIT ) ) {
                     Logger_removeLoghandler( logh );
                 }
@@ -417,11 +417,11 @@ int handle_nsLoggingTable( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case NSLOGGING_MAXLEVEL:
-                logh->pri_max = *request->requestvb->val.integer;
+                logh->pri_max = *request->requestvb->value.integer;
                 break;
 
             case NSLOGGING_STATUS:
-                switch ( *request->requestvb->val.integer ) {
+                switch ( *request->requestvb->value.integer ) {
                 case TC_RS_ACTIVE:
                 case TC_RS_CREATEANDGO:
                     Logger_enableThisLoghandler( logh );

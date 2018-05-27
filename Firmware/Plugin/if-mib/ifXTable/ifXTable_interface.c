@@ -27,17 +27,17 @@
  */
 
 #include "ifXTable_interface.h"
-#include "System/Util/Assert.h"
 #include "BabySteps.h"
 #include "CacheHandler.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
-#include "DefaultStore.h"
-#include "System/Util/Logger.h"
+#include "System/Util/DefaultStore.h"
 #include "Mib.h"
 #include "ReadConfig.h"
 #include "RowMerge.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Trace.h"
+#include "System/Util/Logger.h"
 #include "TableContainer.h"
 #include "if-mib/ifTable/ifTable_defs.h"
 #include "if-mib/ifTable/ifTable_interface.h"
@@ -135,7 +135,7 @@ static NodeHandlerFT _mfd_ifXTable_check_dependencies;
 
 static inline int _ifXTable_undo_column( ifXTable_rowreq_ctx*
                                              rowreq_ctx,
-    Types_VariableList*
+    VariableList*
         var,
     int column );
 
@@ -359,7 +359,7 @@ int ifXTable_index_to_oid( Types_Index* oid_idx,
     /*
      * ifIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/w/e/R/d/H
      */
-    Types_VariableList var_ifIndex;
+    VariableList var_ifIndex;
 
     /*
      * set up varbinds
@@ -370,7 +370,7 @@ int ifXTable_index_to_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ifIndex.nextVariable = NULL;
+    var_ifIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ifXTable:ifXTable_index_to_oid", "called\n" ) );
 
@@ -410,7 +410,7 @@ int ifXTable_index_from_oid( Types_Index* oid_idx,
     /*
      * ifIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/w/e/R/d/H
      */
-    Types_VariableList var_ifIndex;
+    VariableList var_ifIndex;
 
     /*
      * set up varbinds
@@ -421,7 +421,7 @@ int ifXTable_index_from_oid( Types_Index* oid_idx,
     /*
      * chain temp index varbinds together
      */
-    var_ifIndex.nextVariable = NULL;
+    var_ifIndex.next = NULL;
 
     DEBUG_MSGTL( ( "verbose:ifXTable:ifXTable_index_from_oid", "called\n" ) );
 
@@ -433,7 +433,7 @@ int ifXTable_index_from_oid( Types_Index* oid_idx,
         /*
          * copy out values
          */
-        mib_idx->ifIndex = *( ( long* )var_ifIndex.val.string );
+        mib_idx->ifIndex = *( ( long* )var_ifIndex.value.string );
     }
 
     /*
@@ -612,7 +612,7 @@ _mfd_ifXTable_object_lookup( MibHandler* handler,
  */
 static inline int
 _ifXTable_get_column( ifXTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -628,156 +628,156 @@ _ifXTable_get_column( ifXTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFNAME:
         var->type = ASN01_OCTET_STR;
-        rc = ifName_get( rowreq_ctx, ( char** )&var->val.string,
-            &var->valLen );
+        rc = ifName_get( rowreq_ctx, ( char** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * ifInMulticastPkts(2)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINMULTICASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInMulticastPkts_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInMulticastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifInBroadcastPkts(3)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFINBROADCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
-        rc = ifInBroadcastPkts_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifInBroadcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutMulticastPkts(4)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTMULTICASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ifOutMulticastPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ifOutBroadcastPkts(5)/COUNTER/ASN_COUNTER/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFOUTBROADCASTPKTS:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_COUNTER;
         rc = ifOutBroadcastPkts_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ifHCInOctets(6)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCINOCTETS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCInOctets_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCInOctets_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCInUcastPkts(7)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCINUCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCInUcastPkts_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCInUcastPkts_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCInMulticastPkts(8)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCINMULTICASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCInMulticastPkts_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCInMulticastPkts_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCInBroadcastPkts(9)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCINBROADCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCInBroadcastPkts_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCInBroadcastPkts_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCOutOctets(10)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCOUTOCTETS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCOutOctets_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCOutOctets_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCOutUcastPkts(11)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCOUTUCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCOutUcastPkts_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCOutUcastPkts_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCOutMulticastPkts(12)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCOUTMULTICASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCOutMulticastPkts_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCOutMulticastPkts_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifHCOutBroadcastPkts(13)/COUNTER64/ASN_COUNTER64/Int64_U64(Int64_U64)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHCOUTBROADCASTPKTS:
-        var->valLen = sizeof( Int64_U64 );
+        var->valueLength = sizeof( Integer64 );
         var->type = ASN01_COUNTER64;
-        rc = ifHCOutBroadcastPkts_get( rowreq_ctx, ( Int64_U64* )var->val.string );
+        rc = ifHCOutBroadcastPkts_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
     /*
          * ifLinkUpDownTrapEnable(14)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IFLINKUPDOWNTRAPENABLE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ifLinkUpDownTrapEnable_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
          * ifHighSpeed(15)/GAUGE/ASN_GAUGE/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFHIGHSPEED:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_GAUGE;
-        rc = ifHighSpeed_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifHighSpeed_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifPromiscuousMode(16)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IFPROMISCUOUSMODE:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
-        rc = ifPromiscuousMode_get( rowreq_ctx, ( u_long* )var->val.string );
+        rc = ifPromiscuousMode_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
     /*
          * ifConnectorPresent(17)/TruthValue/ASN_INTEGER/long(u_long)//l/A/w/E/r/d/h 
          */
     case COLUMN_IFCONNECTORPRESENT:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_INTEGER;
         rc = ifConnectorPresent_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     /*
@@ -785,18 +785,18 @@ _ifXTable_get_column( ifXTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFALIAS:
         var->type = ASN01_OCTET_STR;
-        rc = ifAlias_get( rowreq_ctx, ( char** )&var->val.string,
-            &var->valLen );
+        rc = ifAlias_get( rowreq_ctx, ( char** )&var->value.string,
+            &var->valueLength );
         break;
 
     /*
          * ifCounterDiscontinuityTime(19)/TimeStamp/ASN_TIMETICKS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IFCOUNTERDISCONTINUITYTIME:
-        var->valLen = sizeof( u_long );
+        var->valueLength = sizeof( u_long );
         var->type = ASN01_TIMETICKS;
         rc = ifCounterDiscontinuityTime_get( rowreq_ctx,
-            ( u_long* )var->val.string );
+            ( u_long* )var->value.string );
         break;
 
     default:
@@ -828,14 +828,14 @@ int _mfd_ifXTable_get_values( MibHandler* handler,
         /*
          * save old pointer, so we can free it if replaced
          */
-        old_string = requests->requestvb->val.string;
+        old_string = requests->requestvb->value.string;
         dataFreeHook = requests->requestvb->dataFreeHook;
-        if ( NULL == requests->requestvb->val.string ) {
-            requests->requestvb->val.string = requests->requestvb->buf;
-            requests->requestvb->valLen = sizeof( requests->requestvb->buf );
-        } else if ( requests->requestvb->buf == requests->requestvb->val.string ) {
-            if ( requests->requestvb->valLen != sizeof( requests->requestvb->buf ) )
-                requests->requestvb->valLen = sizeof( requests->requestvb->buf );
+        if ( NULL == requests->requestvb->value.string ) {
+            requests->requestvb->value.string = requests->requestvb->buffer;
+            requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
+        } else if ( requests->requestvb->buffer == requests->requestvb->value.string ) {
+            if ( requests->requestvb->valueLength != sizeof( requests->requestvb->buffer ) )
+                requests->requestvb->valueLength = sizeof( requests->requestvb->buffer );
         }
 
         /*
@@ -852,7 +852,7 @@ int _mfd_ifXTable_get_values( MibHandler* handler,
                 requests->requestvb->type = PRIOT_NOSUCHINSTANCE;
                 rc = PRIOT_ERR_NOERROR;
             }
-        } else if ( NULL == requests->requestvb->val.string ) {
+        } else if ( NULL == requests->requestvb->value.string ) {
             Logger_log( LOGGER_PRIORITY_ERR, "NULL varbind data pointer!\n" );
             rc = ErrorCode_GENERR;
         }
@@ -864,7 +864,7 @@ int _mfd_ifXTable_get_values( MibHandler* handler,
          * was allcoated memory)  and the get routine replaced the pointer,
          * we need to free the previous pointer.
          */
-        if ( old_string && ( old_string != requests->requestvb->buf ) && ( requests->requestvb->val.string != old_string ) ) {
+        if ( old_string && ( old_string != requests->requestvb->buffer ) && ( requests->requestvb->value.string != old_string ) ) {
             if ( dataFreeHook )
                 ( *dataFreeHook )( old_string );
             else
@@ -892,7 +892,7 @@ int _mfd_ifXTable_get_values( MibHandler* handler,
  */
 static inline int
 _ifXTable_check_column( ifXTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -998,21 +998,21 @@ _ifXTable_check_column( ifXTable_rowreq_ctx* rowreq_ctx,
          * ifLinkUpDownTrapEnable(14)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IFLINKUPDOWNTRAPENABLE:
-        rc = CheckVarbind_typeAndSize( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
             sizeof( rowreq_ctx->data.ifLinkUpDownTrapEnable ) );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != IFLINKUPDOWNTRAPENABLE_ENABLED )
-            && ( *var->val.integer != IFLINKUPDOWNTRAPENABLE_DISABLED ) ) {
+            && ( *var->value.integer != IFLINKUPDOWNTRAPENABLE_ENABLED )
+            && ( *var->value.integer != IFLINKUPDOWNTRAPENABLE_DISABLED ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ifXTable:_ifXTable_check_column:ifLinkUpDownTrapEnable", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ifLinkUpDownTrapEnable_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1034,21 +1034,21 @@ _ifXTable_check_column( ifXTable_rowreq_ctx* rowreq_ctx,
          * ifPromiscuousMode(16)/TruthValue/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IFPROMISCUOUSMODE:
-        rc = CheckVarbind_typeAndSize( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
             sizeof( rowreq_ctx->data.ifPromiscuousMode ) );
         /*
          * check that the value is one of defined enums 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( *var->val.integer != TRUTHVALUE_TRUE )
-            && ( *var->val.integer != TRUTHVALUE_FALSE ) ) {
+            && ( *var->value.integer != TRUTHVALUE_TRUE )
+            && ( *var->value.integer != TRUTHVALUE_FALSE ) ) {
             rc = PRIOT_ERR_WRONGVALUE;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ifXTable:_ifXTable_check_column:ifPromiscuousMode", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
             rc = ifPromiscuousMode_check_value( rowreq_ctx,
-                *( ( u_long* )var->val.string ) );
+                *( ( u_long* )var->value.string ) );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR,
@@ -1070,21 +1070,21 @@ _ifXTable_check_column( ifXTable_rowreq_ctx* rowreq_ctx,
          * ifAlias(18)/DisplayString/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H 
          */
     case COLUMN_IFALIAS:
-        rc = CheckVarbind_typeAndMaxSize( var, ASN01_OCTET_STR,
+        rc = VariableList_checkTypeAndMaxLength( var, ASN01_OCTET_STR,
             sizeof( rowreq_ctx->data.ifAlias ) );
         /*
          * check defined range(s). 
          */
         if ( ( ErrorCode_SUCCESS == rc )
-            && ( ( var->valLen < 0 ) || ( var->valLen > 64 ) ) ) {
+            && ( ( var->valueLength < 0 ) || ( var->valueLength > 64 ) ) ) {
             rc = PRIOT_ERR_WRONGLENGTH;
         }
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ifXTable:_ifXTable_check_column:ifAlias",
                 "varbind validation failed (eg bad type or size)\n" ) );
         } else {
-            rc = ifAlias_check_value( rowreq_ctx, ( char* )var->val.string,
-                var->valLen );
+            rc = ifAlias_check_value( rowreq_ctx, ( char* )var->value.string,
+                var->valueLength );
             if ( ( MFD_SUCCESS != rc ) && ( MFD_NOT_VALID_EVER != rc )
                 && ( MFD_NOT_VALID_NOW != rc ) ) {
                 Logger_log( LOGGER_PRIORITY_ERR, "bad rc %d from ifAlias_check_value\n",
@@ -1357,7 +1357,7 @@ int _mfd_ifXTable_undo_cleanup( MibHandler* handler,
  */
 static inline int
 _ifXTable_set_column( ifXTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1374,7 +1374,7 @@ _ifXTable_set_column( ifXTable_rowreq_ctx* rowreq_ctx,
     case COLUMN_IFLINKUPDOWNTRAPENABLE:
         rowreq_ctx->column_set_flags |= COLUMN_IFLINKUPDOWNTRAPENABLE_FLAG;
         rc = ifLinkUpDownTrapEnable_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1383,7 +1383,7 @@ _ifXTable_set_column( ifXTable_rowreq_ctx* rowreq_ctx,
     case COLUMN_IFPROMISCUOUSMODE:
         rowreq_ctx->column_set_flags |= COLUMN_IFPROMISCUOUSMODE_FLAG;
         rc = ifPromiscuousMode_set( rowreq_ctx,
-            *( ( u_long* )var->val.string ) );
+            *( ( u_long* )var->value.string ) );
         break;
 
     /*
@@ -1391,8 +1391,8 @@ _ifXTable_set_column( ifXTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFALIAS:
         rowreq_ctx->column_set_flags |= COLUMN_IFALIAS_FLAG;
-        rc = ifAlias_set( rowreq_ctx, ( char* )var->val.string,
-            var->valLen );
+        rc = ifAlias_set( rowreq_ctx, ( char* )var->value.string,
+            var->valueLength );
         break;
 
     default:
@@ -1536,7 +1536,7 @@ int _mfd_ifXTable_undo_commit( MibHandler* handler,
  */
 static inline int
 _ifXTable_undo_column( ifXTable_rowreq_ctx* rowreq_ctx,
-    Types_VariableList* var, int column )
+    VariableList* var, int column )
 {
     int rc = ErrorCode_SUCCESS;
 
@@ -1756,8 +1756,8 @@ void ifXTable_container_init_persistence( Container_Container* container )
     Assert_assert( container );
     container_p = ( Container_Container** )Memory_memdup( &container, sizeof( container ) );
     Assert_assert( container_p );
-    rc = Callback_registerCallback( CALLBACK_LIBRARY,
-        CALLBACK_STORE_DATA,
+    rc = Callback_register( CallbackMajor_LIBRARY,
+        CallbackMinor_STORE_DATA,
         _ifXTable_container_save_rows, container_p );
 
     if ( rc != PRIOT_ERR_NOERROR )
@@ -1773,7 +1773,7 @@ _ifXTable_container_save_rows( int majorID, int minorID, void* serverarg,
     char buf[] = "#\n"
                  "# ifXTable persistent data\n"
                  "#";
-    char* type = DefaultStore_getString( DsStorage_LIBRARY_ID,
+    char* type = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
 
     ReadConfig_store( ( char* )type, sep );

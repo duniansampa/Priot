@@ -7,9 +7,9 @@
  */
 
 #include "mteEventNotificationTable.h"
-#include "CheckVarbind.h"
+#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Table.h"
 #include "mteEvent.h"
 
@@ -141,7 +141,7 @@ int mteEventNotificationTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTNOTIFICATION:
-                ret = CheckVarbind_oid( request->requestvb );
+                ret = VariableList_checkOidMaxLength( request->requestvb );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -149,7 +149,7 @@ int mteEventNotificationTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTSOWNER:
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTS:
-                ret = CheckVarbind_typeAndMaxSize(
+                ret = VariableList_checkTypeAndMaxLength(
                     request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -221,19 +221,19 @@ int mteEventNotificationTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTNOTIFICATION:
                 memset( entry->mteNotification, 0, sizeof( entry->mteNotification ) );
-                memcpy( entry->mteNotification, request->requestvb->val.objid,
-                    request->requestvb->valLen );
-                entry->mteNotification_len = request->requestvb->valLen / sizeof( oid );
+                memcpy( entry->mteNotification, request->requestvb->value.objectId,
+                    request->requestvb->valueLength );
+                entry->mteNotification_len = request->requestvb->valueLength / sizeof( oid );
                 break;
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTSOWNER:
                 memset( entry->mteNotifyOwner, 0, sizeof( entry->mteNotifyOwner ) );
-                memcpy( entry->mteNotifyOwner, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteNotifyOwner, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTS:
                 memset( entry->mteNotifyObjects, 0, sizeof( entry->mteNotifyObjects ) );
-                memcpy( entry->mteNotifyObjects, request->requestvb->val.string,
-                    request->requestvb->valLen );
+                memcpy( entry->mteNotifyObjects, request->requestvb->value.string,
+                    request->requestvb->valueLength );
                 break;
             }
         }

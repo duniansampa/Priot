@@ -1,7 +1,7 @@
 #include "MasterAdmin.h"
 #include "Types.h"
 #include "Protocol.h"
-#include "System/Util/Debug.h"
+#include "System/Util/Trace.h"
 #include "Agent.h"
 #include "AgentRegistry.h"
 #include "AgentIndex.h"
@@ -68,7 +68,7 @@ MasterAdmin_openAgentxSession(Types_Session * session, Types_Pdu *pdu)
                                                  pdu->variables->
                                                  nameLength);
     sp->securityAuthProtoLen = pdu->variables->nameLength;
-    sp->securityName = strdup((char *) pdu->variables->val.string);
+    sp->securityName = strdup((char *) pdu->variables->value.string);
     sp->engineTime = (uint32_t)((Agent_getAgentRuntime() + 50) / 100) & 0x7fffffffL;
 
     sp->subsession = session;   /* link back to head */
@@ -170,7 +170,7 @@ MasterAdmin_registerAgentxList(Types_Session * session, Types_Pdu *pdu)
      * *   registration context
      */
     if (pdu->range_subid) {
-        ubound = pdu->variables->val.objid[pdu->range_subid - 1];
+        ubound = pdu->variables->value.objectId[pdu->range_subid - 1];
     }
 
     if (pdu->flags & AGENTX_MSG_FLAG_INSTANCE_REGISTER) {
@@ -232,7 +232,7 @@ MasterAdmin_unregisterAgentxList(Types_Session * session, Types_Pdu *pdu)
 
     if (pdu->range_subid != 0) {
         oid             ubound =
-            pdu->variables->val.objid[pdu->range_subid - 1];
+            pdu->variables->value.objectId[pdu->range_subid - 1];
         rc = AgentRegistry_unregisterMibTableRow(pdu->variables->name,
                                               pdu->variables->nameLength,
                                               pdu->priority,
@@ -260,7 +260,7 @@ int
 MasterAdmin_allocateIdxList(Types_Session * session, Types_Pdu *pdu)
 {
     Types_Session *sp;
-    Types_VariableList *vp, *vp2, *next, *res;
+    VariableList *vp, *vp2, *next, *res;
     int             flags = 0;
 
     sp = MasterAdmin_findAgentxSession(session, pdu->sessid);
@@ -283,7 +283,7 @@ MasterAdmin_allocateIdxList(Types_Session * session, Types_Pdu *pdu)
      * For now - assume they all succeed.
      */
     for (vp = pdu->variables; vp != NULL; vp = next) {
-        next = vp->nextVariable;
+        next = vp->next;
         res = AgentIndex_registerIndex(vp, flags, session);
         if (res == NULL) {
             /*
@@ -291,7 +291,7 @@ MasterAdmin_allocateIdxList(Types_Session * session, Types_Pdu *pdu)
              *      all previous ones (i.e. remove them completely
              *      from the index registry)
              */
-            for (vp2 = pdu->variables; vp2 != vp; vp2 = vp2->nextVariable) {
+            for (vp2 = pdu->variables; vp2 != vp; vp2 = vp2->next) {
                 AgentIndex_removeIndex(vp2, session);
             }
             return AGENTX_ERR_INDEX_NONE_AVAILABLE;     /* XXX */
@@ -299,7 +299,7 @@ MasterAdmin_allocateIdxList(Types_Session * session, Types_Pdu *pdu)
             (void) Client_cloneVar(res, vp);
             free(res);
         }
-        vp->nextVariable = next;
+        vp->next = next;
     }
     return AGENTX_ERR_NOERROR;
 }
@@ -308,21 +308,21 @@ int
 MasterAdmin_releaseIdxList(Types_Session * session, Types_Pdu *pdu)
 {
     Types_Session *sp;
-    Types_VariableList *vp, *vp2, *rv = NULL;
+    VariableList *vp, *vp2, *rv = NULL;
     int             res;
 
     sp = MasterAdmin_findAgentxSession(session, pdu->sessid);
     if (sp == NULL)
         return AGENTX_ERR_NOT_OPEN;
 
-    for (vp = pdu->variables; vp != NULL; vp = vp->nextVariable) {
+    for (vp = pdu->variables; vp != NULL; vp = vp->next) {
         res = AgentIndex_unregisterIndex(vp, TRUE, session);
         /*
          *  If any releases fail,
          *      we need to reinstate all previous ones.
          */
         if (res != PRIOT_ERR_NOERROR) {
-            for (vp2 = pdu->variables; vp2 != vp; vp2 = vp2->nextVariable) {
+            for (vp2 = pdu->variables; vp2 != vp; vp2 = vp2->next) {
                 rv = AgentIndex_registerIndex(vp2, ALLOCATE_THIS_INDEX, session);
                 free(rv);
             }
@@ -342,8 +342,8 @@ MasterAdmin_addAgentCapsList(Types_Session * session, Types_Pdu *pdu)
     if (sp == NULL)
         return AGENTX_ERR_NOT_OPEN;
 
-    description = Memory_strdupAndNull(pdu->variables->val.string,
-                                          pdu->variables->valLen);
+    description = Memory_strdupAndNull(pdu->variables->value.string,
+                                          pdu->variables->valueLength);
     SysORTable_registerSysORTableSess(pdu->variables->name, pdu->variables->nameLength,
                              description, sp);
     free(description);
@@ -373,7 +373,7 @@ int
 MasterAdmin_agentxNotify(Types_Session * session, Types_Pdu *pdu)
 {
     Types_Session       *sp;
-    Types_VariableList *var;
+    VariableList *var;
 
     sp = MasterAdmin_findAgentxSession(session, pdu->sessid);
     if (sp == NULL)
@@ -385,7 +385,7 @@ MasterAdmin_agentxNotify(Types_Session * session, Types_Pdu *pdu)
 
     if (Api_oidCompare(var->name, var->nameLength,
                          trap_sysuptimeOid, trap_sysuptimeOidLen) == 0) {
-        var = var->nextVariable;
+        var = var->next;
     }
 
     if (!var || Api_oidCompare(var->name, var->nameLength,
