@@ -1,14 +1,14 @@
 #include "V3.h"
 #include "Api.h"
-#include "System/Util/DefaultStore.h"
-#include "LcdTime.h"
+#include "EngineTime.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
-#include "System.h"
 #include "System/String.h"
-#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
 #include "System/Util/Utilities.h"
 #include "Usm.h"
@@ -349,7 +349,7 @@ int V3_setupEngineID( u_char** eidp, const char* text )
          * get the host name and save the information
          */
         gethostname( ( char* )buf, sizeof( buf ) );
-        hent = System_gethostbyname( ( char* )buf );
+        hent = System_getHostByName( ( char* )buf );
         if ( hent && hent->h_addrtype == AF_INET6 ) {
             localEngineIDType = ENGINEID_TYPE_IPV6;
         } else {
@@ -826,7 +826,7 @@ int V3_initPostConfig( int majorid, int minorid, void* serverarg,
     /*
      * for USM set our local engineTime in the LCD timing cache
      */
-    LcdTime_setEnginetime( c_engineID, engineIDLen,
+    EngineTime_set( c_engineID, engineIDLen,
         V3_localEngineBoots(),
         V3_localEngineTime(), TRUE );
 
@@ -1004,7 +1004,7 @@ V3_localEngineTime( void )
     uint32_t engineTime;
 
     Time_getMonotonicClock( &now );
-    engineTime = System_calculateSectimeDiff( &now, &_v3_starttime ) & 0x7fffffffL;
+    engineTime = Time_diffTime( &now, &_v3_starttime ) & 0x7fffffffL;
     if ( engineTime < last_engineTime )
         _v3_engineBoots++;
     last_engineTime = engineTime;

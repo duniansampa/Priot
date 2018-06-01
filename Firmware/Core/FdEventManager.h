@@ -1,43 +1,43 @@
 #ifndef FDEVENTMANAGER_H
 #define FDEVENTMANAGER_H
 
-#include "LargeFdSet.h"
+#include "System/Util/LargeFdSet.h"
 
 #define NUM_EXTERNAL_FDS 32
-#define FD_REGISTERED_OK                 0
-#define FD_REGISTRATION_FAILED          -2
-#define FD_UNREGISTERED_OK               0
-#define FD_NO_SUCH_REGISTRATION         -1
+#define FD_REGISTERED_OK 0
+#define FD_REGISTRATION_FAILED -2
+#define FD_UNREGISTERED_OK 0
+#define FD_NO_SUCH_REGISTRATION -1
 
 /* Since the inception of netsnmp_external_event_info and
  * netsnmp_dispatch_external_events, there is no longer a need for the data
  * below to be globally visible.  We will leave it global for now for
  * compatibility purposes. */
-extern int      fdEventManager_externalReadfd[NUM_EXTERNAL_FDS],   fdEventManager_externalReadfdlen;
-extern int      fdEventManager_externalWritefd[NUM_EXTERNAL_FDS],  fdEventManager_externalWritefdlen;
-extern int      fdEventManager_externalExceptfd[NUM_EXTERNAL_FDS], fdEventManager_externalExceptfdlen;
+extern int fdEventManager_externalReadfd[ NUM_EXTERNAL_FDS ], fdEventManager_externalReadfdlen;
+extern int fdEventManager_externalWritefd[ NUM_EXTERNAL_FDS ], fdEventManager_externalWritefdlen;
+extern int fdEventManager_externalExceptfd[ NUM_EXTERNAL_FDS ], fdEventManager_externalExceptfdlen;
 
-extern void     (*fdEventManager_externalReadfdFT[NUM_EXTERNAL_FDS])   (int, void *);
-extern void     (*fdEventManager_externalWritefdFT[NUM_EXTERNAL_FDS])  (int, void *);
-extern void     (*fdEventManager_externalExceptfdFT[NUM_EXTERNAL_FDS]) (int, void *);
+extern void ( *fdEventManager_externalReadfdFT[ NUM_EXTERNAL_FDS ] )( int, void* );
+extern void ( *fdEventManager_externalWritefdFT[ NUM_EXTERNAL_FDS ] )( int, void* );
+extern void ( *fdEventManager_externalExceptfdFT[ NUM_EXTERNAL_FDS ] )( int, void* );
 
-extern void    *fdEventManager_externalReadfdData[NUM_EXTERNAL_FDS];
-extern void    *fdEventManager_externalWritefdData[NUM_EXTERNAL_FDS];
-extern void    *fdEventManager_externalExceptfdData[NUM_EXTERNAL_FDS];
+extern void* fdEventManager_externalReadfdData[ NUM_EXTERNAL_FDS ];
+extern void* fdEventManager_externalWritefdData[ NUM_EXTERNAL_FDS ];
+extern void* fdEventManager_externalExceptfdData[ NUM_EXTERNAL_FDS ];
 
 /* Here are the key functions of this unit.  Use register_xfd to register
  * a callback to be called when there is x activity on the register fd.
  * x can be read, write, or except (for exception).  When registering,
  * you can pass in a pointer to some data that you have allocated that
  * you would like to have back when the callback is called. */
-int             FdEventManager_registerReadfd(int, void (*func)(int, void *),   void *);
-int             FdEventManager_registerWritefd(int, void (*func)(int, void *),  void *);
-int             FdEventManager_registerExceptfd(int, void (*func)(int, void *), void *);
+int FdEventManager_registerReadfd( int, void ( *func )( int, void* ), void* );
+int FdEventManager_registerWritefd( int, void ( *func )( int, void* ), void* );
+int FdEventManager_registerExceptfd( int, void ( *func )( int, void* ), void* );
 
 /* Unregisters a given fd for events */
-int             FdEventManager_unregisterReadfd(int);
-int             FdEventManager_unregisterWritefd(int);
-int             FdEventManager_unregisterExceptfd(int);
+int FdEventManager_unregisterReadfd( int );
+int FdEventManager_unregisterWritefd( int );
+int FdEventManager_unregisterExceptfd( int );
 
 /*
  * External Event Info
@@ -67,13 +67,12 @@ int             FdEventManager_unregisterExceptfd(int);
  * Side Effects: None
  */
 
-void FdEventManager_externalEventInfo(int *numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
+void FdEventManager_externalEventInfo( int* numfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds );
 
-
-void FdEventManager_externalEventInfo2(int *numfds,
-                                  Types_LargeFdSet *readfds,
-                                  Types_LargeFdSet *writefds,
-                                  Types_LargeFdSet *exceptfds);
+void FdEventManager_externalEventInfo2( int* numfds,
+    LargeFdSet_t* readfds,
+    LargeFdSet_t* writefds,
+    LargeFdSet_t* exceptfds );
 
 /*
  * Dispatch External Events
@@ -100,11 +99,11 @@ void FdEventManager_externalEventInfo2(int *numfds,
  * Side Effects: None
  */
 
-void FdEventManager_dispatchExternalEvents(int *count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds);
+void FdEventManager_dispatchExternalEvents( int* count, fd_set* readfds, fd_set* writefds, fd_set* exceptfds );
 
-void FdEventManager_dispatchExternalEvents2(int *count,
-                                       Types_LargeFdSet *readfds,
-                                       Types_LargeFdSet *writefds,
-                                       Types_LargeFdSet *exceptfds);
+void FdEventManager_dispatchExternalEvents2( int* count,
+    LargeFdSet_t* readfds,
+    LargeFdSet_t* writefds,
+    LargeFdSet_t* exceptfds );
 
 #endif // FDEVENTMANAGER_H

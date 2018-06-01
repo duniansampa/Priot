@@ -302,4 +302,31 @@ int Convert_hexStringToBinaryString2( const u_char* input, size_t inputLen, char
  */
 int Convert_integerStringToBinaryString( u_char** buffer, size_t* bufferLen, size_t* outLen, int allowRealloc, const char* integerString );
 
+/**
+ * @brief Convert_variablesToDateAndTimeString
+ *        is the wrapping of the Time_convertVariablesToDateAndTimeString
+ *
+ * @see Time_convertVariablesToDateAndTimeString
+ */
+int Convert_variablesToDateAndTimeString( uint8_t* buffer, size_t* bufferSize,
+    uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minutes, uint8_t seconds,
+    uint8_t deciSeconds, int utcOffsetDirection,
+    uint8_t utcOffsetHours, uint8_t utcOffsetMinutes );
+
+/**
+ * @brief Convert_dateAndTimeToString
+ *        is the wrapping of the Time_convertDateAndTimeToString
+ *
+ * @see Time_convertDateAndTimeToString
+ */
+u_char* Convert_dateAndTimeToString( const time_t* when, size_t* length );
+
+/**
+ * @brief Convert_ctimeStringToTimet
+ *        is the wrapping of the Time_convertCtimeStringToTimet
+ *
+ * @see Time_convertCtimeStringToTimet
+ */
+time_t Convert_ctimeStringToTimet( const char* ctimeString );
+
 #endif // IOT_CONVERT_H

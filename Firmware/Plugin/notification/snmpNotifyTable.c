@@ -201,7 +201,7 @@ int send_notifications( int major, int minor, void* serverarg, void* clientarg )
 
     for ( hptr = snmpNotifyTableStorage; hptr; hptr = hptr->next ) {
         nptr = ( struct snmpNotifyTable_data* )hptr->data;
-        if ( nptr->snmpNotifyRowStatus != TC_RS_ACTIVE )
+        if ( nptr->snmpNotifyRowStatus != tcROW_STATUS_ACTIVE )
             continue;
         if ( !nptr->snmpNotifyTag )
             continue;
@@ -305,8 +305,8 @@ int notifyTable_register_notifications( int major, int minor,
     MEMORY_FREE( ptr->tagList );
     ptr->tagList = strdup( buf ); /* strdup ok since buf contains 'internal%d' */
     ptr->params = strdup( buf );
-    ptr->storageType = TC_ST_READONLY;
-    ptr->rowStatus = TC_RS_ACTIVE;
+    ptr->storageType = tcSTORAGE_TYPE_READONLY;
+    ptr->rowStatus = tcROW_STATUS_ACTIVE;
     ptr->sess = ss;
     DEBUG_MSGTL( ( "trapsess", "adding to trap table\n" ) );
     snmpTargetAddrTable_add( ptr );
@@ -330,8 +330,8 @@ int notifyTable_register_notifications( int major, int minor,
         pptr->secName[ ss->securityNameLen ] = 0;
     }
 
-    pptr->storageType = TC_ST_READONLY;
-    pptr->rowStatus = TC_RS_ACTIVE;
+    pptr->storageType = tcSTORAGE_TYPE_READONLY;
+    pptr->rowStatus = tcROW_STATUS_ACTIVE;
     snmpTargetParamTable_add( pptr );
     /*
      * XXX: END move target creation to target code
@@ -348,8 +348,8 @@ int notifyTable_register_notifications( int major, int minor,
     nptr->snmpNotifyTag = strdup( buf );
     nptr->snmpNotifyTagLen = strlen( buf );
     nptr->snmpNotifyType = confirm ? SNMPNOTIFYTYPE_INFORM : SNMPNOTIFYTYPE_TRAP;
-    nptr->snmpNotifyStorageType = TC_ST_READONLY;
-    nptr->snmpNotifyRowStatus = TC_RS_ACTIVE;
+    nptr->snmpNotifyStorageType = tcSTORAGE_TYPE_READONLY;
+    nptr->snmpNotifyRowStatus = tcROW_STATUS_ACTIVE;
 
     snmpNotifyTable_add( nptr );
     return 0;
@@ -370,7 +370,7 @@ int notifyTable_unregister_notifications( int major, int minor,
     for ( hptr = snmpNotifyTableStorage; hptr; hptr = nhptr ) {
         struct snmpNotifyTable_data* nptr = ( struct snmpNotifyTable_data* )hptr->data;
         nhptr = hptr->next;
-        if ( nptr->snmpNotifyStorageType == TC_ST_READONLY ) {
+        if ( nptr->snmpNotifyStorageType == tcSTORAGE_TYPE_READONLY ) {
             header_complex_extract_entry( &snmpNotifyTableStorage, hptr );
             free( nptr->snmpNotifyName );
             free( nptr->snmpNotifyTag );
@@ -523,12 +523,12 @@ void parse_snmpNotifyTable( const char* token, char* line )
     line = ReadConfig_readData( ASN01_INTEGER, line,
         &StorageTmp->snmpNotifyStorageType, &tmpint );
     if ( !StorageTmp->snmpNotifyStorageType )
-        StorageTmp->snmpNotifyStorageType = TC_ST_READONLY;
+        StorageTmp->snmpNotifyStorageType = tcSTORAGE_TYPE_READONLY;
 
     line = ReadConfig_readData( ASN01_INTEGER, line,
         &StorageTmp->snmpNotifyRowStatus, &tmpint );
     if ( !StorageTmp->snmpNotifyRowStatus )
-        StorageTmp->snmpNotifyRowStatus = TC_RS_ACTIVE;
+        StorageTmp->snmpNotifyRowStatus = tcROW_STATUS_ACTIVE;
 
     if ( snmpNotifyTable_add( StorageTmp ) != ErrorCode_SUCCESS ) {
         MEMORY_FREE( StorageTmp->snmpNotifyName );
@@ -562,7 +562,7 @@ int store_snmpNotifyTable( int majorID, int minorID, void* serverarg,
          * store permanent and nonvolatile rows.
          * XXX should there be a qualification on RowStatus??
          */
-        if ( ( StorageTmp->snmpNotifyStorageType == TC_ST_NONVOLATILE ) || ( StorageTmp->snmpNotifyStorageType == TC_ST_PERMANENT ) ) {
+        if ( ( StorageTmp->snmpNotifyStorageType == tcSTORAGE_TYPE_NONVOLATILE ) || ( StorageTmp->snmpNotifyStorageType == tcSTORAGE_TYPE_PERMANENT ) ) {
 
             memset( line, 0, sizeof( line ) );
             strcat( line, "snmpNotifyTable " );
@@ -886,7 +886,7 @@ int write_snmpNotifyRowStatus( int action,
         if ( var_val_len != sizeof( long ) ) {
             return PRIOT_ERR_WRONGLENGTH;
         }
-        if ( set_value < 1 || set_value > 6 || set_value == TC_RS_NOTREADY ) {
+        if ( set_value < 1 || set_value > 6 || set_value == tcROW_STATUS_NOTREADY ) {
             return PRIOT_ERR_WRONGVALUE;
         }
         if ( StorageTmp == NULL ) {
@@ -896,15 +896,15 @@ int write_snmpNotifyRowStatus( int action,
             /*
              * ditch illegal values now
              */
-            if ( set_value == TC_RS_ACTIVE || set_value == TC_RS_NOTINSERVICE ) {
+            if ( set_value == tcROW_STATUS_ACTIVE || set_value == tcROW_STATUS_NOTINSERVICE ) {
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
         } else {
             /*
              * row exists.  Check for a valid state change
              */
-            if ( set_value == TC_RS_CREATEANDGO
-                || set_value == TC_RS_CREATEANDWAIT ) {
+            if ( set_value == tcROW_STATUS_CREATEANDGO
+                || set_value == tcROW_STATUS_CREATEANDWAIT ) {
                 /*
                  * can't create a row that exists
                  */
@@ -918,8 +918,8 @@ int write_snmpNotifyRowStatus( int action,
         /*
          * memory reseveration, final preparation...
          */
-        if ( StorageTmp == NULL && ( set_value == TC_RS_CREATEANDGO
-                                       || set_value == TC_RS_CREATEANDWAIT ) ) {
+        if ( StorageTmp == NULL && ( set_value == tcROW_STATUS_CREATEANDGO
+                                       || set_value == tcROW_STATUS_CREATEANDWAIT ) ) {
             /*
              * creation
              */
@@ -954,7 +954,7 @@ int write_snmpNotifyRowStatus( int action,
             /*
              * default values
              */
-            StorageNew->snmpNotifyStorageType = TC_ST_NONVOLATILE;
+            StorageNew->snmpNotifyStorageType = tcSTORAGE_TYPE_NONVOLATILE;
             StorageNew->snmpNotifyType = SNMPNOTIFYTYPE_TRAP;
             StorageNew->snmpNotifyTagLen = 0;
             StorageNew->snmpNotifyTag = ( char* )calloc( sizeof( char ), 1 );
@@ -980,14 +980,14 @@ int write_snmpNotifyRowStatus( int action,
         break;
 
     case IMPL_ACTION:
-        if ( StorageTmp == NULL && ( set_value == TC_RS_CREATEANDGO || set_value == TC_RS_CREATEANDWAIT ) ) {
+        if ( StorageTmp == NULL && ( set_value == tcROW_STATUS_CREATEANDGO || set_value == tcROW_STATUS_CREATEANDWAIT ) ) {
             /*
              * row creation, so add it
              */
             if ( StorageNew != NULL ) {
                 snmpNotifyTable_add( StorageNew );
             }
-        } else if ( set_value != TC_RS_DESTROY ) {
+        } else if ( set_value != tcROW_STATUS_DESTROY ) {
             /*
              * set the flag?
              */
@@ -1015,7 +1015,7 @@ int write_snmpNotifyRowStatus( int action,
         /*
          * Back out any changes made in the IMPL_ACTION case
          */
-        if ( StorageTmp == NULL && ( set_value == TC_RS_CREATEANDGO || set_value == TC_RS_CREATEANDWAIT ) ) {
+        if ( StorageTmp == NULL && ( set_value == tcROW_STATUS_CREATEANDGO || set_value == tcROW_STATUS_CREATEANDWAIT ) ) {
             /*
              * row creation, so remove it again
              */
@@ -1032,7 +1032,7 @@ int write_snmpNotifyRowStatus( int action,
              * row deletion, so add it again
              */
             snmpNotifyTable_add( StorageDel );
-        } else if ( set_value != TC_RS_DESTROY ) {
+        } else if ( set_value != tcROW_STATUS_DESTROY ) {
             if ( StorageTmp )
                 StorageTmp->snmpNotifyRowStatus = old_value;
         }
@@ -1046,11 +1046,11 @@ int write_snmpNotifyRowStatus( int action,
             StorageDel = NULL;
         }
         if ( StorageTmp
-            && StorageTmp->snmpNotifyRowStatus == TC_RS_CREATEANDGO ) {
-            StorageTmp->snmpNotifyRowStatus = TC_RS_ACTIVE;
+            && StorageTmp->snmpNotifyRowStatus == tcROW_STATUS_CREATEANDGO ) {
+            StorageTmp->snmpNotifyRowStatus = tcROW_STATUS_ACTIVE;
             StorageNew = NULL;
-        } else if ( StorageTmp && StorageTmp->snmpNotifyRowStatus == TC_RS_CREATEANDWAIT ) {
-            StorageTmp->snmpNotifyRowStatus = TC_RS_NOTINSERVICE;
+        } else if ( StorageTmp && StorageTmp->snmpNotifyRowStatus == tcROW_STATUS_CREATEANDWAIT ) {
+            StorageTmp->snmpNotifyRowStatus = tcROW_STATUS_NOTINSERVICE;
             StorageNew = NULL;
         }
         Api_storeNeeded( NULL );

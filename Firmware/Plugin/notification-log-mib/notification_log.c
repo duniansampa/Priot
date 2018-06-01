@@ -578,7 +578,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
     TableDataset_setRowColumn( row, COLUMN_NLMLOGTIME, ASN01_TIMETICKS,
         &tmpl, sizeof( tmpl ) );
     time( &timetnow );
-    logdate = Tc_dateNTime( &timetnow, &logdate_size );
+    logdate = Time_convertDateAndTimeToString( &timetnow, &logdate_size );
     TableDataset_setRowColumn( row, COLUMN_NLMLOGDATEANDTIME, ASN01_OCTET_STR,
         logdate, logdate_size );
     TableDataset_setRowColumn( row, COLUMN_NLMLOGENGINEID, ASN01_OCTET_STR,

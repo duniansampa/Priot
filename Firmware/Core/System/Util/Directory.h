@@ -42,4 +42,19 @@ Container_Container* Directory_readSome( Container_Container* userContainer,
  */
 void Directory_free( Container_Container* c );
 
+/**
+ * @brief Directory_makeDirectoryHierarchy
+ *        Create new folder(s), if they do not already exist.
+ *        no error if existing, make parent directories as needed.
+ *
+ * @param pathName -  the directory path
+ * @param mode - the file permission bits of the new directory
+ * @param skipLast - if it is true, does not create the last directory.
+ *                   Otherwise, creates the last directory.
+ *
+ * @returns ErrorCode_GENERR : in case of error.
+ *          ErrorCode_SUCCESS : on success.
+ */
+int Directory_makeDirectoryHierarchy( const char* pathName, mode_t mode, int skipLast );
+
 #endif // IOT_DIRECTORY_H

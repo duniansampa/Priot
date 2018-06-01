@@ -33,7 +33,7 @@ void Session_read(fd_set * fdset){
 }
 
 
-void Session_read2(Types_LargeFdSet * fdset){
+void Session_read2(LargeFdSet_t * fdset){
     Api_read2(fdset);
 }
 
@@ -48,7 +48,7 @@ int Session_selectInfo(int * numfds, fd_set * fdset, struct timeval * timeout, i
 }
 
 
-int Session_selectInfo2(int *numfds, Types_LargeFdSet *fdset, struct timeval *timeout, int *block){
+int Session_selectInfo2(int *numfds, LargeFdSet_t *fdset, struct timeval *timeout, int *block){
     return Api_selectInfo2(numfds, fdset, timeout, block);
 }
 
@@ -57,7 +57,7 @@ int Session_sessSelectInfoFlags(void *sessp, int *numfds, fd_set *fdset, struct 
     return Api_sessSelectInfoFlags(sessp, numfds, fdset, timeout, block, flags);
 }
 
-int Session_sessSelectInfo2Flags(void *sessp, int *numfds, Types_LargeFdSet * fdset, struct timeval *timeout, int *block, int flags){
+int Session_sessSelectInfo2Flags(void *sessp, int *numfds, LargeFdSet_t * fdset, struct timeval *timeout, int *block, int flags){
     return Api_sessSelectInfo2Flags(sessp, numfds, fdset, timeout, block, flags);
 }
 
@@ -96,7 +96,7 @@ int Session_sessSelectInfo(void * sessp, int * numfds, fd_set * fdset, struct ti
     return Api_sessSelectInfo(sessp, numfds, fdset, timeout, block);
 }
 
-int Session_sessSelectInfo2(void * sessp, int * numfds, Types_LargeFdSet * fdset, struct timeval * timeout, int * block){
+int Session_sessSelectInfo2(void * sessp, int * numfds, LargeFdSet_t * fdset, struct timeval * timeout, int * block){
     return Api_sessSelectInfo2(sessp, numfds,fdset, timeout, block);
 }
 
@@ -104,7 +104,7 @@ int Session_sessRead(void * sessp, fd_set * fdset){
     return Api_sessRead(sessp, fdset);
 }
 
-int Session_sessRead2(void * sessp, Types_LargeFdSet * fdset){
+int Session_sessRead2(void * sessp, LargeFdSet_t * fdset){
     return Api_sessRead2(sessp, fdset);
 }
 

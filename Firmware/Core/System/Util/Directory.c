@@ -1,8 +1,8 @@
 #include "Directory.h"
 #include "File.h"
 #include "System/String.h"
-#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
 
 /** ==================[ Private Functions Prototypes ]================== */
@@ -189,4 +189,61 @@ static int _Directory_insertPriotFile( Container_Container* c, const char* name,
     }
 
     return 0;
+}
+
+int Directory_makeDirectoryHierarchy( const char* pathName, mode_t mode, int skipLast )
+{
+    struct stat sbuf;
+    char* ourcopy = strdup( pathName );
+    char* entry;
+    char* buf = NULL;
+    char* st = NULL;
+    int res;
+
+    res = ErrorCode_GENERR;
+    if ( !ourcopy )
+        goto goto_out;
+
+    buf = ( char* )malloc( strlen( pathName ) + 2 );
+    if ( !buf )
+        goto goto_out;
+
+    entry = strtok_r( ourcopy, "/", &st );
+
+    buf[ 0 ] = '\0';
+
+    /*
+     * check to see if filename is a directory
+     */
+    while ( entry ) {
+        strcat( buf, "/" );
+        strcat( buf, entry );
+        entry = strtok_r( NULL, "/", &st );
+        if ( entry == NULL && skipLast )
+            break;
+        if ( stat( buf, &sbuf ) < 0 ) {
+            /*
+             * DNE, make it
+             */
+            if ( mkdir( buf, mode ) == -1 )
+                goto goto_out;
+            else
+                Logger_log( LOGGER_PRIORITY_INFO, "Created directory: %s\n", buf );
+        } else {
+            /*
+             * exists, is it a file?
+             */
+            if ( ( sbuf.st_mode & S_IFDIR ) == 0 ) {
+                /*
+                 * ack! can't make a directory on top of a file
+                 */
+                goto goto_out;
+            }
+        }
+    }
+    res = ErrorCode_SUCCESS;
+goto_out:
+    free( buf );
+    free( ourcopy );
+    return res;
 }

@@ -1,9 +1,9 @@
 #include "IPv4BaseDomain.h"
 
 #include "Priot.h"
-#include "System.h"
-#include "System/Util/Trace.h"
 #include "System/Util/DefaultStore.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 
 //initialize the sockaddr_in struct.
 int IPv4BaseDomain_sockaddrIn( struct sockaddr_in* addr,
@@ -118,7 +118,7 @@ int IPv4BaseDomain_sockaddrIn2( struct sockaddr_in* addr,
                 DEBUG_MSGTL( ( "sockaddrIn", "Explicit UDP broadcast\n" ) );
                 addr->sin_addr.s_addr = INADDR_NONE;
             } else {
-                ret = System_gethostbynameV4( peername, &addr->sin_addr.s_addr );
+                ret = System_getHostByNameV4( peername, &addr->sin_addr.s_addr );
                 if ( ret < 0 ) {
                     DEBUG_MSGTL( ( "sockaddrIn", "couldn't resolve hostname\n" ) );
                     free( peername );
@@ -164,7 +164,7 @@ char* IPv4BaseDomain_fmtaddr( const char* prefix, Transport_Transport* t,
         } else if ( t && t->flags & TRANSPORT_FLAG_HOSTNAME ) {
             /* XXX: hmm...  why isn't this prefixed */
             /* assuming intentional */
-            host = System_gethostbyaddr( ( char* )&to->sin_addr, sizeof( struct in_addr ), AF_INET );
+            host = System_getHostByAddr( ( char* )&to->sin_addr, sizeof( struct in_addr ), AF_INET );
             return ( host ? strdup( host->h_name ) : NULL );
         } else {
             snprintf( tmp, sizeof( tmp ), "%s: [%s]:%hu->", prefix,

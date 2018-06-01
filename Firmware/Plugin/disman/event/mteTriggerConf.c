@@ -808,7 +808,7 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
          * Backwards compatability means reading these individually. 
          */
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
-        if ( tmp == TC_TV_TRUE )
+        if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_VWILD;
     }
     len = MTE_STR2_LEN;
@@ -819,7 +819,7 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
     line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
     if ( bcomp ) {
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
-        if ( tmp == TC_TV_TRUE )
+        if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_CWILD;
     }
 
@@ -842,10 +842,10 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
          *   and mteTriggerEntryStatus values separately...
          */
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
-        if ( tmp == TC_TV_TRUE )
+        if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_ENABLED;
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
-        if ( tmp == TC_RS_ACTIVE )
+        if ( tmp == tcROW_STATUS_ACTIVE )
             entry->flags |= MTE_TRIGGER_FLAG_ACTIVE;
     } else {
         /*
@@ -912,7 +912,7 @@ char* _parse_mteTDCols( char* line, struct mteTrigger* entry, int bcomp )
         &entry->mteDeltaDiscontID_len );
     line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
     if ( bcomp ) {
-        if ( tmp == TC_TV_TRUE )
+        if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_DWILD;
     } else {
         if ( tmp & MTE_TRIGGER_FLAG_DWILD )
@@ -1055,7 +1055,7 @@ char* _parse_mteTBlCols( char* line, struct mteTrigger* entry, int bcomp )
         line = ReadConfig_readData( ASN01_INTEGER, line,
             &entry->mteTBoolValue, NULL );
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
-        if ( tmp == TC_TV_TRUE )
+        if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_BSTART;
     } else {
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );

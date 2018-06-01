@@ -105,7 +105,7 @@ void parse_sched_periodic( const char* token, char* line )
     memcpy( entry->schedVariable, variable, var_len * sizeof( oid ) );
 
     entry->schedType = SCHED_TYPE_PERIODIC;
-    entry->schedStorageType = TC_ST_READONLY; /* or PERMANENT */
+    entry->schedStorageType = tcSTORAGE_TYPE_READONLY; /* or PERMANENT */
     entry->flags = SCHEDULE_FLAG_ENABLED | SCHEDULE_FLAG_ACTIVE | SCHEDULE_FLAG_VALID;
     entry->session = Client_queryGetDefaultSession();
     sched_nextTime( entry );
@@ -278,7 +278,7 @@ void parse_sched_timed( const char* token, char* line )
         entry->schedType = SCHED_TYPE_ONESHOT;
     else
         entry->schedType = SCHED_TYPE_CALENDAR;
-    entry->schedStorageType = TC_ST_READONLY; /* or PERMANENT */
+    entry->schedStorageType = tcSTORAGE_TYPE_READONLY; /* or PERMANENT */
     entry->flags = SCHEDULE_FLAG_ENABLED | SCHEDULE_FLAG_ACTIVE | SCHEDULE_FLAG_VALID;
     entry->session = Client_queryGetDefaultSession();
     sched_nextTime( entry );
@@ -389,7 +389,7 @@ int store_schedTable( int majorID, int minorID, void* serverarg, void* clientarg
          * Only save (dynamically-created) 'nonVolatile' entries
          *    (XXX - what about dynamic 'permanent' entries ??)
          */
-        if ( entry->schedStorageType != TC_ST_NONVOLATILE )
+        if ( entry->schedStorageType != tcSTORAGE_TYPE_NONVOLATILE )
             continue;
         DEBUG_MSGTL( ( "disman:schedule:conf", "  Storing (%s, %s)\n",
             entry->schedOwner, entry->schedName ) );

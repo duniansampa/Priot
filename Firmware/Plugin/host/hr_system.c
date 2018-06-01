@@ -16,10 +16,10 @@
 
 #include "hr_system.h"
 #include "AgentRegistry.h"
-#include "System/Util/Trace.h"
 #include "Impl.h"
 #include "System/Util/Logger.h"
-#include "System.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 #include "TextualConvention.h"
 #include "host_res.h"
 #include <utmpx.h>
@@ -144,12 +144,12 @@ var_hrsys( struct Variable_s* vp,
 
     switch ( vp->magic ) {
     case HRSYS_UPTIME:
-        vars_longReturn = System_getUptime();
+        vars_longReturn = System_getUpTime();
         return ( u_char* )&vars_longReturn;
     case HRSYS_DATE:
         *write_method = ns_set_time;
         time( &now );
-        return ( u_char* )Tc_dateNTime( &now, var_len );
+        return ( u_char* )Time_convertDateAndTimeToString( &now, var_len );
     case HRSYS_LOAD_DEV:
         vars_longReturn = get_load_dev();
         return ( u_char* )&vars_longReturn;

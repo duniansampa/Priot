@@ -4,198 +4,9 @@
 #include <netinet/in.h>
 
 /*
-  DateAndTime ::= TEXTUAL-CONVENTION
-    DISPLAY-HINT "2d-1d-1d,1d:1d:1d.1d,1a1d:1d"
-    STATUS       current
-    DESCRIPTION
-            "A date-time specification.
-
-            field  octets  contents                  range
-            -----  ------  --------                  -----
-              1      1-2   year*                     0..65536
-              2       3    month                     1..12
-              3       4    day                       1..31
-              4       5    hour                      0..23
-              5       6    minutes                   0..59
-              6       7    seconds                   0..60
-                           (use 60 for leap-second)
-              7       8    deci-seconds              0..9
-              8       9    direction from UTC        '+' / '-'
-              9      10    hours from UTC*           0..13
-             10      11    minutes from UTC          0..59
-
-            * Notes:
-            - the value of year is in network-byte order
-            - daylight saving time in New Zealand is +13
-
-            For example, Tuesday May 26, 1992 at 1:30:15 PM EDT would be
-            displayed as:
-
-                             1992-5-26,13:30:15.0,-4:0
-
-            Note that if only local time is known, then timezone
-            information (fields 8-10) is not present."
-    SYNTAX       OCTET STRING (SIZE (8 | 11))
-*/
-
-int Tc_dateandtimeSetBufFromVars( u_char* buf, size_t* bufsize,
-    u_short year, u_char month, u_char day,
-    u_char hour, u_char minutes,
-    u_char seconds, u_char deci_seconds,
-    int utc_offset_direction,
-    u_char utc_offset_hours,
-    u_char utc_offset_minutes )
-{
-    u_short tmp_year = htons( year );
-
-    /*
-     * if we have a utc offset, need 11 bytes. Otherwise we
-     * just need 8 bytes.
-     */
-    if ( utc_offset_direction ) {
-        if ( *bufsize < 11 )
-            return ErrorCode_RANGE;
-
-        /*
-         * set utc offset data
-         */
-        buf[ 8 ] = ( utc_offset_direction < 0 ) ? '-' : '+';
-        buf[ 9 ] = utc_offset_hours;
-        buf[ 10 ] = utc_offset_minutes;
-        *bufsize = 11;
-    } else if ( *bufsize < 8 )
-        return ErrorCode_RANGE;
-    else
-        *bufsize = 8;
-
-    /*
-     * set basic date/time data
-     */
-    memcpy( buf, &tmp_year, sizeof( tmp_year ) );
-    buf[ 2 ] = month;
-    buf[ 3 ] = day;
-    buf[ 4 ] = hour;
-    buf[ 5 ] = minutes;
-    buf[ 6 ] = seconds;
-    buf[ 7 ] = deci_seconds;
-
-    return ErrorCode_SUCCESS;
-}
-
-u_char* Tc_dateNTime( const time_t* when, size_t* length )
-{
-    struct tm* tm_p;
-    static u_char string[ 11 ];
-    unsigned short yauron;
-
-    /*
-     * Null time
-     */
-    if ( when == NULL || *when == 0 || *when == ( time_t )-1 ) {
-        string[ 0 ] = 0;
-        string[ 1 ] = 0;
-        string[ 2 ] = 1;
-        string[ 3 ] = 1;
-        string[ 4 ] = 0;
-        string[ 5 ] = 0;
-        string[ 6 ] = 0;
-        string[ 7 ] = 0;
-        *length = 8;
-        return string;
-    }
-
-    /*
-     * Basic 'local' time handling
-     */
-    tm_p = localtime( when );
-    yauron = tm_p->tm_year + 1900;
-    string[ 0 ] = ( u_char )( yauron >> 8 );
-    string[ 1 ] = ( u_char )yauron;
-    string[ 2 ] = tm_p->tm_mon + 1;
-    string[ 3 ] = tm_p->tm_mday;
-    string[ 4 ] = tm_p->tm_hour;
-    string[ 5 ] = tm_p->tm_min;
-    string[ 6 ] = tm_p->tm_sec;
-    string[ 7 ] = 0;
-    *length = 8;
-
-    /*
-     * Timezone offset
-     */
-    {
-        const int tzoffset = -tm_p->tm_gmtoff; /* Seconds east of UTC */
-
-        if ( tzoffset > 0 )
-            string[ 8 ] = '-';
-        else
-            string[ 8 ] = '+';
-        string[ 9 ] = abs( tzoffset ) / 3600;
-        string[ 10 ] = ( abs( tzoffset ) - string[ 9 ] * 3600 ) / 60;
-        *length = 11;
-    }
-
-    return string;
-}
-
-time_t Tc_ctimeToTimet( const char* str )
-{
-    struct tm tm;
-
-    if ( strlen( str ) < 24 )
-        return 0;
-
-    /*
-     * Month
-     */
-    if ( !strncmp( str + 4, "Jan", 3 ) )
-        tm.tm_mon = 0;
-    else if ( !strncmp( str + 4, "Feb", 3 ) )
-        tm.tm_mon = 1;
-    else if ( !strncmp( str + 4, "Mar", 3 ) )
-        tm.tm_mon = 2;
-    else if ( !strncmp( str + 4, "Apr", 3 ) )
-        tm.tm_mon = 3;
-    else if ( !strncmp( str + 4, "May", 3 ) )
-        tm.tm_mon = 4;
-    else if ( !strncmp( str + 4, "Jun", 3 ) )
-        tm.tm_mon = 5;
-    else if ( !strncmp( str + 4, "Jul", 3 ) )
-        tm.tm_mon = 6;
-    else if ( !strncmp( str + 4, "Aug", 3 ) )
-        tm.tm_mon = 7;
-    else if ( !strncmp( str + 4, "Sep", 3 ) )
-        tm.tm_mon = 8;
-    else if ( !strncmp( str + 4, "Oct", 3 ) )
-        tm.tm_mon = 9;
-    else if ( !strncmp( str + 4, "Nov", 3 ) )
-        tm.tm_mon = 10;
-    else if ( !strncmp( str + 4, "Dec", 3 ) )
-        tm.tm_mon = 11;
-    else
-        return 0;
-
-    tm.tm_mday = atoi( str + 8 );
-    tm.tm_hour = atoi( str + 11 );
-    tm.tm_min = atoi( str + 14 );
-    tm.tm_sec = atoi( str + 17 );
-    tm.tm_year = atoi( str + 20 ) - 1900;
-
-    /*
-     *  Cope with timezone and DST
-     */
-
-    if ( daylight )
-        tm.tm_isdst = 1;
-
-    tm.tm_sec -= timezone;
-
-    return ( mktime( &tm ) );
-}
-
-/*
  * blatantly lifted from opensnmp
  */
-char Tc_checkRowstatusTransition( int oldValue, int newValue )
+char TextualConvention_checkRowStatusTransition( int oldValue, int newValue )
 {
     /*
      * From the SNMPv2-TC MIB:
@@ -305,31 +116,31 @@ char Tc_checkRowstatusTransition( int oldValue, int newValue )
          * status goes, although the final states are based on the
          * newValue.
          */
-    case TC_RS_ACTIVE:
-    case TC_RS_NOTINSERVICE:
-        if ( oldValue == TC_RS_NOTINSERVICE || oldValue == TC_RS_ACTIVE )
+    case tcROW_STATUS_ACTIVE:
+    case tcROW_STATUS_NOTINSERVICE:
+        if ( oldValue == tcROW_STATUS_NOTINSERVICE || oldValue == tcROW_STATUS_ACTIVE )
             ;
         else
             return PRIOT_ERR_INCONSISTENTVALUE;
         break;
 
-    case TC_RS_NOTREADY:
+    case tcROW_STATUS_NOTREADY:
         /*
          * Illegal set value.
          */
         return PRIOT_ERR_WRONGVALUE;
         break;
 
-    case TC_RS_CREATEANDGO:
-    case TC_RS_CREATEANDWAIT:
-        if ( oldValue != TC_RS_NONEXISTENT )
+    case tcROW_STATUS_CREATEANDGO:
+    case tcROW_STATUS_CREATEANDWAIT:
+        if ( oldValue != tcROW_STATUS_NONEXISTENT )
             /*
              * impossible, we already exist.
              */
             return PRIOT_ERR_INCONSISTENTVALUE;
         break;
 
-    case TC_RS_DESTROY:
+    case tcROW_STATUS_DESTROY:
         break;
 
     default:
@@ -340,19 +151,19 @@ char Tc_checkRowstatusTransition( int oldValue, int newValue )
     return PRIOT_ERR_NOERROR;
 }
 
-char Tc_checkRowstatusWithStoragetypeTransition( int oldValue, int newValue,
+char TextualConvention_checkRowStatusWithStorageTypeTransition( int oldValue, int newValue,
     int oldStorage )
 {
     /*
      * can not destroy permanent or readonly rows
      */
-    if ( ( TC_RS_DESTROY == newValue ) && ( ( PRIOT_STORAGE_PERMANENT == oldStorage ) || ( PRIOT_STORAGE_READONLY == oldStorage ) ) )
+    if ( ( tcROW_STATUS_DESTROY == newValue ) && ( ( PRIOT_STORAGE_PERMANENT == oldStorage ) || ( PRIOT_STORAGE_READONLY == oldStorage ) ) )
         return PRIOT_ERR_WRONGVALUE;
 
-    return Tc_checkRowstatusTransition( oldValue, newValue );
+    return TextualConvention_checkRowStatusTransition( oldValue, newValue );
 }
 
-char Tc_checkStorageTransition( int oldValue, int newValue )
+char TextualConvention_checkStorageTransition( int oldValue, int newValue )
 {
     /*
      * From the SNMPv2-TC MIB:

@@ -61,12 +61,12 @@ Vacm_save(const char *token, const char *type)
     int i;
 
     for (vptr = _vacm_viewList; vptr != NULL; vptr = vptr->next) {
-        if (vptr->viewStorageType == TC_ST_NONVOLATILE)
+        if (vptr->viewStorageType == tcSTORAGE_TYPE_NONVOLATILE)
             Vacm_saveView(vptr, token, type);
     }
 
     for (aptr = _vacm_accessList; aptr != NULL; aptr = aptr->next) {
-        if (aptr->storageType == TC_ST_NONVOLATILE) {
+        if (aptr->storageType == tcSTORAGE_TYPE_NONVOLATILE) {
             /* Store the standard views (if set) */
             if ( aptr->views[VACM_VIEW_READ  ][0] ||
                  aptr->views[VACM_VIEW_WRITE ][0] ||
@@ -81,7 +81,7 @@ Vacm_save(const char *token, const char *type)
     }
 
     for (gptr = _vacm_groupList; gptr != NULL; gptr = gptr->next) {
-        if (gptr->storageType == TC_ST_NONVOLATILE)
+        if (gptr->storageType == tcSTORAGE_TYPE_NONVOLATILE)
             Vacm_saveGroup(gptr, token, type);
     }
 }

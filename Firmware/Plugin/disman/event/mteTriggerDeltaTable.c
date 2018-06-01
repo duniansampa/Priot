@@ -100,7 +100,7 @@ int mteTriggerDeltaTable_handler( MibHandler* handler,
                     entry->mteDeltaDiscontID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDWILDCARD:
-                ret = ( entry->flags & MTE_TRIGGER_FLAG_DWILD ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_TRIGGER_FLAG_DWILD ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDTYPE:
@@ -238,7 +238,7 @@ int mteTriggerDeltaTable_handler( MibHandler* handler,
                 }
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDWILDCARD:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_DWILD;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_DWILD;

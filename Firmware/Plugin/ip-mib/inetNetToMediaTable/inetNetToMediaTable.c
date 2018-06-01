@@ -1614,7 +1614,7 @@ int inetNetToMediaTable_check_dependencies( inetNetToMediaTable_rowreq_ctx*
          * (Note: move transition check to 
          *  to catch errors earlier)
          */
-        rc = Tc_checkRowstatusTransition( rowreq_ctx->inetNetToMediaRowStatus_undo,
+        rc = TextualConvention_checkRowStatusTransition( rowreq_ctx->inetNetToMediaRowStatus_undo,
             rowreq_ctx->inetNetToMediaRowStatus );
         if ( MFD_SUCCESS != rc )
             return rc;

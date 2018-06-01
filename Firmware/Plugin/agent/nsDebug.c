@@ -313,7 +313,7 @@ int handle_nsDebugTable( MibHandler* handler,
                 TableIterator_extractIteratorContext( request );
             if ( !debug_entry )
                 continue;
-            status = ( debug_entry->enabled ? TC_RS_ACTIVE : TC_RS_NOTINSERVICE );
+            status = ( debug_entry->enabled ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE );
             Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
                 ( u_char* )&status, sizeof( status ) );
         }
@@ -334,8 +334,8 @@ int handle_nsDebugTable( MibHandler* handler,
             debug_entry = ( Debug_tokenDescr* )
                 TableIterator_extractIteratorContext( request );
             switch ( *request->requestvb->value.integer ) {
-            case TC_RS_ACTIVE:
-            case TC_RS_NOTINSERVICE:
+            case tcROW_STATUS_ACTIVE:
+            case tcROW_STATUS_NOTINSERVICE:
                 /*
 		 * These operations require an existing row
 		 */
@@ -346,8 +346,8 @@ int handle_nsDebugTable( MibHandler* handler,
                 }
                 break;
 
-            case TC_RS_CREATEANDWAIT:
-            case TC_RS_CREATEANDGO:
+            case tcROW_STATUS_CREATEANDWAIT:
+            case tcROW_STATUS_CREATEANDGO:
                 /*
 		 * These operations assume the row doesn't already exist
 		 */
@@ -358,13 +358,13 @@ int handle_nsDebugTable( MibHandler* handler,
                 }
                 break;
 
-            case TC_RS_DESTROY:
+            case tcROW_STATUS_DESTROY:
                 /*
 		 * This operation can work regardless
 		 */
                 break;
 
-            case TC_RS_NOTREADY:
+            case tcROW_STATUS_NOTREADY:
             default:
                 Agent_setRequestError( reqinfo, request,
                     PRIOT_ERR_WRONGVALUE );
@@ -382,19 +382,19 @@ int handle_nsDebugTable( MibHandler* handler,
             }
 
             switch ( *request->requestvb->value.integer ) {
-            case TC_RS_ACTIVE:
-            case TC_RS_NOTINSERVICE:
+            case tcROW_STATUS_ACTIVE:
+            case tcROW_STATUS_NOTINSERVICE:
                 /*
 		 * Update the enabled field appropriately
 		 */
                 debug_entry = ( Debug_tokenDescr* )
                     TableIterator_extractIteratorContext( request );
                 if ( debug_entry )
-                    debug_entry->enabled = ( *request->requestvb->value.integer == TC_RS_ACTIVE );
+                    debug_entry->enabled = ( *request->requestvb->value.integer == tcROW_STATUS_ACTIVE );
                 break;
 
-            case TC_RS_CREATEANDWAIT:
-            case TC_RS_CREATEANDGO:
+            case tcROW_STATUS_CREATEANDWAIT:
+            case tcROW_STATUS_CREATEANDGO:
                 /*
 		 * Create the entry, and set the enabled field appropriately
 		 */
@@ -403,7 +403,7 @@ int handle_nsDebugTable( MibHandler* handler,
 
                 break;
 
-            case TC_RS_DESTROY:
+            case tcROW_STATUS_DESTROY:
                 /*
 		 * XXX - there's no "remove" API  :-(
 		 */

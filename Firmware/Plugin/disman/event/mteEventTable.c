@@ -105,11 +105,11 @@ int mteEventTable_handler( MibHandler* handler,
                     &entry->mteEventActions, 1 );
                 break;
             case COLUMN_MTEEVENTENABLED:
-                ret = ( entry->flags & MTE_EVENT_FLAG_ENABLED ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_EVENT_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTEEVENTENTRYSTATUS:
-                ret = ( entry->flags & MTE_EVENT_FLAG_ACTIVE ) ? TC_RS_ACTIVE : TC_RS_NOTINSERVICE;
+                ret = ( entry->flags & MTE_EVENT_FLAG_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             }
@@ -179,13 +179,13 @@ int mteEventTable_handler( MibHandler* handler,
 
             case COLUMN_MTEEVENTENTRYSTATUS:
                 ret = VariableList_checkRowStatusTransition( request->requestvb,
-                    ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
+                    ( entry ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NONEXISTENT ) );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 /* An active row can only be deleted */
-                if ( entry && entry->flags & MTE_EVENT_FLAG_ACTIVE && *request->requestvb->value.integer == TC_RS_NOTINSERVICE ) {
+                if ( entry && entry->flags & MTE_EVENT_FLAG_ACTIVE && *request->requestvb->value.integer == tcROW_STATUS_NOTINSERVICE ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_INCONSISTENTVALUE );
                     return PRIOT_ERR_NOERROR;
@@ -209,8 +209,8 @@ int mteEventTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
@@ -244,8 +244,8 @@ int mteEventTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Tidy up after a failed row creation request
                      */
@@ -309,7 +309,7 @@ int mteEventTable_handler( MibHandler* handler,
                 break;
 
             case COLUMN_MTEEVENTENABLED:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_EVENT_FLAG_ENABLED;
                 else
                     entry->flags &= ~MTE_EVENT_FLAG_ENABLED;
@@ -317,18 +317,18 @@ int mteEventTable_handler( MibHandler* handler,
 
             case COLUMN_MTEEVENTENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
+                case tcROW_STATUS_ACTIVE:
                     entry->flags |= MTE_EVENT_FLAG_ACTIVE;
                     break;
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDGO:
                     entry->flags |= MTE_EVENT_FLAG_ACTIVE;
                 /* fall-through */
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDWAIT:
                     entry->flags |= MTE_EVENT_FLAG_VALID;
                     entry->session = Iquery_pduSession( reqinfo->asp->pdu );
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     row = ( TdataRow* )
                         TableTdata_extractRow( request );
                     mteEvent_removeEntry( row );

@@ -2,15 +2,14 @@
 #define SESSION_H
 
 #include "Generals.h"
+#include "System/Util/LargeFdSet.h"
 #include "Types.h"
 /**
  *  Library API routines concerned with specifying and using SNMP "sessions"
  *    including sending and receiving requests.
  */
 
-
-
-void  Session_sessInit(Types_Session *);
+void Session_sessInit( Types_Session* );
 
 /*
  * Types_Session *Session_open(session)
@@ -23,7 +22,7 @@ void  Session_sessInit(Types_Session *);
  * and snmp_errno is set to the appropriate error code.
  */
 
-Types_Session *Session_open(Types_Session *);
+Types_Session* Session_open( Types_Session* );
 
 /*
  * int snmp_close(session)
@@ -36,10 +35,9 @@ Types_Session *Session_open(Types_Session *);
  * Session_closeSessions() does the same thing for all open sessions
  */
 
-int             Session_close(Types_Session *);
+int Session_close( Types_Session* );
 
-int             Session_closeSessions(void);
-
+int Session_closeSessions( void );
 
 /*
  * int Session_send(session, pdu)
@@ -55,7 +53,7 @@ int             Session_closeSessions(void);
  * The pdu is freed by Session_send() unless a failure occured.
  */
 
-int             Session_send(Types_Session *, Types_Pdu *);
+int Session_send( Types_Session*, Types_Pdu* );
 
 /*
  * int Session_asyncSend(session, pdu, callback, cb_data)
@@ -74,9 +72,8 @@ int             Session_send(Types_Session *, Types_Pdu *);
  * The pdu is freed by Session_send() unless a failure occured.
  */
 
-int             Session_asyncSend(Types_Session *, Types_Pdu *,
-                                Types_CallbackFT, void *);
-
+int Session_asyncSend( Types_Session*, Types_Pdu*,
+    Types_CallbackFT, void* );
 
 /*
  * void Session_read(fdset)
@@ -89,7 +86,7 @@ int             Session_asyncSend(Types_Session *, Types_Pdu *,
  * routine returns successfully, the pdu and it's request are deleted.
  */
 
-void            Session_read(fd_set *);
+void Session_read( fd_set* );
 
 /*
  * Session_read2() is similar to Session_read(), but accepts a pointer to a
@@ -97,12 +94,10 @@ void            Session_read(fd_set *);
  * descriptor set.
  */
 
-void            Session_read2(Types_LargeFdSet *);
+void Session_read2( LargeFdSet_t* );
 
-
-
-int             Session_synchResponse(Types_Session *, Types_Pdu *,
-                                    Types_Pdu **);
+int Session_synchResponse( Types_Session*, Types_Pdu*,
+    Types_Pdu** );
 
 /*
  * int Session_selectInfo(numfds, fdset, timeout, block)
@@ -132,8 +127,8 @@ int             Session_synchResponse(Types_Session *, Types_Pdu *,
  * of sessions open)
  */
 
-int             Session_selectInfo(int *, fd_set *, struct timeval *,
-                                 int *);
+int Session_selectInfo( int*, fd_set*, struct timeval*,
+    int* );
 
 /*
  * Session_selectInfo2() is similar to Session_selectInfo(), but accepts a
@@ -141,17 +136,17 @@ int             Session_selectInfo(int *, fd_set *, struct timeval *,
  * regular file descriptor set.
  */
 
-int             Session_selectInfo2(int *, Types_LargeFdSet *,
-                                  struct timeval *, int *);
+int Session_selectInfo2( int*, LargeFdSet_t*,
+    struct timeval*, int* );
 
-#define SESSION_SELECT_NOFLAGS  0x00
+#define SESSION_SELECT_NOFLAGS 0x00
 #define SESSION_SELECT_NOALARMS 0x01
 
-int             Session_sessSelectInfoFlags(void *, int *, fd_set *,
-                                            struct timeval *, int *, int);
-int             Session_sessSelectInfo2Flags(void *, int *,
-                                             Types_LargeFdSet *,
-                                             struct timeval *, int *, int);
+int Session_sessSelectInfoFlags( void*, int*, fd_set*,
+    struct timeval*, int*, int );
+int Session_sessSelectInfo2Flags( void*, int*,
+    LargeFdSet_t*,
+    struct timeval*, int*, int );
 
 /*
  * void Session_timeout();
@@ -165,8 +160,7 @@ int             Session_sessSelectInfo2Flags(void *, int *,
  * callback for the session is used to alert the user of the timeout.
  */
 
-
-void            Session_timeout(void);
+void Session_timeout( void );
 
 /*
  * single session API.
@@ -206,50 +200,46 @@ void            Session_timeout(void);
  *  4. Replace Session_send(ss,pdu) with Session_sessSend(sessp,pdu)
  */
 
+void* Session_sessOpen( Types_Session* );
 
-void           *Session_sessOpen(Types_Session *);
+void* Session_sessPointer( Types_Session* );
 
-void           *Session_sessPointer(Types_Session *);
+Types_Session* Session_sessSession( void* );
 
-Types_Session *Session_sessSession(void *);
-
-Types_Session *Session_sessSessionLookup(void *);
-
+Types_Session* Session_sessSessionLookup( void* );
 
 /*
  * use return value from Session_sessOpen as void * parameter
  */
 
+int Session_sessSend( void*, Types_Pdu* );
 
-int             Session_sessSend(void *, Types_Pdu *);
+int Session_sessAsyncSend( void*, Types_Pdu*,
+    Types_CallbackFT, void* );
 
-int             Session_sessAsyncSend(void *, Types_Pdu *,
-                                     Types_CallbackFT, void *);
+int Session_sessSelectInfo( void*, int*, fd_set*,
+    struct timeval*, int* );
 
-int             Session_sessSelectInfo(void *, int *, fd_set *,
-                                      struct timeval *, int *);
-
-int             Session_sessSelectInfo2(void *, int *, Types_LargeFdSet *,
-                                       struct timeval *, int *);
+int Session_sessSelectInfo2( void*, int*, LargeFdSet_t*,
+    struct timeval*, int* );
 /*
  * Returns 0 if success, -1 if fail.
  */
 
-int             Session_sessRead(void *, fd_set *);
+int Session_sessRead( void*, fd_set* );
 /*
  * Similar to Session_sessRead(), but accepts a pointer to a large file
  * descriptor set instead of a pointer to a file descriptor set.
  */
 
-int             Session_sessRead2(void *,
-                                Types_LargeFdSet *);
+int Session_sessRead2( void*,
+    LargeFdSet_t* );
 
-void            Session_sessTimeout(void *);
+void Session_sessTimeout( void* );
 
-int             Session_sessClose(void *);
+int Session_sessClose( void* );
 
-
-int             Session_sessSynchResponse(void *, Types_Pdu *,
-                                         Types_Pdu **);
+int Session_sessSynchResponse( void*, Types_Pdu*,
+    Types_Pdu** );
 
 #endif // SESSION_H

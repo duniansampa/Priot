@@ -2,7 +2,7 @@
 #include "Api.h"
 #include "Client.h"
 #include "Keytools.h"
-#include "LcdTime.h"
+#include "EngineTime.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Scapi.h"
@@ -120,7 +120,7 @@ int Usm_freeEnginetimeOnShutdown( int majorid, int minorid, void* serverarg,
 
     engineID_len = V3_getEngineID( engineID, engineID_len );
     if ( engineID_len > 0 )
-        LcdTime_freeEnginetime( engineID, engineID_len );
+        EngineTime_free( engineID, engineID_len );
     return 0;
 }
 
@@ -864,7 +864,7 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
      * XXX  No error is declared in the EoP when sending messages to
      *      unknown engines, processing continues w/ boots/time == (0,0).
      */
-    if ( LcdTime_getEnginetime( theEngineID, theEngineIDLength,
+    if ( EngineTime_get( theEngineID, theEngineIDLength,
              &boots_uint, &time_uint, FALSE )
         == -1 ) {
         DEBUG_MSGTL( ( "usm", "%s\n", "Failed to find engine data." ) );
@@ -1328,7 +1328,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      * * XXX    No error is declared in the EoP when sending messages to
      * *        unknown engines, processing continues w/ boots/time == (0,0).
      */
-    if ( LcdTime_getEnginetime( theEngineID, theEngineIDLength,
+    if ( EngineTime_get( theEngineID, theEngineIDLength,
              &boots_uint, &time_uint, FALSE )
         == -1 ) {
         DEBUG_MSGTL( ( "usm", "%s\n", "Failed to find engine data." ) );
@@ -1951,7 +1951,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
         u_int theirBoots, theirTime, theirLastTime;
         u_int time_difference;
 
-        if ( LcdTime_getEnginetimeEx( secEngineID, secEngineIDLen,
+        if ( EngineTime_getEx( secEngineID, secEngineIDLen,
                  &theirBoots, &theirTime,
                  &theirLastTime, TRUE )
             != ErrorCode_SUCCESS ) {
@@ -1998,7 +1998,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
          * time is greater than before with the same boots.
          */
 
-        if ( LcdTime_setEnginetime( secEngineID, secEngineIDLen,
+        if ( EngineTime_set( secEngineID, secEngineIDLen,
                  boots_uint, time_uint, TRUE )
             != ErrorCode_SUCCESS ) {
             DEBUG_MSGTL( ( "usm", "%s\n",
@@ -2182,13 +2182,13 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
      * If it is unknown, then either create one or note this as an error.
      */
     if ( ( sess && ( sess->isAuthoritative == API_SESS_AUTHORITATIVE || ( sess->isAuthoritative == API_SESS_UNKNOWNAUTH && ( msg_flags & PRIOT_MSG_FLAG_RPRT_BIT ) ) ) ) || ( !sess && ( msg_flags & PRIOT_MSG_FLAG_RPRT_BIT ) ) ) {
-        if ( LCDTIME_ISENGINEKNOWN( secEngineID, *secEngineIDLen ) == FALSE ) {
+        if ( engineIS_ENGINE_KNOWN( secEngineID, *secEngineIDLen ) == FALSE ) {
             DEBUG_MSGTL( ( "usm", "Unknown Engine ID.\n" ) );
             Api_incrementStatistic( API_STAT_USMSTATSUNKNOWNENGINEIDS );
             return ErrorCode_USM_UNKNOWNENGINEID;
         }
     } else {
-        if ( LCDTIME_ENSURE_ENGINE_RECORD( secEngineID, *secEngineIDLen )
+        if ( engineENSURE_ENGINE_RECORD( secEngineID, *secEngineIDLen )
             != ErrorCode_SUCCESS ) {
             DEBUG_MSGTL( ( "usm", "%s\n", "Couldn't ensure engine record." ) );
             return ErrorCode_USM_GENERICERROR;
@@ -2209,7 +2209,7 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
     }
 
     /* ensure the user is active */
-    if ( user->userStatus != TC_RS_ACTIVE ) {
+    if ( user->userStatus != tcROW_STATUS_ACTIVE ) {
         DEBUG_MSGTL( ( "usm", "Attempt to use an inactive user.\n" ) );
         return ErrorCode_USM_UNKNOWNSECURITYNAME;
     }
@@ -2310,7 +2310,7 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
      * that we normally use.
      */
     else {
-        LcdTime_setEnginetime( secEngineID, *secEngineIDLen,
+        EngineTime_set( secEngineID, *secEngineIDLen,
             boots_uint, time_uint, FALSE );
     }
 
@@ -2751,8 +2751,8 @@ int Usm_createUserFromSession( Types_Session* session )
         /*
          * add the user into the database
          */
-        user->userStatus = TC_RS_ACTIVE;
-        user->userStorageType = TC_ST_READONLY;
+        user->userStatus = tcROW_STATUS_ACTIVE;
+        user->userStorageType = tcSTORAGE_TYPE_READONLY;
         Usm_addUser( user );
     }
 
@@ -2869,7 +2869,7 @@ int Usm_discoverEngineid( void* slpv, Types_Session* session )
      * if boot/time supplied set it for this engineID
      */
     if ( session->engineBoots || session->engineTime ) {
-        LcdTime_setEnginetime( session->securityEngineID,
+        EngineTime_set( session->securityEngineID,
             session->securityEngineIDLen,
             session->engineBoots, session->engineTime,
             TRUE );
@@ -3034,7 +3034,7 @@ void Usm_clearUserList( void )
 
 void Usm_shutdownUsm( void )
 {
-    LcdTime_freeEtimelist();
+    EngineTime_clear();
     Usm_clearUserList();
 }
 
@@ -3054,7 +3054,7 @@ void Usm_shutdownUsm( void )
 int Usm_checkSecLevel( int level, struct Usm_User_s* user )
 {
 
-    if ( user->userStatus != TC_RS_ACTIVE )
+    if ( user->userStatus != tcROW_STATUS_ACTIVE )
         return -1;
 
     DEBUG_MSGTL( ( "comparex", "Comparing: %"
@@ -3507,8 +3507,8 @@ Usm_createUser( void )
     /*
      * set the storage type to nonvolatile, and the status to ACTIVE
      */
-    newUser->userStorageType = TC_ST_NONVOLATILE;
-    newUser->userStatus = TC_RS_ACTIVE;
+    newUser->userStorageType = tcSTORAGE_TYPE_NONVOLATILE;
+    newUser->userStatus = tcROW_STATUS_ACTIVE;
     return newUser;
 
 } /* end usm_clone_user() */
@@ -3558,8 +3558,8 @@ Usm_createInitialUser( const char* name,
     }
     newUser->authProtocolLen = authProtocolLen;
 
-    newUser->userStatus = TC_RS_ACTIVE;
-    newUser->userStorageType = TC_ST_READONLY;
+    newUser->userStatus = tcROW_STATUS_ACTIVE;
+    newUser->userStorageType = tcSTORAGE_TYPE_READONLY;
 
     return newUser;
 }
@@ -3603,7 +3603,7 @@ void Usm_saveUsersFromList( struct Usm_User_s* puserList, const char* token,
 {
     struct Usm_User_s* uptr;
     for ( uptr = puserList; uptr != NULL; uptr = uptr->next ) {
-        if ( uptr->userStorageType == TC_ST_NONVOLATILE )
+        if ( uptr->userStorageType == tcSTORAGE_TYPE_NONVOLATILE )
             Usm_saveUser( uptr, token, type );
     }
 }
@@ -3678,7 +3678,7 @@ Usm_readUser( const char* line )
      * This is mostly important when receiving v3 traps so that the usm
      * will at least continue processing them.
      */
-    LcdTime_setEnginetime( user->engineID, user->engineIDLen, 1, 0, 0 );
+    EngineTime_set( user->engineID, user->engineIDLen, 1, 0, 0 );
 
     line = ReadConfig_readOctetString( line, ( u_char** )&user->name,
         &len );

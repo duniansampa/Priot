@@ -3,6 +3,7 @@
 #include "Numerics/Float.h"
 #include "System/Util/Logger.h"
 #include "System/Util/Memory.h"
+#include "Util/Time.h"
 
 /** =============================[ Public Functions ]================== */
 
@@ -575,4 +576,25 @@ int Convert_hexStringToBinaryString2( const u_char* input, size_t inputLen, char
 goto_hexToBinaryQuit:
     Memory_freeZero( s, olen );
     return -1;
+}
+
+int Convert_variablesToDateAndTimeString( uint8_t* buffer, size_t* bufferSize,
+    uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minutes, uint8_t seconds,
+    uint8_t deciSeconds, int utcOffsetDirection,
+    uint8_t utcOffsetHours, uint8_t utcOffsetMinutes )
+{
+    return Time_convertVariablesToDateAndTimeString( buffer, bufferSize,
+        year, month, day, hour, minutes, seconds,
+        deciSeconds, utcOffsetDirection,
+        utcOffsetHours, utcOffsetMinutes );
+}
+
+u_char* Convert_dateAndTimeToString( const time_t* when, size_t* length )
+{
+    return Time_convertDateAndTimeToString( when, length );
+}
+
+time_t Convert_ctimeStringToTimet( const char* ctimeString )
+{
+    return Time_convertCtimeStringToTimet( ctimeString );
 }

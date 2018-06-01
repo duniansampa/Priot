@@ -46,8 +46,7 @@ SOURCES += \
     Asn01.c \
     Client.c \
     Keytools.c \
-    LargeFdSet.c \
-    LcdTime.c \
+    System/Util/LargeFdSet.c \
     Md5.c \
     Mib.c \
     OidStash.c \
@@ -59,7 +58,7 @@ SOURCES += \
     Secmod.c \
     Service.c \
     Session.c \
-    System.c \
+    System/Util/System.c \
     Transport.c \
     Usm.c \
     V3.c \
@@ -76,7 +75,8 @@ SOURCES += \
     System/Util/VariableList.c \
     System/Util/FileParser.c \
     TextualConvention.c \
-    System/Util/Trace.c
+    System/Util/Trace.c \
+    EngineTime.c
 
 HEADERS += \
     Config.h \
@@ -115,12 +115,11 @@ HEADERS += \
     Transports/CallbackDomain.h \
     DataType.h \
     Transport.h \
-    System.h \
+    System/Util/System.h \
     Types.h \
     Priot.h \
-    LargeFdSet.h \
+    System/Util/LargeFdSet.h \
     Keytools.h \
-    LcdTime.h \
     Md5.h \
     Mib.h \
     Asn01.h \
@@ -147,7 +146,8 @@ HEADERS += \
     System/Util/VariableList.h \
     System/Util/FileParser.h \
     TextualConvention.h \
-    System/Util/Trace.h
+    System/Util/Trace.h \
+    EngineTime.h
 
 
 

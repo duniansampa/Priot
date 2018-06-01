@@ -96,7 +96,7 @@ Types_Session* get_target_sessions( char* taglist, TargetFilterFunction* filterf
                          */
                         matched = 1;
 
-                        if ( targaddrs->storageType != TC_ST_READONLY && targaddrs->sess && param->updateTime >= targaddrs->sessionCreationTime ) {
+                        if ( targaddrs->storageType != tcSTORAGE_TYPE_READONLY && targaddrs->sess && param->updateTime >= targaddrs->sessionCreationTime ) {
                             /*
                              * parameters have changed, nuke the old session 
                              */

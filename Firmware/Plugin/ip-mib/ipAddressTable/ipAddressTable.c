@@ -1968,7 +1968,7 @@ int ipAddressRowStatus_check_value( ipAddressTable_rowreq_ctx* rowreq_ctx,
         return MFD_NOT_VALID_EVER;
     }
 
-    rc = Tc_checkRowstatusTransition( rowreq_ctx->ipAddressRowStatus,
+    rc = TextualConvention_checkRowStatusTransition( rowreq_ctx->ipAddressRowStatus,
         ipAddressRowStatus_val );
     if ( MFD_SUCCESS != rc ) {
         DEBUG_MSGTL( ( "ipAddressTable",
@@ -2167,7 +2167,7 @@ int ipAddressStorageType_check_value( ipAddressTable_rowreq_ctx* rowreq_ctx,
     /*
      * check for valid StorageType transition (old, new)
      */
-    rc = Tc_checkStorageTransition( rowreq_ctx->data->ia_storagetype,
+    rc = TextualConvention_checkStorageTransition( rowreq_ctx->data->ia_storagetype,
         ipAddressStorageType_val );
     if ( MFD_SUCCESS != rc )
         return rc;

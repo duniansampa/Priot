@@ -627,13 +627,13 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_STORAGE:
-                i = ( ( extension->flags & NS_EXTEND_FLAGS_CONFIG ) ? TC_ST_PERMANENT : TC_ST_VOLATILE );
+                i = ( ( extension->flags & NS_EXTEND_FLAGS_CONFIG ) ? tcSTORAGE_TYPE_PERMANENT : tcSTORAGE_TYPE_VOLATILE );
                 Client_setVarTypedValue(
                     request->requestvb, ASN01_INTEGER,
                     ( u_char* )&i, sizeof( i ) );
                 break;
             case COLUMN_EXTCFG_STATUS:
-                i = ( ( extension->flags & NS_EXTEND_FLAGS_ACTIVE ) ? TC_RS_ACTIVE : TC_RS_NOTINSERVICE );
+                i = ( ( extension->flags & NS_EXTEND_FLAGS_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE );
                 Client_setVarTypedValue(
                     request->requestvb, ASN01_INTEGER,
                     ( u_char* )&i, sizeof( i ) );
@@ -799,8 +799,8 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 }
                 i = *request->requestvb->value.integer;
                 switch ( i ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_NOTINSERVICE:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_NOTINSERVICE:
                     if ( !extension ) {
                         /* Must be used with existing rows */
                         Agent_setRequestError( reqinfo, request,
@@ -808,8 +808,8 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                         return PRIOT_ERR_INCONSISTENTVALUE;
                     }
                     break; /* OK */
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     if ( extension ) {
                         /* Can only be used to create new rows */
                         Agent_setRequestError( reqinfo, request,
@@ -817,7 +817,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                         return PRIOT_ERR_INCONSISTENTVALUE;
                     }
                     break;
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     break;
                 default:
                     Agent_setRequestError( reqinfo, request,
@@ -838,8 +838,8 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             case COLUMN_EXTCFG_STATUS:
                 i = *request->requestvb->value.integer;
                 switch ( i ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     eptr = _find_extension_block( request->requestvb->name,
                         request->requestvb->nameLength );
                     extension = _new_extension( ( char* )table_info->indexes->value.string,
@@ -859,8 +859,8 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             case COLUMN_EXTCFG_STATUS:
                 i = *request->requestvb->value.integer;
                 switch ( i ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     eptr = _find_extension_block( request->requestvb->name,
                         request->requestvb->nameLength );
                     _free_extension( extension, eptr );
@@ -891,8 +891,8 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             case COLUMN_EXTCFG_STATUS:
                 i = *request->requestvb->value.integer;
                 switch ( i ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_CREATEANDGO:
                     need_to_validate = 1;
                 }
                 break;
@@ -925,8 +925,8 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             case COLUMN_EXTCFG_STATUS:
                 i = *request->requestvb->value.integer;
                 switch ( i ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     eptr = _find_extension_block( request->requestvb->name,
                         request->requestvb->nameLength );
                     _free_extension( extension, eptr );
@@ -968,15 +968,15 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             case COLUMN_EXTCFG_STATUS:
                 i = *request->requestvb->value.integer;
                 switch ( i ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_CREATEANDGO:
                     extension->flags |= NS_EXTEND_FLAGS_ACTIVE;
                     break;
-                case TC_RS_NOTINSERVICE:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_NOTINSERVICE:
+                case tcROW_STATUS_CREATEANDWAIT:
                     extension->flags &= ~NS_EXTEND_FLAGS_ACTIVE;
                     break;
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     eptr = _find_extension_block( request->requestvb->name,
                         request->requestvb->nameLength );
                     _free_extension( extension, eptr );
@@ -1004,7 +1004,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_STATUS:
                 i = *request->requestvb->value.integer;
-                if ( ( i == TC_RS_ACTIVE || i == TC_RS_CREATEANDGO ) && !( extension && extension->command && extension->command[ 0 ] == '/' /* &&
+                if ( ( i == tcROW_STATUS_ACTIVE || i == tcROW_STATUS_CREATEANDGO ) && !( extension && extension->command && extension->command[ 0 ] == '/' /* &&
                       is_executable(extension->command) */ ) ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_INCONSISTENTVALUE );

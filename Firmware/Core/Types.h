@@ -311,37 +311,4 @@ typedef struct Types_RefSizeT_s {
     size_t val;
 } * Types_RefSizeT;
 
-/*
- * Structure for holding a set of file descriptors, similar to fd_set.
- *
- * This structure however can hold so-called large file descriptors
- * (>= FD_SETSIZE or 1024) on Unix systems or more than FD_SETSIZE (64)
- * sockets on Windows systems.
- *
- * It is safe to allocate this structure on the stack.
- *
- * This structure must be initialized by calling netsnmp_large_fd_set_init()
- * and must be cleaned up via netsnmp_large_fd_set_cleanup(). If this last
- * function is not called this may result in a memory leak.
- *
- * The members of this structure are:
- * lfs_setsize: maximum set size.
- * lsf_setptr:  points to lfs_set if lfs_setsize <= FD_SETSIZE, and otherwise
- *              to dynamically allocated memory.
- * lfs_set:     file descriptor / socket set data if lfs_setsize <= FD_SETSIZE.
- */
-
-/**
- * >>> IMPORTANT <<<
- * _GNU_SOURCE defined in Config.h. It's defined by the user.
- * _XOPEN_SOURCE define in feature.h and depend on _GNU_SOURCE
- * __USE_XOPEN defined in feature.h and depend on _XOPEN_SOURCE
- * fd_set defined in sys/select.h and depend on __USE_XOPEN
- */
-typedef struct Types_LargeFdSet_s {
-    unsigned lfs_setsize;
-    fd_set* lfs_setptr;
-    fd_set lfs_set;
-} Types_LargeFdSet;
-
 #endif // TYPES_H

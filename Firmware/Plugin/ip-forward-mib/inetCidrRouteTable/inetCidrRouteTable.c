@@ -2522,7 +2522,7 @@ int inetCidrRouteTable_check_dependencies( inetCidrRouteTable_rowreq_ctx*
          * (Note: move transition check to 
          *  to catch errors earlier)
          */
-        rc = Tc_checkRowstatusTransition( rowreq_ctx->row_status_undo,
+        rc = TextualConvention_checkRowStatusTransition( rowreq_ctx->row_status_undo,
             rowreq_ctx->row_status );
         if ( MFD_SUCCESS != rc )
             return rc;

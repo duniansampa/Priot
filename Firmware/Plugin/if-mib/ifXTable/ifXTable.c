@@ -1318,7 +1318,7 @@ int ifConnectorPresent_get( ifXTable_rowreq_ctx* rowreq_ctx,
 
     Assert_assert( NULL != rowreq_ctx );
 
-    ( *ifConnectorPresent_val_ptr ) = rowreq_ctx->data.ifConnectorPresent ? TC_TV_TRUE : TC_TV_FALSE;
+    ( *ifConnectorPresent_val_ptr ) = rowreq_ctx->data.ifConnectorPresent ? tcTRUE : tcFALSE;
 
     return MFD_SUCCESS;
 } /* ifConnectorPresent_get */

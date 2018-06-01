@@ -1,18 +1,18 @@
 #include "ReadConfig.h"
 #include "Asn01.h"
-#include "System/Util/Callback.h"
-#include "System/Util/DefaultStore.h"
 #include "Impl.h"
 #include "Mib.h"
 #include "Priot.h"
-#include "System.h"
 #include "System/Numerics/Integer64.h"
 #include "System/String.h"
 #include "System/String.h"
-#include "System/Util/Trace.h"
+#include "System/Util/Callback.h"
+#include "System/Util/DefaultStore.h"
+#include "System/Util/Directory.h"
 #include "System/Util/Logger.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
-
 #include <arpa/inet.h>
 
 /** @defgroup read_config parsing various configuration files at run time
@@ -1378,7 +1378,7 @@ void ReadConfig_store( const char* type, const char* line )
     }
     oldmask = umask( PERSISTENT_MASK );
 
-    if ( System_mkdirhier( filep, AGENT_DIRECTORY_MODE, 1 ) ) {
+    if ( Directory_makeDirectoryHierarchy( filep, AGENT_DIRECTORY_MODE, 1 ) ) {
         Logger_log( LOGGER_PRIORITY_ERR,
             "Failed to create the persistent directory for %s\n",
             file );

@@ -584,8 +584,8 @@ int TableDataset_helperHandler( MibHandler* handler,
                  * steps followed earlier in the 'allow_creation' case)
                  */
                 switch ( *( request->requestvb->value.integer ) ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     newrowstash = TableDataset_createNewrowstash(
                         datatable, table_info );
                     newrow = newrowstash->newrow;
@@ -617,8 +617,8 @@ int TableDataset_helperHandler( MibHandler* handler,
             }
             if ( datatable->rowstatus_column == table_info->colnum ) {
                 switch ( *( request->requestvb->value.integer ) ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_NOTINSERVICE:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_NOTINSERVICE:
                     /*
                      * Can only operate on pre-existing rows.
                      */
@@ -629,8 +629,8 @@ int TableDataset_helperHandler( MibHandler* handler,
                     }
                     break;
 
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Can only operate on newly created rows.
                      */
@@ -641,13 +641,13 @@ int TableDataset_helperHandler( MibHandler* handler,
                     }
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     /*
                      * Can operate on new or pre-existing rows.
                      */
                     break;
 
-                case TC_RS_NOTREADY:
+                case tcROW_STATUS_NOTREADY:
                 default:
                     /*
                      * Not a valid value to Set
@@ -678,21 +678,21 @@ int TableDataset_helperHandler( MibHandler* handler,
 
             if ( datatable->rowstatus_column == table_info->colnum ) {
                 switch ( *( request->requestvb->value.integer ) ) {
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDGO:
                     /*
                      * XXX: check legality
                      */
-                    *( data->data.integer ) = TC_RS_ACTIVE;
+                    *( data->data.integer ) = tcROW_STATUS_ACTIVE;
                     break;
 
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * XXX: check legality
                      */
-                    *( data->data.integer ) = TC_RS_NOTINSERVICE;
+                    *( data->data.integer ) = tcROW_STATUS_NOTINSERVICE;
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     newrowstash->deleted = 1;
                     break;
                 }

@@ -1,20 +1,21 @@
 #include "Mib.h"
 #include "Api.h"
 #include "Asn01.h"
-#include "System/Util/Assert.h"
 #include "Client.h"
-#include "System/Util/DefaultStore.h"
 #include "Impl.h"
-#include "System/Numerics/Integer64.h"
 #include "Parse.h"
 #include "Parse.h"
 #include "Priot.h"
 #include "ReadConfig.h"
+#include "System/Numerics/Integer64.h"
 #include "System/String.h"
-#include "System.h"
 #include "System/String.h"
-#include "System/Util/Trace.h"
+#include "System/Util/Assert.h"
+#include "System/Util/DefaultStore.h"
+#include "System/Util/Directory.h"
 #include "System/Util/Logger.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
 
 #define MIB_NAMLEN( dirent ) strlen( ( dirent )->d_name )
@@ -2448,7 +2449,7 @@ void Mib_mibIndexLoad( void )
     dir = opendir( tmpbuf );
     if ( dir == NULL ) {
         DEBUG_MSGTL( ( "mibindex", "load: (new)\n" ) );
-        System_mkdirhier( tmpbuf, AGENT_DIRECTORY_MODE, 0 );
+        Directory_makeDirectoryHierarchy( tmpbuf, AGENT_DIRECTORY_MODE, 0 );
         return;
     }
 

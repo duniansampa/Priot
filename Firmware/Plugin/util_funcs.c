@@ -9,12 +9,12 @@
  */
 
 #include "util_funcs.h"
-#include "System/Util/Assert.h"
-#include "System/Util/Trace.h"
 #include "Impl.h"
-#include "System/Util/Logger.h"
 #include "ReadConfig.h"
-#include "System.h"
+#include "System/Util/Assert.h"
+#include "System/Util/Logger.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 #include "utilities/ExecuteCmd.h"
 
 static long cachetime;
@@ -25,7 +25,7 @@ extern int numprocs, numextens;
 const char*
 make_tempfile( void )
 {
-    return System_mktemp();
+    return System_makeTemporaryFile();
 }
 
 int shell_command( struct extensible* ex )

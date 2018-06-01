@@ -158,7 +158,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_NOSUCHINSTANCE );
                     continue;
                 }
-                temp = ( logh->type ? ( logh->enabled ? TC_RS_ACTIVE : TC_RS_NOTINSERVICE ) : TC_RS_NOTREADY );
+                temp = ( logh->type ? ( logh->enabled ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE ) : tcROW_STATUS_NOTREADY );
                 Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
                     ( u_char* )&temp, sizeof( temp ) );
                 break;
@@ -217,8 +217,8 @@ int handle_nsLoggingTable( MibHandler* handler,
                     return PRIOT_ERR_WRONGTYPE;
                 }
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_NOTINSERVICE:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_NOTINSERVICE:
                     /*
 		     * Can only work on existing rows
 		     */
@@ -229,8 +229,8 @@ int handle_nsLoggingTable( MibHandler* handler,
                     }
                     break;
 
-                case TC_RS_CREATEANDWAIT:
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
                     /*
 		     * Can only work with new rows
 		     */
@@ -270,13 +270,13 @@ int handle_nsLoggingTable( MibHandler* handler,
                     TableIterator_insertIteratorContext( request, ( void* )logh );
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     /*
 		     * Can work with new or existing rows
 		     */
                     break;
 
-                case TC_RS_NOTREADY:
+                case tcROW_STATUS_NOTREADY:
                 default:
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGVALUE );
@@ -336,8 +336,8 @@ int handle_nsLoggingTable( MibHandler* handler,
 		 * 'active', then there needs to be a valid type value.
 		 */
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_CREATEANDGO:
                     if ( !logh || !logh->type ) {
                         Agent_setRequestError( reqinfo, request,
                             PRIOT_ERR_INCONSISTENTVALUE );
@@ -390,7 +390,7 @@ int handle_nsLoggingTable( MibHandler* handler,
 
             case NSLOGGING_STATUS:
                 temp = *request->requestvb->value.integer;
-                if ( logh && ( temp == TC_RS_CREATEANDGO || temp == TC_RS_CREATEANDWAIT ) ) {
+                if ( logh && ( temp == tcROW_STATUS_CREATEANDGO || temp == tcROW_STATUS_CREATEANDWAIT ) ) {
                     Logger_removeLoghandler( logh );
                 }
                 break;
@@ -422,15 +422,15 @@ int handle_nsLoggingTable( MibHandler* handler,
 
             case NSLOGGING_STATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_CREATEANDGO:
                     Logger_enableThisLoghandler( logh );
                     break;
-                case TC_RS_NOTINSERVICE:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_NOTINSERVICE:
+                case tcROW_STATUS_CREATEANDWAIT:
                     Logger_disableThisLoghandler( logh );
                     break;
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     Logger_removeLoghandler( logh );
                     break;
                 }

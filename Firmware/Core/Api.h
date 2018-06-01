@@ -3,9 +3,9 @@
 
 #include "Generals.h"
 #include "System/Containers/Container.h"
+#include "System/Util/LargeFdSet.h"
 #include "System/Util/Utilities.h"
 #include "Transport.h"
-
 /*
  * @file Api.h - API for access to snmp.
  *
@@ -105,91 +105,6 @@
 #define API_SET_PRIOT_STRIKE_FLAGS( x )                                                                                          \
     ( ( x & API_FLAGS_STRIKE2 ) ? 1 : ( ( ( x & API_FLAGS_STRIKE1 ) ? ( x |= API_FLAGS_STRIKE2 ) : ( x |= API_FLAGS_STRIKE1 ) ), \
                                           0 ) )
-
-/*
- * Error return values.
- *
- * API_ERR_SUCCESS is the non-PDU "success" code.
- *
- * XXX  These should be merged with PRIOT_ERR_* defines and confined
- *      to values < 0.  ???
- */
-
-//Error codes (the value of the field error-status in PDUs)
-enum ErrorCode_e {
-    ErrorCode_TLS_NO_CERTIFICATE = -69,
-    ErrorCode_TRANSPORT_CONFIG_ERROR,
-    ErrorCode_TRANSPORT_NO_CONFIG,
-    ErrorCode_JUST_A_CONTEXT_PROBE,
-    ErrorCode_OID_NONINCREASING,
-    ErrorCode_PROTOCOL,
-    ErrorCode_KRB5,
-    ErrorCode_MALLOC,
-    ErrorCode_VAR_TYPE,
-    ErrorCode_NO_VARS,
-    ErrorCode_NULL_PDU,
-    ErrorCode_UNKNOWN_OBJID,
-    ErrorCode_VALUE,
-    ErrorCode_BAD_NAME,
-    ErrorCode_LONG_OID,
-    ErrorCode_BAD_SUBID,
-    ErrorCode_MAX_SUBID,
-    ErrorCode_RANGE,
-    ErrorCode_NOMIB,
-    ErrorCode_USM_DECRYPTIONERROR,
-    ErrorCode_USM_NOTINTIMEWINDOW,
-    ErrorCode_USM_UNKNOWNENGINEID,
-    ErrorCode_USM_PARSEERROR,
-    ErrorCode_USM_AUTHENTICATIONFAILURE,
-    ErrorCode_USM_ENCRYPTIONERROR,
-    ErrorCode_USM_UNSUPPORTEDSECURITYLEVEL,
-    ErrorCode_USM_UNKNOWNSECURITYNAME,
-    ErrorCode_USM_GENERICERROR,
-    ErrorCode_UNKNOWN_REPORT,
-    ErrorCode_KT_NOT_AVAILABLE,
-    ErrorCode_SC_NOT_CONFIGURED,
-    ErrorCode_SC_GENERAL_FAILURE,
-    ErrorCode_DECRYPTION_ERR,
-    ErrorCode_NOT_IN_TIME_WINDOW,
-    ErrorCode_AUTHENTICATION_FAILURE,
-    ErrorCode_UNSUPPORTED_SEC_LEVEL,
-    ErrorCode_UNKNOWN_USER_NAME,
-    ErrorCode_UNKNOWN_ENG_ID,
-    ErrorCode_INVALID_MSG,
-    ErrorCode_UNKNOWN_SEC_MODEL,
-    ErrorCode_ASN_PARSE_ERR,
-    ErrorCode_BAD_SEC_LEVEL,
-    ErrorCode_BAD_SEC_NAME,
-    ErrorCode_BAD_ENG_ID,
-    ErrorCode_BAD_RECVFROM,
-    ErrorCode_TIMEOUT,
-    ErrorCode_UNKNOWN_PDU,
-    ErrorCode_ABORT,
-    ErrorCode_BAD_PARTY,
-    ErrorCode_BAD_ACL,
-    ErrorCode_NOAUTH_DESPRIV,
-    ErrorCode_BAD_COMMUNITY,
-    ErrorCode_BAD_CONTEXT,
-    ErrorCode_BAD_DST_PARTY,
-    ErrorCode_BAD_SRC_PARTY,
-    ErrorCode_BAD_VERSION,
-    ErrorCode_BAD_PARSE,
-    ErrorCode_BAD_SENDTO,
-    ErrorCode_BAD_ASN1_BUILD,
-    ErrorCode_BAD_REPETITIONS,
-    ErrorCode_BAD_REPEATERS,
-    ErrorCode_V1_IN_V2,
-    ErrorCode_V2_IN_V1,
-    ErrorCode_NO_SOCKET,
-    ErrorCode_TOO_LONG,
-    ErrorCode_BAD_SESSION,
-    ErrorCode_BAD_ADDRESS,
-    ErrorCode_BAD_LOCPORT,
-    ErrorCode_GENERR,
-    ErrorCode_SUCCESS = 0 // must be = 0
-};
-
-#define ErrorCode_MAX ( -69 )
 
 extern int api_priotErrno;
 
@@ -352,12 +267,12 @@ void Api_sessInit( Types_Session* session );
 int Api_send( Types_Session* session, Types_Pdu* pdu );
 void Api_read( fd_set* fdset );
 int Api_selectInfo( int* numfds, fd_set* fdset, struct timeval* timeout, int* block );
-int Api_selectInfo2( int* numfds, Types_LargeFdSet* fdset, struct timeval* timeout, int* block );
+int Api_selectInfo2( int* numfds, LargeFdSet_t* fdset, struct timeval* timeout, int* block );
 void Api_timeout( void );
 Types_Session* Api_sessSession( void* sessp );
 Types_Session* Api_sessSessionLookup( void* sessp );
 int Api_sessRead( void* sessp, fd_set* fdset );
-int Api_sessRead2( void* sessp, Types_LargeFdSet* fdset );
+int Api_sessRead2( void* sessp, LargeFdSet_t* fdset );
 
 void Api_freePdu( Types_Pdu* pdu );
 void Api_perror( const char* msg ); /* for parsing errors only */
@@ -583,16 +498,16 @@ Api_pduAddVariable( Types_Pdu* pdu,
     size_t name_length,
     u_char type, const void* value, size_t len );
 
-int Api_sessSelectInfo2( void* sessp, int* numfds, Types_LargeFdSet* fdset,
+int Api_sessSelectInfo2( void* sessp, int* numfds, LargeFdSet_t* fdset,
     struct timeval* timeout, int* block );
 
 void Api_sessTimeout( void* sessp );
 
 int Api_sessSelectInfo2Flags( void* sessp, int* numfds,
-    Types_LargeFdSet* fdset,
+    LargeFdSet_t* fdset,
     struct timeval* timeout, int* block, int flags );
 
-void Api_read2( Types_LargeFdSet* fdset );
+void Api_read2( LargeFdSet_t* fdset );
 
 void* Api_sessPointer( Types_Session* session );
 

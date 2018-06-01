@@ -243,13 +243,13 @@ TableArray_checkRowStatus(TableArrayCallbacks *cb,
         /*
          * is it set to active?
          */
-        if (TC_RS_IS_GOING_ACTIVE(*rs_new)) {
+        if (tcROW_STATUS_IS_GOING_ACTIVE(*rs_new)) {
             /*
              * is it ready to be active?
              */
             if ((NULL==cb->can_activate) ||
                 cb->can_activate(undo_ctx, row_ctx, ag))
-                *rs_new = TC_RS_ACTIVE;
+                *rs_new = tcROW_STATUS_ACTIVE;
             else
                 return PRIOT_ERR_INCONSISTENTVALUE;
         } else {
@@ -260,7 +260,7 @@ TableArray_checkRowStatus(TableArrayCallbacks *cb,
                 /*
                  * change
                  */
-                if (TC_RS_IS_ACTIVE(*rs_old)) {
+                if (tcROW_STATUS_IS_ACTIVE(*rs_old)) {
                     /*
                      * check pre-reqs for deactivation
                      */
@@ -275,12 +275,12 @@ TableArray_checkRowStatus(TableArrayCallbacks *cb,
                  */
             }
 
-            if (*rs_new != TC_RS_DESTROY) {
+            if (*rs_new != tcROW_STATUS_DESTROY) {
                 if ((NULL==cb->can_activate) ||
                     cb->can_activate(undo_ctx, row_ctx, ag))
-                    *rs_new = TC_RS_NOTINSERVICE;
+                    *rs_new = tcROW_STATUS_NOTINSERVICE;
                 else
-                    *rs_new = TC_RS_NOTREADY;
+                    *rs_new = tcROW_STATUS_NOTREADY;
             } else {
                 if (cb->can_delete && !cb->can_delete(undo_ctx, row_ctx, ag)) {
                     return PRIOT_ERR_INCONSISTENTVALUE;

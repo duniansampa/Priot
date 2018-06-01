@@ -1333,7 +1333,7 @@ _Client_rowStatusStateActivate( Client_StateMachineInput* input,
 {
     Client_RowcreateState* ctx;
     VariableList *rs_var, *var = NULL;
-    int32_t rc, val = TC_RS_ACTIVE;
+    int32_t rc, val = tcROW_STATUS_ACTIVE;
 
     Assert_requirePtrLRV( input, ErrorCode_GENERR );
     Assert_requirePtrLRV( step, ErrorCode_GENERR );
@@ -1478,7 +1478,7 @@ _Client_rowStatusStateSingleValueCreateAndWait( Client_StateMachineInput* input,
 {
     Client_RowcreateState* ctx;
     VariableList *var = NULL, *rs_var;
-    int32_t rc, val = TC_RS_CREATEANDWAIT;
+    int32_t rc, val = tcROW_STATUS_CREATEANDWAIT;
 
     Assert_requirePtrLRV( input, ErrorCode_GENERR );
     Assert_requirePtrLRV( step, ErrorCode_GENERR );
@@ -1538,8 +1538,8 @@ _Client_rowStatusStateAllValuesCreateAndWait( Client_StateMachineInput* input,
         return ErrorCode_GENERR;
     }
 
-    if ( *rs_var->value.integer != TC_RS_CREATEANDWAIT )
-        *rs_var->value.integer = TC_RS_CREATEANDWAIT;
+    if ( *rs_var->value.integer != tcROW_STATUS_CREATEANDWAIT )
+        *rs_var->value.integer = tcROW_STATUS_CREATEANDWAIT;
 
     /*
      * send set
@@ -1584,8 +1584,8 @@ _Client_rowStatusStateAllValuesCreateAndGo( Client_StateMachineInput* input,
         return ErrorCode_GENERR;
     }
 
-    if ( *rs_var->value.integer != TC_RS_CREATEANDGO )
-        *rs_var->value.integer = TC_RS_CREATEANDGO;
+    if ( *rs_var->value.integer != tcROW_STATUS_CREATEANDGO )
+        *rs_var->value.integer = tcROW_STATUS_CREATEANDGO;
 
     /*
      * send set

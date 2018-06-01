@@ -99,11 +99,11 @@ int mteObjectsTable_handler( MibHandler* handler,
                     entry->mteObjectID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTEOBJECTSIDWILDCARD:
-                ret = ( entry->flags & MTE_OBJECT_FLAG_WILD ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_OBJECT_FLAG_WILD ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTEOBJECTSENTRYSTATUS:
-                ret = ( entry->flags & MTE_OBJECT_FLAG_ACTIVE ) ? TC_RS_ACTIVE : TC_RS_NOTINSERVICE;
+                ret = ( entry->flags & MTE_OBJECT_FLAG_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             }
@@ -157,13 +157,13 @@ int mteObjectsTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTEOBJECTSENTRYSTATUS:
                 ret = VariableList_checkRowStatusTransition( request->requestvb,
-                    ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
+                    ( entry ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NONEXISTENT ) );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
                 }
                 /* An active row can only be deleted */
-                if ( entry && entry->flags & MTE_OBJECT_FLAG_ACTIVE && *request->requestvb->value.integer == TC_RS_NOTINSERVICE ) {
+                if ( entry && entry->flags & MTE_OBJECT_FLAG_ACTIVE && *request->requestvb->value.integer == tcROW_STATUS_NOTINSERVICE ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_INCONSISTENTVALUE );
                     return PRIOT_ERR_NOERROR;
@@ -187,8 +187,8 @@ int mteObjectsTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
@@ -223,8 +223,8 @@ int mteObjectsTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Tidy up after a failed row creation request
                      */
@@ -282,7 +282,7 @@ int mteObjectsTable_handler( MibHandler* handler,
                 break;
 
             case COLUMN_MTEOBJECTSIDWILDCARD:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_OBJECT_FLAG_WILD;
                 else
                     entry->flags &= ~MTE_OBJECT_FLAG_WILD;
@@ -290,18 +290,18 @@ int mteObjectsTable_handler( MibHandler* handler,
 
             case COLUMN_MTEOBJECTSENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
+                case tcROW_STATUS_ACTIVE:
                     entry->flags |= MTE_OBJECT_FLAG_ACTIVE;
                     break;
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDGO:
                     entry->flags |= MTE_OBJECT_FLAG_VALID;
                     entry->flags |= MTE_OBJECT_FLAG_ACTIVE;
                     break;
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDWAIT:
                     entry->flags |= MTE_OBJECT_FLAG_VALID;
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     row = ( TdataRow* )
                         TableTdata_extractRow( request );
                     mteObjects_removeEntry( row );

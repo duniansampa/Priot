@@ -237,14 +237,14 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                     break;
                 }
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
-                case TC_RS_NOTINSERVICE:
+                case tcROW_STATUS_ACTIVE:
+                case tcROW_STATUS_NOTINSERVICE:
                     /* Check that this particular view is already set */
                     if ( !entry || !entry->views[ viewIdx ][ 0 ] )
                         ret = PRIOT_ERR_INCONSISTENTVALUE;
                     break;
-                case TC_RS_CREATEANDWAIT:
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
                     /* Check that this particular view is not yet set */
                     if ( entry && entry->views[ viewIdx ][ 0 ] )
                         ret = PRIOT_ERR_INCONSISTENTVALUE;
@@ -268,8 +268,8 @@ int nsVacmAccessTable_handler( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_NSVACMACCESSSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     if ( !entry ) {
                         idx = table_info->indexes;
                         gName = ( char* )idx->value.string;
@@ -280,7 +280,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                         idx = idx->next;
                         level = *idx->value.integer;
                         entry = Vacm_createAccessEntry( gName, cPrefix, model, level );
-                        entry->storageType = TC_ST_NONVOLATILE;
+                        entry->storageType = tcSTORAGE_TYPE_NONVOLATILE;
                         TableIterator_insertIteratorContext( request, ( void* )entry );
                     }
                 }
@@ -327,7 +327,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                 break;
             case COLUMN_NSVACMACCESSSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     memset( entry->views[ viewIdx ], 0, VACM_VACMSTRINGLEN );
                     break;
                 }

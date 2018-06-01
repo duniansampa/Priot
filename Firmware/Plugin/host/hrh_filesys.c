@@ -275,14 +275,14 @@ when_dumped( char* filesys, int level, size_t* length )
      */
 
     if ( *filesys == '\0' ) /* No filesystem name? */
-        return Tc_dateNTime( NULL, length );
+        return Time_convertDateAndTimeToString( NULL, length );
     cp1 = strrchr( filesys, '/' ); /* Find the last element of the current FS */
 
     if ( cp1 == NULL )
         cp1 = filesys;
 
     if ( ( dump_fp = fopen( "/etc/dumpdates", "r" ) ) == NULL )
-        return Tc_dateNTime( NULL, length );
+        return Time_convertDateAndTimeToString( NULL, length );
 
     while ( fgets( line, sizeof( line ), dump_fp ) != NULL ) {
         cp2 = strchr( line, ' ' ); /* Start by looking at the device name only */
@@ -305,16 +305,16 @@ when_dumped( char* filesys, int level, size_t* length )
                 while ( isspace( 0xFF & *cp2 ) )
                     ++cp2;
 
-                dumpdate = Tc_ctimeToTimet( cp2 );
+                dumpdate = Time_convertCtimeStringToTimet( cp2 );
                 fclose( dump_fp );
-                return Tc_dateNTime( &dumpdate, length );
+                return Time_convertDateAndTimeToString( &dumpdate, length );
             } else { /* Partial Dump */
                 if ( *( cp2++ ) == '0' )
                     continue; /* Not interested in full dumps */
                 while ( isspace( 0xFF & *cp2 ) )
                     ++cp2;
 
-                tmp = Tc_ctimeToTimet( cp2 );
+                tmp = Time_convertCtimeStringToTimet( cp2 );
                 if ( tmp > dumpdate )
                     dumpdate = tmp; /* Remember the 'latest' partial dump */
             }
@@ -323,7 +323,7 @@ when_dumped( char* filesys, int level, size_t* length )
 
     fclose( dump_fp );
 
-    return Tc_dateNTime( &dumpdate, length );
+    return Time_convertDateAndTimeToString( &dumpdate, length );
 }
 
 #define RAW_DEVICE_PREFIX "/dev/rdsk"

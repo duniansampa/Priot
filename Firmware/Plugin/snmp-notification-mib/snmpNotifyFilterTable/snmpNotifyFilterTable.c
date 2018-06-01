@@ -1725,7 +1725,7 @@ int snmpNotifyFilterTable_check_dependencies( snmpNotifyFilterTable_rowreq_ctx*
     /*
      * check for valid StorageType transition (old, new)
      */
-    rc = Tc_checkStorageTransition( rowreq_ctx->undo->snmpNotifyFilterStorageType,
+    rc = TextualConvention_checkStorageTransition( rowreq_ctx->undo->snmpNotifyFilterStorageType,
         rowreq_ctx->data.snmpNotifyFilterStorageType );
     if ( MFD_SUCCESS != rc )
         return rc;
@@ -1739,7 +1739,7 @@ int snmpNotifyFilterTable_check_dependencies( snmpNotifyFilterTable_rowreq_ctx*
          * (Note: move transition check to 
          *  to catch errors earlier)
          */
-        rc = Tc_checkRowstatusTransition( rowreq_ctx->undo->snmpNotifyFilterRowStatus,
+        rc = TextualConvention_checkRowStatusTransition( rowreq_ctx->undo->snmpNotifyFilterRowStatus,
             rowreq_ctx->data.snmpNotifyFilterRowStatus );
         if ( MFD_SUCCESS != rc )
             return rc;

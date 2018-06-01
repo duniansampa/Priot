@@ -146,11 +146,11 @@ int schedTable_handler( MibHandler* handler,
                     entry->schedType );
                 break;
             case COLUMN_SCHEDADMINSTATUS:
-                ret = ( entry->flags & SCHEDULE_FLAG_ENABLED ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & SCHEDULE_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_SCHEDOPERSTATUS:
-                ret = ( entry->flags & SCHEDULE_FLAG_ENABLED ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & SCHEDULE_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
                 /*
                  * Check for one-shot entries that have already fired
                  */
@@ -171,7 +171,7 @@ int schedTable_handler( MibHandler* handler,
                  * Convert 'schedLastFailed' timestamp
                  *   into DateAndTime string
                  */
-                cp = ( char* )Tc_dateNTime( &entry->schedLastFailed, &len );
+                cp = ( char* )Time_convertDateAndTimeToString( &entry->schedLastFailed, &len );
                 Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
                     cp, len );
                 break;
@@ -180,7 +180,7 @@ int schedTable_handler( MibHandler* handler,
                     entry->schedStorageType );
                 break;
             case COLUMN_SCHEDROWSTATUS:
-                ret = ( entry->flags & SCHEDULE_FLAG_ACTIVE ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & SCHEDULE_FLAG_ACTIVE ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_SCHEDTRIGGERS:
@@ -303,7 +303,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDSTORAGETYPE:
                 ret = VariableList_checkIntLengthAndRange( request->requestvb,
-                    TC_ST_NONE, TC_ST_READONLY );
+                    tcSTORAGE_TYPE_NONE, tcSTORAGE_TYPE_READONLY );
                 /* XXX - check valid/consistent assignments */
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -312,7 +312,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDROWSTATUS:
                 ret = VariableList_checkRowStatusTransition( request->requestvb,
-                    ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
+                    ( entry ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NONEXISTENT ) );
                 /* XXX - check consistency assignments */
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -337,8 +337,8 @@ int schedTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDROWSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
@@ -370,8 +370,8 @@ int schedTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDROWSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Tidy up after a failed row creation request
                      */
@@ -477,7 +477,7 @@ int schedTable_handler( MibHandler* handler,
                 entry->schedType = *request->requestvb->value.integer;
                 break;
             case COLUMN_SCHEDADMINSTATUS:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= SCHEDULE_FLAG_ENABLED;
                 else
                     entry->flags &= ~SCHEDULE_FLAG_ENABLED;
@@ -487,20 +487,20 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDROWSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
+                case tcROW_STATUS_ACTIVE:
                     entry->flags |= SCHEDULE_FLAG_ACTIVE;
                     break;
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDGO:
                     entry->flags |= SCHEDULE_FLAG_ACTIVE;
                     entry->flags |= SCHEDULE_FLAG_VALID;
                     entry->session = Iquery_pduSession( reqinfo->asp->pdu );
                     break;
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDWAIT:
                     entry->flags |= SCHEDULE_FLAG_VALID;
                     entry->session = Iquery_pduSession( reqinfo->asp->pdu );
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     row = ( TdataRow* )
                         TableTdata_extractRow( request );
                     schedTable_removeEntry( row );

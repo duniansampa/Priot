@@ -155,23 +155,23 @@ FdEventManager_unregisterExceptfd(int fd)
  */
 void FdEventManager_externalEventInfo(int *numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
 {
-  Types_LargeFdSet lreadfds;
-  Types_LargeFdSet lwritefds;
-  Types_LargeFdSet lexceptfds;
+  LargeFdSet_t lreadfds;
+  LargeFdSet_t lwritefds;
+  LargeFdSet_t lexceptfds;
 
   LargeFdSet_init(&lreadfds, FD_SETSIZE);
   LargeFdSet_init(&lwritefds, FD_SETSIZE);
   LargeFdSet_init(&lexceptfds, FD_SETSIZE);
 
-  LargeFdSet_copyFdSetToLargeFdSet(&lreadfds, readfds);
-  LargeFdSet_copyFdSetToLargeFdSet(&lwritefds, writefds);
-  LargeFdSet_copyFdSetToLargeFdSet(&lexceptfds, exceptfds);
+  LargeFdSet_copyFromFdSet(&lreadfds, readfds);
+  LargeFdSet_copyFromFdSet(&lwritefds, writefds);
+  LargeFdSet_copyFromFdSet(&lexceptfds, exceptfds);
 
   FdEventManager_externalEventInfo2(numfds, &lreadfds, &lwritefds, &lexceptfds);
 
-  if (LargeFdSet_copyLargeFdSetToFdSet(readfds, &lreadfds) < 0
-      || LargeFdSet_copyLargeFdSetToFdSet(writefds, &lwritefds) < 0
-      || LargeFdSet_copyLargeFdSetToFdSet(exceptfds, &lexceptfds) < 0)
+  if (LargeFdSet_copyToFdSet(readfds, &lreadfds) < 0
+      || LargeFdSet_copyToFdSet(writefds, &lwritefds) < 0
+      || LargeFdSet_copyToFdSet(exceptfds, &lexceptfds) < 0)
   {
     Logger_log(LOGGER_PRIORITY_ERR,
          "Use netsnmp_external_event_info2() for processing"
@@ -184,26 +184,26 @@ void FdEventManager_externalEventInfo(int *numfds, fd_set *readfds, fd_set *writ
 }
 
 void FdEventManager_externalEventInfo2(int *numfds,
-                                  Types_LargeFdSet *readfds,
-                                  Types_LargeFdSet *writefds,
-                                  Types_LargeFdSet *exceptfds)
+                                  LargeFdSet_t *readfds,
+                                  LargeFdSet_t *writefds,
+                                  LargeFdSet_t *exceptfds)
 {
   int i;
 
   _externalFdUnregistered = 0;
 
   for (i = 0; i < fdEventManager_externalReadfdlen; i++) {
-    LARGEFDSET_FD_SET(fdEventManager_externalReadfd[i], readfds);
+    largeFD_SET(fdEventManager_externalReadfd[i], readfds);
     if (fdEventManager_externalReadfd[i] >= *numfds)
       *numfds = fdEventManager_externalReadfd[i] + 1;
   }
   for (i = 0; i < fdEventManager_externalWritefdlen; i++) {
-    LARGEFDSET_FD_SET(fdEventManager_externalWritefd[i], writefds);
+    largeFD_SET(fdEventManager_externalWritefd[i], writefds);
     if (fdEventManager_externalWritefd[i] >= *numfds)
       *numfds = fdEventManager_externalWritefd[i] + 1;
   }
   for (i = 0; i < fdEventManager_externalExceptfdlen; i++) {
-    LARGEFDSET_FD_SET(fdEventManager_externalExceptfd[i], exceptfds);
+    largeFD_SET(fdEventManager_externalExceptfd[i], exceptfds);
     if (fdEventManager_externalExceptfd[i] >= *numfds)
       *numfds = fdEventManager_externalExceptfd[i] + 1;
   }
@@ -214,23 +214,23 @@ void FdEventManager_externalEventInfo2(int *numfds,
  */
 void FdEventManager_dispatchExternalEvents(int *count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
 {
-  Types_LargeFdSet lreadfds;
-  Types_LargeFdSet lwritefds;
-  Types_LargeFdSet lexceptfds;
+  LargeFdSet_t lreadfds;
+  LargeFdSet_t lwritefds;
+  LargeFdSet_t lexceptfds;
 
   LargeFdSet_init(&lreadfds, FD_SETSIZE);
   LargeFdSet_init(&lwritefds, FD_SETSIZE);
   LargeFdSet_init(&lexceptfds, FD_SETSIZE);
 
-  LargeFdSet_copyFdSetToLargeFdSet(&lreadfds, readfds);
-  LargeFdSet_copyFdSetToLargeFdSet(&lwritefds, writefds);
-  LargeFdSet_copyFdSetToLargeFdSet(&lexceptfds, exceptfds);
+  LargeFdSet_copyFromFdSet(&lreadfds, readfds);
+  LargeFdSet_copyFromFdSet(&lwritefds, writefds);
+  LargeFdSet_copyFromFdSet(&lexceptfds, exceptfds);
 
   FdEventManager_dispatchExternalEvents2(count, &lreadfds, &lwritefds, &lexceptfds);
 
-  if (LargeFdSet_copyLargeFdSetToFdSet(readfds, &lreadfds) < 0
-      || LargeFdSet_copyLargeFdSetToFdSet(writefds,  &lwritefds) < 0
-      || LargeFdSet_copyLargeFdSetToFdSet(exceptfds, &lexceptfds) < 0)
+  if (LargeFdSet_copyToFdSet(readfds, &lreadfds) < 0
+      || LargeFdSet_copyToFdSet(writefds,  &lwritefds) < 0
+      || LargeFdSet_copyToFdSet(exceptfds, &lexceptfds) < 0)
   {
     Logger_log(LOGGER_PRIORITY_ERR,
          "Use netsnmp_dispatch_external_events2() for processing"
@@ -243,41 +243,41 @@ void FdEventManager_dispatchExternalEvents(int *count, fd_set *readfds, fd_set *
 }
 
 void FdEventManager_dispatchExternalEvents2(int *count,
-                                       Types_LargeFdSet *readfds,
-                                       Types_LargeFdSet *writefds,
-                                       Types_LargeFdSet *exceptfds)
+                                       LargeFdSet_t *readfds,
+                                       LargeFdSet_t *writefds,
+                                       LargeFdSet_t *exceptfds)
 {
   int i;
   for (i = 0;
        *count && (i < fdEventManager_externalReadfdlen) && !_externalFdUnregistered; i++) {
-      if (LARGEFDSET_FD_ISSET(fdEventManager_externalReadfd[i], readfds)) {
+      if (largeFD_ISSET(fdEventManager_externalReadfd[i], readfds)) {
           DEBUG_MSGTL(("fd_event_manager:netsnmp_dispatch_external_events",
                      "readfd[%d] = %d\n", i, fdEventManager_externalReadfd[i]));
           fdEventManager_externalReadfdFT[i] (fdEventManager_externalReadfd[i],
                                   fdEventManager_externalReadfdData[i]);
-          LARGEFDSET_FD_CLR(fdEventManager_externalReadfd[i], readfds);
+          largeFD_CLR(fdEventManager_externalReadfd[i], readfds);
           (*count)--;
       }
   }
   for (i = 0;
        *count && (i < fdEventManager_externalWritefdlen) && !_externalFdUnregistered; i++) {
-      if (LARGEFDSET_FD_ISSET(fdEventManager_externalWritefd[i], writefds)) {
+      if (largeFD_ISSET(fdEventManager_externalWritefd[i], writefds)) {
           DEBUG_MSGTL(("fd_event_manager:netsnmp_dispatch_external_events",
                      "writefd[%d] = %d\n", i, fdEventManager_externalWritefd[i]));
           fdEventManager_externalWritefdFT[i] (fdEventManager_externalWritefd[i],
                                    fdEventManager_externalWritefdData[i]);
-          LARGEFDSET_FD_CLR(fdEventManager_externalWritefd[i], writefds);
+          largeFD_CLR(fdEventManager_externalWritefd[i], writefds);
           (*count)--;
       }
   }
   for (i = 0;
        *count && (i < fdEventManager_externalExceptfdlen) && !_externalFdUnregistered; i++) {
-      if (LARGEFDSET_FD_ISSET(fdEventManager_externalExceptfd[i], exceptfds)) {
+      if (largeFD_ISSET(fdEventManager_externalExceptfd[i], exceptfds)) {
           DEBUG_MSGTL(("fd_event_manager:netsnmp_dispatch_external_events",
                      "exceptfd[%d] = %d\n", i, fdEventManager_externalExceptfd[i]));
           fdEventManager_externalExceptfdFT[i] (fdEventManager_externalExceptfd[i],
                                     fdEventManager_externalExceptfdData[i]);
-          LARGEFDSET_FD_CLR(fdEventManager_externalExceptfd[i], exceptfds);
+          largeFD_CLR(fdEventManager_externalExceptfd[i], exceptfds);
           (*count)--;
       }
   }

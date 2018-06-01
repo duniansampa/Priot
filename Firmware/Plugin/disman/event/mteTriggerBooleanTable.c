@@ -107,7 +107,7 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
                     entry->mteTBoolValue );
                 break;
             case COLUMN_MTETRIGGERBOOLEANSTARTUP:
-                ret = ( entry->flags & MTE_TRIGGER_FLAG_BSTART ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_TRIGGER_FLAG_BSTART ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERBOOLEANOBJECTSOWNER:
@@ -262,7 +262,7 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
                 entry->mteTBoolValue = *request->requestvb->value.integer;
                 break;
             case COLUMN_MTETRIGGERBOOLEANSTARTUP:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_BSTART;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_BSTART;

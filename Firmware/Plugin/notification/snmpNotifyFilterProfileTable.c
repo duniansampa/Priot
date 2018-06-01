@@ -189,7 +189,7 @@ int store_snmpNotifyFilterProfileTable( int majorID, int minorID,
           hcindex = hcindex->next ) {
         StorageTmp = ( struct snmpNotifyFilterProfileTable_data* )hcindex->data;
 
-        if ( ( StorageTmp->snmpNotifyFilterProfileStorType == TC_ST_NONVOLATILE ) || ( StorageTmp->snmpNotifyFilterProfileStorType == TC_ST_PERMANENT ) ) {
+        if ( ( StorageTmp->snmpNotifyFilterProfileStorType == tcSTORAGE_TYPE_NONVOLATILE ) || ( StorageTmp->snmpNotifyFilterProfileStorType == tcSTORAGE_TYPE_PERMANENT ) ) {
 
             memset( line, 0, sizeof( line ) );
             strcat( line, "snmpNotifyFilterProfileTable " );
@@ -476,7 +476,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
         if ( var_val_len != sizeof( long ) ) {
             return PRIOT_ERR_WRONGLENGTH;
         }
-        if ( set_value < 1 || set_value > 6 || set_value == TC_RS_NOTREADY ) {
+        if ( set_value < 1 || set_value > 6 || set_value == tcROW_STATUS_NOTREADY ) {
             return PRIOT_ERR_WRONGVALUE;
         }
         /*
@@ -490,21 +490,21 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
             /*
              * ditch illegal values now 
              */
-            if ( set_value == TC_RS_ACTIVE || set_value == TC_RS_NOTINSERVICE ) {
+            if ( set_value == tcROW_STATUS_ACTIVE || set_value == tcROW_STATUS_NOTINSERVICE ) {
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
         } else {
             /*
              * row exists.  Check for a valid state change 
              */
-            if ( set_value == TC_RS_CREATEANDGO
-                || set_value == TC_RS_CREATEANDWAIT ) {
+            if ( set_value == tcROW_STATUS_CREATEANDGO
+                || set_value == tcROW_STATUS_CREATEANDWAIT ) {
                 /*
                  * can't create a row that exists 
                  */
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( ( set_value == TC_RS_ACTIVE || set_value == TC_RS_NOTINSERVICE ) && StorageTmp->snmpNotifyFilterProfileNameLen == 0 ) {
+            if ( ( set_value == tcROW_STATUS_ACTIVE || set_value == tcROW_STATUS_NOTINSERVICE ) && StorageTmp->snmpNotifyFilterProfileNameLen == 0 ) {
                 /*
                  * can't activate row without a profile name
                  */
@@ -518,8 +518,8 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
         /*
          * memory reseveration, final preparation... 
          */
-        if ( StorageTmp == NULL && ( set_value == TC_RS_CREATEANDGO
-                                       || set_value == TC_RS_CREATEANDWAIT ) ) {
+        if ( StorageTmp == NULL && ( set_value == tcROW_STATUS_CREATEANDGO
+                                       || set_value == tcROW_STATUS_CREATEANDWAIT ) ) {
             /*
              * creation 
              */
@@ -542,9 +542,9 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
             StorageNew->snmpTargetParamsName = ( char* )
                 Memory_memdup( vars->value.string, vars->valueLength );
             StorageNew->snmpTargetParamsNameLen = vars->valueLength;
-            StorageNew->snmpNotifyFilterProfileStorType = TC_ST_NONVOLATILE;
+            StorageNew->snmpNotifyFilterProfileStorType = tcSTORAGE_TYPE_NONVOLATILE;
 
-            StorageNew->snmpNotifyFilterProfileRowStatus = TC_RS_NOTREADY;
+            StorageNew->snmpNotifyFilterProfileRowStatus = tcROW_STATUS_NOTREADY;
             Api_freeVar( vars );
         }
 
@@ -576,7 +576,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
          * the IMPL_UNDO case
          */
 
-        if ( StorageTmp == NULL && ( set_value == TC_RS_CREATEANDGO || set_value == TC_RS_CREATEANDWAIT ) ) {
+        if ( StorageTmp == NULL && ( set_value == tcROW_STATUS_CREATEANDGO || set_value == tcROW_STATUS_CREATEANDWAIT ) ) {
             /*
              * row creation, so add it 
              */
@@ -585,7 +585,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
             /*
              * XXX: ack, and if it is NULL? 
              */
-        } else if ( set_value != TC_RS_DESTROY ) {
+        } else if ( set_value != tcROW_STATUS_DESTROY ) {
             /*
              * set the flag? 
              */
@@ -612,7 +612,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
         /*
          * Back out any changes made in the IMPL_ACTION case
          */
-        if ( StorageTmp == NULL && ( set_value == TC_RS_CREATEANDGO || set_value == TC_RS_CREATEANDWAIT ) ) {
+        if ( StorageTmp == NULL && ( set_value == tcROW_STATUS_CREATEANDGO || set_value == tcROW_STATUS_CREATEANDWAIT ) ) {
             /*
              * row creation, so remove it again 
              */
@@ -629,7 +629,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
              */
             snmpNotifyFilterProfileTable_add( StorageDel );
             StorageDel = NULL;
-        } else if ( set_value != TC_RS_DESTROY ) {
+        } else if ( set_value != tcROW_STATUS_DESTROY ) {
             if ( StorageTmp )
                 StorageTmp->snmpNotifyFilterProfileRowStatus = old_value;
         }
@@ -646,13 +646,13 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
             free( StorageDel );
             StorageDel = NULL;
         }
-        if ( StorageTmp && set_value == TC_RS_CREATEANDGO ) {
+        if ( StorageTmp && set_value == tcROW_STATUS_CREATEANDGO ) {
             if ( StorageTmp->snmpNotifyFilterProfileNameLen )
-                StorageTmp->snmpNotifyFilterProfileRowStatus = TC_RS_ACTIVE;
+                StorageTmp->snmpNotifyFilterProfileRowStatus = tcROW_STATUS_ACTIVE;
             StorageNew = NULL;
-        } else if ( StorageTmp && set_value == TC_RS_CREATEANDWAIT ) {
+        } else if ( StorageTmp && set_value == tcROW_STATUS_CREATEANDWAIT ) {
             if ( StorageTmp->snmpNotifyFilterProfileNameLen )
-                StorageTmp->snmpNotifyFilterProfileRowStatus = TC_RS_NOTINSERVICE;
+                StorageTmp->snmpNotifyFilterProfileRowStatus = tcROW_STATUS_NOTINSERVICE;
             StorageNew = NULL;
         }
         Api_storeNeeded( NULL );
@@ -687,7 +687,7 @@ char* get_FilterProfileName( const char* paramName, size_t paramName_len,
     /*
      * return the requested information (if this row is active) 
      */
-    if ( data && data->snmpNotifyFilterProfileRowStatus == TC_RS_ACTIVE ) {
+    if ( data && data->snmpNotifyFilterProfileRowStatus == tcROW_STATUS_ACTIVE ) {
         *profileName_len = data->snmpNotifyFilterProfileNameLen;
         return data->snmpNotifyFilterProfileName;
     }

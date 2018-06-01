@@ -111,7 +111,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                     entry->mteTriggerValueID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTETRIGGERVALUEIDWILDCARD:
-                ret = ( entry->flags & MTE_TRIGGER_FLAG_VWILD ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_TRIGGER_FLAG_VWILD ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERTARGETTAG:
@@ -125,7 +125,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                     strlen( entry->mteTriggerContext ) );
                 break;
             case COLUMN_MTETRIGGERCONTEXTNAMEWILDCARD:
-                ret = ( entry->flags & MTE_TRIGGER_FLAG_CWILD ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_TRIGGER_FLAG_CWILD ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERFREQUENCY:
@@ -143,11 +143,11 @@ int mteTriggerTable_handler( MibHandler* handler,
                     strlen( entry->mteTriggerObjects ) );
                 break;
             case COLUMN_MTETRIGGERENABLED:
-                ret = ( entry->flags & MTE_TRIGGER_FLAG_ENABLED ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_TRIGGER_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERENTRYSTATUS:
-                ret = ( entry->flags & MTE_TRIGGER_FLAG_ACTIVE ) ? TC_RS_ACTIVE : TC_RS_NOTINSERVICE;
+                ret = ( entry->flags & MTE_TRIGGER_FLAG_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             }
@@ -227,7 +227,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTETRIGGERENTRYSTATUS:
                 ret = VariableList_checkRowStatusTransition( request->requestvb,
-                    ( entry ? TC_RS_ACTIVE : TC_RS_NONEXISTENT ) );
+                    ( entry ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NONEXISTENT ) );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -251,7 +251,7 @@ int mteTriggerTable_handler( MibHandler* handler,
              */
             if ( entry && entry->flags & MTE_TRIGGER_FLAG_ACTIVE ) {
                 /* check for the acceptable assignments */
-                if ( ( tinfo->colnum == COLUMN_MTETRIGGERENABLED ) || ( tinfo->colnum == COLUMN_MTETRIGGERENTRYSTATUS && *request->requestvb->value.integer != TC_RS_NOTINSERVICE ) )
+                if ( ( tinfo->colnum == COLUMN_MTETRIGGERENABLED ) || ( tinfo->colnum == COLUMN_MTETRIGGERENTRYSTATUS && *request->requestvb->value.integer != tcROW_STATUS_NOTINSERVICE ) )
                     continue;
 
                 /* Otherwise, reject this request */
@@ -272,8 +272,8 @@ int mteTriggerTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Create an (empty) new row structure
                      */
@@ -307,8 +307,8 @@ int mteTriggerTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_CREATEANDGO:
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDWAIT:
                     /*
                      * Tidy up after a failed row creation request
                      */
@@ -384,7 +384,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                 entry->mteTriggerValueID_len = request->requestvb->valueLength / sizeof( oid );
                 break;
             case COLUMN_MTETRIGGERVALUEIDWILDCARD:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_VWILD;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_VWILD;
@@ -404,7 +404,7 @@ int mteTriggerTable_handler( MibHandler* handler,
                     request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERCONTEXTNAMEWILDCARD:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_CWILD;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_CWILD;
@@ -427,29 +427,29 @@ int mteTriggerTable_handler( MibHandler* handler,
                     request->requestvb->valueLength );
                 break;
             case COLUMN_MTETRIGGERENABLED:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_TRIGGER_FLAG_ENABLED;
                 else
                     entry->flags &= ~MTE_TRIGGER_FLAG_ENABLED;
                 break;
             case COLUMN_MTETRIGGERENTRYSTATUS:
                 switch ( *request->requestvb->value.integer ) {
-                case TC_RS_ACTIVE:
+                case tcROW_STATUS_ACTIVE:
                     entry->flags |= MTE_TRIGGER_FLAG_ACTIVE;
                     mteTrigger_enable( entry );
                     break;
-                case TC_RS_CREATEANDGO:
+                case tcROW_STATUS_CREATEANDGO:
                     entry->flags |= MTE_TRIGGER_FLAG_ACTIVE;
                     entry->flags |= MTE_TRIGGER_FLAG_VALID;
                     entry->session = Iquery_pduSession( reqinfo->asp->pdu );
                     mteTrigger_enable( entry );
                     break;
-                case TC_RS_CREATEANDWAIT:
+                case tcROW_STATUS_CREATEANDWAIT:
                     entry->flags |= MTE_TRIGGER_FLAG_VALID;
                     entry->session = Iquery_pduSession( reqinfo->asp->pdu );
                     break;
 
-                case TC_RS_DESTROY:
+                case tcROW_STATUS_DESTROY:
                     row = ( TdataRow* )
                         TableTdata_extractRow( request );
                     mteTrigger_removeEntry( row );

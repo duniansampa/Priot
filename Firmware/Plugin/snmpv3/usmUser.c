@@ -661,9 +661,9 @@ write_usmUserAuthProtocol(int action,
             return PRIOT_ERR_INCONSISTENTNAME;
         }
 
-        if (uptr->userStatus == TC_RS_ACTIVE
-            || uptr->userStatus == TC_RS_NOTREADY
-            || uptr->userStatus == TC_RS_NOTINSERVICE) {
+        if (uptr->userStatus == tcROW_STATUS_ACTIVE
+            || uptr->userStatus == tcROW_STATUS_NOTREADY
+            || uptr->userStatus == tcROW_STATUS_NOTINSERVICE) {
             /*
              * The authProtocol is already set.  It is only legal to CHANGE it
              * to usm_noAuthProtocol...
@@ -928,9 +928,9 @@ write_usmUserPrivProtocol(int action,
             return PRIOT_ERR_INCONSISTENTNAME;
         }
 
-        if (uptr->userStatus == TC_RS_ACTIVE
-            || uptr->userStatus == TC_RS_NOTREADY
-            || uptr->userStatus == TC_RS_NOTINSERVICE) {
+        if (uptr->userStatus == tcROW_STATUS_ACTIVE
+            || uptr->userStatus == tcROW_STATUS_NOTREADY
+            || uptr->userStatus == tcROW_STATUS_NOTINSERVICE) {
             /*
              * The privProtocol is already set.  It is only legal to CHANGE it
              * to usm_noPrivProtocol.
@@ -1213,9 +1213,9 @@ write_usmUserStorageType(int action,
         if ((uptr = Usm_parseUser(name, name_len)) == NULL) {
             return PRIOT_ERR_INCONSISTENTNAME;
         }
-        if ((long_ret == TC_ST_VOLATILE || long_ret == TC_ST_NONVOLATILE) &&
-            (uptr->userStorageType == TC_ST_VOLATILE ||
-             uptr->userStorageType == TC_ST_NONVOLATILE)) {
+        if ((long_ret == tcSTORAGE_TYPE_VOLATILE || long_ret == tcSTORAGE_TYPE_NONVOLATILE) &&
+            (uptr->userStorageType == tcSTORAGE_TYPE_VOLATILE ||
+             uptr->userStorageType == tcSTORAGE_TYPE_NONVOLATILE)) {
             oldValue = uptr->userStorageType;
             uptr->userStorageType = long_ret;
             resetOnFail = 1;
@@ -1238,12 +1238,12 @@ write_usmUserStorageType(int action,
                         long_ret, uptr->userStorageType,
                         uptr->userStatus));
 
-            if (long_ret == TC_ST_READONLY &&
-                uptr->userStorageType != TC_ST_READONLY &&
-                (uptr->userStatus == TC_RS_ACTIVE ||
-                 uptr->userStatus == TC_RS_NOTINSERVICE)) {
+            if (long_ret == tcSTORAGE_TYPE_READONLY &&
+                uptr->userStorageType != tcSTORAGE_TYPE_READONLY &&
+                (uptr->userStatus == tcROW_STATUS_ACTIVE ||
+                 uptr->userStatus == tcROW_STATUS_NOTINSERVICE)) {
                 return PRIOT_ERR_WRONGVALUE;
-            } else if (long_ret == TC_ST_READONLY &&
+            } else if (long_ret == tcSTORAGE_TYPE_READONLY &&
                        (Api_oidCompare
                         (uptr->privProtocol, uptr->privProtocolLen,
                          usm_noPrivProtocol,
@@ -1334,7 +1334,7 @@ write_usmUserStatus(int action,
             return PRIOT_ERR_WRONGLENGTH;
         }
         long_ret = *((long *) var_val);
-        if (long_ret == TC_RS_NOTREADY || long_ret < 1 || long_ret > 6) {
+        if (long_ret == tcROW_STATUS_NOTREADY || long_ret < 1 || long_ret > 6) {
             return PRIOT_ERR_WRONGVALUE;
         }
 
@@ -1362,21 +1362,21 @@ write_usmUserStatus(int action,
         uptr = Usm_getUser(engineID, engineIDLen, newName);
 
         if (uptr != NULL) {
-            if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT) {
+            if (long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT) {
                 MEMORY_FREE(engineID);
                 MEMORY_FREE(newName);
-                long_ret = TC_RS_NOTREADY;
+                long_ret = tcROW_STATUS_NOTREADY;
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
             MEMORY_FREE(engineID);
             MEMORY_FREE(newName);
         } else {
-            if (long_ret == TC_RS_ACTIVE || long_ret == TC_RS_NOTINSERVICE) {
+            if (long_ret == tcROW_STATUS_ACTIVE || long_ret == tcROW_STATUS_NOTINSERVICE) {
                 MEMORY_FREE(engineID);
                 MEMORY_FREE(newName);
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT) {
+            if (long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT) {
                 if ((uptr = Usm_createUser()) == NULL) {
                     MEMORY_FREE(engineID);
                     MEMORY_FREE(newName);
@@ -1418,24 +1418,24 @@ write_usmUserStatus(int action,
         MEMORY_FREE(newName);
 
         if (uptr != NULL) {
-            if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_ACTIVE) {
+            if (long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_ACTIVE) {
                 if (usmStatusCheck(uptr)) {
-                    uptr->userStatus = TC_RS_ACTIVE;
+                    uptr->userStatus = tcROW_STATUS_ACTIVE;
                 } else {
                     MEMORY_FREE(engineID);
                     MEMORY_FREE(newName);
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
-            } else if (long_ret == TC_RS_CREATEANDWAIT) {
+            } else if (long_ret == tcROW_STATUS_CREATEANDWAIT) {
                 if (usmStatusCheck(uptr)) {
-                    uptr->userStatus = TC_RS_NOTINSERVICE;
+                    uptr->userStatus = tcROW_STATUS_NOTINSERVICE;
                 } else {
-                    uptr->userStatus = TC_RS_NOTREADY;
+                    uptr->userStatus = tcROW_STATUS_NOTREADY;
                 }
-            } else if (long_ret == TC_RS_NOTINSERVICE) {
-                if (uptr->userStatus == TC_RS_ACTIVE ||
-                    uptr->userStatus == TC_RS_NOTINSERVICE) {
-                    uptr->userStatus = TC_RS_NOTINSERVICE;
+            } else if (long_ret == tcROW_STATUS_NOTINSERVICE) {
+                if (uptr->userStatus == tcROW_STATUS_ACTIVE ||
+                    uptr->userStatus == tcROW_STATUS_NOTINSERVICE) {
+                    uptr->userStatus = tcROW_STATUS_NOTINSERVICE;
                 } else {
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
@@ -1450,7 +1450,7 @@ write_usmUserStatus(int action,
         MEMORY_FREE(newName);
 
         if (uptr != NULL) {
-            if (long_ret == TC_RS_DESTROY) {
+            if (long_ret == tcROW_STATUS_DESTROY) {
                 Usm_removeUser(uptr);
                 Usm_freeUser(uptr);
             }
@@ -1466,7 +1466,7 @@ write_usmUserStatus(int action,
         MEMORY_FREE(engineID);
         MEMORY_FREE(newName);
 
-        if (long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT) {
+        if (long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT) {
             Usm_removeUser(uptr);
             Usm_freeUser(uptr);
         }

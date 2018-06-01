@@ -1,10 +1,10 @@
 #include "ExecuteCmd.h"
 #include "../Plugin/Struct.h"
-#include "System/Util/Trace.h"
-#include "System/Util/Logger.h"
 #include "PriotSettings.h"
 #include "ReadConfig.h"
-#include "System.h"
+#include "System/Util/Logger.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 #include <stdlib.h>
 #include <sys/wait.h>
 
@@ -34,7 +34,7 @@ int ExecuteCmd_runShellCommand( char* command, char* input,
             const char* ofname; /* Filename for output redirection */
             char shellline[ STRMAX ]; /* The full command to run */
 
-            ifname = System_mktemp();
+            ifname = System_makeTemporaryFile();
             if ( NULL == ifname )
                 return -1;
             file = fopen( ifname, "w" );
@@ -46,7 +46,7 @@ int ExecuteCmd_runShellCommand( char* command, char* input,
             fprintf( file, "%s", input );
             fclose( file );
 
-            ofname = System_mktemp();
+            ofname = System_makeTemporaryFile();
             if ( NULL == ofname ) {
                 if ( ifname )
                     unlink( ifname );

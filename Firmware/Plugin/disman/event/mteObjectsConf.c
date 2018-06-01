@@ -83,10 +83,10 @@ void parse_mteOTable( const char* token, char* line )
          * Accept this (for backwards compatability)
          */
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmpint, &len );
-        if ( tmpint == TC_TV_TRUE )
+        if ( tmpint == tcTRUE )
             entry->flags |= MTE_OBJECT_FLAG_WILD;
         line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmpint, &len );
-        if ( tmpint == TC_RS_ACTIVE )
+        if ( tmpint == tcROW_STATUS_ACTIVE )
             entry->flags |= MTE_OBJECT_FLAG_ACTIVE;
     } else {
         /*

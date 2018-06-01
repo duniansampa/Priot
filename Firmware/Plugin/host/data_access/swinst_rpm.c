@@ -97,7 +97,7 @@ int netsnmp_swinst_arch_load( Container_Container* container, u_int flags )
             : 4; /*  application    */
 
         install_time = *t;
-        dt = Tc_dateNTime( &install_time, &date_len );
+        dt = Time_convertDateAndTimeToString( &install_time, &date_len );
         if ( date_len != 8 && date_len != 11 ) {
             Logger_log( LOGGER_PRIORITY_ERR, "Bogus length from Tc_dateNTime for %s", entry->swName );
             entry->swDate_len = 0;

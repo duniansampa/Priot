@@ -179,7 +179,7 @@ int VariableList_checkRowStatusLengthAndRange( const VariableList* var )
     rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER, sizeof( long ) );
 
     if ( rc == PRIOT_ERR_NOERROR ) {
-        if ( *var->value.integer == TC_RS_NOTREADY )
+        if ( *var->value.integer == tcROW_STATUS_NOTREADY )
             rc = PRIOT_ERR_WRONGVALUE;
     }
 
@@ -200,7 +200,7 @@ int VariableList_checkRowStatusTransition( const VariableList* var, int oldValue
     rc = VariableList_checkRowStatusLengthAndRange( var );
 
     if ( rc == PRIOT_ERR_NOERROR ) {
-        rc = Tc_checkRowstatusTransition( oldValue, *var->value.integer );
+        rc = TextualConvention_checkRowStatusTransition( oldValue, *var->value.integer );
     }
 
     return rc;
@@ -216,7 +216,7 @@ int VariableList_checkRowStatusWithStorageType( const VariableList* var, int old
     rc = VariableList_checkRowStatusLengthAndRange( var );
 
     if ( rc == PRIOT_ERR_NOERROR ) {
-        rc = Tc_checkRowstatusWithStoragetypeTransition( oldValue, *var->value.integer, oldStorage );
+        rc = TextualConvention_checkRowStatusWithStorageTypeTransition( oldValue, *var->value.integer, oldStorage );
     }
 
     return rc;
@@ -236,7 +236,7 @@ int VariableList_checkStorageType( const VariableList* var, int old_value )
     }
 
     if ( rc == PRIOT_ERR_NOERROR ) {
-        rc = Tc_checkStorageTransition( old_value, *var->value.integer );
+        rc = TextualConvention_checkStorageTransition( old_value, *var->value.integer );
     }
 
     return rc;

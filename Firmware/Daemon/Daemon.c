@@ -13,18 +13,19 @@
 #include "Agent.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/Alarm.h"
 #include "DsAgent.h"
 #include "FdEventManager.h"
-#include "System/Util/Logger.h"
 #include "M2M.h"
 #include "Mib.h"
 #include "ParseArgs.h"
 #include "PluginModules.h"
 #include "ReadConfig.h"
-#include "System.h"
-#include "Trap.h"
+#include "System/Util/Alarm.h"
+#include "System/Util/Directory.h"
+#include "System/Util/Logger.h"
+#include "System/Util/System.h"
 #include "System/Version.h"
+#include "Trap.h"
 #include <grp.h>
 #include <pwd.h>
 #include <signal.h>
@@ -666,7 +667,7 @@ int main( int argc, char* argv[] )
         int uid, gid;
 
         persistent_dir = ReadConfig_getPersistentDirectory();
-        System_mkdirhier( persistent_dir, AGENT_DIRECTORY_MODE, 0 );
+        Directory_makeDirectoryHierarchy( persistent_dir, AGENT_DIRECTORY_MODE, 0 );
 
         uid = DefaultStore_getInt( DsStore_APPLICATION_ID,
             DsAgentInterger_USERID );
@@ -778,7 +779,7 @@ static int
 _Daemon_receive( void )
 {
     int numfds;
-    Types_LargeFdSet readfds, writefds, exceptfds;
+    LargeFdSet_t readfds, writefds, exceptfds;
     struct timeval timeout, *tvp = &timeout;
     int count, block, i;
 
@@ -820,9 +821,9 @@ _Daemon_receive( void )
         tvp->tv_usec = 0;
 
         numfds = 0;
-        NETSNMP_LARGE_FD_ZERO( &readfds );
-        NETSNMP_LARGE_FD_ZERO( &writefds );
-        NETSNMP_LARGE_FD_ZERO( &exceptfds );
+        largeFD_ZERO( &readfds );
+        largeFD_ZERO( &writefds );
+        largeFD_ZERO( &exceptfds );
         block = 0;
         Api_selectInfo2( &numfds, &readfds, tvp, &block );
         if ( block == 1 ) {

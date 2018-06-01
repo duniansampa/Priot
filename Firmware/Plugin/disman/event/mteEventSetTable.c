@@ -103,7 +103,7 @@ int mteEventSetTable_handler( MibHandler* handler,
                     entry->mteSetOID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTEEVENTSETOBJECTWILDCARD:
-                ret = ( entry->flags & MTE_SET_FLAG_OBJWILD ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_SET_FLAG_OBJWILD ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             case COLUMN_MTEEVENTSETVALUE:
@@ -121,7 +121,7 @@ int mteEventSetTable_handler( MibHandler* handler,
                     strlen( entry->mteSetContext ) );
                 break;
             case COLUMN_MTEEVENTSETCONTEXTNAMEWILDCARD:
-                ret = ( entry->flags & MTE_SET_FLAG_CTXWILD ) ? TC_TV_TRUE : TC_TV_FALSE;
+                ret = ( entry->flags & MTE_SET_FLAG_CTXWILD ) ? tcTRUE : tcFALSE;
                 Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
                 break;
             }
@@ -254,7 +254,7 @@ int mteEventSetTable_handler( MibHandler* handler,
                 entry->mteSetOID_len = request->requestvb->valueLength / sizeof( oid );
                 break;
             case COLUMN_MTEEVENTSETOBJECTWILDCARD:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_SET_FLAG_OBJWILD;
                 else
                     entry->flags &= ~MTE_SET_FLAG_OBJWILD;
@@ -273,7 +273,7 @@ int mteEventSetTable_handler( MibHandler* handler,
                     request->requestvb->valueLength );
                 break;
             case COLUMN_MTEEVENTSETCONTEXTNAMEWILDCARD:
-                if ( *request->requestvb->value.integer == TC_TV_TRUE )
+                if ( *request->requestvb->value.integer == tcTRUE )
                     entry->flags |= MTE_SET_FLAG_CTXWILD;
                 else
                     entry->flags &= ~MTE_SET_FLAG_CTXWILD;

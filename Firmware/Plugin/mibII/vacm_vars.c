@@ -7,7 +7,7 @@
  */
 /*
  * Portions of this file are copyrighted by:
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright c 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
@@ -724,8 +724,8 @@ int write_vacmGroupName( int action,
             memcpy( string, geptr->groupName, VACM_VACMSTRINGLEN );
             memcpy( geptr->groupName, var_val, var_val_len );
             geptr->groupName[ var_val_len ] = 0;
-            if ( geptr->status == TC_RS_NOTREADY ) {
-                geptr->status = TC_RS_NOTINSERVICE;
+            if ( geptr->status == tcROW_STATUS_NOTREADY ) {
+                geptr->status = tcROW_STATUS_NOTINSERVICE;
             }
         }
     } else if ( action == IMPL_FREE ) {
@@ -766,7 +766,7 @@ int write_vacmSecurityToGroupStorageType( int action,
             return PRIOT_ERR_NOSUCHNAME;
         }
         long_ret = *( ( long* )var_val );
-        if ( ( long_ret == TC_ST_VOLATILE || long_ret == TC_ST_NONVOLATILE ) && ( geptr->storageType == TC_ST_VOLATILE || geptr->storageType == TC_ST_NONVOLATILE ) ) {
+        if ( ( long_ret == tcSTORAGE_TYPE_VOLATILE || long_ret == tcSTORAGE_TYPE_NONVOLATILE ) && ( geptr->storageType == tcSTORAGE_TYPE_VOLATILE || geptr->storageType == tcSTORAGE_TYPE_NONVOLATILE ) ) {
             geptr->storageType = long_ret;
         } else if ( long_ret == geptr->storageType ) {
             return PRIOT_ERR_NOERROR;
@@ -798,7 +798,7 @@ int write_vacmSecurityToGroupStatus( int action,
             return PRIOT_ERR_WRONGLENGTH;
         }
         long_ret = *( ( long* )var_val );
-        if ( long_ret == TC_RS_NOTREADY || long_ret < 1 || long_ret > 6 ) {
+        if ( long_ret == tcROW_STATUS_NOTREADY || long_ret < 1 || long_ret > 6 ) {
             return PRIOT_ERR_WRONGVALUE;
         }
 
@@ -823,21 +823,21 @@ int write_vacmSecurityToGroupStatus( int action,
         geptr = Vacm_getGroupEntry( model, newName );
 
         if ( geptr != NULL ) {
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
                 free( newName );
-                long_ret = TC_RS_NOTREADY;
+                long_ret = tcROW_STATUS_NOTREADY;
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( long_ret == TC_RS_DESTROY && geptr->storageType == TC_ST_PERMANENT ) {
+            if ( long_ret == tcROW_STATUS_DESTROY && geptr->storageType == tcSTORAGE_TYPE_PERMANENT ) {
                 free( newName );
                 return PRIOT_ERR_WRONGVALUE;
             }
         } else {
-            if ( long_ret == TC_RS_ACTIVE || long_ret == TC_RS_NOTINSERVICE ) {
+            if ( long_ret == tcROW_STATUS_ACTIVE || long_ret == tcROW_STATUS_NOTINSERVICE ) {
                 free( newName );
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
 
                 /*
                  * Generate a new group entry.  
@@ -850,8 +850,8 @@ int write_vacmSecurityToGroupStatus( int action,
                 /*
                  * Set defaults.  
                  */
-                geptr->storageType = TC_ST_NONVOLATILE;
-                geptr->status = TC_RS_NOTREADY;
+                geptr->storageType = tcSTORAGE_TYPE_NONVOLATILE;
+                geptr->status = tcROW_STATUS_NOTREADY;
             }
         }
         free( newName );
@@ -863,7 +863,7 @@ int write_vacmSecurityToGroupStatus( int action,
         geptr = Vacm_getGroupEntry( model, newName );
 
         if ( geptr != NULL ) {
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_ACTIVE ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_ACTIVE ) {
                 /*
                  * Check that all the mandatory objects have been set by now,
                  * otherwise return inconsistentValue.  
@@ -872,15 +872,15 @@ int write_vacmSecurityToGroupStatus( int action,
                     free( newName );
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
-                geptr->status = TC_RS_ACTIVE;
-            } else if ( long_ret == TC_RS_CREATEANDWAIT ) {
+                geptr->status = tcROW_STATUS_ACTIVE;
+            } else if ( long_ret == tcROW_STATUS_CREATEANDWAIT ) {
                 if ( geptr->groupName[ 0 ] != 0 ) {
-                    geptr->status = TC_RS_NOTINSERVICE;
+                    geptr->status = tcROW_STATUS_NOTINSERVICE;
                 }
-            } else if ( long_ret == TC_RS_NOTINSERVICE ) {
-                if ( geptr->status == TC_RS_ACTIVE ) {
-                    geptr->status = TC_RS_NOTINSERVICE;
-                } else if ( geptr->status == TC_RS_NOTREADY ) {
+            } else if ( long_ret == tcROW_STATUS_NOTINSERVICE ) {
+                if ( geptr->status == tcROW_STATUS_ACTIVE ) {
+                    geptr->status = tcROW_STATUS_NOTINSERVICE;
+                } else if ( geptr->status == tcROW_STATUS_NOTREADY ) {
                     free( newName );
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
@@ -895,13 +895,13 @@ int write_vacmSecurityToGroupStatus( int action,
         geptr = Vacm_getGroupEntry( model, newName );
 
         if ( geptr != NULL ) {
-            if ( long_ret == TC_RS_DESTROY ) {
+            if ( long_ret == tcROW_STATUS_DESTROY ) {
                 Vacm_destroyGroupEntry( model, newName );
             }
         }
         free( newName );
     } else if ( action == IMPL_UNDO ) {
-        if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+        if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
             sec2group_parse_oid( &name[ SEC2GROUP_MIB_LENGTH ],
                 name_len - SEC2GROUP_MIB_LENGTH,
                 &model, ( u_char** )&newName, &nameLen );
@@ -1035,7 +1035,7 @@ int write_vacmAccessStatus( int action,
             return PRIOT_ERR_WRONGLENGTH;
         }
         long_ret = *( ( long* )var_val );
-        if ( long_ret == TC_RS_NOTREADY || long_ret < 1 || long_ret > 6 ) {
+        if ( long_ret == tcROW_STATUS_NOTREADY || long_ret < 1 || long_ret > 6 ) {
             return PRIOT_ERR_WRONGVALUE;
         }
 
@@ -1063,23 +1063,23 @@ int write_vacmAccessStatus( int action,
             level );
 
         if ( aptr != NULL ) {
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
                 free( newGroupName );
                 free( newContextPrefix );
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( long_ret == TC_RS_DESTROY && aptr->storageType == TC_ST_PERMANENT ) {
+            if ( long_ret == tcROW_STATUS_DESTROY && aptr->storageType == tcSTORAGE_TYPE_PERMANENT ) {
                 free( newGroupName );
                 free( newContextPrefix );
                 return PRIOT_ERR_WRONGVALUE;
             }
         } else {
-            if ( long_ret == TC_RS_ACTIVE || long_ret == TC_RS_NOTINSERVICE ) {
+            if ( long_ret == tcROW_STATUS_ACTIVE || long_ret == tcROW_STATUS_NOTINSERVICE ) {
                 free( newGroupName );
                 free( newContextPrefix );
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
                 if ( ( aptr = Vacm_createAccessEntry( newGroupName,
                            newContextPrefix,
                            model,
@@ -1094,8 +1094,8 @@ int write_vacmAccessStatus( int action,
                  * Set defaults.  
                  */
                 aptr->contextMatch = 1; /*  exact(1) is the DEFVAL  */
-                aptr->storageType = TC_ST_NONVOLATILE;
-                aptr->status = TC_RS_NOTREADY;
+                aptr->storageType = tcSTORAGE_TYPE_NONVOLATILE;
+                aptr->status = tcROW_STATUS_NOTREADY;
             }
         }
         free( newGroupName );
@@ -1110,14 +1110,14 @@ int write_vacmAccessStatus( int action,
             level );
 
         if ( aptr != NULL ) {
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_ACTIVE ) {
-                aptr->status = TC_RS_ACTIVE;
-            } else if ( long_ret == TC_RS_CREATEANDWAIT ) {
-                aptr->status = TC_RS_NOTINSERVICE;
-            } else if ( long_ret == TC_RS_NOTINSERVICE ) {
-                if ( aptr->status == TC_RS_ACTIVE ) {
-                    aptr->status = TC_RS_NOTINSERVICE;
-                } else if ( aptr->status == TC_RS_NOTREADY ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_ACTIVE ) {
+                aptr->status = tcROW_STATUS_ACTIVE;
+            } else if ( long_ret == tcROW_STATUS_CREATEANDWAIT ) {
+                aptr->status = tcROW_STATUS_NOTINSERVICE;
+            } else if ( long_ret == tcROW_STATUS_NOTINSERVICE ) {
+                if ( aptr->status == tcROW_STATUS_ACTIVE ) {
+                    aptr->status = tcROW_STATUS_NOTINSERVICE;
+                } else if ( aptr->status == tcROW_STATUS_NOTREADY ) {
                     free( newGroupName );
                     free( newContextPrefix );
                     return PRIOT_ERR_INCONSISTENTVALUE;
@@ -1136,7 +1136,7 @@ int write_vacmAccessStatus( int action,
             level );
 
         if ( aptr ) {
-            if ( long_ret == TC_RS_DESTROY ) {
+            if ( long_ret == tcROW_STATUS_DESTROY ) {
                 Vacm_destroyAccessEntry( newGroupName, newContextPrefix,
                     model, level );
             }
@@ -1144,7 +1144,7 @@ int write_vacmAccessStatus( int action,
         free( newGroupName );
         free( newContextPrefix );
     } else if ( action == IMPL_UNDO ) {
-        if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+        if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
             access_parse_oid( &name[ ACCESS_MIB_LENGTH ],
                 name_len - ACCESS_MIB_LENGTH,
                 ( u_char** )&newGroupName, &groupNameLen,
@@ -1478,7 +1478,7 @@ int write_vacmViewStatus( int action,
             return PRIOT_ERR_WRONGLENGTH;
         }
         long_ret = *( ( long* )var_val );
-        if ( long_ret == TC_RS_NOTREADY || long_ret < 1 || long_ret > 6 ) {
+        if ( long_ret == tcROW_STATUS_NOTREADY || long_ret < 1 || long_ret > 6 ) {
             return PRIOT_ERR_WRONGVALUE;
         }
 
@@ -1507,24 +1507,24 @@ int write_vacmViewStatus( int action,
             vptr = NULL;
         }
         if ( vptr != NULL ) {
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
                 free( newViewName );
                 free( newViewSubtree );
-                long_ret = TC_RS_NOTREADY;
+                long_ret = tcROW_STATUS_NOTREADY;
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( long_ret == TC_RS_DESTROY && vptr->viewStorageType == TC_ST_PERMANENT ) {
+            if ( long_ret == tcROW_STATUS_DESTROY && vptr->viewStorageType == tcSTORAGE_TYPE_PERMANENT ) {
                 free( newViewName );
                 free( newViewSubtree );
                 return PRIOT_ERR_WRONGVALUE;
             }
         } else {
-            if ( long_ret == TC_RS_ACTIVE || long_ret == TC_RS_NOTINSERVICE ) {
+            if ( long_ret == tcROW_STATUS_ACTIVE || long_ret == tcROW_STATUS_NOTINSERVICE ) {
                 free( newViewName );
                 free( newViewSubtree );
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
 
                 /*
                  * Generate a new group entry.  
@@ -1540,8 +1540,8 @@ int write_vacmViewStatus( int action,
                 /*
                  * Set defaults.  
                  */
-                vptr->viewStorageType = TC_ST_NONVOLATILE;
-                vptr->viewStatus = TC_RS_NOTREADY;
+                vptr->viewStorageType = tcSTORAGE_TYPE_NONVOLATILE;
+                vptr->viewStatus = tcROW_STATUS_NOTREADY;
                 vptr->viewType = PRIOT_VIEW_INCLUDED;
             }
         }
@@ -1556,14 +1556,14 @@ int write_vacmViewStatus( int action,
             VACM_MODE_IGNORE_MASK );
 
         if ( vptr != NULL ) {
-            if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_ACTIVE ) {
-                vptr->viewStatus = TC_RS_ACTIVE;
-            } else if ( long_ret == TC_RS_CREATEANDWAIT ) {
-                vptr->viewStatus = TC_RS_NOTINSERVICE;
-            } else if ( long_ret == TC_RS_NOTINSERVICE ) {
-                if ( vptr->viewStatus == TC_RS_ACTIVE ) {
-                    vptr->viewStatus = TC_RS_NOTINSERVICE;
-                } else if ( vptr->viewStatus == TC_RS_NOTREADY ) {
+            if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_ACTIVE ) {
+                vptr->viewStatus = tcROW_STATUS_ACTIVE;
+            } else if ( long_ret == tcROW_STATUS_CREATEANDWAIT ) {
+                vptr->viewStatus = tcROW_STATUS_NOTINSERVICE;
+            } else if ( long_ret == tcROW_STATUS_NOTINSERVICE ) {
+                if ( vptr->viewStatus == tcROW_STATUS_ACTIVE ) {
+                    vptr->viewStatus = tcROW_STATUS_NOTINSERVICE;
+                } else if ( vptr->viewStatus == tcROW_STATUS_NOTREADY ) {
                     free( newViewName );
                     free( newViewSubtree );
                     return PRIOT_ERR_INCONSISTENTVALUE;
@@ -1581,7 +1581,7 @@ int write_vacmViewStatus( int action,
             VACM_MODE_IGNORE_MASK );
 
         if ( vptr != NULL ) {
-            if ( long_ret == TC_RS_DESTROY ) {
+            if ( long_ret == tcROW_STATUS_DESTROY ) {
                 Vacm_destroyViewEntry( newViewName, newViewSubtree,
                     viewSubtreeLen );
             }
@@ -1589,7 +1589,7 @@ int write_vacmViewStatus( int action,
         free( newViewName );
         free( newViewSubtree );
     } else if ( action == IMPL_UNDO ) {
-        if ( long_ret == TC_RS_CREATEANDGO || long_ret == TC_RS_CREATEANDWAIT ) {
+        if ( long_ret == tcROW_STATUS_CREATEANDGO || long_ret == tcROW_STATUS_CREATEANDWAIT ) {
             view_parse_oid( &name[ VIEW_MIB_LENGTH ],
                 name_len - VIEW_MIB_LENGTH,
                 ( u_char** )&newViewName, &viewNameLen,
@@ -1631,7 +1631,7 @@ int write_vacmViewStorageType( int action,
         if ( ( vptr = view_parse_viewEntry( name, name_len ) ) == NULL ) {
             return PRIOT_ERR_INCONSISTENTNAME;
         } else {
-            if ( ( newValue == TC_ST_VOLATILE || newValue == TC_ST_NONVOLATILE ) && ( vptr->viewStorageType == TC_ST_VOLATILE || vptr->viewStorageType == TC_ST_NONVOLATILE ) ) {
+            if ( ( newValue == tcSTORAGE_TYPE_VOLATILE || newValue == tcSTORAGE_TYPE_NONVOLATILE ) && ( vptr->viewStorageType == tcSTORAGE_TYPE_VOLATILE || vptr->viewStorageType == tcSTORAGE_TYPE_NONVOLATILE ) ) {
                 oldValue = vptr->viewStorageType;
                 vptr->viewStorageType = newValue;
             } else if ( newValue == vptr->viewStorageType ) {

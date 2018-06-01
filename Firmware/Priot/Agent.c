@@ -3216,7 +3216,7 @@ Agent_markerUptime( timeMarker pm )
     u_long res;
     timeMarkerConst start = Agent_getAgentStarttime();
 
-    res = Time_uatimeHdiff( start, pm );
+    res = Time_timeHdiff( start, pm );
     return res;
 }
 

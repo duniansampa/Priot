@@ -3,7 +3,6 @@
 #include "Auth.h"
 #include "Client.h"
 #include "Impl.h"
-#include "LargeFdSet.h"
 #include "Mib.h"
 #include "Parse.h"
 #include "Priot.h"
@@ -20,9 +19,10 @@
 #include "System/Util/Assert.h"
 #include "System/Util/Callback.h"
 #include "System/Util/Callback.h"
-#include "System/Util/Trace.h"
 #include "System/Util/DefaultStore.h"
+#include "System/Util/LargeFdSet.h"
 #include "System/Util/Logger.h"
+#include "System/Util/Trace.h"
 #include "Usm.h"
 #include "V3.h"
 #include "Vacm.h"
@@ -4714,15 +4714,15 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
  */
 void Api_read( fd_set* fdset )
 {
-    Types_LargeFdSet lfdset;
+    LargeFdSet_t lfdset;
 
     LargeFdSet_init( &lfdset, FD_SETSIZE );
-    LargeFdSet_copyFdSetToLargeFdSet( &lfdset, fdset );
+    LargeFdSet_copyFromFdSet( &lfdset, fdset );
     Api_read2( &lfdset );
     LargeFdSet_cleanup( &lfdset );
 }
 
-void Api_read2( Types_LargeFdSet* fdset )
+void Api_read2( LargeFdSet_t* fdset )
 {
     struct Api_SessionList_s* slp;
     Mutex_lock( MTSUPPORT_LIBRARY_ID, MTSUPPORT_LIB_SESSION );
@@ -4738,7 +4738,7 @@ void Api_read2( Types_LargeFdSet* fdset )
  * MTR: can't lock here and at Api_read
  * Beware recursive send maybe inside Api_read callback function.
  */
-int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
+int Api_sessRead3( void* sessp, LargeFdSet_t* fdset )
 {
     struct Api_SessionList_s* slp = ( struct Api_SessionList_s* )sessp;
     Types_Session* sp = slp ? slp->session : NULL;
@@ -4760,10 +4760,10 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
         return 0;
     }
 
-    if ( !fdset || !( LARGEFDSET_FD_ISSET( transport->sock, fdset ) ) ) {
+    if ( !fdset || !( largeFD_ISSET( transport->sock, fdset ) ) ) {
         DEBUG_MSGTL( ( "sessRead", "not reading %d (fdset %p set %d)\n",
             transport->sock, fdset,
-            fdset ? LARGEFDSET_FD_ISSET( transport->sock, fdset )
+            fdset ? largeFD_ISSET( transport->sock, fdset )
                   : -9 ) );
         return 0;
     }
@@ -5129,16 +5129,16 @@ int Api_sessRead3( void* sessp, Types_LargeFdSet* fdset )
 int Api_sessRead( void* sessp, fd_set* fdset )
 {
     int rc;
-    Types_LargeFdSet lfdset;
+    LargeFdSet_t lfdset;
 
     LargeFdSet_init( &lfdset, FD_SETSIZE );
-    LargeFdSet_copyFdSetToLargeFdSet( &lfdset, fdset );
+    LargeFdSet_copyFromFdSet( &lfdset, fdset );
     rc = Api_sessRead2( sessp, &lfdset );
     LargeFdSet_cleanup( &lfdset );
     return rc;
 }
 
-int Api_sessRead2( void* sessp, Types_LargeFdSet* fdset )
+int Api_sessRead2( void* sessp, LargeFdSet_t* fdset )
 {
     struct Api_SessionList_s* psl;
     Types_Session* pss;
@@ -5186,7 +5186,7 @@ int Api_selectInfo( int* numfds, fd_set* fdset, struct timeval* timeout,
 /**
  * @see See also Api_sessSelectInfo2Flags().
  */
-int Api_selectInfo2( int* numfds, Types_LargeFdSet* fdset,
+int Api_selectInfo2( int* numfds, LargeFdSet_t* fdset,
     struct timeval* timeout, int* block )
 {
     return Api_sessSelectInfo2( NULL, numfds, fdset, timeout, block );
@@ -5209,13 +5209,13 @@ int Api_sessSelectInfoFlags( void* sessp, int* numfds, fd_set* fdset,
     struct timeval* timeout, int* block, int flags )
 {
     int rc;
-    Types_LargeFdSet lfdset;
+    LargeFdSet_t lfdset;
 
     LargeFdSet_init( &lfdset, FD_SETSIZE );
-    LargeFdSet_copyFdSetToLargeFdSet( &lfdset, fdset );
+    LargeFdSet_copyFromFdSet( &lfdset, fdset );
     rc = Api_sessSelectInfo2Flags( sessp, numfds, &lfdset, timeout,
         block, flags );
-    if ( LargeFdSet_copyLargeFdSetToFdSet( fdset, &lfdset ) < 0 ) {
+    if ( LargeFdSet_copyToFdSet( fdset, &lfdset ) < 0 ) {
         Logger_log( LOGGER_PRIORITY_ERR,
             "Use Api_sessSelectInfo2() for processing"
             " large file descriptors\n" );
@@ -5227,7 +5227,7 @@ int Api_sessSelectInfoFlags( void* sessp, int* numfds, fd_set* fdset,
 /**
  * @see See also Api_sessSelectInfo2Flags().
  */
-int Api_sessSelectInfo2( void* sessp, int* numfds, Types_LargeFdSet* fdset,
+int Api_sessSelectInfo2( void* sessp, int* numfds, LargeFdSet_t* fdset,
     struct timeval* timeout, int* block )
 {
     return Api_sessSelectInfo2Flags( sessp, numfds, fdset, timeout, block,
@@ -5262,7 +5262,7 @@ int Api_sessSelectInfo2( void* sessp, int* numfds, Types_LargeFdSet* fdset,
  *   function.
  */
 int Api_sessSelectInfo2Flags( void* sessp, int* numfds,
-    Types_LargeFdSet* fdset,
+    LargeFdSet_t* fdset,
     struct timeval* timeout, int* block, int flags )
 {
     struct Api_SessionList_s *slp, *next = NULL;
@@ -5313,7 +5313,7 @@ int Api_sessSelectInfo2Flags( void* sessp, int* numfds,
             *numfds = ( slp->transport->sock + 1 );
         }
 
-        LARGEFDSET_FD_SET( slp->transport->sock, fdset );
+        largeFD_SET( slp->transport->sock, fdset );
         if ( slp->internal != NULL && slp->internal->requests ) {
             /*
              * Found another session with outstanding requests.

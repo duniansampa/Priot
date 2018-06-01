@@ -1417,7 +1417,7 @@ int write_snmpTargetAddrRowStatus( int action,
             printf( "-----------> : %d %d \n", var_val_len, sizeof( long ) );
             return PRIOT_ERR_WRONGLENGTH;
         }
-        if ( value == TC_RS_NOTREADY || value < 1 || value > 6 ) {
+        if ( value == tcROW_STATUS_NOTREADY || value < 1 || value > 6 ) {
             return PRIOT_ERR_WRONGVALUE;
         }
 
@@ -1441,8 +1441,8 @@ int write_snmpTargetAddrRowStatus( int action,
             &name_len, 1 );
 
         if ( target != NULL ) {
-            if ( value == TC_RS_CREATEANDGO || value == TC_RS_CREATEANDWAIT ) {
-                value = TC_RS_NOTREADY;
+            if ( value == tcROW_STATUS_CREATEANDGO || value == tcROW_STATUS_CREATEANDWAIT ) {
+                value = tcROW_STATUS_NOTREADY;
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
             if ( target->storageType == PRIOT_STORAGE_READONLY ) {
@@ -1450,17 +1450,17 @@ int write_snmpTargetAddrRowStatus( int action,
                 return PRIOT_ERR_NOTWRITABLE;
             }
             if ( target->storageType == PRIOT_STORAGE_PERMANENT ) {
-                if ( value == TC_RS_DESTROY ) {
+                if ( value == tcROW_STATUS_DESTROY ) {
                     DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                         "unable to destroy permanent row\n" ) );
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
             }
         } else {
-            if ( value == TC_RS_ACTIVE || value == TC_RS_NOTINSERVICE ) {
+            if ( value == tcROW_STATUS_ACTIVE || value == tcROW_STATUS_NOTINSERVICE ) {
                 return PRIOT_ERR_INCONSISTENTVALUE;
             }
-            if ( value == TC_RS_CREATEANDGO || value == TC_RS_CREATEANDWAIT ) {
+            if ( value == tcROW_STATUS_CREATEANDGO || value == tcROW_STATUS_CREATEANDWAIT ) {
                 if ( snmpTargetAddr_createNewRow( name, name_len ) == 0 ) {
                     DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                         "couldn't malloc() new row\n" ) );
@@ -1475,34 +1475,34 @@ int write_snmpTargetAddrRowStatus( int action,
             &name_len, 1 );
 
         if ( target != NULL ) {
-            if ( value == TC_RS_CREATEANDGO ) {
+            if ( value == tcROW_STATUS_CREATEANDGO ) {
                 /*
                  * Check whether all the required objects have been set.  
                  */
                 if ( snmpTargetAddr_rowStatusCheck( target ) ) {
-                    target->rowStatus = TC_RS_ACTIVE;
+                    target->rowStatus = tcROW_STATUS_ACTIVE;
                 } else {
-                    target->rowStatus = TC_RS_NOTREADY;
+                    target->rowStatus = tcROW_STATUS_NOTREADY;
                 }
-            } else if ( value == TC_RS_CREATEANDWAIT ) {
+            } else if ( value == tcROW_STATUS_CREATEANDWAIT ) {
                 /*
                  * Check whether all the required objects have been set.  
                  */
                 if ( snmpTargetAddr_rowStatusCheck( target ) ) {
-                    target->rowStatus = TC_RS_NOTINSERVICE;
+                    target->rowStatus = tcROW_STATUS_NOTINSERVICE;
                 } else {
-                    target->rowStatus = TC_RS_NOTREADY;
+                    target->rowStatus = tcROW_STATUS_NOTREADY;
                 }
-            } else if ( value == TC_RS_ACTIVE ) {
-                if ( target->rowStatus == TC_RS_NOTINSERVICE ) {
-                    target->rowStatus = TC_RS_ACTIVE;
-                } else if ( target->rowStatus == TC_RS_NOTREADY ) {
+            } else if ( value == tcROW_STATUS_ACTIVE ) {
+                if ( target->rowStatus == tcROW_STATUS_NOTINSERVICE ) {
+                    target->rowStatus = tcROW_STATUS_ACTIVE;
+                } else if ( target->rowStatus == tcROW_STATUS_NOTREADY ) {
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
-            } else if ( value == TC_RS_NOTINSERVICE ) {
-                if ( target->rowStatus == TC_RS_ACTIVE ) {
-                    target->rowStatus = TC_RS_NOTINSERVICE;
-                } else if ( target->rowStatus == TC_RS_NOTREADY ) {
+            } else if ( value == tcROW_STATUS_NOTINSERVICE ) {
+                if ( target->rowStatus == tcROW_STATUS_ACTIVE ) {
+                    target->rowStatus = tcROW_STATUS_NOTINSERVICE;
+                } else if ( target->rowStatus == tcROW_STATUS_NOTREADY ) {
                     return PRIOT_ERR_INCONSISTENTVALUE;
                 }
             }
@@ -1513,10 +1513,10 @@ int write_snmpTargetAddrRowStatus( int action,
             snmpTargetAddrOIDLen, name,
             &name_len, 1 );
         if ( target != NULL ) {
-            if ( value == TC_RS_DESTROY ) {
+            if ( value == tcROW_STATUS_DESTROY ) {
                 snmpTargetAddrTable_remFromList( target, &aAddrTable );
             }
-            if ( value == TC_RS_NOTINSERVICE ) {
+            if ( value == tcROW_STATUS_NOTINSERVICE ) {
                 if ( target->sess != NULL ) {
                     Api_close( target->sess );
                     target->sess = NULL;
@@ -1529,7 +1529,7 @@ int write_snmpTargetAddrRowStatus( int action,
         target = search_snmpTargetAddrTable( snmpTargetAddrOID,
             snmpTargetAddrOIDLen, name,
             &name_len, 1 );
-        if ( value == TC_RS_CREATEANDGO || value == TC_RS_CREATEANDWAIT ) {
+        if ( value == tcROW_STATUS_CREATEANDGO || value == tcROW_STATUS_CREATEANDWAIT ) {
             if ( target != NULL ) {
                 snmpTargetAddrTable_remFromList( target, &aAddrTable );
             }

@@ -2,9 +2,9 @@
 
 #include "siglog/agent/hardware/memory.h"
 #include "CacheHandler.h"
-#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
-#include "System.h"
+#include "System/Util/System.h"
+#include "System/Util/Trace.h"
 
 /*
  * Try to use an initial size that will cover default cases. We aren't talking
@@ -92,7 +92,7 @@ int netsnmp_mem_arch_load( Cache* cache, void* magic )
         if ( first )
             Logger_log( LOGGER_PRIORITY_ERR, "No MemFree line in /proc/meminfo\n" );
     }
-    if ( 0 == System_osPrematch( "Linux", "2.4" ) ) {
+    if ( 0 == System_isOsPrefixMatch( "Linux", "2.4" ) ) {
         b = strstr( buff, "MemShared: " );
         if ( b )
             sscanf( b, "MemShared: %lu", &memshared );
