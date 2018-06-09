@@ -1,9 +1,10 @@
 #include "V3.h"
 #include "Api.h"
-#include "EngineTime.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
+#include "System/Security/EngineTime.h"
+#include "System/Security/Usm.h"
 #include "System/String.h"
 #include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
@@ -11,8 +12,6 @@
 #include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
 #include "System/Util/Utilities.h"
-#include "Usm.h"
-
 #include <net/if.h>
 #include <sys/ioctl.h>
 

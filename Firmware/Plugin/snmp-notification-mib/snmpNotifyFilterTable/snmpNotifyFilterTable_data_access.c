@@ -11,10 +11,9 @@
 //#include <siglog/library/vacm.h>
 
 #include "snmpNotifyFilterTable_data_access.h"
-#include "System/Util/Trace.h"
+#include "System/AccessControl/Vacm.h"
 #include "System/Util/Logger.h"
-#include "Vacm.h"
-#include "Vacm.h"
+#include "System/Util/Trace.h"
 #include "siglog/agent/mfd.h"
 #include "snmpNotifyFilterTable_interface.h"
 

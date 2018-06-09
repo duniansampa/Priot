@@ -41,7 +41,7 @@ StashToNext_helper( MibHandler*          handler,
     int             ret = PRIOT_ERR_NOERROR;
     int             namelen;
     int             finished = 0;
-    OidStash_Node **cinfo;
+    OidStashNode_t **cinfo;
     VariableList   *vb;
     RequestInfo    *reqtmp;
 

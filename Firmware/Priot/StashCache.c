@@ -104,10 +104,10 @@ StashCache_getTimedStashCacheHandler(int timeout, oid *rootoid, size_t rootoid_l
 }
 
 /** extracts a pointer to the stash_cache info from the reqinfo structure. */
-OidStash_Node  **
+OidStashNode_t  **
 StashCache_extractStashCache(AgentRequestInfo *reqinfo)
 {
-    return (OidStash_Node**)Agent_getListData(reqinfo, STASH_CACHE_NAME);
+    return (OidStashNode_t**)Agent_getListData(reqinfo, STASH_CACHE_NAME);
 }
 
 
@@ -120,7 +120,7 @@ StashCache_helper( MibHandler *handler,
 {
     Cache            *cache;
     StashCacheInfo *cinfo;
-    OidStash_Node   *cnode;
+    OidStashNode_t   *cnode;
     VariableList    *cdata;
     RequestInfo     *request;
 
@@ -156,11 +156,11 @@ StashCache_helper( MibHandler *handler,
         DEBUG_MSGTL(("helper:stash_cache", "Processing GETNEXT request\n"));
         for(request = requests; request; request = request->next) {
             cnode =
-                OidStash_getnextNode(cinfo->cache,
+                OidStash_getNextNode(cinfo->cache,
                                                requests->requestvb->name,
                                                requests->requestvb->nameLength);
-            if (cnode && cnode->thedata) {
-                cdata =  (VariableList*)cnode->thedata;
+            if (cnode && cnode->data) {
+                cdata =  (VariableList*)cnode->data;
                 if (cdata->value.string && cdata->name && cdata->nameLength) {
                     DEBUG_MSGTL(("helper:stash_cache", "Found cached GETNEXT varbind\n"));
                     DEBUG_MSGOID(("helper:stash_cache", cdata->name, cdata->nameLength));
@@ -219,8 +219,8 @@ void
 StashCache_free( Cache *cache, void *magic )
 {
     StashCacheInfo *cinfo = (StashCacheInfo*) magic;
-    OidStash_free(&cinfo->cache,
-                  (OidStash_FuncStashFreeNode *) Api_freeVar);
+    OidStash_clear(&cinfo->cache,
+                  (OidStashFreeNode_f *) Api_freeVar);
     return;
 }
 

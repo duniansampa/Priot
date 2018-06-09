@@ -2,7 +2,7 @@
 #define SESSION_H
 
 #include "Generals.h"
-#include "System/Util/LargeFdSet.h"
+#include "System/Dispatcher/LargeFdSet.h"
 #include "Types.h"
 /**
  *  Library API routines concerned with specifying and using SNMP "sessions"

@@ -4,13 +4,13 @@
  */
 
 #include "nsVacmAccessTable.h"
-#include "System/Util/VariableList.h"
 #include "Client.h"
-#include "System/Util/Trace.h"
+#include "System/AccessControl/Vacm.h"
 #include "System/Containers/MapList.h"
+#include "System/Util/Trace.h"
+#include "System/Util/VariableList.h"
 #include "Table.h"
 #include "TextualConvention.h"
-#include "Vacm.h"
 
 /** Initializes the nsVacmAccessTable module */
 void init_register_nsVacm_context( const char* context )

@@ -443,7 +443,7 @@ int TableDataset_helperHandler( MibHandler* handler,
     TableRow *row, *newrow = NULL;
     TableRequestInfo* table_info;
     RequestInfo* request;
-    OidStash_Node** stashp = NULL;
+    OidStashNode_t** stashp = NULL;
 
     if ( !handler )
         return ErrorCode_GENERR;
@@ -1123,12 +1123,12 @@ void TableDataset_configParseAddRow( const char* token, char* line )
     }
 }
 
-OidStash_Node**
+OidStashNode_t**
 TableDataset_getOrCreateStash( AgentRequestInfo* reqinfo,
     TableDataSet* datatable,
     TableRequestInfo* table_info )
 {
-    OidStash_Node** stashp = NULL;
+    OidStashNode_t** stashp = NULL;
     char buf[ 256 ]; /* is this reasonable size?? */
     size_t len;
     int rc;
@@ -1148,7 +1148,7 @@ TableDataset_getOrCreateStash( AgentRequestInfo* reqinfo,
         return NULL;
     }
 
-    stashp = ( OidStash_Node** )
+    stashp = ( OidStashNode_t** )
         Table_getOrCreateRowStash( reqinfo, ( u_char* )buf );
     return stashp;
 }
@@ -1162,7 +1162,7 @@ TableDataset_getNewrow( RequestInfo* request,
 {
     oid* const suffix = request->requestvb->name + rootoid_len + 2;
     size_t suffix_len = request->requestvb->nameLength - ( rootoid_len + 2 );
-    OidStash_Node** stashp;
+    OidStashNode_t** stashp;
     NewrowStash* newrowstash;
 
     stashp = TableDataset_getOrCreateStash( reqinfo, datatable,

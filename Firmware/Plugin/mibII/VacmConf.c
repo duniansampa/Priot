@@ -2,7 +2,6 @@
 #include "AgentCallbacks.h"
 #include "AgentReadConfig.h"
 #include "AgentRegistry.h"
-#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
 #include "Impl.h"
 #include "Mib.h"
@@ -10,14 +9,15 @@
 #include "PriotSettings.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
+#include "System/AccessControl/Vacm.h"
 #include "System/Containers/MapList.h"
 #include "System/String.h"
-#include "System/Util/Trace.h"
+#include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
+#include "System/Util/Trace.h"
 #include "Transports/TCPDomain.h"
 #include "Transports/UDPDomain.h"
 #include "Transports/UnixDomain.h"
-#include "Vacm.h"
 
 /**
  * Registers the VACM token handlers for inserting rows into the vacm tables.

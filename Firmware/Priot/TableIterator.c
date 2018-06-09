@@ -413,7 +413,7 @@ int TableIterator_helperHandler( MibHandler* handler,
     void* callback_data_context = NULL;
     TiCacheInfo* ti_info = NULL;
     int request_count = 0;
-    OidStash_Node** cinfo = NULL;
+    OidStashNode_t** cinfo = NULL;
     VariableList *old_indexes = NULL, *vb;
     TableRegistrationInfo* table_reg_info = NULL;
     int i;

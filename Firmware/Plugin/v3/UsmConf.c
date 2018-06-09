@@ -1,8 +1,7 @@
 #include "UsmConf.h"
-#include "Usm.h"
+#include "System/Security/Usm.h"
 
-void
-UsmConf_initUsmConf(void)
+void UsmConf_initUsmConf( void )
 {
-    Usm_initUsmConf(NULL);
+    Usm_initUsmConf( NULL );
 }

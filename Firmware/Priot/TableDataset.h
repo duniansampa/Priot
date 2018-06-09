@@ -147,7 +147,7 @@ TableDataset_extractTableDataSet( RequestInfo * request );
 TableDataSetStorage *
 TableDataset_extractTableDataSetColumn( RequestInfo *,
                                         unsigned int );
-OidStash_Node **
+OidStashNode_t **
 TableDataset_getOrCreateStash( AgentRequestInfo * ari,
                                TableDataSet     * tds,
                                TableRequestInfo * tri );

@@ -9,7 +9,7 @@
 typedef struct StashCacheInfo_s {
    int            cache_valid;
    timeMarker        cache_time;
-   OidStash_Node* cache;
+   OidStashNode_t* cache;
    int            cache_length;
 } StashCacheInfo;
 
@@ -41,7 +41,7 @@ StashCache_getTimedStashCacheHandler( int    timeout,
 
 NodeHandlerFT StashCache_helper;
 
-OidStash_Node**
+OidStashNode_t**
 StashCache_extractStashCache( AgentRequestInfo *reqinfo);
 
 

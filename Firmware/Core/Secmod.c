@@ -1,12 +1,12 @@
 #include "Secmod.h"
 #include "Api.h"
+#include "System/Containers/MapList.h"
+#include "System/Security/Usm.h"
 #include "System/Util/Callback.h"
 #include "System/Util/DefaultStore.h"
-#include "System/Containers/MapList.h"
-#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
+#include "System/Util/Trace.h"
 #include "System/Util/Utilities.h"
-#include "Usm.h"
 
 extern void Usm_initUsm();
 extern void Usm_shutdownUsm();

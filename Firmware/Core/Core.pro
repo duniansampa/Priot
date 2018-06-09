@@ -45,9 +45,8 @@ SOURCES += \
     Api.c \
     Asn01.c \
     Client.c \
-    Keytools.c \
-    System/Util/LargeFdSet.c \
-    Md5.c \
+    System/Security/Keytools.c \
+    System/Dispatcher/LargeFdSet.c \
     Mib.c \
     OidStash.c \
     Parse.c \
@@ -60,10 +59,10 @@ SOURCES += \
     Session.c \
     System/Util/System.c \
     Transport.c \
-    Usm.c \
+    System/Security/Usm.c \
     V3.c \
-    Vacm.c \
-    FdEventManager.c \
+    System/AccessControl/Vacm.c \
+    System/Dispatcher/FdEventManager.c \
     System/Util/Directory.c \
     System/Util/File.c \
     System/Numerics/Integer.c \
@@ -76,7 +75,7 @@ SOURCES += \
     System/Util/FileParser.c \
     TextualConvention.c \
     System/Util/Trace.c \
-    EngineTime.c
+    System/Security/EngineTime.c
 
 HEADERS += \
     Config.h \
@@ -118,9 +117,8 @@ HEADERS += \
     System/Util/System.h \
     Types.h \
     Priot.h \
-    System/Util/LargeFdSet.h \
-    Keytools.h \
-    Md5.h \
+    System/Dispatcher/LargeFdSet.h \
+    System/Security/Keytools.h \
     Mib.h \
     Asn01.h \
     Parse.h \
@@ -131,15 +129,15 @@ HEADERS += \
     ParseArgs.h \
     Secmod.h \
     Service.h \
-    Usm.h \
+    System/Security/Usm.h \
     V3.h \
-    Vacm.h \
+    System/AccessControl/Vacm.h \
     Client.h \
     Impl.h \
     Session.h \
     ../Plugin/Agentx/Protocol.h \
     System/Convert.h \
-    FdEventManager.h \
+    System/Dispatcher/FdEventManager.h \
     System/Numerics/Integer.h \
     System/Task/Mutex.h \
     System/Containers/List.h \
@@ -147,7 +145,7 @@ HEADERS += \
     System/Util/FileParser.h \
     TextualConvention.h \
     System/Util/Trace.h \
-    EngineTime.h
+    System/Security/EngineTime.h
 
 
 

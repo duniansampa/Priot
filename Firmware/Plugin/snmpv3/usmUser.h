@@ -2,7 +2,7 @@
 #define _MIBGROUP_USMUSER_H
 
 #include "Vars.h"
-#include "Usm.h"
+#include "System/Security/Usm.h"
 
 /*
  * <...prefix>.<engineID_length>.<engineID>.<user_name_length>.<user_name>

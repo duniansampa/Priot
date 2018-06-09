@@ -6,7 +6,7 @@
 #define _MIBGROUP_VACM_H
 
 #include "Vars.h"
-#include "Vacm.h"
+#include "System/AccessControl/Vacm.h"
 
      void            init_vacm_vars(void);
 

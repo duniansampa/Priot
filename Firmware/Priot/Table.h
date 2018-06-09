@@ -164,7 +164,7 @@ int Table_checkGetnextReply( RequestInfo *request,
 TableRequestInfo*
 Table_extractTableInfo( RequestInfo * );
 
-OidStash_Node**
+OidStashNode_t**
 Table_getOrCreateRowStash( AgentRequestInfo *reqinfo,
                                 const u_char * storage_name);
 unsigned int

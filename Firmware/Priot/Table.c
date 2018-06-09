@@ -1108,26 +1108,26 @@ void Table_helperAddIndexes( TableRegistrationInfo* tinfo,
 static void
 _Table_rowStashDataListFree( void* ptr )
 {
-    OidStash_Node** tmp = ( OidStash_Node** )ptr;
-    OidStash_free( tmp, NULL );
+    OidStashNode_t** tmp = ( OidStashNode_t** )ptr;
+    OidStash_clear( tmp, NULL );
     free( ptr );
 }
 
 /** returns a row-wide place to store data in.
     @todo This function will likely change to add free pointer functions. */
-OidStash_Node**
+OidStashNode_t**
 Table_getOrCreateRowStash( AgentRequestInfo* reqinfo,
     const u_char* storage_name )
 {
-    OidStash_Node** stashp = NULL;
-    stashp = ( OidStash_Node** )
+    OidStashNode_t** stashp = NULL;
+    stashp = ( OidStashNode_t** )
         Agent_getListData( reqinfo, ( const char* )storage_name );
 
     if ( !stashp ) {
         /*
          * hasn't be created yet.  we create it here.
          */
-        stashp = MEMORY_MALLOC_TYPEDEF( OidStash_Node* );
+        stashp = MEMORY_MALLOC_TYPEDEF( OidStashNode_t* );
 
         if ( !stashp )
             return NULL; /* ack. out of mem */
