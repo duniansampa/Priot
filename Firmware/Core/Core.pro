@@ -75,7 +75,7 @@ SOURCES += \
     System/Util/FileParser.c \
     TextualConvention.c \
     System/Util/Trace.c \
-    System/Security/EngineTime.c
+    System/Security/Engine.c
 
 HEADERS += \
     Config.h \
@@ -145,7 +145,7 @@ HEADERS += \
     System/Util/FileParser.h \
     TextualConvention.h \
     System/Util/Trace.h \
-    System/Security/EngineTime.h
+    System/Security/Engine.h
 
 
 

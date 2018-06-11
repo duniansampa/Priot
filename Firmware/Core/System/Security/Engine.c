@@ -1,4 +1,4 @@
-#include "EngineTime.h"
+#include "Engine.h"
 #include "Api.h"
 #include "Scapi.h"
 #include "System/Util/Trace.h"
@@ -10,16 +10,16 @@
  * Global static hashlist to contain Enginetime entries.
  * New records are prepended to the appropriate list at the hash index.
  */
-static Enginetime_p _engineTime_list[ engineLIST_SIZE ];
+static Engine_p _engine_list[ engineLIST_SIZE ];
 
-int EngineTime_get( const u_char* engineId,
+int Engine_get( const u_char* engineId,
     u_int engineIdLength,
     u_int* engineBoot,
     u_int* engineTime, u_int authenticatedFlag )
 {
     int rval = ErrorCode_SUCCESS;
     int timediff = 0;
-    Enginetime_p e = NULL;
+    Engine_p e = NULL;
 
     /*
      * Sanity check.
@@ -38,7 +38,7 @@ int EngineTime_get( const u_char* engineId,
         UTILITIES_QUIT_FUN( ErrorCode_GENERR, goto_getEnginetimeQuit );
     }
 
-    if ( !( e = EngineTime_searchInList( engineId, engineIdLength ) ) ) {
+    if ( !( e = Engine_searchInList( engineId, engineIdLength ) ) ) {
         UTILITIES_QUIT_FUN( ErrorCode_GENERR, goto_getEnginetimeQuit );
     }
 
@@ -73,7 +73,7 @@ goto_getEnginetimeQuit:
     return rval;
 }
 
-int EngineTime_getEx( u_char* engineId,
+int Engine_getEx( u_char* engineId,
     u_int engineIdLength,
     u_int* engineBoot,
     u_int* engineTime,
@@ -81,7 +81,7 @@ int EngineTime_getEx( u_char* engineId,
 {
     int rval = ErrorCode_SUCCESS;
     int timediff = 0;
-    Enginetime_p e = NULL;
+    Engine_p e = NULL;
 
     /*
      * Sanity check.
@@ -100,7 +100,7 @@ int EngineTime_getEx( u_char* engineId,
         UTILITIES_QUIT_FUN( ErrorCode_GENERR, goto_getEnginetimeExQuit );
     }
 
-    if ( !( e = EngineTime_searchInList( engineId, engineIdLength ) ) ) {
+    if ( !( e = Engine_searchInList( engineId, engineIdLength ) ) ) {
         UTILITIES_QUIT_FUN( ErrorCode_GENERR, goto_getEnginetimeExQuit );
     }
 
@@ -135,33 +135,33 @@ goto_getEnginetimeExQuit:
     return rval;
 }
 
-void EngineTime_free( unsigned char* engineId, size_t engineIdLength )
+void Engine_free( unsigned char* engineId, size_t engineIdLength )
 {
-    Enginetime_p e = NULL;
+    Engine_p e = NULL;
     int rval = 0;
 
-    rval = EngineTime_hashEngineId( engineId, engineIdLength );
+    rval = Engine_hashEngineId( engineId, engineIdLength );
     if ( rval < 0 )
         return;
 
-    e = _engineTime_list[ rval ];
+    e = _engine_list[ rval ];
 
     while ( e != NULL ) {
-        _engineTime_list[ rval ] = e->next;
+        _engine_list[ rval ] = e->next;
         MEMORY_FREE( e->engineId );
         MEMORY_FREE( e );
-        e = _engineTime_list[ rval ];
+        e = _engine_list[ rval ];
     }
 }
 
-void EngineTime_clear( void )
+void Engine_clear( void )
 {
     int index = 0;
-    Enginetime_p e = NULL;
-    Enginetime_p nextE = NULL;
+    Engine_p e = NULL;
+    Engine_p nextE = NULL;
 
     for ( ; index < engineLIST_SIZE; ++index ) {
-        e = _engineTime_list[ index ];
+        e = _engine_list[ index ];
 
         while ( e != NULL ) {
             nextE = e->next;
@@ -170,17 +170,17 @@ void EngineTime_clear( void )
             e = nextE;
         }
 
-        _engineTime_list[ index ] = NULL;
+        _engine_list[ index ] = NULL;
     }
     return;
 }
 
-int EngineTime_set( const u_char* engineId,
+int Engine_set( const u_char* engineId,
     u_int engineIdLength,
     u_int engineBoot, u_int engineTime, u_int authenticatedFlag )
 {
     int rval = ErrorCode_SUCCESS, iindex;
-    Enginetime_p e = NULL;
+    Engine_p e = NULL;
 
     /*
      * Sanity check.
@@ -193,15 +193,15 @@ int EngineTime_set( const u_char* engineId,
      * Store the given <engine_time, engineboot> tuple in the record
      * for engineID.  Create a new record if necessary.
      */
-    if ( !( e = EngineTime_searchInList( engineId, engineIdLength ) ) ) {
-        if ( ( iindex = EngineTime_hashEngineId( engineId, engineIdLength ) ) < 0 ) {
+    if ( !( e = Engine_searchInList( engineId, engineIdLength ) ) ) {
+        if ( ( iindex = Engine_hashEngineId( engineId, engineIdLength ) ) < 0 ) {
             UTILITIES_QUIT_FUN( ErrorCode_GENERR, goto_setEnginetimeQuit );
         }
 
-        e = ( Enginetime_p )calloc( 1, sizeof( *e ) );
+        e = ( Engine_p )calloc( 1, sizeof( *e ) );
 
-        e->next = _engineTime_list[ iindex ];
-        _engineTime_list[ iindex ] = e;
+        e->next = _engine_list[ iindex ];
+        _engine_list[ iindex ] = e;
 
         e->engineId = ( u_char* )calloc( 1, engineIdLength );
         memcpy( e->engineId, engineId, engineIdLength );
@@ -230,10 +230,10 @@ goto_setEnginetimeQuit:
     return rval;
 }
 
-Enginetime_p EngineTime_searchInList( const u_char* engineId, u_int engineIdLength )
+Engine_p Engine_searchInList( const u_char* engineId, u_int engineIdLength )
 {
     int rval = ErrorCode_SUCCESS;
-    Enginetime_p e = NULL;
+    Engine_p e = NULL;
 
     /*
      * Sanity check.
@@ -245,11 +245,11 @@ Enginetime_p EngineTime_searchInList( const u_char* engineId, u_int engineIdLeng
     /*
      * Find the entry for engineID if there be one.
      */
-    rval = EngineTime_hashEngineId( engineId, engineIdLength );
+    rval = Engine_hashEngineId( engineId, engineIdLength );
     if ( rval < 0 ) {
         UTILITIES_QUIT_FUN( ErrorCode_GENERR, goto_searchEnginetimeListQuit );
     }
-    e = _engineTime_list[ rval ];
+    e = _engine_list[ rval ];
 
     for ( ; e; e = e->next ) {
         if ( ( engineIdLength == e->engineIdLength )
@@ -262,7 +262,7 @@ goto_searchEnginetimeListQuit:
     return e;
 }
 
-int EngineTime_hashEngineId( const u_char* engineId, u_int engineIdLength )
+int Engine_hashEngineId( const u_char* engineId, u_int engineIdLength )
 {
     int rval = ErrorCode_GENERR;
     size_t buf_len = UTILITIES_MAX_BUFFER;

@@ -2,7 +2,7 @@
 #include "Api.h"
 #include "Client.h"
 #include "Keytools.h"
-#include "EngineTime.h"
+#include "Engine.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Scapi.h"
@@ -120,7 +120,7 @@ int Usm_freeEnginetimeOnShutdown( int majorid, int minorid, void* serverarg,
 
     engineID_len = V3_getEngineID( engineID, engineID_len );
     if ( engineID_len > 0 )
-        EngineTime_free( engineID, engineID_len );
+        Engine_free( engineID, engineID_len );
     return 0;
 }
 
@@ -864,7 +864,7 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
      * XXX  No error is declared in the EoP when sending messages to
      *      unknown engines, processing continues w/ boots/time == (0,0).
      */
-    if ( EngineTime_get( theEngineID, theEngineIDLength,
+    if ( Engine_get( theEngineID, theEngineIDLength,
              &boots_uint, &time_uint, FALSE )
         == -1 ) {
         DEBUG_MSGTL( ( "usm", "%s\n", "Failed to find engine data." ) );
@@ -1328,7 +1328,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      * * XXX    No error is declared in the EoP when sending messages to
      * *        unknown engines, processing continues w/ boots/time == (0,0).
      */
-    if ( EngineTime_get( theEngineID, theEngineIDLength,
+    if ( Engine_get( theEngineID, theEngineIDLength,
              &boots_uint, &time_uint, FALSE )
         == -1 ) {
         DEBUG_MSGTL( ( "usm", "%s\n", "Failed to find engine data." ) );
@@ -1951,7 +1951,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
         u_int theirBoots, theirTime, theirLastTime;
         u_int time_difference;
 
-        if ( EngineTime_getEx( secEngineID, secEngineIDLen,
+        if ( Engine_getEx( secEngineID, secEngineIDLen,
                  &theirBoots, &theirTime,
                  &theirLastTime, TRUE )
             != ErrorCode_SUCCESS ) {
@@ -1998,7 +1998,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
          * time is greater than before with the same boots.
          */
 
-        if ( EngineTime_set( secEngineID, secEngineIDLen,
+        if ( Engine_set( secEngineID, secEngineIDLen,
                  boots_uint, time_uint, TRUE )
             != ErrorCode_SUCCESS ) {
             DEBUG_MSGTL( ( "usm", "%s\n",
@@ -2310,7 +2310,7 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
      * that we normally use.
      */
     else {
-        EngineTime_set( secEngineID, *secEngineIDLen,
+        Engine_set( secEngineID, *secEngineIDLen,
             boots_uint, time_uint, FALSE );
     }
 
@@ -2869,7 +2869,7 @@ int Usm_discoverEngineid( void* slpv, Types_Session* session )
      * if boot/time supplied set it for this engineID
      */
     if ( session->engineBoots || session->engineTime ) {
-        EngineTime_set( session->securityEngineID,
+        Engine_set( session->securityEngineID,
             session->securityEngineIDLen,
             session->engineBoots, session->engineTime,
             TRUE );
@@ -3034,7 +3034,7 @@ void Usm_clearUserList( void )
 
 void Usm_shutdownUsm( void )
 {
-    EngineTime_clear();
+    Engine_clear();
     Usm_clearUserList();
 }
 
@@ -3678,7 +3678,7 @@ Usm_readUser( const char* line )
      * This is mostly important when receiving v3 traps so that the usm
      * will at least continue processing them.
      */
-    EngineTime_set( user->engineID, user->engineIDLen, 1, 0, 0 );
+    Engine_set( user->engineID, user->engineIDLen, 1, 0, 0 );
 
     line = ReadConfig_readOctetString( line, ( u_char** )&user->name,
         &len );

@@ -3,7 +3,7 @@
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Secmod.h"
-#include "System/Security/EngineTime.h"
+#include "System/Security/Engine.h"
 #include "System/Security/Usm.h"
 #include "System/String.h"
 #include "System/Util/DefaultStore.h"
@@ -825,7 +825,7 @@ int V3_initPostConfig( int majorid, int minorid, void* serverarg,
     /*
      * for USM set our local engineTime in the LCD timing cache
      */
-    EngineTime_set( c_engineID, engineIDLen,
+    Engine_set( c_engineID, engineIDLen,
         V3_localEngineBoots(),
         V3_localEngineTime(), TRUE );
 
