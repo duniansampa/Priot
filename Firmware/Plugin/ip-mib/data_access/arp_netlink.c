@@ -86,7 +86,7 @@ int netsnmp_access_arp_load( netsnmp_arp_access* access )
             return -1;
         }
 
-        if ( FdEventManager_registerReadfd( fd, netsnmp_access_arp_read_netlink, access ) != 0 ) {
+        if ( FdEventManager_registerReadFD( fd, netsnmp_access_arp_read_netlink, access ) != 0 ) {
             Logger_log( LOGGER_PRIORITY_ERR, "netsnmp_access_arp_load: error registering netlink socket\n" );
             return -1;
         }
@@ -123,7 +123,7 @@ int netsnmp_access_arp_unload( netsnmp_arp_access* access )
 
     fd = ( uintptr_t )access->arch_magic;
     if ( fd > 0 ) {
-        FdEventManager_unregisterReadfd( fd );
+        FdEventManager_unregisterReadFD( fd );
         close( fd );
         access->arch_magic = NULL;
         access->synchronized = 0;

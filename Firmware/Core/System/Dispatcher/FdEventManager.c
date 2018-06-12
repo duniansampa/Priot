@@ -1,285 +1,277 @@
 #include "FdEventManager.h"
-#include "System/Util/Trace.h"
 #include "System/Util/Logger.h"
+#include "System/Util/Trace.h"
 
+/** to store the file descriptor for read fd. */
+static int _readFd[ evmNUMBER_OF_EXTERNAL_FDS ], _readFdLength = 0;
 
-int     fdEventManager_externalReadfd[NUM_EXTERNAL_FDS],   fdEventManager_externalReadfdlen   = 0;
-int     fdEventManager_externalWritefd[NUM_EXTERNAL_FDS],  fdEventManager_externalWritefdlen  = 0;
-int     fdEventManager_externalExceptfd[NUM_EXTERNAL_FDS], fdEventManager_externalExceptfdlen = 0;
-void  (*fdEventManager_externalReadfdFT[NUM_EXTERNAL_FDS]) (int, void *);
-void  (*fdEventManager_externalWritefdFT[NUM_EXTERNAL_FDS]) (int, void *);
-void  (*fdEventManager_externalExceptfdFT[NUM_EXTERNAL_FDS]) (int, void *);
-void   *fdEventManager_externalReadfdData[NUM_EXTERNAL_FDS];
-void   *fdEventManager_externalWritefdData[NUM_EXTERNAL_FDS];
-void   *fdEventManager_externalExceptfdData[NUM_EXTERNAL_FDS];
+/** to store the file descriptor for write fd. */
+static int _writeFd[ evmNUMBER_OF_EXTERNAL_FDS ], _writeFdLength = 0;
 
-static int _externalFdUnregistered;
+/** to store the file descriptor for exception fd. */
+static int _exceptionFd[ evmNUMBER_OF_EXTERNAL_FDS ], _exceptionFdLength = 0;
 
-/*
- * Register a given fd for read events.  Call callback when events
- * are received.
+/** to store the callback function for read fd. */
+static FdEventCallback_fp _readFdFunction[ evmNUMBER_OF_EXTERNAL_FDS ];
+
+/** to store the callback function for write fd. */
+static FdEventCallback_fp _writeFdFunction[ evmNUMBER_OF_EXTERNAL_FDS ];
+
+/** to store the callback function for exception fd. */
+static FdEventCallback_fp _exceptionFdFunction[ evmNUMBER_OF_EXTERNAL_FDS ];
+
+/** to store the data for read fd.
+ *  the stored data will be passed to the callback function
  */
-int
-FdEventManager_registerReadfd(int fd, void (*func) (int, void *), void *data)
+static void* _readFdData[ evmNUMBER_OF_EXTERNAL_FDS ];
+
+/** to store the data for write fd.
+ *  the stored data will be passed to the callback function
+ */
+static void* _writeFdData[ evmNUMBER_OF_EXTERNAL_FDS ];
+
+/** to store the data for exception fd.
+ *  the stored data will be passed to the callback function
+ */
+static void* _exceptionFdData[ evmNUMBER_OF_EXTERNAL_FDS ];
+
+/**
+ * if _isFdUnregistered == 1, means that the callback
+ * functions have been unregistered or not ready.
+ * Then, they will not be called by dispatcher.
+ *
+ * if _isFdUnregistered == 0, means that the callback
+ * functions have been registered and ready.
+ * Then, they will be called by dispatcher.
+ */
+static int _isFdUnregistered = 1;
+
+int FdEventManager_registerReadFD( int fd, FdEventCallback_fp function, void* data )
 {
-    if (fdEventManager_externalReadfdlen < NUM_EXTERNAL_FDS) {
-        fdEventManager_externalReadfd[fdEventManager_externalReadfdlen] = fd;
-        fdEventManager_externalReadfdFT[fdEventManager_externalReadfdlen] = func;
-        fdEventManager_externalReadfdData[fdEventManager_externalReadfdlen] = data;
-        fdEventManager_externalReadfdlen++;
-        DEBUG_MSGTL(("fd_event_manager:register_readfd", "registered fd %d\n", fd));
-        return FD_REGISTERED_OK;
+    if ( _readFdLength < evmNUMBER_OF_EXTERNAL_FDS ) {
+        _readFd[ _readFdLength ] = fd;
+        _readFdFunction[ _readFdLength ] = function;
+        _readFdData[ _readFdLength ] = data;
+        _readFdLength++;
+        DEBUG_MSGTL( ( "fdEventManager:FdEventManager_registerReadFD", "registered fd %d\n", fd ) );
+        return evmREGISTERED_OK;
     } else {
-        Logger_log(LOGGER_PRIORITY_CRIT, "register_readfd: too many file descriptors\n");
-        return FD_REGISTRATION_FAILED;
+        Logger_log( LOGGER_PRIORITY_CRIT, "FdEventManager_registerReadFD: too many file descriptors\n" );
+        return evmREGISTRATION_FAILED;
     }
 }
 
-/*
- * Register a given fd for write events.  Call callback when events
- * are received.
- */
-int
-FdEventManager_registerWritefd(int fd, void (*func) (int, void *), void *data)
+int FdEventManager_registerWriteFD( int fd, FdEventCallback_fp function, void* data )
 {
-    if (fdEventManager_externalWritefdlen < NUM_EXTERNAL_FDS) {
-        fdEventManager_externalWritefd[fdEventManager_externalWritefdlen] = fd;
-        fdEventManager_externalWritefdFT[fdEventManager_externalWritefdlen] = func;
-        fdEventManager_externalWritefdData[fdEventManager_externalWritefdlen] = data;
-        fdEventManager_externalWritefdlen++;
-        DEBUG_MSGTL(("fd_event_manager:register_writefd", "registered fd %d\n", fd));
-        return FD_REGISTERED_OK;
+    if ( _writeFdLength < evmNUMBER_OF_EXTERNAL_FDS ) {
+        _writeFd[ _writeFdLength ] = fd;
+        _writeFdFunction[ _writeFdLength ] = function;
+        _writeFdData[ _writeFdLength ] = data;
+        _writeFdLength++;
+        DEBUG_MSGTL( ( "fdEventManager:FdEventManager_registerWriteFD", "registered fd %d\n", fd ) );
+        return evmREGISTERED_OK;
     } else {
-        Logger_log(LOGGER_PRIORITY_CRIT,
-                 "register_writefd: too many file descriptors\n");
-        return FD_REGISTRATION_FAILED;
+        Logger_log( LOGGER_PRIORITY_CRIT,
+            "FdEventManager_registerWriteFD: too many file descriptors\n" );
+        return evmREGISTRATION_FAILED;
     }
 }
 
-/*
- * Register a given fd for exception events.  Call callback when events
- * are received.
- */
-int
-FdEventManager_registerExceptfd(int fd, void (*func) (int, void *), void *data)
+int FdEventManager_registerExceptionFD( int fd, FdEventCallback_fp function, void* data )
 {
-    if (fdEventManager_externalExceptfdlen < NUM_EXTERNAL_FDS) {
-        fdEventManager_externalExceptfd[fdEventManager_externalExceptfdlen] = fd;
-        fdEventManager_externalExceptfdFT[fdEventManager_externalExceptfdlen] = func;
-        fdEventManager_externalExceptfdData[fdEventManager_externalExceptfdlen] = data;
-        fdEventManager_externalExceptfdlen++;
-        DEBUG_MSGTL(("fd_event_manager:register_exceptfd", "registered fd %d\n", fd));
-        return FD_REGISTERED_OK;
+    if ( _exceptionFdLength < evmNUMBER_OF_EXTERNAL_FDS ) {
+        _exceptionFd[ _exceptionFdLength ] = fd;
+        _exceptionFdFunction[ _exceptionFdLength ] = function;
+        _exceptionFdData[ _exceptionFdLength ] = data;
+        _exceptionFdLength++;
+        DEBUG_MSGTL( ( "fdEventManager:FdEventManager_registerExceptionFD", "registered fd %d\n", fd ) );
+        return evmREGISTERED_OK;
     } else {
-        Logger_log(LOGGER_PRIORITY_CRIT,
-                 "register_exceptfd: too many file descriptors\n");
-        return FD_REGISTRATION_FAILED;
+        Logger_log( LOGGER_PRIORITY_CRIT,
+            "FdEventManager_registerExceptionFD: too many file descriptors\n" );
+        return evmREGISTRATION_FAILED;
     }
 }
 
-/*
- * Unregister a given fd for read events.
- */
-int
-FdEventManager_unregisterReadfd(int fd)
+int FdEventManager_unregisterReadFD( int fd )
 {
-    int             i, j;
+    int i, j;
 
-    for (i = 0; i < fdEventManager_externalReadfdlen; i++) {
-        if (fdEventManager_externalReadfd[i] == fd) {
-            fdEventManager_externalReadfdlen--;
-            for (j = i; j < fdEventManager_externalReadfdlen; j++) {
-                fdEventManager_externalReadfd[j] = fdEventManager_externalReadfd[j + 1];
-                fdEventManager_externalReadfdFT[j] = fdEventManager_externalReadfdFT[j + 1];
-                fdEventManager_externalReadfdData[j] = fdEventManager_externalReadfdData[j + 1];
+    for ( i = 0; i < _readFdLength; i++ ) {
+        if ( _readFd[ i ] == fd ) {
+            _readFdLength--;
+            for ( j = i; j < _readFdLength; j++ ) {
+                _readFd[ j ] = _readFd[ j + 1 ];
+                _readFdFunction[ j ] = _readFdFunction[ j + 1 ];
+                _readFdData[ j ] = _readFdData[ j + 1 ];
             }
-            DEBUG_MSGTL(("fd_event_manager:unregister_readfd", "unregistered fd %d\n", fd));
-            _externalFdUnregistered = 1;
-            return FD_UNREGISTERED_OK;
+            DEBUG_MSGTL( ( "fdEventManager:FdEventManager_unregisterReadFD", "unregistered fd %d\n", fd ) );
+            _isFdUnregistered = 1;
+            return evmUNREGISTERED_OK;
         }
     }
-    return FD_NO_SUCH_REGISTRATION;
+    return evmNO_SUCH_REGISTRATION;
 }
 
-/*
- * Unregister a given fd for read events.
- */
-int
-FdEventManager_unregisterWritefd(int fd)
+int FdEventManager_unregisterWriteFD( int fd )
 {
-    int             i, j;
+    int i, j;
 
-    for (i = 0; i < fdEventManager_externalWritefdlen; i++) {
-        if (fdEventManager_externalWritefd[i] == fd) {
-            fdEventManager_externalWritefdlen--;
-            for (j = i; j < fdEventManager_externalWritefdlen; j++) {
-                fdEventManager_externalWritefd[j] = fdEventManager_externalWritefd[j + 1];
-                fdEventManager_externalWritefdFT[j] = fdEventManager_externalWritefdFT[j + 1];
-                fdEventManager_externalWritefdData[j] = fdEventManager_externalWritefdData[j + 1];
+    for ( i = 0; i < _writeFdLength; i++ ) {
+        if ( _writeFd[ i ] == fd ) {
+            _writeFdLength--;
+            for ( j = i; j < _writeFdLength; j++ ) {
+                _writeFd[ j ] = _writeFd[ j + 1 ];
+                _writeFdFunction[ j ] = _writeFdFunction[ j + 1 ];
+                _writeFdData[ j ] = _writeFdData[ j + 1 ];
             }
-            DEBUG_MSGTL(("fd_event_manager:unregister_writefd", "unregistered fd %d\n", fd));
-            _externalFdUnregistered = 1;
-            return FD_UNREGISTERED_OK;
+            DEBUG_MSGTL( ( "fdEventManager:FdEventManager_unregisterWriteFD", "unregistered fd %d\n", fd ) );
+            _isFdUnregistered = 1;
+            return evmUNREGISTERED_OK;
         }
     }
-    return FD_NO_SUCH_REGISTRATION;
+    return evmNO_SUCH_REGISTRATION;
 }
 
-/*
- * Unregister a given fd for exception events.
- */
-int
-FdEventManager_unregisterExceptfd(int fd)
+int FdEventManager_unregisterExceptionFD( int fd )
 {
-    int             i, j;
+    int i, j;
 
-    for (i = 0; i < fdEventManager_externalExceptfdlen; i++) {
-        if (fdEventManager_externalExceptfd[i] == fd) {
-            fdEventManager_externalExceptfdlen--;
-            for (j = i; j < fdEventManager_externalExceptfdlen; j++) {
-                fdEventManager_externalExceptfd[j] = fdEventManager_externalExceptfd[j + 1];
-                fdEventManager_externalExceptfdFT[j] = fdEventManager_externalExceptfdFT[j + 1];
-                fdEventManager_externalExceptfdData[j] = fdEventManager_externalExceptfdData[j + 1];
+    for ( i = 0; i < _exceptionFdLength; i++ ) {
+        if ( _exceptionFd[ i ] == fd ) {
+            _exceptionFdLength--;
+            for ( j = i; j < _exceptionFdLength; j++ ) {
+                _exceptionFd[ j ] = _exceptionFd[ j + 1 ];
+                _exceptionFdFunction[ j ] = _exceptionFdFunction[ j + 1 ];
+                _exceptionFdData[ j ] = _exceptionFdData[ j + 1 ];
             }
-            DEBUG_MSGTL(("fd_event_manager:unregister_exceptfd", "unregistered fd %d\n",
-                        fd));
-            _externalFdUnregistered = 1;
-            return FD_UNREGISTERED_OK;
+            DEBUG_MSGTL( ( "fdEventManager:FdEventManager_unregisterExceptionFD", "unregistered fd %d\n",
+                fd ) );
+            _isFdUnregistered = 1;
+            return evmUNREGISTERED_OK;
         }
     }
-    return FD_NO_SUCH_REGISTRATION;
+    return evmNO_SUCH_REGISTRATION;
 }
 
-/*
- * NET-SNMP External Event Info
- */
-void FdEventManager_externalEventInfo(int *numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
+void FdEventManager_fdSetEventInfo( int* numfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds )
 {
-  LargeFdSet_t lreadfds;
-  LargeFdSet_t lwritefds;
-  LargeFdSet_t lexceptfds;
+    LargeFdSet_t lreadfds;
+    LargeFdSet_t lwritefds;
+    LargeFdSet_t lexceptfds;
 
-  LargeFdSet_init(&lreadfds, FD_SETSIZE);
-  LargeFdSet_init(&lwritefds, FD_SETSIZE);
-  LargeFdSet_init(&lexceptfds, FD_SETSIZE);
+    LargeFdSet_init( &lreadfds, FD_SETSIZE );
+    LargeFdSet_init( &lwritefds, FD_SETSIZE );
+    LargeFdSet_init( &lexceptfds, FD_SETSIZE );
 
-  LargeFdSet_copyFromFdSet(&lreadfds, readfds);
-  LargeFdSet_copyFromFdSet(&lwritefds, writefds);
-  LargeFdSet_copyFromFdSet(&lexceptfds, exceptfds);
+    LargeFdSet_copyFromFdSet( &lreadfds, readfds );
+    LargeFdSet_copyFromFdSet( &lwritefds, writefds );
+    LargeFdSet_copyFromFdSet( &lexceptfds, exceptfds );
 
-  FdEventManager_externalEventInfo2(numfds, &lreadfds, &lwritefds, &lexceptfds);
+    FdEventManager_largeFdSetEventInfo( numfds, &lreadfds, &lwritefds, &lexceptfds );
 
-  if (LargeFdSet_copyToFdSet(readfds, &lreadfds) < 0
-      || LargeFdSet_copyToFdSet(writefds, &lwritefds) < 0
-      || LargeFdSet_copyToFdSet(exceptfds, &lexceptfds) < 0)
-  {
-    Logger_log(LOGGER_PRIORITY_ERR,
-         "Use netsnmp_external_event_info2() for processing"
-         " large file descriptors\n");
-  }
+    if ( LargeFdSet_copyToFdSet( readfds, &lreadfds ) < 0
+        || LargeFdSet_copyToFdSet( writefds, &lwritefds ) < 0
+        || LargeFdSet_copyToFdSet( exceptfds, &lexceptfds ) < 0 ) {
+        Logger_log( LOGGER_PRIORITY_ERR,
+            "Use FdEventManager_fdSetEventInfo() for processing"
+            " large file descriptors\n" );
+    }
 
-  LargeFdSet_cleanup(&lreadfds);
-  LargeFdSet_cleanup(&lwritefds);
-  LargeFdSet_cleanup(&lexceptfds);
+    LargeFdSet_cleanup( &lreadfds );
+    LargeFdSet_cleanup( &lwritefds );
+    LargeFdSet_cleanup( &lexceptfds );
 }
 
-void FdEventManager_externalEventInfo2(int *numfds,
-                                  LargeFdSet_t *readfds,
-                                  LargeFdSet_t *writefds,
-                                  LargeFdSet_t *exceptfds)
+void FdEventManager_largeFdSetEventInfo( int* numfds,
+    LargeFdSet_t* readfds,
+    LargeFdSet_t* writefds,
+    LargeFdSet_t* exceptfds )
 {
-  int i;
+    int i;
 
-  _externalFdUnregistered = 0;
+    _isFdUnregistered = 0;
 
-  for (i = 0; i < fdEventManager_externalReadfdlen; i++) {
-    largeFD_SET(fdEventManager_externalReadfd[i], readfds);
-    if (fdEventManager_externalReadfd[i] >= *numfds)
-      *numfds = fdEventManager_externalReadfd[i] + 1;
-  }
-  for (i = 0; i < fdEventManager_externalWritefdlen; i++) {
-    largeFD_SET(fdEventManager_externalWritefd[i], writefds);
-    if (fdEventManager_externalWritefd[i] >= *numfds)
-      *numfds = fdEventManager_externalWritefd[i] + 1;
-  }
-  for (i = 0; i < fdEventManager_externalExceptfdlen; i++) {
-    largeFD_SET(fdEventManager_externalExceptfd[i], exceptfds);
-    if (fdEventManager_externalExceptfd[i] >= *numfds)
-      *numfds = fdEventManager_externalExceptfd[i] + 1;
-  }
+    for ( i = 0; i < _readFdLength; i++ ) {
+        largeFD_SET( _readFd[ i ], readfds );
+        if ( _readFd[ i ] >= *numfds )
+            *numfds = _readFd[ i ] + 1;
+    }
+    for ( i = 0; i < _writeFdLength; i++ ) {
+        largeFD_SET( _writeFd[ i ], writefds );
+        if ( _writeFd[ i ] >= *numfds )
+            *numfds = _writeFd[ i ] + 1;
+    }
+    for ( i = 0; i < _exceptionFdLength; i++ ) {
+        largeFD_SET( _exceptionFd[ i ], exceptfds );
+        if ( _exceptionFd[ i ] >= *numfds )
+            *numfds = _exceptionFd[ i ] + 1;
+    }
 }
 
-/*
- * NET-SNMP Dispatch External Events
- */
-void FdEventManager_dispatchExternalEvents(int *count, fd_set *readfds, fd_set *writefds, fd_set *exceptfds)
+void FdEventManager_dispatchFdSetEvents( int* count, fd_set* readfds, fd_set* writefds, fd_set* exceptfds )
 {
-  LargeFdSet_t lreadfds;
-  LargeFdSet_t lwritefds;
-  LargeFdSet_t lexceptfds;
+    LargeFdSet_t lreadfds;
+    LargeFdSet_t lwritefds;
+    LargeFdSet_t lexceptfds;
 
-  LargeFdSet_init(&lreadfds, FD_SETSIZE);
-  LargeFdSet_init(&lwritefds, FD_SETSIZE);
-  LargeFdSet_init(&lexceptfds, FD_SETSIZE);
+    LargeFdSet_init( &lreadfds, FD_SETSIZE );
+    LargeFdSet_init( &lwritefds, FD_SETSIZE );
+    LargeFdSet_init( &lexceptfds, FD_SETSIZE );
 
-  LargeFdSet_copyFromFdSet(&lreadfds, readfds);
-  LargeFdSet_copyFromFdSet(&lwritefds, writefds);
-  LargeFdSet_copyFromFdSet(&lexceptfds, exceptfds);
+    LargeFdSet_copyFromFdSet( &lreadfds, readfds );
+    LargeFdSet_copyFromFdSet( &lwritefds, writefds );
+    LargeFdSet_copyFromFdSet( &lexceptfds, exceptfds );
 
-  FdEventManager_dispatchExternalEvents2(count, &lreadfds, &lwritefds, &lexceptfds);
+    FdEventManager_dispatchLargeFdSetEvents( count, &lreadfds, &lwritefds, &lexceptfds );
 
-  if (LargeFdSet_copyToFdSet(readfds, &lreadfds) < 0
-      || LargeFdSet_copyToFdSet(writefds,  &lwritefds) < 0
-      || LargeFdSet_copyToFdSet(exceptfds, &lexceptfds) < 0)
-  {
-    Logger_log(LOGGER_PRIORITY_ERR,
-         "Use netsnmp_dispatch_external_events2() for processing"
-         " large file descriptors\n");
-  }
+    if ( LargeFdSet_copyToFdSet( readfds, &lreadfds ) < 0
+        || LargeFdSet_copyToFdSet( writefds, &lwritefds ) < 0
+        || LargeFdSet_copyToFdSet( exceptfds, &lexceptfds ) < 0 ) {
+        Logger_log( LOGGER_PRIORITY_ERR,
+            "Use FdEventManager_dispatchFdSetEvents() for processing"
+            " large file descriptors\n" );
+    }
 
-  LargeFdSet_cleanup(&lreadfds);
-  LargeFdSet_cleanup(&lwritefds);
-  LargeFdSet_cleanup(&lexceptfds);
+    LargeFdSet_cleanup( &lreadfds );
+    LargeFdSet_cleanup( &lwritefds );
+    LargeFdSet_cleanup( &lexceptfds );
 }
 
-void FdEventManager_dispatchExternalEvents2(int *count,
-                                       LargeFdSet_t *readfds,
-                                       LargeFdSet_t *writefds,
-                                       LargeFdSet_t *exceptfds)
+void FdEventManager_dispatchLargeFdSetEvents( int* count,
+    LargeFdSet_t* readfds,
+    LargeFdSet_t* writefds,
+    LargeFdSet_t* exceptfds )
 {
-  int i;
-  for (i = 0;
-       *count && (i < fdEventManager_externalReadfdlen) && !_externalFdUnregistered; i++) {
-      if (largeFD_ISSET(fdEventManager_externalReadfd[i], readfds)) {
-          DEBUG_MSGTL(("fd_event_manager:netsnmp_dispatch_external_events",
-                     "readfd[%d] = %d\n", i, fdEventManager_externalReadfd[i]));
-          fdEventManager_externalReadfdFT[i] (fdEventManager_externalReadfd[i],
-                                  fdEventManager_externalReadfdData[i]);
-          largeFD_CLR(fdEventManager_externalReadfd[i], readfds);
-          (*count)--;
-      }
-  }
-  for (i = 0;
-       *count && (i < fdEventManager_externalWritefdlen) && !_externalFdUnregistered; i++) {
-      if (largeFD_ISSET(fdEventManager_externalWritefd[i], writefds)) {
-          DEBUG_MSGTL(("fd_event_manager:netsnmp_dispatch_external_events",
-                     "writefd[%d] = %d\n", i, fdEventManager_externalWritefd[i]));
-          fdEventManager_externalWritefdFT[i] (fdEventManager_externalWritefd[i],
-                                   fdEventManager_externalWritefdData[i]);
-          largeFD_CLR(fdEventManager_externalWritefd[i], writefds);
-          (*count)--;
-      }
-  }
-  for (i = 0;
-       *count && (i < fdEventManager_externalExceptfdlen) && !_externalFdUnregistered; i++) {
-      if (largeFD_ISSET(fdEventManager_externalExceptfd[i], exceptfds)) {
-          DEBUG_MSGTL(("fd_event_manager:netsnmp_dispatch_external_events",
-                     "exceptfd[%d] = %d\n", i, fdEventManager_externalExceptfd[i]));
-          fdEventManager_externalExceptfdFT[i] (fdEventManager_externalExceptfd[i],
-                                    fdEventManager_externalExceptfdData[i]);
-          largeFD_CLR(fdEventManager_externalExceptfd[i], exceptfds);
-          (*count)--;
-      }
-  }
+    int i;
+    for ( i = 0; *count && ( i < _readFdLength ) && !_isFdUnregistered; i++ ) {
+        if ( largeFD_ISSET( _readFd[ i ], readfds ) ) {
+            DEBUG_MSGTL( ( "fdEventManager:FdEventManager_dispatchLargeFdSetEvents",
+                "readfd[%d] = %d\n", i, _readFd[ i ] ) );
+            _readFdFunction[ i ]( _readFd[ i ],
+                _readFdData[ i ] );
+            largeFD_CLR( _readFd[ i ], readfds );
+            ( *count )--;
+        }
+    }
+    for ( i = 0; *count && ( i < _writeFdLength ) && !_isFdUnregistered; i++ ) {
+        if ( largeFD_ISSET( _writeFd[ i ], writefds ) ) {
+            DEBUG_MSGTL( ( "fdEventManager:FdEventManager_dispatchLargeFdSetEvents",
+                "writefd[%d] = %d\n", i, _writeFd[ i ] ) );
+            _writeFdFunction[ i ]( _writeFd[ i ],
+                _writeFdData[ i ] );
+            largeFD_CLR( _writeFd[ i ], writefds );
+            ( *count )--;
+        }
+    }
+    for ( i = 0; *count && ( i < _exceptionFdLength ) && !_isFdUnregistered; i++ ) {
+        if ( largeFD_ISSET( _exceptionFd[ i ], exceptfds ) ) {
+            DEBUG_MSGTL( ( "fdEventManager:FdEventManager_dispatchLargeFdSetEvents",
+                "exceptfd[%d] = %d\n", i, _exceptionFd[ i ] ) );
+            _exceptionFdFunction[ i ]( _exceptionFd[ i ],
+                _exceptionFdData[ i ] );
+            largeFD_CLR( _exceptionFd[ i ], exceptfds );
+            ( *count )--;
+        }
+    }
 }
-

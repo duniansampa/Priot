@@ -830,7 +830,7 @@ _Daemon_receive( void )
             tvp = NULL; /* block without timeout */
         }
 
-        FdEventManager_externalEventInfo2( &numfds, &readfds, &writefds, &exceptfds );
+        FdEventManager_largeFdSetEventInfo( &numfds, &readfds, &writefds, &exceptfds );
 
     reselect:
         for ( i = 0; i < NUM_EXTERNAL_SIGS; i++ ) {
@@ -851,7 +851,7 @@ _Daemon_receive( void )
 
         if ( count > 0 ) {
 
-            FdEventManager_dispatchExternalEvents2( &count, &readfds,
+            FdEventManager_dispatchLargeFdSetEvents( &count, &readfds,
                 &writefds, &exceptfds );
 
             /* If there are still events leftover, process them */

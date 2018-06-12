@@ -95,6 +95,7 @@ typedef struct Engine_s {
     u_int authenticatedFlag;
 
     struct Engine_s* next;
+
 } Engine_t, *Engine_p;
 
 /** =============================[ Functions Prototypes ]================== */
@@ -116,7 +117,8 @@ typedef struct Engine_s {
  * @param engineIdLength - the length of engineId
  * @param engineBoot - the engine boot information
  * @param engineTime - the engine time information
- * @param authenticatedFlag -
+ * @param authenticatedFlag - Timestamp made when engineTime/engineBoots was last
+ *                            updated.  Measured in seconds.
  *
  * @returns ErrorCode_SUCCESS : on success -- when a record for engineId is found.
  *          ErrorCode_GENERR  : Otherwise.
@@ -141,7 +143,8 @@ int Engine_get( const u_char* engineId, u_int engineIdLength, u_int* engineBoot,
  * @param engineIdLength - the length of engineId
  * @param engineBoot - the engine boot information
  * @param engineTime - the engine time information
- * @param authenticatedFlag -
+ * @param authenticatedFlag - Timestamp made when engineTime/engineBoots was last
+ *                            updated.  Measured in seconds.
  *
  * @returns ErrorCode_SUCCESS : Success -- when a record for engineID is found.
  *          ErrorCode_GENERR  : Otherwise.
@@ -168,7 +171,8 @@ int Engine_getEx( u_char* engineId,
  * @param engineIdLength - the length of engineId
  * @param engineBoot - the engine boot information
  * @param engineTime - the engine time information
- * @param authenticatedFlag -
+ * @param authenticatedFlag - Timestamp made when engineTime/engineBoots was last
+ *                            updated.  Measured in seconds.
  *
  * @returns ErrorCode_SUCCESS : on success.
  *          ErrorCode_GENERR  : otherwise.
@@ -182,9 +186,11 @@ int Engine_set( const u_char* engineId, u_int engineIdLength,
  *
  * @note ASSUMES that no engineId will have more than one record in the list.
  *
- * @param engineId -
+ * @param engineId - uniquely and unambiguously identifies an PRIOT engine
  * @param engineIdLength - the length of engineId
- * @return Pointer to a _engine_list record with engineId <engineId>  -OR- NULL if no record exists.
+ *
+ * @return Pointer to a _engine_list record with engineId
+ *         <engineId>  -OR- NULL if no record exists.
  */
 Engine_p Engine_searchInList( const u_char* engineId, u_int engineIdLength );
 
@@ -196,6 +202,7 @@ Engine_p Engine_searchInList( const u_char* engineId, u_int engineIdLength );
  *
  * @param engineId - uniquely and unambiguously identifies an PRIOT engine
  * @param engineIdLength - the length of engineId
+ *
  * @returns               >0 : _engine_list index for this engineId.
  *          ErrorCode_GENERR : in case of error.
  */
