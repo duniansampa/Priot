@@ -54,16 +54,16 @@ struct Variable2_s snmpNotifyTable_variables[] = {
      * magic number        , variable type , ro/rw , callback fn  , L, oidsuffix
      */
 #define SNMPNOTIFYTAG 4
-    { SNMPNOTIFYTAG, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYTAG, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyTable, 2, { 1, 2 } },
 #define SNMPNOTIFYTYPE 5
-    { SNMPNOTIFYTYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYTYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyTable, 2, { 1, 3 } },
 #define SNMPNOTIFYSTORAGETYPE 6
-    { SNMPNOTIFYSTORAGETYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYSTORAGETYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyTable, 2, { 1, 4 } },
 #define SNMPNOTIFYROWSTATUS 7
-    { SNMPNOTIFYROWSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYROWSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyTable, 2, { 1, 5 } },
 
 };
@@ -468,7 +468,7 @@ int snmpNotifyTable_add( struct snmpNotifyTable_data* thedata )
      * used by header_complex to index the data
      */
 
-    Api_varlistAddVariable( &vars, NULL, 0, ASN01_PRIV_IMPLIED_OCTET_STR, ( u_char* )thedata->snmpNotifyName, thedata->snmpNotifyNameLen ); /* snmpNotifyName */
+    Api_varlistAddVariable( &vars, NULL, 0, asnPRIV_IMPLIED_OCTET_STR, ( u_char* )thedata->snmpNotifyName, thedata->snmpNotifyNameLen ); /* snmpNotifyName */
 
     if ( header_complex_maybe_add_data( &snmpNotifyTableStorage, vars, thedata, 1 )
         != NULL ) {
@@ -498,7 +498,7 @@ void parse_snmpNotifyTable( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_OCTET_STR, line,
+    line = ReadConfig_readData( asnOCTET_STR, line,
         &StorageTmp->snmpNotifyName,
         &StorageTmp->snmpNotifyNameLen );
     if ( StorageTmp->snmpNotifyName == NULL ) {
@@ -507,7 +507,7 @@ void parse_snmpNotifyTable( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_OCTET_STR, line,
+    line = ReadConfig_readData( asnOCTET_STR, line,
         &StorageTmp->snmpNotifyTag,
         &StorageTmp->snmpNotifyTagLen );
     if ( StorageTmp->snmpNotifyTag == NULL ) {
@@ -516,15 +516,15 @@ void parse_snmpNotifyTable( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &StorageTmp->snmpNotifyType, &tmpint );
 
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &StorageTmp->snmpNotifyStorageType, &tmpint );
     if ( !StorageTmp->snmpNotifyStorageType )
         StorageTmp->snmpNotifyStorageType = tcSTORAGE_TYPE_READONLY;
 
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &StorageTmp->snmpNotifyRowStatus, &tmpint );
     if ( !StorageTmp->snmpNotifyRowStatus )
         StorageTmp->snmpNotifyRowStatus = tcROW_STATUS_ACTIVE;
@@ -567,19 +567,19 @@ int store_snmpNotifyTable( int majorID, int minorID, void* serverarg,
             strcat( line, "snmpNotifyTable " );
             cptr = line + strlen( line );
 
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr,
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr,
                 &StorageTmp->snmpNotifyName,
                 &StorageTmp->snmpNotifyNameLen );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr,
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr,
                 &StorageTmp->snmpNotifyTag,
                 &StorageTmp->snmpNotifyTagLen );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &StorageTmp->snmpNotifyType,
                 &tmpint );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &StorageTmp->snmpNotifyStorageType,
                 &tmpint );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &StorageTmp->snmpNotifyRowStatus,
                 &tmpint );
 
@@ -706,7 +706,7 @@ int write_snmpNotifyTag( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len > 255 ) {
@@ -782,7 +782,7 @@ int write_snmpNotifyType( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -830,7 +830,7 @@ int write_snmpNotifyStorageType( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -879,7 +879,7 @@ int write_snmpNotifyRowStatus( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_INTEGER || var_val == NULL ) {
+        if ( var_val_type != asnINTEGER || var_val == NULL ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -924,7 +924,7 @@ int write_snmpNotifyRowStatus( int action,
              */
             vars = NULL;
 
-            Api_varlistAddVariable( &vars, NULL, 0, ASN01_PRIV_IMPLIED_OCTET_STR, NULL, 0 ); /* snmpNotifyName */
+            Api_varlistAddVariable( &vars, NULL, 0, asnPRIV_IMPLIED_OCTET_STR, NULL, 0 ); /* snmpNotifyName */
 
             if ( header_complex_parse_oid( &( name
                                                    [ sizeof( snmpNotifyTable_variables_oid ) / sizeof( oid ) + 2 ] ),

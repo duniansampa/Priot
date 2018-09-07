@@ -28,7 +28,7 @@ void initialize_table_nsTransactionTable( void )
      */
     my_handler = AgentHandler_createHandlerRegistration(
         "nsTransactionTable", nsTransactionTable_handler,
-        nsTransactionTable_oid, ASN01_OID_LENGTH( nsTransactionTable_oid ),
+        nsTransactionTable_oid, asnOID_LENGTH( nsTransactionTable_oid ),
         HANDLER_CAN_RONLY );
 
     if ( !my_handler || !table_info || !iinfo ) {
@@ -42,7 +42,7 @@ void initialize_table_nsTransactionTable( void )
     /***************************************************
      * Setting up the table's definition
      */
-    Table_helperAddIndex( table_info, ASN01_INTEGER ); /* index:
+    Table_helperAddIndex( table_info, asnINTEGER ); /* index:
                                                                  * * nsTransactionID 
                                                                  */
 
@@ -212,7 +212,7 @@ int nsTransactionTable_handler( MibHandler* handler,
             switch ( table_info->colnum ) {
 
             case COLUMN_NSTRANSACTIONMODE:
-                Client_setVarTypedValue( var, ASN01_INTEGER,
+                Client_setVarTypedValue( var, asnINTEGER,
                     ( u_char* )&asp->mode,
                     sizeof( asp->mode ) );
                 break;

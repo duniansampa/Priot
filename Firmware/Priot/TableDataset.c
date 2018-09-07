@@ -859,8 +859,8 @@ void TableDataset_unregisterAutoDataTable( TableDataSet* table_set,
 static void
 _TableDataset_addIndexes( TableDataSet* table_set, struct Parse_Tree_s* tp )
 {
-    oid name[ ASN01_MAX_OID_LEN ];
-    size_t name_length = ASN01_MAX_OID_LEN;
+    oid name[ asnMAX_OID_LEN ];
+    size_t name_length = asnMAX_OID_LEN;
     struct Parse_IndexList_s* index;
     struct Parse_Tree_s* indexnode;
     u_char type;
@@ -892,10 +892,10 @@ _TableDataset_addIndexes( TableDataSet* table_set, struct Parse_Tree_s* tp )
             ( NULL == indexnode->ranges->next ) && /*   but only one */
             ( indexnode->ranges->high == /*   & high==low */
                  indexnode->ranges->low ) ) {
-            type |= ASN01_PRIVATE;
+            type |= asnPRIVATE;
             fixed_len = indexnode->ranges->high;
         } else if ( index->isimplied )
-            type |= ASN01_PRIVATE;
+            type |= asnPRIVATE;
 
         DEBUG_MSGTL( ( "table_set_add_table",
             "adding default index of type %d\n", type ) );
@@ -919,8 +919,8 @@ _TableDataset_addIndexes( TableDataSet* table_set, struct Parse_Tree_s* tp )
 /** @internal */
 void TableDataset_configParseTableSet( const char* token, char* line )
 {
-    oid table_name[ ASN01_MAX_OID_LEN ];
-    size_t table_name_length = ASN01_MAX_OID_LEN;
+    oid table_name[ asnMAX_OID_LEN ];
+    size_t table_name_length = asnMAX_OID_LEN;
     struct Parse_Tree_s* tp;
     TableDataSet* table_set;
     DataSetTables* tables;
@@ -972,8 +972,8 @@ void TableDataset_configParseTableSet( const char* token, char* line )
      * check for augments indexes
      */
     if ( NULL != tp->augments ) {
-        oid name[ ASN01_MAX_OID_LEN ];
-        size_t name_length = ASN01_MAX_OID_LEN;
+        oid name[ asnMAX_OID_LEN ];
+        size_t name_length = asnMAX_OID_LEN;
         struct Parse_Tree_s* tp2;
 
         if ( !Mib_parseOid( tp->augments, name, &name_length ) ) {

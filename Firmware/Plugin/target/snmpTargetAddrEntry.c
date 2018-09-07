@@ -256,27 +256,27 @@ snmpTargetAddr_rowStatusCheck( const struct targetAddrTable_struct* entry )
  */
 
 static const struct Variable2_s snmpTargetAddrEntry_variables[] = {
-    { SNMPTARGETADDRTDOMAIN, ASN01_OBJECT_ID, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRTDOMAIN, asnOBJECT_ID, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRTDOMAINCOLUMN } },
-    { SNMPTARGETADDRTADDRESS, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRTADDRESS, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRTADDRESSCOLUMN } },
-    { SNMPTARGETADDRTIMEOUT, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRTIMEOUT, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRTIMEOUTCOLUMN } },
-    { SNMPTARGETADDRRETRYCOUNT, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRRETRYCOUNT, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRRETRYCOUNTCOLUMN } },
-    { SNMPTARGETADDRTAGLIST, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRTAGLIST, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRTAGLISTCOLUMN } },
-    { SNMPTARGETADDRPARAMS, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRPARAMS, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRPARAMSCOLUMN } },
-    { SNMPTARGETADDRSTORAGETYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRSTORAGETYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRSTORAGETYPECOLUMN } },
-    { SNMPTARGETADDRROWSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETADDRROWSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetAddrEntry, 1, { SNMPTARGETADDRROWSTATUSCOLUMN } },
 
 };
 
 static const struct Variable2_s snmpTargetSpinLock_var[] = {
-    { SNMPTARGETSPINLOCK, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETSPINLOCK, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_targetSpinLock, 1, { 1 } }
 };
 
@@ -820,16 +820,16 @@ int write_snmpTargetAddrTDomain( int action,
     u_char* statP, oid* name, size_t name_len )
 {
     struct targetAddrTable_struct* target = NULL;
-    static oid old_oid[ ASN01_MAX_OID_LEN ];
+    static oid old_oid[ asnMAX_OID_LEN ];
     static size_t old_oid_len;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OBJECT_ID ) {
+        if ( var_val_type != asnOBJECT_ID ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrTDomain not ASN01_OBJECT_ID\n" ) );
             return PRIOT_ERR_WRONGTYPE;
         }
-        if ( ( var_val_len > ( ASN01_MAX_OID_LEN * sizeof( oid ) ) ) || ( var_val_len % sizeof( oid ) != 0 ) ) {
+        if ( ( var_val_len > ( asnMAX_OID_LEN * sizeof( oid ) ) ) || ( var_val_len % sizeof( oid ) != 0 ) ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrTDomain: bad length\n" ) );
             return PRIOT_ERR_WRONGLENGTH;
@@ -909,7 +909,7 @@ int write_snmpTargetAddrTAddress( int action,
     static size_t old_len = 0;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrTAddress not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -995,7 +995,7 @@ int write_snmpTargetAddrTimeout( int action,
     struct targetAddrTable_struct* temp_struct;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrTimeout not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1062,7 +1062,7 @@ int write_snmpTargetAddrRetryCount( int action,
     struct targetAddrTable_struct* target;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrRetryCount not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1150,7 +1150,7 @@ int write_snmpTargetAddrTagList( int action,
     static char* old_tlist;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrTagList not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1216,7 +1216,7 @@ int write_snmpTargetAddrParams( int action,
     static char* old_params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrParams not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1297,7 +1297,7 @@ int write_snmpTargetAddrStorageType( int action,
     struct targetAddrTable_struct* target;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrStorageType not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1406,7 +1406,7 @@ int write_snmpTargetAddrRowStatus( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         value = *( ( long* )var_val );
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetAddrEntry",
                 "write to snmpTargetAddrRowStatus not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1545,7 +1545,7 @@ int write_targetSpinLock( int action,
     u_char* statP, oid* name, size_t name_len )
 {
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( unsigned long ) ) {

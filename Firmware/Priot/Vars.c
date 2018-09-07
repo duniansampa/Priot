@@ -5,14 +5,14 @@
 #include "Agentx/AgentxConfig.h"
 #include "Agentx/Subagent.h"
 #include "AllHelpers.h"
-#include "System/Util/Trace.h"
-#include "System/Util/DefaultStore.h"
 #include "DsAgent.h"
-#include "System/Containers/MapList.h"
-#include "System/Util/Logger.h"
 #include "PriotSettings.h"
-#include "Secmod.h"
 #include "SysORTable.h"
+#include "System/Containers/MapList.h"
+#include "System/Security/SecMod.h"
+#include "System/Util/DefaultStore.h"
+#include "System/Util/Logger.h"
+#include "System/Util/Trace.h"
 #include "Transports/CallbackDomain.h"
 #include "Transports/UDPDomain.h"
 #include "Transports/UnixDomain.h"
@@ -200,10 +200,10 @@ void Vars_shutdownAgent( void )
     AgentHandler_clearHandlerList();
     SysORTable_shutdownAgentSysORTable();
     Container_freeList();
-    Secmod_clear();
+    SecMod_clear();
     MapList_clear();
     Callback_clear();
-    Secmod_shutdown();
+    SecMod_shutdown();
     Agent_addrcacheDestroy();
 
     _vars_doneInitAgent = 0;

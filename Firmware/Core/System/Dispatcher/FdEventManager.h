@@ -3,12 +3,24 @@
 
 #include "System/Dispatcher/LargeFdSet.h"
 
+/** ============================[ Macros ]============================ */
+
 #define evmNUMBER_OF_EXTERNAL_FDS 32
 
 #define evmREGISTERED_OK 0
 #define evmREGISTRATION_FAILED -2
 #define evmUNREGISTERED_OK 0
 #define evmNO_SUCH_REGISTRATION -1
+
+/** ============================[ Types ]================== */
+
+/**
+ * function type: a callback to be called when there is
+ * read, or write, or except activity on the register fd.
+ */
+typedef void ( *FdEventCallback_fp )( int fd, void* data );
+
+/** =============================[ Functions Prototypes ]================== */
 
 /**
  * @details
@@ -19,12 +31,6 @@
  * you can pass in a pointer to some data that you have allocated that
  * you would like to have back when the callback is called.
  */
-
-/**
- * function type: a callback to be called when there is
- * read, or write, or except activity on the register fd.
- */
-typedef void ( *FdEventCallback_fp )( int fd, void* data );
 
 /**
  * @brief FdEventManager_registerReadFD

@@ -21,7 +21,7 @@ static TableRegistrationInfo* table_info;
 void init_mteEventTable( void )
 {
     static oid mteEventTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 4, 2 };
-    size_t mteEventTable_oid_len = ASN01_OID_LENGTH( mteEventTable_oid );
+    size_t mteEventTable_oid_len = asnOID_LENGTH( mteEventTable_oid );
     HandlerRegistration* reg;
 
     /*
@@ -40,9 +40,9 @@ void init_mteEventTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner */
+        asnOCTET_STR, /* index: mteOwner */
         /* index: mteEventName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTEEVENTCOMMENT;
@@ -96,21 +96,21 @@ int mteEventTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTCOMMENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->mteEventComment,
                     strlen( entry->mteEventComment ) );
                 break;
             case COLUMN_MTEEVENTACTIONS:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     &entry->mteEventActions, 1 );
                 break;
             case COLUMN_MTEEVENTENABLED:
                 ret = ( entry->flags & MTE_EVENT_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_MTEEVENTENTRYSTATUS:
                 ret = ( entry->flags & MTE_EVENT_FLAG_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             }
         }
@@ -130,7 +130,7 @@ int mteEventTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTCOMMENT:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
+                    request->requestvb, asnOCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -147,7 +147,7 @@ int mteEventTable_handler( MibHandler* handler,
                 break;
             case COLUMN_MTEEVENTACTIONS:
                 ret = VariableList_checkTypeAndLength(
-                    request->requestvb, ASN01_OCTET_STR, 1 );
+                    request->requestvb, asnOCTET_STR, 1 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

@@ -30,8 +30,8 @@ void init_nsLogging( void )
     if ( !table_info ) {
         return;
     }
-    Table_helperAddIndexes( table_info, ASN01_INTEGER,
-        ASN01_PRIV_IMPLIED_OCTET_STR, 0 );
+    Table_helperAddIndexes( table_info, asnINTEGER,
+        asnPRIV_IMPLIED_OCTET_STR, 0 );
     table_info->min_column = NSLOGGING_TYPE;
     table_info->max_column = NSLOGGING_STATUS;
 
@@ -52,7 +52,7 @@ void init_nsLogging( void )
     TableIterator_registerTableIterator2(
         AgentHandler_createHandlerRegistration(
             "tzLoggingTable", handle_nsLoggingTable,
-            nsLoggingTable_oid, ASN01_OID_LENGTH( nsLoggingTable_oid ),
+            nsLoggingTable_oid, asnOID_LENGTH( nsLoggingTable_oid ),
             HANDLER_CAN_RWRITE ),
         iinfo );
 }
@@ -137,7 +137,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                 }
 
                 temp = logh->type;
-                Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( request->requestvb, asnINTEGER,
                     ( u_char* )&temp,
                     sizeof( temp ) );
                 break;
@@ -148,7 +148,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                     continue;
                 }
                 temp = logh->pri_max;
-                Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( request->requestvb, asnINTEGER,
                     ( u_char* )&temp,
                     sizeof( temp ) );
                 break;
@@ -159,7 +159,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                     continue;
                 }
                 temp = ( logh->type ? ( logh->enabled ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE ) : tcROW_STATUS_NOTREADY );
-                Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( request->requestvb, asnINTEGER,
                     ( u_char* )&temp, sizeof( temp ) );
                 break;
 
@@ -180,7 +180,7 @@ int handle_nsLoggingTable( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case NSLOGGING_TYPE:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
@@ -201,7 +201,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                 break;
 
             case NSLOGGING_MAXLEVEL:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
@@ -212,7 +212,7 @@ int handle_nsLoggingTable( MibHandler* handler,
                 break;
 
             case NSLOGGING_STATUS:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }

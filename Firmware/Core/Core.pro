@@ -45,7 +45,6 @@ SOURCES += \
     Api.c \
     Asn01.c \
     Client.c \
-    System/Security/Keytools.c \
     System/Dispatcher/LargeFdSet.c \
     Mib.c \
     OidStash.c \
@@ -53,8 +52,7 @@ SOURCES += \
     ParseArgs.c \
     Priot.c \
     ReadConfig.c \
-    Scapi.c \
-    Secmod.c \
+    System/Security/Scapi.c \
     Service.c \
     Session.c \
     System/Util/System.c \
@@ -75,7 +73,9 @@ SOURCES += \
     System/Util/FileParser.c \
     TextualConvention.c \
     System/Util/Trace.c \
-    System/Security/Engine.c
+    System/Security/Engine.c \
+    System/Security/KeyTools.c \
+    System/Security/SecMod.c
 
 HEADERS += \
     Config.h \
@@ -118,16 +118,14 @@ HEADERS += \
     Types.h \
     Priot.h \
     System/Dispatcher/LargeFdSet.h \
-    System/Security/Keytools.h \
     Mib.h \
     Asn01.h \
     Parse.h \
     OidStash.h \
     ReadConfig.h \
-    Scapi.h \
+    System/Security/Scapi.h \
     Api.h \
     ParseArgs.h \
-    Secmod.h \
     Service.h \
     System/Security/Usm.h \
     V3.h \
@@ -145,7 +143,9 @@ HEADERS += \
     System/Util/FileParser.h \
     TextualConvention.h \
     System/Util/Trace.h \
-    System/Security/Engine.h
+    System/Security/Engine.h \
+    System/Security/KeyTools.h \
+    System/Security/SecMod.h
 
 
 

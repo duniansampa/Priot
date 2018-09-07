@@ -5,7 +5,7 @@
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "System/Containers/Container.h"
-#include "System/Security/Keytools.h"
+#include "System/Security/KeyTools.h"
 #include "System/Security/Usm.h"
 #include "System/String.h"
 #include "System/Util/DefaultStore.h"
@@ -587,7 +587,7 @@ int ParseArgs_parseArgs( int argc,
                 USM_AUTH_PROTO_MD5_LEN );
             session->securityAuthProtoLen = USM_AUTH_PROTO_MD5_LEN;
         }
-        if ( Keytools_generateKu( session->securityAuthProto,
+        if ( KeyTools_generateKu( session->securityAuthProto,
                  session->securityAuthProtoLen,
                  ( u_char* )Apsz, strlen( Apsz ),
                  session->securityAuthKey,
@@ -616,7 +616,7 @@ int ParseArgs_parseArgs( int argc,
                 USM_PRIV_PROTO_DES_LEN );
             session->securityPrivProtoLen = USM_PRIV_PROTO_DES_LEN;
         }
-        if ( Keytools_generateKu( session->securityAuthProto,
+        if ( KeyTools_generateKu( session->securityAuthProto,
                  session->securityAuthProtoLen,
                  ( u_char* )Xpsz, strlen( Xpsz ),
                  session->securityPrivKey,

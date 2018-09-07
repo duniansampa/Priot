@@ -36,13 +36,13 @@ struct Variable2_s snmpNotifyFilterProfileTable_variables[] = {
      * magic number        , variable type , ro/rw , callback fn  , L, oidsuffix 
      */
 #define SNMPNOTIFYFILTERPROFILENAME 3
-    { SNMPNOTIFYFILTERPROFILENAME, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYFILTERPROFILENAME, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyFilterProfileTable, 2, { 1, 1 } },
 #define SNMPNOTIFYFILTERPROFILESTORTYPE 4
-    { SNMPNOTIFYFILTERPROFILESTORTYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYFILTERPROFILESTORTYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyFilterProfileTable, 2, { 1, 2 } },
 #define SNMPNOTIFYFILTERPROFILEROWSTATUS 5
-    { SNMPNOTIFYFILTERPROFILEROWSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPNOTIFYFILTERPROFILEROWSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpNotifyFilterProfileTable, 2, { 1, 3 } },
 
 };
@@ -105,7 +105,7 @@ int snmpNotifyFilterProfileTable_add( struct snmpNotifyFilterProfileTable_data* 
      * used by header_complex to index the data 
      */
 
-    Api_varlistAddVariable( &vars, NULL, 0, ASN01_PRIV_IMPLIED_OCTET_STR,
+    Api_varlistAddVariable( &vars, NULL, 0, asnPRIV_IMPLIED_OCTET_STR,
         ( u_char* )thedata->snmpTargetParamsName,
         thedata->snmpTargetParamsNameLen );
 
@@ -138,7 +138,7 @@ void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_OCTET_STR, line,
+    line = ReadConfig_readData( asnOCTET_STR, line,
         &StorageTmp->snmpTargetParamsName,
         &StorageTmp->snmpTargetParamsNameLen );
     if ( StorageTmp->snmpTargetParamsName == NULL ) {
@@ -146,7 +146,7 @@ void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_OCTET_STR, line,
+    line = ReadConfig_readData( asnOCTET_STR, line,
         &StorageTmp->snmpNotifyFilterProfileName,
         &StorageTmp->snmpNotifyFilterProfileNameLen );
     if ( StorageTmp->snmpNotifyFilterProfileName == NULL ) {
@@ -155,11 +155,11 @@ void parse_snmpNotifyFilterProfileTable( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &StorageTmp->snmpNotifyFilterProfileStorType,
         &tmpint );
 
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &StorageTmp->snmpNotifyFilterProfileRowStatus, &tmpint );
 
     if ( snmpNotifyFilterProfileTable_add( StorageTmp ) != ErrorCode_SUCCESS ) {
@@ -195,16 +195,16 @@ int store_snmpNotifyFilterProfileTable( int majorID, int minorID,
             strcat( line, "snmpNotifyFilterProfileTable " );
             cptr = line + strlen( line );
 
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr,
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr,
                 &StorageTmp->snmpTargetParamsName,
                 &StorageTmp->snmpTargetParamsNameLen );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr,
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr,
                 &StorageTmp->snmpNotifyFilterProfileName,
                 &StorageTmp->snmpNotifyFilterProfileNameLen );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &StorageTmp->snmpNotifyFilterProfileStorType,
                 NULL );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &StorageTmp->snmpNotifyFilterProfileRowStatus,
                 NULL );
 
@@ -314,7 +314,7 @@ int write_snmpNotifyFilterProfileName( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len < 1 || var_val_len > 32 ) {
@@ -392,7 +392,7 @@ int write_snmpNotifyFilterProfileStorType( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -470,7 +470,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1:
-        if ( var_val_type != ASN01_INTEGER || var_val == NULL ) {
+        if ( var_val_type != asnINTEGER || var_val == NULL ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -526,7 +526,7 @@ int write_snmpNotifyFilterProfileRowStatus( int action,
             vars = NULL;
 
             Api_varlistAddVariable( &vars, NULL, 0,
-                ASN01_PRIV_IMPLIED_OCTET_STR, NULL, 0 );
+                asnPRIV_IMPLIED_OCTET_STR, NULL, 0 );
 
             if ( header_complex_parse_oid( &( name
                                                    [ sizeof( snmpNotifyFilterProfileTable_variables_oid ) / sizeof( oid ) + 2 ] ),
@@ -670,7 +670,7 @@ char* get_FilterProfileName( const char* paramName, size_t paramName_len,
     /*
      * put requested info into var structure 
      */
-    Api_varlistAddVariable( &vars, NULL, 0, ASN01_PRIV_IMPLIED_OCTET_STR,
+    Api_varlistAddVariable( &vars, NULL, 0, asnPRIV_IMPLIED_OCTET_STR,
         ( const u_char* )paramName, paramName_len );
 
     /*

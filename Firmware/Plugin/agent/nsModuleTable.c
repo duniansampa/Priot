@@ -36,7 +36,7 @@ void initialize_table_nsModuleTable( void )
     my_handler = AgentHandler_createHandlerRegistration( "nsModuleTable",
         nsModuleTable_handler,
         nsModuleTable_oid,
-        ASN01_OID_LENGTH( nsModuleTable_oid ),
+        asnOID_LENGTH( nsModuleTable_oid ),
         HANDLER_CAN_RWRITE );
 
     if ( !my_handler || !table_info || !iinfo ) {
@@ -50,9 +50,9 @@ void initialize_table_nsModuleTable( void )
     /***************************************************
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( table_info, ASN01_OCTET_STR, /* context name */
-        ASN01_OBJECT_ID, /* reg point */
-        ASN01_INTEGER, /* priority */
+    Table_helperAddIndexes( table_info, asnOCTET_STR, /* context name */
+        asnOBJECT_ID, /* reg point */
+        asnINTEGER, /* priority */
         0 );
 
     table_info->min_column = 4;
@@ -268,11 +268,11 @@ int nsModuleTable_handler( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_NSMODULENAME:
                 if ( tree->reginfo->handlerName ) {
-                    Client_setVarTypedValue( var, ASN01_OCTET_STR,
+                    Client_setVarTypedValue( var, asnOCTET_STR,
                         tree->reginfo->handlerName,
                         strlen( tree->reginfo->handlerName ) );
                 } else {
-                    Client_setVarTypedValue( var, ASN01_OCTET_STR, "", 0 );
+                    Client_setVarTypedValue( var, asnOCTET_STR, "", 0 );
                 }
                 break;
 
@@ -284,12 +284,12 @@ int nsModuleTable_handler( MibHandler* handler,
                                                                                                                                                          & tree->reginfo->modes )
                                                                                                                                                        << 3 );
                 /*  yuck  */
-                Client_setVarTypedValue( var, ASN01_OCTET_STR, modes, 1 );
+                Client_setVarTypedValue( var, asnOCTET_STR, modes, 1 );
                 break;
 
             case COLUMN_NSMODULETIMEOUT:
                 ultmp = tree->timeout;
-                Client_setVarTypedValue( var, ASN01_INTEGER,
+                Client_setVarTypedValue( var, asnINTEGER,
                     ( u_char* )&ultmp,
                     sizeof( u_long ) );
                 break;

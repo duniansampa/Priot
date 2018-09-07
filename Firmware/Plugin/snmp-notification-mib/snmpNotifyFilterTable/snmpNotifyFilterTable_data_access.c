@@ -466,7 +466,7 @@ int snmpNotifyFilterTable_validate_index( snmpNotifyFilterTable_registration*
 struct vacm_viewEntry*
 snmpNotifyFilterTable_vacm_view_subtree( const char* profile )
 {
-    oid tmp_oid[ ASN01_MAX_OID_LEN ];
+    oid tmp_oid[ asnMAX_OID_LEN ];
     Types_Index tmp_idx;
     size_t i, j;
     Types_VoidArray* s;

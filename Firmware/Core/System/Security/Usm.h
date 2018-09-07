@@ -3,7 +3,7 @@
 
 #include "Generals.h"
 #include "Types.h"
-#include "Secmod.h"
+#include "SecMod.h"
 #include "System/Util/Callback.h"
 #include "Priot.h"
 
@@ -189,10 +189,10 @@ int             Usm_checkAndUpdateTimeliness(u_char * secEngineID,
                                                 u_int time_uint,
                                                 int *error);
 
-Secmod_SessionCallbackFT usm_openSession;
-Secmod_OutMsgFT    usm_secmodGenerateOutMsg;
-Secmod_OutMsgFT    usm_secmodGenerateOutMsg;
-Secmod_InMsgFT     usm_secmodProcessInMsg;
+SecModSessionCallback_f usm_openSession;
+SecModOutMsg_f    usm_secmodGenerateOutMsg;
+SecModOutMsg_f    usm_secmodGenerateOutMsg;
+SecModInMsg_f     usm_secmodProcessInMsg;
 
 int             Usm_generateOutMsg(int, u_char *, size_t, int, int,
                                      u_char *, size_t, char *, size_t,
@@ -274,7 +274,7 @@ void            Usm_shutdownUsm(void);
 
 
 int             Usm_createUserFromSession(Types_Session * session);
-Secmod_PostDiscoveryFT Usm_createUserFromSessionHook;
+SecModPostDiscovery_f Usm_createUserFromSessionHook;
 
 void            Usm_parseCreateUsmUser(const char *token,
                                          char *line);

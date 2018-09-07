@@ -125,7 +125,7 @@ Cache*
 netsnmp_swrun_cache( void )
 {
     oid hrSWRunTable_oid[] = { 1, 3, 6, 1, 2, 1, 25, 4, 2 };
-    size_t hrSWRunTable_oid_len = ASN01_OID_LENGTH( hrSWRunTable_oid );
+    size_t hrSWRunTable_oid_len = asnOID_LENGTH( hrSWRunTable_oid );
 
     if ( !swrun_cache ) {
         swrun_cache = CacheHandler_create( 30, /* timeout in seconds */

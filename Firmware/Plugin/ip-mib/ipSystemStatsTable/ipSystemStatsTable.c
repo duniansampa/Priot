@@ -20,7 +20,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ipSystemStatsTable_oid[] = { IPSYSTEMSTATSTABLE_OID };
-const int ipSystemStatsTable_oid_size = ASN01_OID_LENGTH( ipSystemStatsTable_oid );
+const int ipSystemStatsTable_oid_size = asnOID_LENGTH( ipSystemStatsTable_oid );
 
 ipSystemStatsTable_registration ipSystemStatsTable_user_context;
 static ipSystemStatsTable_registration* ipSystemStatsTable_user_context_p;

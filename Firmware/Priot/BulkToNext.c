@@ -46,8 +46,8 @@ BulkToNext_fixRequests(RequestInfo *requests)
      */
     for (request = requests; request; request = request->next) {
         if (request->repeat > 0 &&
-            request->requestvb->type != ASN01_NULL &&
-            request->requestvb->type != ASN01_PRIV_RETRY &&
+            request->requestvb->type != asnNULL &&
+            request->requestvb->type != asnPRIV_RETRY &&
             (Api_oidCompare(request->requestvb->name,
                               request->requestvb->nameLength,
                               request->range_end,
@@ -58,7 +58,7 @@ BulkToNext_fixRequests(RequestInfo *requests)
                                request->requestvb->name,
                                request->requestvb->nameLength);
             request->requestvb = request->requestvb->next;
-            request->requestvb->type = ASN01_PRIV_RETRY;
+            request->requestvb->type = asnPRIV_RETRY;
             /*
              * if inclusive == 2, it was set in check_getnext_results for
              * the previous requestvb. Now that we've moved on, clear it.

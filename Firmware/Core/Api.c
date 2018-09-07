@@ -7,7 +7,6 @@
 #include "Parse.h"
 #include "Priot.h"
 #include "ReadConfig.h"
-#include "Secmod.h"
 #include "Service.h"
 #include "Session.h"
 #include "System/AccessControl/Vacm.h"
@@ -15,6 +14,7 @@
 #include "System/Containers/MapList.h"
 #include "System/Dispatcher/LargeFdSet.h"
 #include "System/Numerics/Integer64.h"
+#include "System/Security/SecMod.h"
 #include "System/Security/Usm.h"
 #include "System/String.h"
 #include "System/Task/Mutex.h"
@@ -578,46 +578,46 @@ void Api_sessInit( Types_Session* session )
 static void
 _Api_registerDefaultHandlers( void )
 {
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "dumpPacket",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "dumpPacket",
         DsStore_LIBRARY_ID, DsBool_DUMP_PACKET );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "reverseEncodeBER",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "reverseEncodeBER",
         DsStore_LIBRARY_ID, DsBool_REVERSE_ENCODE );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "defaultPort",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "defaultPort",
         DsStore_LIBRARY_ID, DsInt_DEFAULT_PORT );
 
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "noTokenWarnings",
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "noTokenWarnings",
         DsStore_LIBRARY_ID, DsBool_NO_TOKEN_WARNINGS );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noRangeCheck",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "noRangeCheck",
         DsStore_LIBRARY_ID, DsBool_DONT_CHECK_RANGE );
-    DefaultStore_registerPremib( ASN01_OCTET_STR, "priot", "persistentDir",
+    DefaultStore_registerPremib( asnOCTET_STR, "priot", "persistentDir",
         DsStore_LIBRARY_ID, DsStr_PERSISTENT_DIR );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "tempFilePattern",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "tempFilePattern",
         DsStore_LIBRARY_ID, DsStr_TEMP_FILE_PATTERN );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noDisplayHint",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "noDisplayHint",
         DsStore_LIBRARY_ID, DsBool_NO_DISPLAY_HINT );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "16bitIDs",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "16bitIDs",
         DsStore_LIBRARY_ID, DsBool_LIB_16BIT_IDS );
-    DefaultStore_registerPremib( ASN01_OCTET_STR, "priot", "clientaddr",
+    DefaultStore_registerPremib( asnOCTET_STR, "priot", "clientaddr",
         DsStore_LIBRARY_ID, DsStr_CLIENT_ADDR );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "serverSendBuf",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "serverSendBuf",
         DsStore_LIBRARY_ID, DsInt_SERVERSENDBUF );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "serverRecvBuf",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "serverRecvBuf",
         DsStore_LIBRARY_ID, DsInt_SERVERRECVBUF );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "clientSendBuf",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "clientSendBuf",
         DsStore_LIBRARY_ID, DsInt_CLIENTSENDBUF );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "clientRecvBuf",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "clientRecvBuf",
         DsStore_LIBRARY_ID, DsInt_CLIENTRECVBUF );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noPersistentLoad",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "noPersistentLoad",
         DsStore_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_LOAD );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot", "noPersistentSave",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot", "noPersistentSave",
         DsStore_LIBRARY_ID, DsBool_DISABLE_PERSISTENT_SAVE );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, "priot",
+    DefaultStore_registerConfig( asnBOOLEAN, "priot",
         "noContextEngineIDDiscovery",
         DsStore_LIBRARY_ID,
         DsBool_NO_DISCOVERY );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "timeout",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "timeout",
         DsStore_LIBRARY_ID, DsInt_TIMEOUT );
-    DefaultStore_registerConfig( ASN01_INTEGER, "priot", "retries",
+    DefaultStore_registerConfig( asnINTEGER, "priot", "retries",
         DsStore_LIBRARY_ID, DsInt_RETRIES );
 
     Service_registerServiceHandlers();
@@ -724,14 +724,14 @@ void Api_shutdown( const char* type )
 
     ReadConfig_unregisterAllConfigHandlers();
     Container_freeList();
-    Secmod_clear();
+    SecMod_clear();
     MapList_clear();
     Transport_clearTdomainList();
     Callback_clear();
     DefaultStore_clear();
     Service_clearDefaultTarget();
     Service_clearDefaultDomain();
-    Secmod_shutdown();
+    SecMod_shutdown();
 
     _api_initPriotInitDone = 0;
     _api_initPriotInitDone2 = 0;
@@ -800,7 +800,7 @@ _Api_sessCopy2( Types_Session* in_session )
     struct Api_SessionList_s* slp;
     struct Api_InternalSession_s* isp;
     Types_Session* session;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
     char* cp;
     u_char* ucp;
 
@@ -968,12 +968,12 @@ _Api_sessCopy2( Types_Session* in_session )
     Callback_call( CallbackMajor_LIBRARY, CallbackMinor_SESSION_INIT,
         session );
 
-    if ( ( sptr = Secmod_find( session->securityModel ) ) != NULL ) {
+    if ( ( sptr = SecMod_findDefBySecMod( session->securityModel ) ) != NULL ) {
         /*
          * security module specific copying
          */
-        if ( sptr->session_setup ) {
-            int ret = ( *sptr->session_setup )( in_session, session );
+        if ( sptr->sessionSetupFunction ) {
+            int ret = ( *sptr->sessionSetupFunction )( in_session, session );
             if ( ret != ErrorCode_SUCCESS ) {
                 Api_sessClose( slp );
                 return NULL;
@@ -983,8 +983,8 @@ _Api_sessCopy2( Types_Session* in_session )
         /*
          * security module specific opening
          */
-        if ( sptr->session_open ) {
-            int ret = ( *sptr->session_open )( session );
+        if ( sptr->sessionOpenFunction ) {
+            int ret = ( *sptr->sessionOpenFunction )( session );
             if ( ret != ErrorCode_SUCCESS ) {
                 Api_sessClose( slp );
                 return NULL;
@@ -1064,7 +1064,7 @@ int Api_v3ProbeContextEngineIDRfc5343( void* slp, Types_Session* session )
     }
 
     /* check that the response makes sense */
-    if ( NULL != response->variables && NULL != response->variables->name && Api_oidCompare( response->variables->name, response->variables->nameLength, snmpEngineIDoid, snmpEngineIDoid_len ) == 0 && ASN01_OCTET_STR == response->variables->type && NULL != response->variables->value.string && response->variables->valueLength > 0 ) {
+    if ( NULL != response->variables && NULL != response->variables->name && Api_oidCompare( response->variables->name, response->variables->nameLength, snmpEngineIDoid, snmpEngineIDoid_len ) == 0 && asnOCTET_STR == response->variables->type && NULL != response->variables->value.string && response->variables->valueLength > 0 ) {
         session->contextEngineID = ( u_char* )Memory_memdup( response->variables->value.string,
             response->variables->valueLength );
         if ( !session->contextEngineID ) {
@@ -1116,7 +1116,7 @@ int Api_v3EngineIDProbe( struct Api_SessionList_s* slp,
 {
     Types_Session* session;
     int status;
-    struct Secmod_Def_s* sptr = NULL;
+    struct SecModDefinition_s* sptr = NULL;
 
     if ( slp == NULL || slp->session == NULL ) {
         return 0;
@@ -1124,7 +1124,7 @@ int Api_v3EngineIDProbe( struct Api_SessionList_s* slp,
 
     session = slp->session;
     Assert_assertOrReturn( session != NULL, 0 );
-    sptr = Secmod_find( session->securityModel );
+    sptr = SecMod_findDefBySecMod( session->securityModel );
 
     /*
      * If we are opening a V3 session and we don't know engineID we must probe
@@ -1133,10 +1133,10 @@ int Api_v3EngineIDProbe( struct Api_SessionList_s* slp,
      */
 
     if ( session->version == PRIOT_VERSION_3 && ( 0 == ( session->flags & API_FLAGS_DONT_PROBE ) ) ) {
-        if ( NULL != sptr && NULL != sptr->probe_engineid ) {
+        if ( NULL != sptr && NULL != sptr->probeEngineIdFunction ) {
             DEBUG_MSGTL( ( "priotApi", "probing for engineID using security model callback...\n" ) );
             /* security model specific mechanism of determining engineID */
-            status = ( *sptr->probe_engineid )( slp, in_session );
+            status = ( *sptr->probeEngineIdFunction )( slp, in_session );
             if ( status != ErrorCode_SUCCESS )
                 return 0;
         } else {
@@ -1149,8 +1149,8 @@ int Api_v3EngineIDProbe( struct Api_SessionList_s* slp,
      * see if there is a hook to call now that we're done probing for an
      * engineID
      */
-    if ( sptr && sptr->post_probe_engineid ) {
-        status = ( *sptr->post_probe_engineid )( slp, in_session );
+    if ( sptr && sptr->postProbeEngineIdFunction ) {
+        status = ( *sptr->postProbeEngineIdFunction )( slp, in_session );
         if ( status != ErrorCode_SUCCESS )
             return 0;
     }
@@ -1566,14 +1566,14 @@ int Api_sessClose( void* sessp )
     Transport_Transport* transport;
     struct Api_InternalSession_s* isp;
     Types_Session* sesp = NULL;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
 
     if ( slp == NULL ) {
         return 0;
     }
 
-    if ( slp->session != NULL && ( sptr = Secmod_find( slp->session->securityModel ) ) != NULL && sptr->session_close != NULL ) {
-        ( *sptr->session_close )( slp->session );
+    if ( slp->session != NULL && ( sptr = SecMod_findDefBySecMod( slp->session->securityModel ) ) != NULL && sptr->sessionCloseFunction != NULL ) {
+        ( *sptr->sessionCloseFunction )( slp->session );
     }
 
     isp = slp->internal;
@@ -1900,7 +1900,7 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      * * for SNMP message sequence (actual length inserted later)
      */
     cp = Asn01_buildSequence( packet, out_length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         length );
     if ( cp == NULL )
         return NULL;
@@ -1912,8 +1912,8 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      * store the version field - msgVersion
      */
     DEBUG_DUMPHEADER( "send", "PRIOT Version Number" );
-    cp = Asn01_buildInt( cp, out_length,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), ( long* )&pdu->version,
+    cp = Asn_buildInt( cp, out_length,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), ( long* )&pdu->version,
         sizeof( pdu->version ) );
     DEBUG_INDENTLESS();
     if ( cp == NULL )
@@ -1925,7 +1925,7 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      */
     DEBUG_DUMPSECTION( "send", "msgGlobalData" );
     cp = Asn01_buildSequence( cp, out_length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), 0 );
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ), 0 );
     if ( cp == NULL )
         return NULL;
     global_hdr_e = cp;
@@ -1934,8 +1934,8 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      * msgID
      */
     DEBUG_DUMPHEADER( "send", "msgID" );
-    cp = Asn01_buildInt( cp, out_length,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &pdu->msgid,
+    cp = Asn_buildInt( cp, out_length,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &pdu->msgid,
         sizeof( pdu->msgid ) );
     DEBUG_INDENTLESS();
     if ( cp == NULL )
@@ -1946,8 +1946,8 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      */
     max_size = session->rcvMsgMaxSize;
     DEBUG_DUMPHEADER( "send", "msgMaxSize" );
-    cp = Asn01_buildInt( cp, out_length,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &max_size,
+    cp = Asn_buildInt( cp, out_length,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &max_size,
         sizeof( max_size ) );
     DEBUG_INDENTLESS();
     if ( cp == NULL )
@@ -1959,7 +1959,7 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
     _Api_v3CalcMsgFlags( pdu->securityLevel, pdu->command, &msg_flags );
     DEBUG_DUMPHEADER( "send", "msgFlags" );
     cp = Asn01_buildString( cp, out_length,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), &msg_flags,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ), &msg_flags,
         sizeof( msg_flags ) );
     DEBUG_INDENTLESS();
     if ( cp == NULL )
@@ -1970,8 +1970,8 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      */
     sec_model = pdu->securityModel;
     DEBUG_DUMPHEADER( "send", "msgSecurityModel" );
-    cp = Asn01_buildInt( cp, out_length,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &sec_model,
+    cp = Asn_buildInt( cp, out_length,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &sec_model,
         sizeof( sec_model ) );
     DEBUG_INDENTADD( -4 ); /* return from global data indent */
     if ( cp == NULL )
@@ -1981,7 +1981,7 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      * insert actual length of globalData
      */
     pb = Asn01_buildSequence( global_hdr, out_length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         cp - global_hdr_e );
     if ( pb == NULL )
         return NULL;
@@ -1990,7 +1990,7 @@ _Api_v3HeaderBuild( Types_Session* session, Types_Pdu* pdu,
      * insert the actual length of the entire packet
      */
     pb = Asn01_buildSequence( packet, out_length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         length + ( cp - pb0e ) );
     if ( pb == NULL )
         return NULL;
@@ -2014,7 +2014,7 @@ int Api_v3HeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
     sec_model = pdu->securityModel;
     DEBUG_DUMPHEADER( "send", "msgSecurityModel" );
     rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &sec_model,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &sec_model,
         sizeof( sec_model ) );
     DEBUG_INDENTLESS();
     if ( rc == 0 ) {
@@ -2027,8 +2027,8 @@ int Api_v3HeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
     _Api_v3CalcMsgFlags( pdu->securityLevel, pdu->command, &msg_flags );
     DEBUG_DUMPHEADER( "send", "msgFlags" );
     rc = Asn01_reallocRbuildString( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         &msg_flags,
         sizeof( msg_flags ) );
     DEBUG_INDENTLESS();
@@ -2042,7 +2042,7 @@ int Api_v3HeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
     max_size = session->rcvMsgMaxSize;
     DEBUG_DUMPHEADER( "send", "msgMaxSize" );
     rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &max_size,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &max_size,
         sizeof( max_size ) );
     DEBUG_INDENTLESS();
     if ( rc == 0 ) {
@@ -2054,7 +2054,7 @@ int Api_v3HeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
      */
     DEBUG_DUMPHEADER( "send", "msgID" );
     rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &pdu->msgid,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &pdu->msgid,
         sizeof( pdu->msgid ) );
     DEBUG_INDENTLESS();
     if ( rc == 0 ) {
@@ -2065,7 +2065,7 @@ int Api_v3HeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
      * Global data sequence.
      */
     rc = Asn01_reallocRbuildSequence( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         *offset - start_offset );
     if ( rc == 0 ) {
         return 0;
@@ -2076,7 +2076,7 @@ int Api_v3HeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
      */
     DEBUG_DUMPHEADER( "send", "PRIOT Version Number" );
     rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ),
         ( long* )&pdu->version,
         sizeof( pdu->version ) );
     DEBUG_INDENTLESS();
@@ -2092,7 +2092,7 @@ _Api_v3ScopedPDUHeaderBuild( Types_Pdu* pdu,
 
     pb = scopedPdu = packet;
     pb = Asn01_buildSequence( pb, out_length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), 0 );
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ), 0 );
     if ( pb == NULL )
         return NULL;
     if ( spdu_e )
@@ -2100,7 +2100,7 @@ _Api_v3ScopedPDUHeaderBuild( Types_Pdu* pdu,
 
     DEBUG_DUMPHEADER( "send", "contextEngineID" );
     pb = Asn01_buildString( pb, out_length,
-        ( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+        ( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ),
         pdu->contextEngineID, pdu->contextEngineIDLen );
     DEBUG_INDENTLESS();
     if ( pb == NULL )
@@ -2108,7 +2108,7 @@ _Api_v3ScopedPDUHeaderBuild( Types_Pdu* pdu,
 
     DEBUG_DUMPHEADER( "send", "contextName" );
     pb = Asn01_buildString( pb, out_length,
-        ( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+        ( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ),
         ( u_char* )pdu->contextName,
         pdu->contextNameLen );
     DEBUG_INDENTLESS();
@@ -2131,8 +2131,8 @@ int Api_v3ScopedPDUHeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
      */
     DEBUG_DUMPHEADER( "send", "contextName" );
     rc = Asn01_reallocRbuildString( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         ( u_char* )pdu->contextName,
         pdu->contextNameLen );
     DEBUG_INDENTLESS();
@@ -2145,8 +2145,8 @@ int Api_v3ScopedPDUHeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
      */
     DEBUG_DUMPHEADER( "send", "contextEngineID" );
     rc = Asn01_reallocRbuildString( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         pdu->contextEngineID,
         pdu->contextEngineIDLen );
     DEBUG_INDENTLESS();
@@ -2155,7 +2155,7 @@ int Api_v3ScopedPDUHeaderReallocRbuild( u_char** pkt, size_t* pkt_len,
     }
 
     rc = Asn01_reallocRbuildSequence( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         *offset - start_offset + body_len );
 
     return rc;
@@ -2172,7 +2172,7 @@ int Api_v3PacketReallocRbuild( u_char** pkt, size_t* pkt_len,
     u_char *scoped_pdu, *hdrbuf = NULL, *hdr = NULL;
     size_t hdrbuf_len = API_MAX_MSG_V3_HDRS, hdr_offset = 0, spdu_offset = 0;
     size_t body_end_offset = *offset, body_len = 0;
-    struct Secmod_Def_s* sptr = NULL;
+    struct SecModDefinition_s* sptr = NULL;
     int rc = 0;
 
     /*
@@ -2223,37 +2223,37 @@ int Api_v3PacketReallocRbuild( u_char** pkt, size_t* pkt_len,
      * message---the entire message to transmitted on the wire is returned.
      */
 
-    sptr = Secmod_find( pdu->securityModel );
+    sptr = SecMod_findDefBySecMod( pdu->securityModel );
     DEBUG_DUMPSECTION( "send", "SM msgSecurityParameters" );
-    if ( sptr && sptr->encode_reverse ) {
-        struct Secmod_OutgoingParams_s parms;
+    if ( sptr && sptr->encodeReverseFunction ) {
+        struct OutgoingParams_s parms;
 
         parms.msgProcModel = pdu->msgParseModel;
         parms.globalData = hdr;
-        parms.globalDataLen = hdr_offset;
+        parms.globalDataLength = hdr_offset;
         parms.maxMsgSize = API_MAX_MSG_SIZE;
         parms.secModel = pdu->securityModel;
-        parms.secEngineID = pdu->securityEngineID;
-        parms.secEngineIDLen = pdu->securityEngineIDLen;
+        parms.secEngineId = pdu->securityEngineID;
+        parms.secEngineIdLength = pdu->securityEngineIDLen;
         parms.secName = pdu->securityName;
-        parms.secNameLen = pdu->securityNameLen;
+        parms.secNameLength = pdu->securityNameLen;
         parms.secLevel = pdu->securityLevel;
         parms.scopedPdu = scoped_pdu;
-        parms.scopedPduLen = spdu_offset;
+        parms.scopedPduLength = spdu_offset;
         parms.secStateRef = pdu->securityStateRef;
         parms.wholeMsg = pkt;
-        parms.wholeMsgLen = pkt_len;
+        parms.wholeMsgLength = pkt_len;
         parms.wholeMsgOffset = offset;
         parms.session = session;
         parms.pdu = pdu;
 
-        rc = ( *sptr->encode_reverse )( &parms );
+        rc = ( *sptr->encodeReverseFunction )( &parms );
     } else {
         if ( !sptr ) {
             Logger_log( LOGGER_PRIORITY_ERR,
                 "no such security service available: %d\n",
                 pdu->securityModel );
-        } else if ( !sptr->encode_reverse ) {
+        } else if ( !sptr->encodeReverseFunction ) {
             Logger_log( LOGGER_PRIORITY_ERR,
                 "security service %d doesn't support reverse encoding.\n",
                 pdu->securityModel );
@@ -2279,7 +2279,7 @@ int Api_v3PacketBuild( Types_Session* session, Types_Pdu* pdu,
     size_t spdu_buf_len, spdu_len;
     u_char* cp;
     int result;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
 
     global_data = packet;
 
@@ -2323,7 +2323,7 @@ int Api_v3PacketBuild( Types_Session* session, Types_Pdu* pdu,
     spdu_len = cp - spdu_hdr_e; /* length of scopedPdu minus ASN.1 headers */
     spdu_buf_len = API_MAX_MSG_SIZE;
     if ( Asn01_buildSequence( spdu_buf, &spdu_buf_len,
-             ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+             ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
              spdu_len )
         == NULL )
         return -1;
@@ -2336,34 +2336,34 @@ int Api_v3PacketBuild( Types_Session* session, Types_Pdu* pdu,
     cp = NULL;
     *out_length = API_MAX_MSG_SIZE;
     DEBUG_DUMPSECTION( "send", "SM msgSecurityParameters" );
-    sptr = Secmod_find( pdu->securityModel );
-    if ( sptr && sptr->encode_forward ) {
-        struct Secmod_OutgoingParams_s parms;
+    sptr = SecMod_findDefBySecMod( pdu->securityModel );
+    if ( sptr && sptr->encodeForwardFunction ) {
+        struct OutgoingParams_s parms;
         parms.msgProcModel = pdu->msgParseModel;
         parms.globalData = global_data;
-        parms.globalDataLen = global_data_len;
+        parms.globalDataLength = global_data_len;
         parms.maxMsgSize = API_MAX_MSG_SIZE;
         parms.secModel = pdu->securityModel;
-        parms.secEngineID = pdu->securityEngineID;
-        parms.secEngineIDLen = pdu->securityEngineIDLen;
+        parms.secEngineId = pdu->securityEngineID;
+        parms.secEngineIdLength = pdu->securityEngineIDLen;
         parms.secName = pdu->securityName;
-        parms.secNameLen = pdu->securityNameLen;
+        parms.secNameLength = pdu->securityNameLen;
         parms.secLevel = pdu->securityLevel;
         parms.scopedPdu = spdu_buf;
-        parms.scopedPduLen = spdu_len;
+        parms.scopedPduLength = spdu_len;
         parms.secStateRef = pdu->securityStateRef;
         parms.secParams = sec_params;
-        parms.secParamsLen = &sec_params_len;
+        parms.secParamsLength = &sec_params_len;
         parms.wholeMsg = &cp;
-        parms.wholeMsgLen = out_length;
+        parms.wholeMsgLength = out_length;
         parms.session = session;
         parms.pdu = pdu;
-        result = ( *sptr->encode_forward )( &parms );
+        result = ( *sptr->encodeForwardFunction )( &parms );
     } else {
         if ( !sptr ) {
             Logger_log( LOGGER_PRIORITY_ERR, "no such security service available: %d\n",
                 pdu->securityModel );
-        } else if ( !sptr->encode_forward ) {
+        } else if ( !sptr->encodeForwardFunction ) {
             Logger_log( LOGGER_PRIORITY_ERR,
                 "security service %d doesn't support forward out encoding.\n",
                 pdu->securityModel );
@@ -2558,8 +2558,8 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
         /*
          * request id
          */
-        cp = Asn01_buildInt( cp, out_length,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &pdu->reqid,
+        cp = Asn_buildInt( cp, out_length,
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &pdu->reqid,
             sizeof( pdu->reqid ) );
         DEBUG_INDENTLESS();
         if ( cp == NULL )
@@ -2569,8 +2569,8 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          * error status (getbulk non-repeaters)
          */
         DEBUG_DUMPHEADER( "send", "error status" );
-        cp = Asn01_buildInt( cp, out_length,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &pdu->errstat,
+        cp = Asn_buildInt( cp, out_length,
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &pdu->errstat,
             sizeof( pdu->errstat ) );
         DEBUG_INDENTLESS();
         if ( cp == NULL )
@@ -2580,8 +2580,8 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          * error index (getbulk max-repetitions)
          */
         DEBUG_DUMPHEADER( "send", "error index" );
-        cp = Asn01_buildInt( cp, out_length,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &pdu->errindex,
+        cp = Asn_buildInt( cp, out_length,
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &pdu->errindex,
             sizeof( pdu->errindex ) );
         DEBUG_INDENTLESS();
         if ( cp == NULL )
@@ -2596,7 +2596,7 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          */
         DEBUG_DUMPHEADER( "send", "enterprise OBJID" );
         cp = Asn01_buildObjid( cp, out_length,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OBJECT_ID ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOBJECT_ID ),
             ( oid* )pdu->enterprise,
             pdu->enterpriseLength );
         DEBUG_INDENTLESS();
@@ -2608,7 +2608,7 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          */
         DEBUG_DUMPHEADER( "send", "agent Address" );
         cp = Asn01_buildString( cp, out_length,
-            ( u_char )( ASN01_IPADDRESS | ASN01_PRIMITIVE ),
+            ( u_char )( asnIPADDRESS | asnPRIMITIVE ),
             ( u_char* )pdu->agentAddr, 4 );
         DEBUG_INDENTLESS();
         if ( cp == NULL )
@@ -2618,8 +2618,8 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          * generic trap
          */
         DEBUG_DUMPHEADER( "send", "generic trap number" );
-        cp = Asn01_buildInt( cp, out_length,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+        cp = Asn_buildInt( cp, out_length,
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ),
             ( long* )&pdu->trapType,
             sizeof( pdu->trapType ) );
         DEBUG_INDENTLESS();
@@ -2630,8 +2630,8 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          * specific trap
          */
         DEBUG_DUMPHEADER( "send", "specific trap number" );
-        cp = Asn01_buildInt( cp, out_length,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+        cp = Asn_buildInt( cp, out_length,
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ),
             ( long* )&pdu->specificType,
             sizeof( pdu->specificType ) );
         DEBUG_INDENTLESS();
@@ -2643,7 +2643,7 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
          */
         DEBUG_DUMPHEADER( "send", "timestamp" );
         cp = Asn01_buildUnsignedInt( cp, out_length,
-            ( u_char )( ASN01_TIMETICKS | ASN01_PRIMITIVE ), &pdu->time,
+            ( u_char )( asnTIMETICKS | asnPRIMITIVE ), &pdu->time,
             sizeof( pdu->time ) );
         DEBUG_INDENTLESS();
         if ( cp == NULL )
@@ -2657,7 +2657,7 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
      */
     h2 = cp;
     cp = Asn01_buildSequence( cp, out_length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), 0 );
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ), 0 );
     if ( cp == NULL )
         return NULL;
     h2e = cp;
@@ -2681,7 +2681,7 @@ Api_pduBuild( Types_Pdu* pdu, u_char* cp, size_t* out_length )
      * insert actual length of variable-bindings sequence
      */
     Asn01_buildSequence( h2, &length,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         cp - h2e );
 
     /*
@@ -2776,7 +2776,7 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
      */
 
     rc = Asn01_reallocRbuildSequence( pkt, pkt_len, offset, 1,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         *offset - start_offset );
 
     /*
@@ -2788,8 +2788,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "error index" );
         rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                         | ASN01_INTEGER ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                         | asnINTEGER ),
             &pdu->errindex, sizeof( pdu->errindex ) );
         DEBUG_INDENTLESS();
         if ( rc == 0 ) {
@@ -2801,8 +2801,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "error status" );
         rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                         | ASN01_INTEGER ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                         | asnINTEGER ),
             &pdu->errstat, sizeof( pdu->errstat ) );
         DEBUG_INDENTLESS();
         if ( rc == 0 ) {
@@ -2814,8 +2814,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "request_id" );
         rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                         | ASN01_INTEGER ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                         | asnINTEGER ),
             &pdu->reqid,
             sizeof( pdu->reqid ) );
         DEBUG_INDENTLESS();
@@ -2832,7 +2832,7 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "timestamp" );
         rc = Asn01_reallocRbuildUnsignedInt( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_TIMETICKS | ASN01_PRIMITIVE ),
+            ( u_char )( asnTIMETICKS | asnPRIMITIVE ),
             &pdu->time,
             sizeof( pdu->time ) );
         DEBUG_INDENTLESS();
@@ -2845,8 +2845,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "specific trap number" );
         rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                         | ASN01_INTEGER ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                         | asnINTEGER ),
             ( long* )&pdu->specificType,
             sizeof( pdu->specificType ) );
         DEBUG_INDENTLESS();
@@ -2859,8 +2859,8 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "generic trap number" );
         rc = Asn01_reallocRbuildInt( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                         | ASN01_INTEGER ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                         | asnINTEGER ),
             ( long* )&pdu->trapType,
             sizeof( pdu->trapType ) );
         DEBUG_INDENTLESS();
@@ -2873,7 +2873,7 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "agent Address" );
         rc = Asn01_reallocRbuildString( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_IPADDRESS | ASN01_PRIMITIVE ),
+            ( u_char )( asnIPADDRESS | asnPRIMITIVE ),
             ( u_char* )pdu->agentAddr, 4 );
         DEBUG_INDENTLESS();
         if ( rc == 0 ) {
@@ -2885,7 +2885,7 @@ int Api_pduReallocRbuild( u_char** pkt, size_t* pkt_len, size_t* offset,
          */
         DEBUG_DUMPHEADER( "send", "enterprise OBJID" );
         rc = Asn01_reallocRbuildObjid( pkt, pkt_len, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OBJECT_ID ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOBJECT_ID ),
             ( oid* )pdu->enterprise,
             pdu->enterpriseLength );
         DEBUG_INDENTLESS();
@@ -2914,12 +2914,12 @@ _Api_parseVersion( u_char* data, size_t length )
     long version = ErrorCode_BAD_VERSION;
 
     data = Asn01_parseSequence( data, &length, &type,
-        ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), "version" );
+        ( asnSEQUENCE | asnCONSTRUCTOR ), "version" );
     if ( data ) {
         DEBUG_DUMPHEADER( "recv", "PRIOT Version" );
-        data = Asn01_parseInt( data, &length, &type, &version, sizeof( version ) );
+        data = Asn_parseInt( data, &length, &type, &version, sizeof( version ) );
         DEBUG_INDENTLESS();
-        if ( !data || type != ASN01_INTEGER ) {
+        if ( !data || type != asnINTEGER ) {
             return ErrorCode_BAD_VERSION;
         }
     }
@@ -2944,7 +2944,7 @@ int Api_v3Parse( Types_Pdu* pdu,
     u_char* cp;
     size_t asn_len, msg_len;
     int ret, ret_val;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
 
     msg_data = data;
     msg_len = *length;
@@ -2954,7 +2954,7 @@ int Api_v3Parse( Types_Pdu* pdu,
      */
     DEBUG_DUMPSECTION( "recv", "PRIOTv3 Message" );
     data = Asn01_parseSequence( data, length, &type,
-        ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), "message" );
+        ( asnSEQUENCE | asnCONSTRUCTOR ), "message" );
     if ( data == NULL ) {
         /*
          * error msg detail is set
@@ -2968,7 +2968,7 @@ int Api_v3Parse( Types_Pdu* pdu,
      * parse msgVersion
      */
     DEBUG_DUMPHEADER( "recv", "PRIOT Version Number" );
-    data = Asn01_parseInt( data, length, &type, &ver, sizeof( ver ) );
+    data = Asn_parseInt( data, length, &type, &ver, sizeof( ver ) );
     DEBUG_INDENTLESS();
     if ( data == NULL ) {
         IMPL_ERROR_MSG( "bad parse of version" );
@@ -2985,7 +2985,7 @@ int Api_v3Parse( Types_Pdu* pdu,
     asn_len = *length;
     DEBUG_DUMPSECTION( "recv", "msgGlobalData" );
     data = Asn01_parseSequence( data, &asn_len, &type,
-        ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( asnSEQUENCE | asnCONSTRUCTOR ),
         "msgGlobalData" );
     if ( data == NULL ) {
         /*
@@ -3001,10 +3001,10 @@ int Api_v3Parse( Types_Pdu* pdu,
      * msgID
      */
     DEBUG_DUMPHEADER( "recv", "msgID" );
-    data = Asn01_parseInt( data, length, &type, &pdu->msgid,
+    data = Asn_parseInt( data, length, &type, &pdu->msgid,
         sizeof( pdu->msgid ) );
     DEBUG_INDENTLESS();
-    if ( data == NULL || type != ASN01_INTEGER ) {
+    if ( data == NULL || type != asnINTEGER ) {
         IMPL_ERROR_MSG( "error parsing msgID" );
         DEBUG_INDENTADD( -4 );
         Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
@@ -3032,10 +3032,10 @@ int Api_v3Parse( Types_Pdu* pdu,
      * msgMaxSize
      */
     DEBUG_DUMPHEADER( "recv", "msgMaxSize" );
-    data = Asn01_parseInt( data, length, &type, &msg_max_size,
+    data = Asn_parseInt( data, length, &type, &msg_max_size,
         sizeof( msg_max_size ) );
     DEBUG_INDENTLESS();
-    if ( data == NULL || type != ASN01_INTEGER ) {
+    if ( data == NULL || type != asnINTEGER ) {
         IMPL_ERROR_MSG( "error parsing msgMaxSize" );
         Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
         DEBUG_INDENTADD( -4 );
@@ -3080,7 +3080,7 @@ int Api_v3Parse( Types_Pdu* pdu,
     DEBUG_DUMPHEADER( "recv", "msgFlags" );
     data = Asn01_parseString( data, length, &type, tmp_buf, &tmp_buf_len );
     DEBUG_INDENTLESS();
-    if ( data == NULL || type != ASN01_OCTET_STR || tmp_buf_len != 1 ) {
+    if ( data == NULL || type != asnOCTET_STR || tmp_buf_len != 1 ) {
         IMPL_ERROR_MSG( "error parsing msgFlags" );
         Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
         DEBUG_INDENTADD( -4 );
@@ -3096,16 +3096,16 @@ int Api_v3Parse( Types_Pdu* pdu,
      * msgSecurityModel
      */
     DEBUG_DUMPHEADER( "recv", "msgSecurityModel" );
-    data = Asn01_parseInt( data, length, &type, &msg_sec_model,
+    data = Asn_parseInt( data, length, &type, &msg_sec_model,
         sizeof( msg_sec_model ) );
     DEBUG_INDENTADD( -4 ); /* return from global data indent */
-    if ( data == NULL || type != ASN01_INTEGER || msg_sec_model < 1 || msg_sec_model > 0x7fffffff ) {
+    if ( data == NULL || type != asnINTEGER || msg_sec_model < 1 || msg_sec_model > 0x7fffffff ) {
         IMPL_ERROR_MSG( "error parsing msgSecurityModel" );
         Api_incrementStatistic( API_STAT_SNMPINASNPARSEERRS );
         DEBUG_INDENTLESS();
         return ErrorCode_ASN_PARSE_ERR;
     }
-    sptr = Secmod_find( msg_sec_model );
+    sptr = SecMod_findDefBySecMod( msg_sec_model );
     if ( !sptr ) {
         Logger_log( LOGGER_PRIORITY_WARNING, "unknown security model: %ld\n",
             msg_sec_model );
@@ -3166,27 +3166,27 @@ int Api_v3Parse( Types_Pdu* pdu,
     }
 
     DEBUG_DUMPSECTION( "recv", "SM msgSecurityParameters" );
-    if ( sptr->decode ) {
-        struct Secmod_IncomingParams_s parms;
+    if ( sptr->decodeFunction ) {
+        struct IncomingParams_s parms;
         parms.msgProcModel = pdu->msgParseModel;
         parms.maxMsgSize = msg_max_size;
         parms.secParams = sec_params;
         parms.secModel = msg_sec_model;
         parms.secLevel = pdu->securityLevel;
         parms.wholeMsg = msg_data;
-        parms.wholeMsgLen = msg_len;
-        parms.secEngineID = pdu->securityEngineID;
-        parms.secEngineIDLen = &pdu->securityEngineIDLen;
+        parms.wholeMsgLength = msg_len;
+        parms.secEngineId = pdu->securityEngineID;
+        parms.secEngineIdLength = &pdu->securityEngineIDLen;
         parms.secName = pdu->securityName;
         parms.secNameLen = &pdu->securityNameLen;
         parms.scopedPdu = &cp;
-        parms.scopedPduLen = &pdu_buf_len;
+        parms.scopedPduLength = &pdu_buf_len;
         parms.maxSizeResponse = &max_size_response;
         parms.secStateRef = &pdu->securityStateRef;
         parms.sess = sess;
         parms.pdu = pdu;
-        parms.msg_flags = msg_flags;
-        ret_val = ( *sptr->decode )( &parms );
+        parms.msgFlags = msg_flags;
+        ret_val = ( *sptr->decodeFunction )( &parms );
     } else {
         MEMORY_FREE( mallocbuf );
         DEBUG_INDENTLESS();
@@ -3270,7 +3270,7 @@ int Api_v3MakeReport( Types_Pdu* pdu, int error )
     oid* err_var;
     int err_var_len;
     int stat_ind;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
 
     switch ( error ) {
     case ErrorCode_USM_UNKNOWNENGINEID:
@@ -3329,10 +3329,10 @@ int Api_v3MakeReport( Types_Pdu* pdu, int error )
      * which cached values to use
      */
     if ( pdu->securityStateRef ) {
-        sptr = Secmod_find( pdu->securityModel );
+        sptr = SecMod_findDefBySecMod( pdu->securityModel );
         if ( sptr ) {
-            if ( sptr->pdu_free_state_ref ) {
-                ( *sptr->pdu_free_state_ref )( pdu->securityStateRef );
+            if ( sptr->pduFreeStateRefFunction ) {
+                ( *sptr->pduFreeStateRefFunction )( pdu->securityStateRef );
             } else {
                 Logger_log( LOGGER_PRIORITY_ERR,
                     "Security Model %d can't free state references\n",
@@ -3361,7 +3361,7 @@ int Api_v3MakeReport( Types_Pdu* pdu, int error )
      * return the appropriate error counter
      */
     Api_pduAddVariable( pdu, err_var, err_var_len,
-        ASN01_COUNTER, &ltmp, sizeof( ltmp ) );
+        asnCOUNTER, &ltmp, sizeof( ltmp ) );
 
     return ErrorCode_SUCCESS;
 } /* end Api_v3MakeReport() */
@@ -3484,7 +3484,7 @@ _Api_parse2( void* sessp,
             Api_errstring( result ) ) );
 
         if ( result ) {
-            struct Secmod_Def_s* secmod = Secmod_find( pdu->securityModel );
+            struct SecModDefinition_s* secmod = SecMod_findDefBySecMod( pdu->securityModel );
             if ( !sessp ) {
                 session->s_snmp_errno = result;
             } else {
@@ -3492,15 +3492,15 @@ _Api_parse2( void* sessp,
                  * Call the security model to special handle any errors
                  */
 
-                if ( secmod && secmod->handle_report ) {
+                if ( secmod && secmod->handleReportFunction ) {
                     struct Api_SessionList_s* slp = ( struct Api_SessionList_s* )sessp;
-                    ( *secmod->handle_report )( sessp, slp->transport, session,
+                    ( *secmod->handleReportFunction )( sessp, slp->transport, session,
                         result, pdu );
                 }
             }
             if ( pdu->securityStateRef != NULL ) {
-                if ( secmod && secmod->pdu_free_state_ref ) {
-                    secmod->pdu_free_state_ref( pdu->securityStateRef );
+                if ( secmod && secmod->pduFreeStateRefFunction ) {
+                    secmod->pduFreeStateRefFunction( pdu->securityStateRef );
                     pdu->securityStateRef = NULL;
                 }
             }
@@ -3578,7 +3578,7 @@ _Api_parse2( void* sessp,
 
                     Api_pduAddVariable( pdu2,
                         snmpEngineIDoid, snmpEngineIDoid_len,
-                        ASN01_OCTET_STR,
+                        asnOCTET_STR,
                         ourEngineID, ourEngineID_len );
 
                     /* send the response */
@@ -3694,14 +3694,14 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         /*
          * generic trap
          */
-        data = Asn01_parseInt( data, length, &type, ( long* )&pdu->trapType,
+        data = Asn_parseInt( data, length, &type, ( long* )&pdu->trapType,
             sizeof( pdu->trapType ) );
         if ( data == NULL )
             return -1;
         /*
          * specific trap
          */
-        data = Asn01_parseInt( data, length, &type,
+        data = Asn_parseInt( data, length, &type,
             ( long* )&pdu->specificType,
             sizeof( pdu->specificType ) );
         if ( data == NULL )
@@ -3738,7 +3738,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
          * request id
          */
         DEBUG_DUMPHEADER( "recv", "request_id" );
-        data = Asn01_parseInt( data, length, &type, &pdu->reqid,
+        data = Asn_parseInt( data, length, &type, &pdu->reqid,
             sizeof( pdu->reqid ) );
         DEBUG_INDENTLESS();
         if ( data == NULL ) {
@@ -3749,7 +3749,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
          * error status (getbulk non-repeaters)
          */
         DEBUG_DUMPHEADER( "recv", "error status" );
-        data = Asn01_parseInt( data, length, &type, &pdu->errstat,
+        data = Asn_parseInt( data, length, &type, &pdu->errstat,
             sizeof( pdu->errstat ) );
         DEBUG_INDENTLESS();
         if ( data == NULL ) {
@@ -3760,7 +3760,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
          * error index (getbulk max-repetitions)
          */
         DEBUG_DUMPHEADER( "recv", "error index" );
-        data = Asn01_parseInt( data, length, &type, &pdu->errindex,
+        data = Asn_parseInt( data, length, &type, &pdu->errindex,
             sizeof( pdu->errindex ) );
         DEBUG_INDENTLESS();
         if ( data == NULL ) {
@@ -3779,7 +3779,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
      */
     DEBUG_DUMPSECTION( "recv", "VarBindList" );
     data = Asn01_parseSequence( data, length, &type,
-        ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( asnSEQUENCE | asnCONSTRUCTOR ),
         "varbinds" );
     if ( data == NULL )
         return -1;
@@ -3818,19 +3818,19 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         len = MAX_PACKET_LENGTH;
         DEBUG_DUMPHEADER( "recv", "Value" );
         switch ( ( short )vp->type ) {
-        case ASN01_INTEGER:
+        case asnINTEGER:
             vp->value.integer = ( long* )vp->buffer;
             vp->valueLength = sizeof( long );
-            p = Asn01_parseInt( var_val, &len, &vp->type,
+            p = Asn_parseInt( var_val, &len, &vp->type,
                 ( long* )vp->value.integer,
                 sizeof( *vp->value.integer ) );
             if ( !p )
                 return -1;
             break;
-        case ASN01_COUNTER:
-        case ASN01_GAUGE:
-        case ASN01_TIMETICKS:
-        case ASN01_UINTEGER:
+        case asnCOUNTER:
+        case asnGAUGE:
+        case asnTIMETICKS:
+        case asnUINTEGER:
             vp->value.integer = ( long* )vp->buffer;
             vp->valueLength = sizeof( u_long );
             p = Asn01_parseUnsignedInt( var_val, &len, &vp->type,
@@ -3839,9 +3839,9 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
             if ( !p )
                 return -1;
             break;
-        case ASN01_OPAQUE_COUNTER64:
-        case ASN01_OPAQUE_U64:
-        case ASN01_COUNTER64:
+        case asnOPAQUE_COUNTER64:
+        case asnOPAQUE_U64:
+        case asnCOUNTER64:
             vp->value.counter64 = ( Counter64* )vp->buffer;
             vp->valueLength = sizeof( Counter64 );
             p = Asn01_parseUnsignedInt64( var_val, &len, &vp->type,
@@ -3849,7 +3849,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
             if ( !p )
                 return -1;
             break;
-        case ASN01_OPAQUE_FLOAT:
+        case asnOPAQUE_FLOAT:
             vp->value.floatValue = ( float* )vp->buffer;
             vp->valueLength = sizeof( float );
             p = Asn01_parseFloat( var_val, &len, &vp->type,
@@ -3857,7 +3857,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
             if ( !p )
                 return -1;
             break;
-        case ASN01_OPAQUE_DOUBLE:
+        case asnOPAQUE_DOUBLE:
             vp->value.doubleValue = ( double* )vp->buffer;
             vp->valueLength = sizeof( double );
             p = Asn01_parseDouble( var_val, &len, &vp->type,
@@ -3865,7 +3865,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
             if ( !p )
                 return -1;
             break;
-        case ASN01_OPAQUE_I64:
+        case asnOPAQUE_I64:
             vp->value.counter64 = ( Counter64* )vp->buffer;
             vp->valueLength = sizeof( Counter64 );
             p = Asn01_parseSignedInt64( var_val, &len, &vp->type,
@@ -3875,13 +3875,13 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
             if ( !p )
                 return -1;
             break;
-        case ASN01_IPADDRESS:
+        case asnIPADDRESS:
             if ( vp->valueLength != 4 )
                 return -1;
         /* fallthrough */
-        case ASN01_OCTET_STR:
-        case ASN01_OPAQUE:
-        case ASN01_NSAP:
+        case asnOCTET_STR:
+        case asnOPAQUE:
+        case asnNSAP:
             if ( vp->valueLength < sizeof( vp->buffer ) ) {
                 vp->value.string = ( u_char* )vp->buffer;
             } else {
@@ -3895,7 +3895,7 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
             if ( !p )
                 return -1;
             break;
-        case ASN01_OBJECT_ID:
+        case asnOBJECT_ID:
             vp->valueLength = TYPES_MAX_OID_LEN;
             p = Asn01_parseObjid( var_val, &len, &vp->type, objid, &vp->valueLength );
             if ( !p )
@@ -3910,9 +3910,9 @@ int Api_pduParse( Types_Pdu* pdu, u_char* data, size_t* length )
         case PRIOT_NOSUCHOBJECT:
         case PRIOT_NOSUCHINSTANCE:
         case PRIOT_ENDOFMIBVIEW:
-        case ASN01_NULL:
+        case asnNULL:
             break;
-        case ASN01_BIT_STR:
+        case asnBIT_STR:
             vp->value.bitString = ( u_char* )malloc( vp->valueLength );
             if ( vp->value.bitString == NULL ) {
                 return -1;
@@ -3951,7 +3951,7 @@ Api_v3ScopedPduParse( Types_Pdu* pdu, u_char* cp, size_t* length )
     pdu->command = 0; /* initialize so we know if it got parsed */
     asn_len = *length;
     data = Asn01_parseSequence( cp, &asn_len, &type,
-        ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( asnSEQUENCE | asnCONSTRUCTOR ),
         "plaintext scopedPDU" );
     if ( data == NULL ) {
         return NULL;
@@ -4348,7 +4348,7 @@ void Api_freeVarbind( VariableList* var )
  */
 void Api_freePdu( Types_Pdu* pdu )
 {
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
 
     if ( !pdu )
         return;
@@ -4373,8 +4373,8 @@ void Api_freePdu( Types_Pdu* pdu )
         return;
     }
      */
-    if ( ( sptr = Secmod_find( pdu->securityModel ) ) != NULL && sptr->pdu_free != NULL ) {
-        ( *sptr->pdu_free )( pdu );
+    if ( ( sptr = SecMod_findDefBySecMod( pdu->securityModel ) ) != NULL && sptr->pduFreeFunction != NULL ) {
+        ( *sptr->pduFreeFunction )( pdu );
     }
     Api_freeVarbind( pdu->variables );
     MEMORY_FREE( pdu->enterprise );
@@ -4427,7 +4427,7 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
     struct Api_SessionList_s* slp = ( struct Api_SessionList_s* )sessp;
     Types_Pdu* pdu;
     Api_RequestList *rp, *orp = NULL;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
     int ret = 0, handled = 0;
 
     DEBUG_MSGTL( ( "sessProcessPacket",
@@ -4498,10 +4498,10 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
      * Call the security model to free any securityStateRef supplied w/ msg.
      */
         if ( pdu->securityStateRef != NULL ) {
-            sptr = Secmod_find( pdu->securityModel );
+            sptr = SecMod_findDefBySecMod( pdu->securityModel );
             if ( sptr != NULL ) {
-                if ( sptr->pdu_free_state_ref != NULL ) {
-                    ( *sptr->pdu_free_state_ref )( pdu->securityStateRef );
+                if ( sptr->pduFreeStateRefFunction != NULL ) {
+                    ( *sptr->pduFreeStateRefFunction )( pdu->securityStateRef );
                 } else {
                     Logger_log( LOGGER_PRIORITY_ERR,
                         "Security Model %d can't free state references\n",
@@ -4523,10 +4523,10 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
      * Call USM to free any securityStateRef supplied with the message.
      */
         if ( pdu->securityStateRef ) {
-            sptr = Secmod_find( pdu->securityModel );
+            sptr = SecMod_findDefBySecMod( pdu->securityModel );
             if ( sptr ) {
-                if ( sptr->pdu_free_state_ref ) {
-                    ( *sptr->pdu_free_state_ref )( pdu->securityStateRef );
+                if ( sptr->pduFreeStateRefFunction ) {
+                    ( *sptr->pduFreeStateRefFunction )( pdu->securityStateRef );
                 } else {
                     Logger_log( LOGGER_PRIORITY_ERR,
                         "Security Model %d can't free state references\n",
@@ -4679,10 +4679,10 @@ _Api_sessProcessPacket( void* sessp, Types_Session* sp,
    * Call USM to free any securityStateRef supplied with the message.
    */
     if ( pdu != NULL && pdu->securityStateRef && pdu->command == PRIOT_MSG_TRAP2 ) {
-        sptr = Secmod_find( pdu->securityModel );
+        sptr = SecMod_findDefBySecMod( pdu->securityModel );
         if ( sptr ) {
-            if ( sptr->pdu_free_state_ref ) {
-                ( *sptr->pdu_free_state_ref )( pdu->securityStateRef );
+            if ( sptr->pduFreeStateRefFunction ) {
+                ( *sptr->pduFreeStateRefFunction )( pdu->securityStateRef );
             } else {
                 Logger_log( LOGGER_PRIORITY_ERR,
                     "Security Model %d can't free state references\n",
@@ -4961,7 +4961,7 @@ int Api_sessRead3( void* sessp, LargeFdSet_t* fdset )
             if ( isp->check_packet ) {
                 pdulen = isp->check_packet( pptr, isp->packet_len );
             } else {
-                pdulen = Asn01_checkPacket( pptr, isp->packet_len );
+                pdulen = Asn_checkPacket( pptr, isp->packet_len );
             }
 
             DEBUG_MSGTL( ( "sessRead",
@@ -5519,7 +5519,7 @@ void Api_sessTimeout( void* sessp )
     struct timeval now;
     Types_CallbackFT callback;
     void* magic;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
 
     sp = slp->session;
     isp = slp->internal;
@@ -5543,11 +5543,11 @@ void Api_sessTimeout( void* sessp )
         }
 
         if ( ( timercmp( &rp->expireM, &now, < ) ) ) {
-            if ( ( sptr = Secmod_find( rp->pdu->securityModel ) ) != NULL && sptr->pdu_timeout != NULL ) {
+            if ( ( sptr = SecMod_findDefBySecMod( rp->pdu->securityModel ) ) != NULL && sptr->pduTimeoutFunction != NULL ) {
                 /*
                  * call security model if it needs to know about this
                  */
-                ( *sptr->pdu_timeout )( rp->pdu );
+                ( *sptr->pduTimeoutFunction )( rp->pdu );
             }
 
             /*
@@ -6086,7 +6086,7 @@ int Api_addVar( Types_Pdu* pdu,
 
         if ( !_Api_checkRange( tp, ltmp, &result, value ) )
             break;
-        Api_pduAddVariable( pdu, name, name_length, ASN01_INTEGER,
+        Api_pduAddVariable( pdu, name, name_length, asnINTEGER,
             &ltmp, sizeof( ltmp ) );
         break;
 
@@ -6098,7 +6098,7 @@ int Api_addVar( Types_Pdu* pdu,
         }
         ltmp = strtoul( value, &ecp, 10 );
         if ( *value && !*ecp )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_UNSIGNED,
+            Api_pduAddVariable( pdu, name, name_length, asnUNSIGNED,
                 &ltmp, sizeof( ltmp ) );
         else
             goto fail;
@@ -6112,7 +6112,7 @@ int Api_addVar( Types_Pdu* pdu,
         }
         ltmp = strtoul( value, &ecp, 10 );
         if ( *value && !*ecp )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_UINTEGER,
+            Api_pduAddVariable( pdu, name, name_length, asnUINTEGER,
                 &ltmp, sizeof( ltmp ) );
         else
             goto fail;
@@ -6126,7 +6126,7 @@ int Api_addVar( Types_Pdu* pdu,
         }
         ltmp = strtoul( value, &ecp, 10 );
         if ( *value && !*ecp )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_COUNTER,
+            Api_pduAddVariable( pdu, name, name_length, asnCOUNTER,
                 &ltmp, sizeof( ltmp ) );
         else
             goto fail;
@@ -6139,7 +6139,7 @@ int Api_addVar( Types_Pdu* pdu,
             goto type_error;
         }
         if ( Integer64_stringToInt64( &c64tmp, value ) )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_COUNTER64,
+            Api_pduAddVariable( pdu, name, name_length, asnCOUNTER64,
                 &c64tmp, sizeof( c64tmp ) );
         else
             goto fail;
@@ -6153,7 +6153,7 @@ int Api_addVar( Types_Pdu* pdu,
         }
         ltmp = strtoul( value, &ecp, 10 );
         if ( *value && !*ecp )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_TIMETICKS,
+            Api_pduAddVariable( pdu, name, name_length, asnTIMETICKS,
                 &ltmp, sizeof( long ) );
         else
             goto fail;
@@ -6167,7 +6167,7 @@ int Api_addVar( Types_Pdu* pdu,
         }
         atmp = inet_addr( value );
         if ( atmp != ( in_addr_t )-1 || !strcmp( value, "255.255.255.255" ) )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_IPADDRESS,
+            Api_pduAddVariable( pdu, name, name_length, asnIPADDRESS,
                 &atmp, sizeof( atmp ) );
         else
             goto fail;
@@ -6184,7 +6184,7 @@ int Api_addVar( Types_Pdu* pdu,
         } else {
             tint = TYPES_MAX_OID_LEN;
             if ( Mib_parseOid( value, ( oid* )buf, &tint ) ) {
-                Api_pduAddVariable( pdu, name, name_length, ASN01_OBJECT_ID,
+                Api_pduAddVariable( pdu, name, name_length, asnOBJECT_ID,
                     buf, sizeof( oid ) * tint );
             } else {
                 result = api_priotErrno; /*MTCRITICAL_RESOURCE */
@@ -6202,7 +6202,7 @@ int Api_addVar( Types_Pdu* pdu,
         }
         if ( 's' == type && do_hint && !Mib_parseOctetHint( tp->hint, value, &hintptr, &itmp ) ) {
             if ( _Api_checkRange( tp, itmp, &result, "Value does not match DISPLAY-HINT" ) ) {
-                Api_pduAddVariable( pdu, name, name_length, ASN01_OCTET_STR,
+                Api_pduAddVariable( pdu, name, name_length, asnOCTET_STR,
                     hintptr, itmp );
             }
             MEMORY_FREE( hintptr );
@@ -6231,12 +6231,12 @@ int Api_addVar( Types_Pdu* pdu,
         }
         if ( !_Api_checkRange( tp, value_len, &result, "Bad string length" ) )
             break;
-        Api_pduAddVariable( pdu, name, name_length, ASN01_OCTET_STR,
+        Api_pduAddVariable( pdu, name, name_length, asnOCTET_STR,
             buf_ptr, value_len );
         break;
 
     case 'n':
-        Api_pduAddVariable( pdu, name, name_length, ASN01_NULL, NULL, 0 );
+        Api_pduAddVariable( pdu, name, name_length, asnNULL, NULL, 0 );
         break;
 
     case 'b':
@@ -6294,13 +6294,13 @@ int Api_addVar( Types_Pdu* pdu,
             buf[ ix ] |= bit;
         }
         MEMORY_FREE( vp );
-        Api_pduAddVariable( pdu, name, name_length, ASN01_OCTET_STR,
+        Api_pduAddVariable( pdu, name, name_length, asnOCTET_STR,
             buf, tint );
         break;
 
     case 'U':
         if ( Integer64_stringToInt64( &c64tmp, value ) )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_OPAQUE_U64,
+            Api_pduAddVariable( pdu, name, name_length, asnOPAQUE_U64,
                 &c64tmp, sizeof( c64tmp ) );
         else
             goto fail;
@@ -6308,7 +6308,7 @@ int Api_addVar( Types_Pdu* pdu,
 
     case 'I':
         if ( Integer64_stringToInt64( &c64tmp, value ) )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_OPAQUE_I64,
+            Api_pduAddVariable( pdu, name, name_length, asnOPAQUE_I64,
                 &c64tmp, sizeof( c64tmp ) );
         else
             goto fail;
@@ -6316,7 +6316,7 @@ int Api_addVar( Types_Pdu* pdu,
 
     case 'F':
         if ( sscanf( value, "%f", &ftmp ) == 1 )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_OPAQUE_FLOAT,
+            Api_pduAddVariable( pdu, name, name_length, asnOPAQUE_FLOAT,
                 &ftmp, sizeof( ftmp ) );
         else
             goto fail;
@@ -6324,7 +6324,7 @@ int Api_addVar( Types_Pdu* pdu,
 
     case 'D':
         if ( sscanf( value, "%lf", &dtmp ) == 1 )
-            Api_pduAddVariable( pdu, name, name_length, ASN01_OPAQUE_DOUBLE,
+            Api_pduAddVariable( pdu, name, name_length, asnOPAQUE_DOUBLE,
                 &dtmp, sizeof( dtmp ) );
         else
             goto fail;

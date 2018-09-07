@@ -71,7 +71,7 @@ StashToNext_helper( MibHandler*          handler,
         cinfo  = StashCache_extractStashCache( reqinfo );
         reqtmp = MEMORY_MALLOC_TYPEDEF(RequestInfo);
         vb = reqtmp->requestvb = MEMORY_MALLOC_TYPEDEF( VariableList );
-        vb->type = ASN01_NULL;
+        vb->type = asnNULL;
         Client_setVarObjid( vb, reginfo->rootoid, reginfo->rootoid_len );
 
         reqinfo->mode = MODE_GETNEXT;
@@ -80,7 +80,7 @@ StashToNext_helper( MibHandler*          handler,
             namelen = UTILITIES_MIN_VALUE(vb->nameLength, reginfo->rootoid_len);
             if ( !Api_oidCompare( reginfo->rootoid, reginfo->rootoid_len,
                                    vb->name, namelen) &&
-                 vb->type != ASN01_NULL && vb->type != PRIOT_ENDOFMIBVIEW ) {
+                 vb->type != asnNULL && vb->type != PRIOT_ENDOFMIBVIEW ) {
                 /*
                  * This result is relevant so save it, and prepare
                  * the request varbind for the next query.
@@ -94,7 +94,7 @@ StashToNext_helper( MibHandler*          handler,
                 Map_clear(reqtmp->parent_data);
                 reqtmp->parent_data = NULL;
                 reqtmp->processed = 0;
-                vb->type = ASN01_NULL;
+                vb->type = asnNULL;
             } else {
                 finished = 1;
             }

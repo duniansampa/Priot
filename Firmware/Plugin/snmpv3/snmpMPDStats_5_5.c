@@ -21,7 +21,7 @@ init_snmpMPDStats_5_5(void)
 {
     HandlerRegistration* s =
         AgentHandler_createHandlerRegistration(
-            "snmpMPDStats", NULL, snmpMPDStats, ASN01_OID_LENGTH(snmpMPDStats),
+            "snmpMPDStats", NULL, snmpMPDStats, asnOID_LENGTH(snmpMPDStats),
             HANDLER_CAN_RONLY);
     if (s &&
     GETSTATISTIC_REGISTER_STATISTIC_HANDLER(s, 1, MPD) == MIB_REGISTERED_OK) {

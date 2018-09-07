@@ -38,7 +38,7 @@ void init_cpu( void )
             _cpu_update_stats( 0, NULL );
     } else
         _cpu_cache = CacheHandler_create( 5, netsnmp_cpu_arch_load, NULL,
-            nsCPU, ASN01_OID_LENGTH( nsCPU ) );
+            nsCPU, asnOID_LENGTH( nsCPU ) );
 }
 
 void shutdown_cpu( void )

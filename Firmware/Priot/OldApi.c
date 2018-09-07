@@ -258,7 +258,7 @@ OldApi_helper(MibHandler *handler,
                        RequestInfo *requests)
 {
 
-    oid             save[ASN01_MAX_OID_LEN];
+    oid             save[asnMAX_OID_LEN];
     size_t          savelen = 0;
 
     struct Variable_s compat_var, *cvp = &compat_var;
@@ -272,7 +272,7 @@ OldApi_helper(MibHandler *handler,
     WriteMethodFT  *write_method = NULL;
     size_t          len;
     size_t          tmp_len;
-    oid             tmp_name[ASN01_MAX_OID_LEN];
+    oid             tmp_name[asnMAX_OID_LEN];
 
     vp = (struct Variable_s *) handler->myvoid;
 

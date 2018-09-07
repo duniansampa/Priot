@@ -22,7 +22,7 @@ static TableRegistrationInfo* table_info;
 void init_schedTable( void )
 {
     static oid schedTable_oid[] = { 1, 3, 6, 1, 2, 1, 63, 1, 2 };
-    size_t schedTable_oid_len = ASN01_OID_LENGTH( schedTable_oid );
+    size_t schedTable_oid_len = asnOID_LENGTH( schedTable_oid );
     HandlerRegistration* reg;
 
     DEBUG_MSGTL( ( "disman:schedule:init", "Initializing table\n" ) );
@@ -42,8 +42,8 @@ void init_schedTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: schedOwner */
-        ASN01_OCTET_STR, /* index: schedName  */
+        asnOCTET_STR, /* index: schedOwner */
+        asnOCTET_STR, /* index: schedName  */
         0 );
     table_info->min_column = COLUMN_SCHEDDESCR;
     table_info->max_column = COLUMN_SCHEDTRIGGERS;
@@ -94,60 +94,60 @@ int schedTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDDESCR:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->schedDescr,
                     strlen( entry->schedDescr ) );
                 break;
             case COLUMN_SCHEDINTERVAL:
-                Client_setVarTypedInteger( request->requestvb, ASN01_UNSIGNED,
+                Client_setVarTypedInteger( request->requestvb, asnUNSIGNED,
                     entry->schedInterval );
                 break;
             case COLUMN_SCHEDWEEKDAY:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     &entry->schedWeekDay,
                     sizeof( entry->schedWeekDay ) );
                 break;
             case COLUMN_SCHEDMONTH:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->schedMonth,
                     sizeof( entry->schedMonth ) );
                 break;
             case COLUMN_SCHEDDAY:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->schedDay,
                     sizeof( entry->schedDay ) );
                 break;
             case COLUMN_SCHEDHOUR:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->schedHour,
                     sizeof( entry->schedHour ) );
                 break;
             case COLUMN_SCHEDMINUTE:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->schedMinute,
                     sizeof( entry->schedMinute ) );
                 break;
             case COLUMN_SCHEDCONTEXTNAME:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     entry->schedContextName,
                     strlen( entry->schedContextName ) );
                 break;
             case COLUMN_SCHEDVARIABLE:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( u_char* )entry->schedVariable,
                     entry->schedVariable_len * sizeof( oid ) );
                 break;
             case COLUMN_SCHEDVALUE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->schedValue );
                 break;
             case COLUMN_SCHEDTYPE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->schedType );
                 break;
             case COLUMN_SCHEDADMINSTATUS:
                 ret = ( entry->flags & SCHEDULE_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_SCHEDOPERSTATUS:
                 ret = ( entry->flags & SCHEDULE_FLAG_ENABLED ) ? tcTRUE : tcFALSE;
@@ -156,14 +156,14 @@ int schedTable_handler( MibHandler* handler,
                  */
                 if ( ( entry->schedType == SCHED_TYPE_ONESHOT ) && ( entry->schedLastRun != 0 ) )
                     ret = 3; /* finished(3) */
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_SCHEDFAILURES:
-                Client_setVarTypedInteger( request->requestvb, ASN01_COUNTER,
+                Client_setVarTypedInteger( request->requestvb, asnCOUNTER,
                     entry->schedFailures );
                 break;
             case COLUMN_SCHEDLASTFAILURE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->schedLastFailure );
                 break;
             case COLUMN_SCHEDLASTFAILED:
@@ -172,19 +172,19 @@ int schedTable_handler( MibHandler* handler,
                  *   into DateAndTime string
                  */
                 cp = ( char* )Time_convertDateAndTimeToString( &entry->schedLastFailed, &len );
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     cp, len );
                 break;
             case COLUMN_SCHEDSTORAGETYPE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->schedStorageType );
                 break;
             case COLUMN_SCHEDROWSTATUS:
                 ret = ( entry->flags & SCHEDULE_FLAG_ACTIVE ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_SCHEDTRIGGERS:
-                Client_setVarTypedInteger( request->requestvb, ASN01_COUNTER,
+                Client_setVarTypedInteger( request->requestvb, asnCOUNTER,
                     entry->schedTriggers );
                 break;
             }
@@ -206,7 +206,7 @@ int schedTable_handler( MibHandler* handler,
             switch ( tinfo->colnum ) {
             case COLUMN_SCHEDDESCR:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, SCHED_STR2_LEN );
+                    request->requestvb, asnOCTET_STR, SCHED_STR2_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -221,7 +221,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDWEEKDAY:
                 ret = VariableList_checkTypeAndLength(
-                    request->requestvb, ASN01_OCTET_STR, 1 );
+                    request->requestvb, asnOCTET_STR, 1 );
                 /* XXX - check for bit(7) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -230,7 +230,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDMONTH:
                 ret = VariableList_checkTypeAndLength( /* max_size ?? */
-                    request->requestvb, ASN01_OCTET_STR, 2 );
+                    request->requestvb, asnOCTET_STR, 2 );
                 /* XXX - check for bit(12)-bit(15) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -239,7 +239,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDDAY:
                 ret = VariableList_checkTypeAndLength( /* max_size ?? */
-                    request->requestvb, ASN01_OCTET_STR, 4 + 4 );
+                    request->requestvb, asnOCTET_STR, 4 + 4 );
                 /* XXX - check for bit(62) or bit(63) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -248,7 +248,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDHOUR:
                 ret = VariableList_checkTypeAndLength( /* max_size ?? */
-                    request->requestvb, ASN01_OCTET_STR, 3 );
+                    request->requestvb, asnOCTET_STR, 3 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -256,7 +256,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDMINUTE:
                 ret = VariableList_checkTypeAndLength( /* max_size ?? */
-                    request->requestvb, ASN01_OCTET_STR, 8 );
+                    request->requestvb, asnOCTET_STR, 8 );
                 /* XXX - check for bit(60)-bit(63) set */
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
@@ -265,7 +265,7 @@ int schedTable_handler( MibHandler* handler,
                 break;
             case COLUMN_SCHEDCONTEXTNAME:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, SCHED_STR1_LEN );
+                    request->requestvb, asnOCTET_STR, SCHED_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

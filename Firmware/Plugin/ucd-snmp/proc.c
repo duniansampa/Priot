@@ -25,23 +25,23 @@ void init_proc( void )
      * information at 
      */
     struct Variable2_s extensible_proc_variables[] = {
-        { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { MIBINDEX } },
-        { ERRORNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORNAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { ERRORNAME } },
-        { PROCMIN, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { PROCMIN, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { PROCMIN } },
-        { PROCMAX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { PROCMAX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { PROCMAX } },
-        { PROCCOUNT, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { PROCCOUNT, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { PROCCOUNT } },
-        { ERRORFLAG, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { ERRORFLAG, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { ERRORFLAG } },
-        { ERRORMSG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORMSG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { ERRORMSG } },
-        { ERRORFIX, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { ERRORFIX, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_extensible_proc, 1, { ERRORFIX } },
-        { ERRORFIXCMD, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORFIXCMD, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_proc, 1, { ERRORFIXCMD } }
     };
 
@@ -274,7 +274,7 @@ int fixProcError( int action,
     long tmp = 0;
 
     if ( ( proc = get_proc_instance( procwatch, name[ 10 ] ) ) ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             Logger_log( LOGGER_PRIORITY_ERR, "Wrong type != int\n" );
             return PRIOT_ERR_WRONGTYPE;
         }

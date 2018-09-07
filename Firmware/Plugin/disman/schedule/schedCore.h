@@ -45,7 +45,7 @@ struct schedTable_entry {
     char            schedHour[3];
     char            schedMinute[8];
     char            schedContextName[SCHED_STR1_LEN+1];
-    oid             schedVariable[   ASN01_MAX_OID_LEN   ];
+    oid             schedVariable[   asnMAX_OID_LEN   ];
     size_t          schedVariable_len;
     long            schedValue;
 

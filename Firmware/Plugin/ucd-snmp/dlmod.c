@@ -291,7 +291,7 @@ header_dlmod( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define DLMOD_NAME_LENGTH 10
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int result;
 
     memcpy( newname, vp->name, vp->namelen * sizeof( oid ) );
@@ -351,7 +351,7 @@ write_dlmodName( int action,
 {
     static struct dlmod* dlm;
 
-    if ( var_val_type != ASN01_OCTET_STR ) {
+    if ( var_val_type != asnOCTET_STR ) {
         Logger_log( LOGGER_PRIORITY_ERR, "write to dlmodName not ASN01_OCTET_STR\n" );
         return PRIOT_ERR_WRONGTYPE;
     }
@@ -378,7 +378,7 @@ write_dlmodPath( int action,
 {
     static struct dlmod* dlm;
 
-    if ( var_val_type != ASN01_OCTET_STR ) {
+    if ( var_val_type != asnOCTET_STR ) {
         Logger_log( LOGGER_PRIORITY_ERR, "write to dlmodPath not ASN01_OCTET_STR\n" );
         return PRIOT_ERR_WRONGTYPE;
     }
@@ -408,7 +408,7 @@ write_dlmodStatus( int action,
      */
     struct dlmod* dlm;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         Logger_log( LOGGER_PRIORITY_ERR, "write to dlmodStatus not ASN01_INTEGER\n" );
         return PRIOT_ERR_WRONGTYPE;
     }
@@ -472,7 +472,7 @@ header_dlmodEntry( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define DLMODENTRY_NAME_LENGTH 12
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int result;
     struct dlmod* dlm = NULL;
     unsigned int dlmod_index;
@@ -557,15 +557,15 @@ var_dlmodEntry( struct Variable_s* vp,
  * information for the dlmod mib
  */
 static struct Variable4_s dlmod_variables[] = {
-    { DLMODNEXTINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { DLMODNEXTINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_dlmod, 1, { 1 } },
-    { DLMODNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { DLMODNAME, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_dlmodEntry, 3, { 2, 1, 2 } },
-    { DLMODPATH, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { DLMODPATH, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_dlmodEntry, 3, { 2, 1, 3 } },
-    { DLMODERROR, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { DLMODERROR, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_dlmodEntry, 3, { 2, 1, 4 } },
-    { DLMODSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { DLMODSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_dlmodEntry, 3, { 2, 1, 5 } },
 };
 
@@ -609,5 +609,5 @@ void init_dlmod( void )
 void shutdown_dlmod( void )
 {
     AgentReadConfig_priotdUnregisterConfigHandler( "dlmod" );
-    AgentRegistry_unregisterMib( dlmod_variables_oid, ASN01_OID_LENGTH( dlmod_variables_oid ) );
+    AgentRegistry_unregisterMib( dlmod_variables_oid, asnOID_LENGTH( dlmod_variables_oid ) );
 }

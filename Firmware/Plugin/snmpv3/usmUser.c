@@ -3,7 +3,7 @@
 #include "Api.h"
 #include "GetStatistic.h"
 #include "Impl.h"
-#include "System/Security/Keytools.h"
+#include "System/Security/KeyTools.h"
 #include "TextualConvention.h"
 #include "VarStruct.h"
 #include "usmUser.h"
@@ -15,29 +15,29 @@
 int usmStatusCheck( struct Usm_User_s* uptr );
 
 struct Variable4_s usmUser_variables[] = {
-    { USMUSERSPINLOCK, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { USMUSERSPINLOCK, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_usmUser, 1, { 1 } },
-    { USMUSERSECURITYNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { USMUSERSECURITYNAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_usmUser, 3, { 2, 1, 3 } },
-    { USMUSERCLONEFROM, ASN01_OBJECT_ID, IMPL_OLDAPI_RWRITE,
+    { USMUSERCLONEFROM, asnOBJECT_ID, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 4 } },
-    { USMUSERAUTHPROTOCOL, ASN01_OBJECT_ID, IMPL_OLDAPI_RWRITE,
+    { USMUSERAUTHPROTOCOL, asnOBJECT_ID, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 5 } },
-    { USMUSERAUTHKEYCHANGE, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { USMUSERAUTHKEYCHANGE, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 6 } },
-    { USMUSEROWNAUTHKEYCHANGE, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { USMUSEROWNAUTHKEYCHANGE, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 7 } },
-    { USMUSERPRIVPROTOCOL, ASN01_OBJECT_ID, IMPL_OLDAPI_RWRITE,
+    { USMUSERPRIVPROTOCOL, asnOBJECT_ID, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 8 } },
-    { USMUSERPRIVKEYCHANGE, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { USMUSERPRIVKEYCHANGE, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 9 } },
-    { USMUSEROWNPRIVKEYCHANGE, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { USMUSEROWNPRIVKEYCHANGE, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 10 } },
-    { USMUSERPUBLIC, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { USMUSERPUBLIC, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 11 } },
-    { USMUSERSTORAGETYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { USMUSERSTORAGETYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 12 } },
-    { USMUSERSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { USMUSERSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_usmUser, 3, { 2, 1, 13 } },
 
 };
@@ -501,7 +501,7 @@ int write_usmUserSpinLock( int action,
      */
     static long long_ret;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         DEBUG_MSGTL( ( "usmUser",
             "write to usmUserSpinLock not ASN01_INTEGER\n" ) );
         return PRIOT_ERR_WRONGTYPE;
@@ -555,7 +555,7 @@ int write_usmUserCloneFrom( int action,
     struct Usm_User_s *uptr, *cloneFrom;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OBJECT_ID ) {
+        if ( var_val_type != asnOBJECT_ID ) {
             DEBUG_MSGTL( ( "usmUser",
                 "write to usmUserCloneFrom not ASN01_OBJECT_ID\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -630,7 +630,7 @@ int write_usmUserAuthProtocol( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OBJECT_ID ) {
+        if ( var_val_type != asnOBJECT_ID ) {
             DEBUG_MSGTL( ( "usmUser",
                 "write to usmUserAuthProtocol not ASN01_OBJECT_ID\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -792,7 +792,7 @@ int write_usmUserAuthKeyChange( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "usmUser", "write to %s not ASN01_OCTET_STR\n",
                 fname ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -848,7 +848,7 @@ int write_usmUserAuthKeyChange( int action,
         DEBUG_MSGTL( ( "usmUser", "%s: changing auth key for user %s\n",
             fname, uptr->secName ) );
 
-        if ( Keytools_decodeKeychange( uptr->authProtocol, uptr->authProtocolLen,
+        if ( KeyTools_decodeKeyChange( uptr->authProtocol, uptr->authProtocolLen,
                  uptr->authKey, uptr->authKeyLen,
                  var_val, var_val_len,
                  buf, &buflen )
@@ -891,7 +891,7 @@ int write_usmUserPrivProtocol( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OBJECT_ID ) {
+        if ( var_val_type != asnOBJECT_ID ) {
             DEBUG_MSGTL( ( "usmUser",
                 "write to usmUserPrivProtocol not ASN01_OBJECT_ID\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1030,7 +1030,7 @@ int write_usmUserPrivKeyChange( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "usmUser", "write to %s not ASN01_OCTET_STR\n",
                 fname ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1087,7 +1087,7 @@ int write_usmUserPrivKeyChange( int action,
         DEBUG_MSGTL( ( "usmUser", "%s: changing priv key for user %s\n",
             fname, uptr->secName ) );
 
-        if ( Keytools_decodeKeychange( uptr->authProtocol, uptr->authProtocolLen,
+        if ( KeyTools_decodeKeyChange( uptr->authProtocol, uptr->authProtocolLen,
                  uptr->privKey, uptr->privKeyLen,
                  var_val, var_val_len,
                  buf, &buflen )
@@ -1125,7 +1125,7 @@ int write_usmUserPublic( int action,
 {
     struct Usm_User_s* uptr = NULL;
 
-    if ( var_val_type != ASN01_OCTET_STR ) {
+    if ( var_val_type != asnOCTET_STR ) {
         DEBUG_MSGTL( ( "usmUser",
             "write to usmUserPublic not ASN01_OCTET_STR\n" ) );
         return PRIOT_ERR_WRONGTYPE;
@@ -1169,7 +1169,7 @@ int write_usmUserStorageType( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "usmUser",
                 "write to usmUserStorageType not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1287,7 +1287,7 @@ int write_usmUserStatus( int action,
     struct Usm_User_s* uptr = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "usmUser",
                 "write to usmUserStatus not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;

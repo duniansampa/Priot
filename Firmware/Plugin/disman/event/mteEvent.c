@@ -89,7 +89,7 @@ void _init_builtin_mteEvent( const char* event, const char* oname, oid* trapOID,
 void _init_default_mteEvent( const char* event, const char* oname, int specific )
 {
     oid mteTrapOID[] = { 1, 3, 6, 1, 2, 1, 88, 2, 0, 99 /* placeholder */ };
-    size_t mteTrapOID_len = ASN01_OID_LENGTH( mteTrapOID );
+    size_t mteTrapOID_len = asnOID_LENGTH( mteTrapOID );
 
     mteTrapOID[ mteTrapOID_len - 1 ] = specific;
     _init_builtin_mteEvent( event, oname, mteTrapOID, mteTrapOID_len );
@@ -98,7 +98,7 @@ void _init_default_mteEvent( const char* event, const char* oname, int specific 
 void _init_link_mteEvent( const char* event, const char* oname, int specific )
 {
     oid mteTrapOID[] = { 1, 3, 6, 1, 6, 3, 1, 1, 5, 99 /* placeholder */ };
-    size_t mteTrapOID_len = ASN01_OID_LENGTH( mteTrapOID );
+    size_t mteTrapOID_len = asnOID_LENGTH( mteTrapOID );
 
     mteTrapOID[ mteTrapOID_len - 1 ] = specific;
     _init_builtin_mteEvent( event, oname, mteTrapOID, mteTrapOID_len );
@@ -166,11 +166,11 @@ mteEvent_createEntry( const char* mteOwner, const char* mteEName, int fixed )
      */
     if ( mteOwner )
         memcpy( entry->mteOwner, mteOwner, mteOwner_len );
-    TableData_rowAddIndex( row, ASN01_OCTET_STR,
+    TableData_rowAddIndex( row, asnOCTET_STR,
         entry->mteOwner, mteOwner_len );
     if ( mteEName )
         memcpy( entry->mteEName, mteEName, mteEName_len );
-    TableData_rowAddIndex( row, ASN01_PRIV_IMPLIED_OCTET_STR,
+    TableData_rowAddIndex( row, asnPRIV_IMPLIED_OCTET_STR,
         entry->mteEName, mteEName_len );
 
     entry->mteNotification_len = 2; /* .0.0 */
@@ -228,8 +228,8 @@ int mteEvent_fire( char* owner, char* event, /* Event to invoke    */
      */
     memset( &owner_var, 0, sizeof( owner_var ) );
     memset( &event_var, 0, sizeof( event_var ) );
-    Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR, owner, strlen( owner ) );
-    Client_setVarTypedValue( &event_var, ASN01_PRIV_IMPLIED_OCTET_STR,
+    Client_setVarTypedValue( &owner_var, asnOCTET_STR, owner, strlen( owner ) );
+    Client_setVarTypedValue( &event_var, asnPRIV_IMPLIED_OCTET_STR,
         event, strlen( event ) );
     owner_var.next = &event_var;
     entry = ( struct mteEvent* )
@@ -285,7 +285,7 @@ int _mteEvent_fire_notify( struct mteEvent* entry, /* The event to fire  */
      */
     memset( var, 0, sizeof( VariableList ) );
     Client_setVarObjid( var, trap_priotTrapOid, trap_priotTrapOidLen );
-    Client_setVarTypedValue( var, ASN01_OBJECT_ID,
+    Client_setVarTypedValue( var, asnOBJECT_ID,
         ( u_char* )entry->mteNotification,
         entry->mteNotification_len * sizeof( oid ) );
 
@@ -362,7 +362,7 @@ int _mteEvent_fire_set( struct mteEvent* entry, /* The event to fire */
     oid* suffix, size_t sfx_len ) /* Matching instance */
 {
     VariableList var;
-    oid set_oid[ ASN01_MAX_OID_LEN ];
+    oid set_oid[ asnMAX_OID_LEN ];
     size_t set_len;
 
     /*
@@ -390,7 +390,7 @@ int _mteEvent_fire_set( struct mteEvent* entry, /* The event to fire */
      */
     memset( &var, 0, sizeof( var ) );
     Client_setVarObjid( &var, set_oid, set_len );
-    Client_setVarTypedInteger( &var, ASN01_INTEGER, entry->mteSetValue );
+    Client_setVarTypedInteger( &var, asnINTEGER, entry->mteSetValue );
     if ( entry->session )
         return Client_querySet( &var, entry->session );
     else

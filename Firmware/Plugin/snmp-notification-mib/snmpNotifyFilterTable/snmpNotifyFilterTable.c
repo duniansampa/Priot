@@ -22,7 +22,7 @@
 #include "snmpNotifyFilterTable_interface.h"
 
 const oid snmpNotifyFilterTable_oid[] = { SNMPNOTIFYFILTERTABLE_OID };
-const int snmpNotifyFilterTable_oid_size = ASN01_OID_LENGTH( snmpNotifyFilterTable_oid );
+const int snmpNotifyFilterTable_oid_size = asnOID_LENGTH( snmpNotifyFilterTable_oid );
 
 snmpNotifyFilterTable_registration snmpNotifyFilterTable_user_context;
 static snmpNotifyFilterTable_registration* snmpNotifyFilterTable_user_context_p;

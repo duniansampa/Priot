@@ -164,9 +164,9 @@ void _ipAddressTable_initialize_interface( ipAddressTable_registration* reg_ptr,
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: ipAddressAddrType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: ipAddressAddr */
         0 );
 
@@ -359,9 +359,9 @@ int ipAddressTable_index_to_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ipAddressAddrType, 0x00, sizeof( var_ipAddressAddrType ) );
-    var_ipAddressAddrType.type = ASN01_INTEGER;
+    var_ipAddressAddrType.type = asnINTEGER;
     memset( &var_ipAddressAddr, 0x00, sizeof( var_ipAddressAddr ) );
-    var_ipAddressAddr.type = ASN01_OCTET_STR;
+    var_ipAddressAddr.type = asnOCTET_STR;
 
     /*
      * chain temp index varbinds together
@@ -426,9 +426,9 @@ int ipAddressTable_index_from_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ipAddressAddrType, 0x00, sizeof( var_ipAddressAddrType ) );
-    var_ipAddressAddrType.type = ASN01_INTEGER;
+    var_ipAddressAddrType.type = asnINTEGER;
     memset( &var_ipAddressAddr, 0x00, sizeof( var_ipAddressAddr ) );
-    var_ipAddressAddr.type = ASN01_OCTET_STR;
+    var_ipAddressAddr.type = asnOCTET_STR;
 
     /*
      * chain temp index varbinds together
@@ -788,7 +788,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSIFINDEX:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressIfIndex_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -797,7 +797,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSTYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressType_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -805,7 +805,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressPrefix(5)/RowPointer/ASN_OBJECT_ID/oid(oid)//L/A/w/e/r/D/h 
          */
     case COLUMN_IPADDRESSPREFIX:
-        var->type = ASN01_OBJECT_ID;
+        var->type = asnOBJECT_ID;
         rc = ipAddressPrefix_get( rowreq_ctx, ( oid** )&var->value.string,
             &var->valueLength );
         break;
@@ -815,7 +815,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSORIGIN:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressOrigin_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -824,7 +824,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSSTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -833,7 +833,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSCREATED:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_TIMETICKS;
+        var->type = asnTIMETICKS;
         rc = ipAddressCreated_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -842,7 +842,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSLASTCHANGED:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_TIMETICKS;
+        var->type = asnTIMETICKS;
         rc = ipAddressLastChanged_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -852,7 +852,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSROWSTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressRowStatus_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -862,7 +862,7 @@ _ipAddressTable_get_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPADDRESSSTORAGETYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressStorageType_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1044,7 +1044,7 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressIfIndex(3)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/W/e/R/d/H 
          */
     case COLUMN_IPADDRESSIFINDEX:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check defined range(s). 
          */
@@ -1072,7 +1072,7 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressType(4)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSTYPE:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check that the value is one of defined enums 
          */
@@ -1114,7 +1114,7 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressStatus(7)/IpAddressStatusTC/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSSTATUS:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check that the value is one of defined enums 
          */
@@ -1180,7 +1180,7 @@ _ipAddressTable_check_column( ipAddressTable_rowreq_ctx* rowreq_ctx,
          * ipAddressStorageType(11)/StorageType/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_IPADDRESSSTORAGETYPE:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check that the value is one of defined enums 
          */
@@ -1965,7 +1965,7 @@ ipAddressTable_rowreq_ctx*
 ipAddressTable_row_find_by_mib_index( ipAddressTable_mib_index* mib_idx )
 {
     ipAddressTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

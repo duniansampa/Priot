@@ -161,17 +161,17 @@ void _tcpConnectionTable_initialize_interface( tcpConnectionTable_registration*
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: tcpConnectionLocalAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: tcpConnectionLocalAddress */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: tcpConnectionLocalPort */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: tcpConnectionRemAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: tcpConnectionRemAddress */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: tcpConnectionRemPort */
         0 );
 
@@ -382,22 +382,22 @@ int tcpConnectionTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_tcpConnectionLocalAddressType, 0x00,
         sizeof( var_tcpConnectionLocalAddressType ) );
-    var_tcpConnectionLocalAddressType.type = ASN01_INTEGER;
+    var_tcpConnectionLocalAddressType.type = asnINTEGER;
     memset( &var_tcpConnectionLocalAddress, 0x00,
         sizeof( var_tcpConnectionLocalAddress ) );
-    var_tcpConnectionLocalAddress.type = ASN01_OCTET_STR;
+    var_tcpConnectionLocalAddress.type = asnOCTET_STR;
     memset( &var_tcpConnectionLocalPort, 0x00,
         sizeof( var_tcpConnectionLocalPort ) );
-    var_tcpConnectionLocalPort.type = ASN01_UNSIGNED;
+    var_tcpConnectionLocalPort.type = asnUNSIGNED;
     memset( &var_tcpConnectionRemAddressType, 0x00,
         sizeof( var_tcpConnectionRemAddressType ) );
-    var_tcpConnectionRemAddressType.type = ASN01_INTEGER;
+    var_tcpConnectionRemAddressType.type = asnINTEGER;
     memset( &var_tcpConnectionRemAddress, 0x00,
         sizeof( var_tcpConnectionRemAddress ) );
-    var_tcpConnectionRemAddress.type = ASN01_OCTET_STR;
+    var_tcpConnectionRemAddress.type = asnOCTET_STR;
     memset( &var_tcpConnectionRemPort, 0x00,
         sizeof( var_tcpConnectionRemPort ) );
-    var_tcpConnectionRemPort.type = ASN01_UNSIGNED;
+    var_tcpConnectionRemPort.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -510,22 +510,22 @@ int tcpConnectionTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_tcpConnectionLocalAddressType, 0x00,
         sizeof( var_tcpConnectionLocalAddressType ) );
-    var_tcpConnectionLocalAddressType.type = ASN01_INTEGER;
+    var_tcpConnectionLocalAddressType.type = asnINTEGER;
     memset( &var_tcpConnectionLocalAddress, 0x00,
         sizeof( var_tcpConnectionLocalAddress ) );
-    var_tcpConnectionLocalAddress.type = ASN01_OCTET_STR;
+    var_tcpConnectionLocalAddress.type = asnOCTET_STR;
     memset( &var_tcpConnectionLocalPort, 0x00,
         sizeof( var_tcpConnectionLocalPort ) );
-    var_tcpConnectionLocalPort.type = ASN01_UNSIGNED;
+    var_tcpConnectionLocalPort.type = asnUNSIGNED;
     memset( &var_tcpConnectionRemAddressType, 0x00,
         sizeof( var_tcpConnectionRemAddressType ) );
-    var_tcpConnectionRemAddressType.type = ASN01_INTEGER;
+    var_tcpConnectionRemAddressType.type = asnINTEGER;
     memset( &var_tcpConnectionRemAddress, 0x00,
         sizeof( var_tcpConnectionRemAddress ) );
-    var_tcpConnectionRemAddress.type = ASN01_OCTET_STR;
+    var_tcpConnectionRemAddress.type = asnOCTET_STR;
     memset( &var_tcpConnectionRemPort, 0x00,
         sizeof( var_tcpConnectionRemPort ) );
-    var_tcpConnectionRemPort.type = ASN01_UNSIGNED;
+    var_tcpConnectionRemPort.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -814,7 +814,7 @@ _tcpConnectionTable_get_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_TCPCONNECTIONSTATE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = tcpConnectionState_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -824,7 +824,7 @@ _tcpConnectionTable_get_column( tcpConnectionTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_TCPCONNECTIONPROCESS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = tcpConnectionProcess_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -976,7 +976,7 @@ _tcpConnectionTable_check_column( tcpConnectionTable_rowreq_ctx*
          * tcpConnectionState(7)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_TCPCONNECTIONSTATE:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check that the value is one of defined enums 
          */
@@ -1679,7 +1679,7 @@ tcpConnectionTable_row_find_by_mib_index( tcpConnectionTable_mib_index*
         mib_idx )
 {
     tcpConnectionTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

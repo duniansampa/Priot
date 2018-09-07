@@ -26,16 +26,16 @@ void init_register_nsVacm_context( const char* context )
 
     reg = AgentHandler_createHandlerRegistration(
         "nsVacmAccessTable", nsVacmAccessTable_handler,
-        nsVacmAccessTable_oid, ASN01_OID_LENGTH( nsVacmAccessTable_oid ),
+        nsVacmAccessTable_oid, asnOID_LENGTH( nsVacmAccessTable_oid ),
         HANDLER_CAN_RWRITE );
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: vacmGroupName */
-        ASN01_OCTET_STR, /* index: vacmAccessContextPrefix */
-        ASN01_INTEGER, /* index: vacmAccessSecurityModel */
-        ASN01_INTEGER, /* index: vacmAccessSecurityLevel */
-        ASN01_OCTET_STR, /* index: nsVacmAuthType */
+        asnOCTET_STR, /* index: vacmGroupName */
+        asnOCTET_STR, /* index: vacmAccessContextPrefix */
+        asnINTEGER, /* index: vacmAccessSecurityModel */
+        asnINTEGER, /* index: vacmAccessSecurityLevel */
+        asnOCTET_STR, /* index: nsVacmAuthType */
         0 );
     table_info->min_column = COLUMN_NSVACMCONTEXTMATCH;
     table_info->max_column = COLUMN_NSVACMACCESSSTATUS;
@@ -166,20 +166,20 @@ int nsVacmAccessTable_handler( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case COLUMN_NSVACMCONTEXTMATCH:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->contextMatch );
                 break;
             case COLUMN_NSVACMVIEWNAME:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->views[ viewIdx ],
                     strlen( entry->views[ viewIdx ] ) );
                 break;
             case COLUMN_VACMACCESSSTORAGETYPE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->storageType );
                 break;
             case COLUMN_NSVACMACCESSSTATUS:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->status );
                 break;
             }
@@ -202,7 +202,7 @@ int nsVacmAccessTable_handler( MibHandler* handler,
                 break;
             case COLUMN_NSVACMVIEWNAME:
                 ret = VariableList_checkTypeAndMaxLength( request->requestvb,
-                    ASN01_OCTET_STR,
+                    asnOCTET_STR,
                     VACM_MAX_STRING );
                 break;
             case COLUMN_VACMACCESSSTORAGETYPE:

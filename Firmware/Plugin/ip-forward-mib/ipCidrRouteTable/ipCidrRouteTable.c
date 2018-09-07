@@ -21,7 +21,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ipCidrRouteTable_oid[] = { IPCIDRROUTETABLE_OID };
-const int ipCidrRouteTable_oid_size = ASN01_OID_LENGTH( ipCidrRouteTable_oid );
+const int ipCidrRouteTable_oid_size = asnOID_LENGTH( ipCidrRouteTable_oid );
 
 ipCidrRouteTable_registration ipCidrRouteTable_user_context;
 static ipCidrRouteTable_registration* ipCidrRouteTable_user_context_p;

@@ -168,13 +168,13 @@ void _ipCidrRouteTable_initialize_interface( ipCidrRouteTable_registration*
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_IPADDRESS,
+    Table_helperAddIndexes( tbl_info, asnIPADDRESS,
         /** index: ipCidrRouteDest */
-        ASN01_IPADDRESS,
+        asnIPADDRESS,
         /** index: ipCidrRouteMask */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: ipCidrRouteTos */
-        ASN01_IPADDRESS,
+        asnIPADDRESS,
         /** index: ipCidrRouteNextHop */
         0 );
 
@@ -370,13 +370,13 @@ int ipCidrRouteTable_index_to_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ipCidrRouteDest, 0x00, sizeof( var_ipCidrRouteDest ) );
-    var_ipCidrRouteDest.type = ASN01_PRIV_IMPLIED_OCTET_STR;
+    var_ipCidrRouteDest.type = asnPRIV_IMPLIED_OCTET_STR;
     memset( &var_ipCidrRouteMask, 0x00, sizeof( var_ipCidrRouteMask ) );
-    var_ipCidrRouteMask.type = ASN01_PRIV_IMPLIED_OCTET_STR;
+    var_ipCidrRouteMask.type = asnPRIV_IMPLIED_OCTET_STR;
     memset( &var_ipCidrRouteTos, 0x00, sizeof( var_ipCidrRouteTos ) );
-    var_ipCidrRouteTos.type = ASN01_INTEGER;
+    var_ipCidrRouteTos.type = asnINTEGER;
     memset( &var_ipCidrRouteNextHop, 0x00, sizeof( var_ipCidrRouteNextHop ) );
-    var_ipCidrRouteNextHop.type = ASN01_PRIV_IMPLIED_OCTET_STR;
+    var_ipCidrRouteNextHop.type = asnPRIV_IMPLIED_OCTET_STR;
 
     /*
      * chain temp index varbinds together
@@ -465,13 +465,13 @@ int ipCidrRouteTable_index_from_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ipCidrRouteDest, 0x00, sizeof( var_ipCidrRouteDest ) );
-    var_ipCidrRouteDest.type = ASN01_IPADDRESS;
+    var_ipCidrRouteDest.type = asnIPADDRESS;
     memset( &var_ipCidrRouteMask, 0x00, sizeof( var_ipCidrRouteMask ) );
-    var_ipCidrRouteMask.type = ASN01_IPADDRESS;
+    var_ipCidrRouteMask.type = asnIPADDRESS;
     memset( &var_ipCidrRouteTos, 0x00, sizeof( var_ipCidrRouteTos ) );
-    var_ipCidrRouteTos.type = ASN01_INTEGER;
+    var_ipCidrRouteTos.type = asnINTEGER;
     memset( &var_ipCidrRouteNextHop, 0x00, sizeof( var_ipCidrRouteNextHop ) );
-    var_ipCidrRouteNextHop.type = ASN01_IPADDRESS;
+    var_ipCidrRouteNextHop.type = asnIPADDRESS;
 
     /*
      * chain temp index varbinds together
@@ -822,7 +822,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * (INDEX) ipCidrRouteDest(1)/IPADDR/ASN_IPADDRESS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPCIDRROUTEDEST:
-        var->type = ASN01_IPADDRESS;
+        var->type = asnIPADDRESS;
         var->valueLength = sizeof( in_addr_t );
         memcpy( var->value.integer, &rowreq_ctx->tbl_idx.ipCidrRouteDest, sizeof( in_addr_t ) );
         break;
@@ -831,7 +831,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * (INDEX) ipCidrRouteMask(2)/IPADDR/ASN_IPADDRESS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPCIDRROUTEMASK:
-        var->type = ASN01_IPADDRESS;
+        var->type = asnIPADDRESS;
         var->valueLength = sizeof( in_addr_t );
         memcpy( var->value.integer, &rowreq_ctx->tbl_idx.ipCidrRouteMask, sizeof( in_addr_t ) );
         break;
@@ -840,7 +840,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * (INDEX) ipCidrRouteTos(3)/INTEGER32/ASN_INTEGER/long(long)//l/A/w/e/R/d/h 
          */
     case COLUMN_IPCIDRROUTETOS:
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         var->valueLength = sizeof( long );
         ( *var->value.integer ) = rowreq_ctx->tbl_idx.ipCidrRouteTos;
         break;
@@ -849,7 +849,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * (INDEX) ipCidrRouteNextHop(4)/IPADDR/ASN_IPADDRESS/u_long(u_long)//l/A/w/e/r/d/h 
          */
     case COLUMN_IPCIDRROUTENEXTHOP:
-        var->type = ASN01_IPADDRESS;
+        var->type = asnIPADDRESS;
         var->valueLength = sizeof( in_addr_t );
         memcpy( var->value.integer, &rowreq_ctx->tbl_idx.ipCidrRouteNextHop, sizeof( in_addr_t ) );
         break;
@@ -859,7 +859,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEIFINDEX:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteIfIndex_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -868,7 +868,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTETYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteType_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -877,7 +877,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEPROTO:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteProto_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -886,7 +886,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEAGE:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteAge_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -894,7 +894,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteInfo(9)/OBJECTID/ASN_OBJECT_ID/oid(oid)//L/A/W/e/r/d/h 
          */
     case COLUMN_IPCIDRROUTEINFO:
-        var->type = ASN01_OBJECT_ID;
+        var->type = asnOBJECT_ID;
         rc = ipCidrRouteInfo_get( rowreq_ctx, ( oid** )&var->value.string,
             &var->valueLength );
         break;
@@ -904,7 +904,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTENEXTHOPAS:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteNextHopAS_get( rowreq_ctx,
             ( long* )var->value.string );
         break;
@@ -914,7 +914,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEMETRIC1:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteMetric1_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -923,7 +923,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEMETRIC2:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteMetric2_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -932,7 +932,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEMETRIC3:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteMetric3_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -941,7 +941,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEMETRIC4:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteMetric4_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -950,7 +950,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTEMETRIC5:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteMetric5_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -959,7 +959,7 @@ _ipCidrRouteTable_get_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPCIDRROUTESTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipCidrRouteStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -1155,7 +1155,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteIfIndex(5)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTEIFINDEX:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteIfIndex", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1175,7 +1175,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteType(6)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/d/h 
          */
     case COLUMN_IPCIDRROUTETYPE:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check that the value is one of defined enums 
          */
@@ -1219,7 +1219,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteInfo(9)/OBJECTID/ASN_OBJECT_ID/oid(oid)//L/A/W/e/r/d/h 
          */
     case COLUMN_IPCIDRROUTEINFO:
-        rc = VariableList_checkType( var, ASN01_OBJECT_ID );
+        rc = VariableList_checkType( var, asnOBJECT_ID );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteInfo", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1240,7 +1240,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteNextHopAS(10)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTENEXTHOPAS:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteNextHopAS", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1260,7 +1260,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteMetric1(11)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTEMETRIC1:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteMetric1", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1280,7 +1280,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteMetric2(12)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTEMETRIC2:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteMetric2", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1300,7 +1300,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteMetric3(13)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTEMETRIC3:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteMetric3", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1320,7 +1320,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteMetric4(14)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTEMETRIC4:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteMetric4", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -1340,7 +1340,7 @@ _ipCidrRouteTable_check_column( ipCidrRouteTable_rowreq_ctx* rowreq_ctx,
          * ipCidrRouteMetric5(15)/INTEGER32/ASN_INTEGER/long(long)//l/A/W/e/r/D/h 
          */
     case COLUMN_IPCIDRROUTEMETRIC5:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         if ( ErrorCode_SUCCESS != rc ) {
             DEBUG_MSGTL( ( "ipCidrRouteTable:_ipCidrRouteTable_check_column:ipCidrRouteMetric5", "varbind validation failed (eg bad type or size)\n" ) );
         } else {
@@ -2235,7 +2235,7 @@ ipCidrRouteTable_row_find_by_mib_index( ipCidrRouteTable_mib_index*
         mib_idx )
 {
     ipCidrRouteTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

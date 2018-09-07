@@ -114,8 +114,8 @@ void netsnmp_parse_override( const char* token, char* line )
     char* cp;
     char buf[ UTILITIES_MAX_BUFFER ], namebuf[ UTILITIES_MAX_BUFFER ];
     int readwrite = 0;
-    oid oidbuf[ ASN01_MAX_OID_LEN ];
-    size_t oidbuf_len = ASN01_MAX_OID_LEN;
+    oid oidbuf[ asnMAX_OID_LEN ];
+    size_t oidbuf_len = asnMAX_OID_LEN;
     int type;
     override_data* thedata;
     HandlerRegistration* the_reg;
@@ -147,23 +147,23 @@ void netsnmp_parse_override( const char* token, char* line )
             const char* key;
             int value;
         } const strings[] = {
-            { "counter", ASN01_COUNTER },
-            { "counter64", ASN01_COUNTER64 },
-            { "integer", ASN01_INTEGER },
-            { "ipaddress", ASN01_IPADDRESS },
-            { "nsap", ASN01_NSAP },
-            { "null", ASN01_NULL },
-            { "object_id", ASN01_OBJECT_ID },
-            { "octet_str", ASN01_OCTET_STR },
-            { "opaque", ASN01_OPAQUE },
-            { "opaque_counter64", ASN01_OPAQUE_COUNTER64 },
-            { "opaque_double", ASN01_OPAQUE_DOUBLE },
-            { "opaque_float", ASN01_OPAQUE_FLOAT },
-            { "opaque_i64", ASN01_OPAQUE_I64 },
-            { "opaque_u64", ASN01_OPAQUE_U64 },
-            { "timeticks", ASN01_TIMETICKS },
-            { "uinteger", ASN01_GAUGE },
-            { "unsigned", ASN01_UNSIGNED },
+            { "counter", asnCOUNTER },
+            { "counter64", asnCOUNTER64 },
+            { "integer", asnINTEGER },
+            { "ipaddress", asnIPADDRESS },
+            { "nsap", asnNSAP },
+            { "null", asnNULL },
+            { "object_id", asnOBJECT_ID },
+            { "octet_str", asnOCTET_STR },
+            { "opaque", asnOPAQUE },
+            { "opaque_counter64", asnOPAQUE_COUNTER64 },
+            { "opaque_double", asnOPAQUE_DOUBLE },
+            { "opaque_float", asnOPAQUE_FLOAT },
+            { "opaque_i64", asnOPAQUE_I64 },
+            { "opaque_u64", asnOPAQUE_U64 },
+            { "timeticks", asnTIMETICKS },
+            { "uinteger", asnGAUGE },
+            { "unsigned", asnUNSIGNED },
             { NULL, 0 }
         },
                 *run;
@@ -190,20 +190,20 @@ void netsnmp_parse_override( const char* token, char* line )
     thedata->type = type;
 
     switch ( type ) {
-    case ASN01_INTEGER:
+    case asnINTEGER:
         MALLOC_OR_DIE( sizeof( long ) );
         *( ( long* )thedata->value ) = strtol( buf, NULL, 0 );
         break;
 
-    case ASN01_COUNTER:
-    case ASN01_TIMETICKS:
-    case ASN01_UNSIGNED:
+    case asnCOUNTER:
+    case asnTIMETICKS:
+    case asnUNSIGNED:
         MALLOC_OR_DIE( sizeof( u_long ) );
         *( ( u_long* )thedata->value ) = strtoul( buf, NULL, 0 );
         break;
 
-    case ASN01_OCTET_STR:
-    case ASN01_BIT_STR:
+    case asnOCTET_STR:
+    case asnBIT_STR:
         if ( buf[ 0 ] == '0' && buf[ 1 ] == 'x' ) {
             /*
              * hex 
@@ -216,14 +216,14 @@ void netsnmp_parse_override( const char* token, char* line )
         }
         break;
 
-    case ASN01_OBJECT_ID:
+    case asnOBJECT_ID:
         ReadConfig_readObjid( buf, ( oid** )&thedata->value,
             &thedata->value_len );
         /* We need the size of the value in bytes, not in oids */
         thedata->value_len *= sizeof( oid );
         break;
 
-    case ASN01_NULL:
+    case asnNULL:
         thedata->value_len = 0;
         break;
 
@@ -233,7 +233,7 @@ void netsnmp_parse_override( const char* token, char* line )
         return;
     }
 
-    if ( !thedata->value && thedata->type != ASN01_NULL ) {
+    if ( !thedata->value && thedata->type != asnNULL ) {
         ReadConfig_configPerror( "memory allocation failure" );
         free( thedata );
         return;

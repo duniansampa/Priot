@@ -57,19 +57,19 @@ NodeHandlerFT handle_memsize;
 #define HRSTORE_FAILS 8
 
 struct Variable2_s hrstore_variables[] = {
-    { HRSTORE_INDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRSTORE_INDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 1 } },
-    { HRSTORE_TYPE, ASN01_OBJECT_ID, IMPL_OLDAPI_RONLY,
+    { HRSTORE_TYPE, asnOBJECT_ID, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 2 } },
-    { HRSTORE_DESCR, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRSTORE_DESCR, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 3 } },
-    { HRSTORE_UNITS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRSTORE_UNITS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 4 } },
-    { HRSTORE_SIZE, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRSTORE_SIZE, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 5 } },
-    { HRSTORE_USED, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRSTORE_USED, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 6 } },
-    { HRSTORE_FAILS, ASN01_COUNTER, IMPL_OLDAPI_RONLY,
+    { HRSTORE_FAILS, asnCOUNTER, IMPL_OLDAPI_RONLY,
         var_hrstore, 1, { 7 } }
 };
 oid hrstore_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 2 };
@@ -82,18 +82,18 @@ void init_hrh_storage( void )
 
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration( "host/hrMemorySize", handle_memsize,
-            hrMemorySize_oid, ASN01_OID_LENGTH( hrMemorySize_oid ),
+            hrMemorySize_oid, asnOID_LENGTH( hrMemorySize_oid ),
             HANDLER_CAN_RONLY ) );
     REGISTER_MIB( "host/hr_storage", hrstore_variables, Variable2_s,
         hrStorageTable_oid );
 
     appname = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, appname, "skipNFSInHostResources",
+    DefaultStore_registerConfig( asnBOOLEAN, appname, "skipNFSInHostResources",
         DsStore_APPLICATION_ID,
         DsAgentBoolean_SKIPNFSINHOSTRESOURCES );
 
-    DefaultStore_registerConfig( ASN01_BOOLEAN, appname, "realStorageUnits",
+    DefaultStore_registerConfig( asnBOOLEAN, appname, "realStorageUnits",
         DsStore_APPLICATION_ID,
         DsAgentBoolean_REALSTORAGEUNITS );
 
@@ -142,7 +142,7 @@ void* header_hrstoreEntry( struct Variable_s* vp,
     size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRSTORE_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int storage_idx, LowIndex = -1;
     int result;
     int idx = -1;
@@ -283,7 +283,7 @@ int handle_memsize( MibHandler* handler,
         else {
             val = mem_info->size; /* memtotal */
             val *= ( mem_info->units / 1024 );
-            Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( requests->requestvb, asnINTEGER,
                 ( u_char* )&val, sizeof( val ) );
         }
         return PRIOT_ERR_NOERROR;

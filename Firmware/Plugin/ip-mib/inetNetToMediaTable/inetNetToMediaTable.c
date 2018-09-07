@@ -24,7 +24,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid inetNetToMediaTable_oid[] = { INETNETTOMEDIATABLE_OID };
-const int inetNetToMediaTable_oid_size = ASN01_OID_LENGTH( inetNetToMediaTable_oid );
+const int inetNetToMediaTable_oid_size = asnOID_LENGTH( inetNetToMediaTable_oid );
 
 inetNetToMediaTable_registration inetNetToMediaTable_user_context;
 static inetNetToMediaTable_registration* inetNetToMediaTable_user_context_p;

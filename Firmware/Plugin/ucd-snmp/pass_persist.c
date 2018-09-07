@@ -34,7 +34,7 @@ struct Variable2_s extensible_persist_passthru_variables[] = {
     /*
      * bogus entry.  Only some of it is actually used. 
      */
-    { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_extensible_pass_persist, 0, { MIBINDEX } },
 };
 
@@ -189,7 +189,7 @@ var_extensible_pass_persist( struct Variable_s* vp,
     int exact,
     size_t* var_len, WriteMethodFT** write_method )
 {
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int i, rtest, newlen;
     char buf[ UTILITIES_MAX_BUFFER ];
     static char buf2[ UTILITIES_MAX_BUFFER ];

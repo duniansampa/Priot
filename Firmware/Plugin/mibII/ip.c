@@ -46,56 +46,56 @@ extern void init_routes( void );
  * information at 
  */
 struct Variable1_s ipaddr_variables[] = {
-    { IPADADDR, ASN01_IPADDRESS, IMPL_OLDAPI_RONLY,
+    { IPADADDR, asnIPADDRESS, IMPL_OLDAPI_RONLY,
         var_ipAddrEntry, 1, { 1 } },
-    { IPADIFINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { IPADIFINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_ipAddrEntry, 1, { 2 } },
-    { IPADNETMASK, ASN01_IPADDRESS, IMPL_OLDAPI_RONLY,
+    { IPADNETMASK, asnIPADDRESS, IMPL_OLDAPI_RONLY,
         var_ipAddrEntry, 1, { 3 } },
-    { IPADBCASTADDR, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { IPADBCASTADDR, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_ipAddrEntry, 1, { 4 } },
-    { IPADREASMMAX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { IPADREASMMAX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_ipAddrEntry, 1, { 5 } }
 };
 
 struct Variable1_s iproute_variables[] = {
-    { IPROUTEDEST, ASN01_IPADDRESS, IMPL_OLDAPI_RWRITE,
+    { IPROUTEDEST, asnIPADDRESS, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 1 } },
-    { IPROUTEIFINDEX, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEIFINDEX, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 2 } },
-    { IPROUTEMETRIC1, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEMETRIC1, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 3 } },
-    { IPROUTEMETRIC2, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEMETRIC2, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 4 } },
-    { IPROUTEMETRIC3, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEMETRIC3, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 5 } },
-    { IPROUTEMETRIC4, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEMETRIC4, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 6 } },
-    { IPROUTENEXTHOP, ASN01_IPADDRESS, IMPL_OLDAPI_RWRITE,
+    { IPROUTENEXTHOP, asnIPADDRESS, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 7 } },
-    { IPROUTETYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTETYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 8 } },
-    { IPROUTEPROTO, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { IPROUTEPROTO, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_ipRouteEntry, 1, { 9 } },
-    { IPROUTEAGE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEAGE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 10 } },
-    { IPROUTEMASK, ASN01_IPADDRESS, IMPL_OLDAPI_RWRITE,
+    { IPROUTEMASK, asnIPADDRESS, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 11 } },
-    { IPROUTEMETRIC5, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { IPROUTEMETRIC5, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_ipRouteEntry, 1, { 12 } },
-    { IPROUTEINFO, ASN01_OBJECT_ID, IMPL_OLDAPI_RONLY,
+    { IPROUTEINFO, asnOBJECT_ID, IMPL_OLDAPI_RONLY,
         var_ipRouteEntry, 1, { 13 } }
 };
 
 struct Variable1_s ipmedia_variables[] = {
 
-    { IPMEDIAIFINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { IPMEDIAIFINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 1 } },
-    { IPMEDIAPHYSADDRESS, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { IPMEDIAPHYSADDRESS, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 2 } },
-    { IPMEDIANETADDRESS, ASN01_IPADDRESS, IMPL_OLDAPI_RONLY,
+    { IPMEDIANETADDRESS, asnIPADDRESS, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 3 } },
-    { IPMEDIATYPE, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { IPMEDIATYPE, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 4 } }
 };
 
@@ -122,7 +122,7 @@ void init_ip( void )
      */
     DEBUG_MSGTL( ( "mibII/ip", "Initialising IP group\n" ) );
     reginfo = AgentHandler_createHandlerRegistration( "ip", ip_handler,
-        ip_oid, ASN01_OID_LENGTH( ip_oid ), HANDLER_CAN_RONLY );
+        ip_oid, asnOID_LENGTH( ip_oid ), HANDLER_CAN_RONLY );
     rc = ScalarGroup_registerScalarGroup( reginfo, IPFORWARDING, IPROUTEDISCARDS );
     if ( rc != ErrorCode_SUCCESS )
         return;
@@ -134,7 +134,7 @@ void init_ip( void )
     AgentHandler_injectHandler( reginfo,
         CacheHandler_getCacheHandler( IP_STATS_CACHE_TIMEOUT,
                                     ip_load, ip_free,
-                                    ip_oid, ASN01_OID_LENGTH( ip_oid ) ) );
+                                    ip_oid, asnOID_LENGTH( ip_oid ) ) );
 
     /*
      * register (using the old-style API) to handle the IP tables
@@ -185,7 +185,7 @@ int ip_handler( MibHandler* handler,
     VariableList* requestvb;
     long ret_value;
     oid subid;
-    int type = ASN01_COUNTER;
+    int type = asnCOUNTER;
 
     /*
      * The cached data should already have been loaded by the
@@ -202,7 +202,7 @@ int ip_handler( MibHandler* handler,
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
             requestvb = request->requestvb;
-            subid = requestvb->name[ ASN01_OID_LENGTH( ip_oid ) ]; /* XXX */
+            subid = requestvb->name[ asnOID_LENGTH( ip_oid ) ]; /* XXX */
             DEBUG_MSGTL( ( "mibII/ip", "oid: " ) );
             DEBUG_MSGOID( ( "mibII/ip", requestvb->name,
                 requestvb->nameLength ) );
@@ -211,11 +211,11 @@ int ip_handler( MibHandler* handler,
             switch ( subid ) {
             case IPFORWARDING:
                 ret_value = ipstat.ipForwarding;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case IPDEFAULTTTL:
                 ret_value = ipstat.ipDefaultTTL;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case IPINRECEIVES:
                 ret_value = ipstat.ipInReceives & 0xffffffff;
@@ -249,7 +249,7 @@ int ip_handler( MibHandler* handler,
                 break;
             case IPREASMTIMEOUT:
                 ret_value = ipstat.ipReasmTimeout;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case IPREASMREQDS:
                 ret_value = ipstat.ipReasmReqds;

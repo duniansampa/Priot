@@ -372,7 +372,7 @@ Watcher_timestampHandler( MibHandler *handler,
         else
             uptime = Agent_markerUptime( timestamp );
         Client_setVarTypedValue(requests->requestvb,
-                                 ASN01_TIMETICKS,
+                                 asnTIMETICKS,
                                  (u_char *) &uptime,
                                  sizeof(uptime));
         break;
@@ -423,7 +423,7 @@ Watcher_registerWatchedSpinlock(HandlerRegistration *reginfo,
     whandler         = Watcher_getWatchedSpinlockHandler();
     whandler->myvoid = (void *)spinlock;
     winfo            = Watcher_createWatcherInfo((void *)spinlock,
-                   sizeof(int), ASN01_INTEGER, WATCHER_FIXED_SIZE);
+                   sizeof(int), asnINTEGER, WATCHER_FIXED_SIZE);
     AgentHandler_injectHandler(reginfo, whandler);
     return Watcher_registerWatchedScalar2(reginfo, winfo);
 }
@@ -530,7 +530,7 @@ Watcher_registerUlongScalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( u_long ),
-        ASN01_UNSIGNED, subhandler, HANDLER_CAN_RWRITE);
+        asnUNSIGNED, subhandler, HANDLER_CAN_RWRITE);
 }
 
 int
@@ -542,7 +542,7 @@ Watcher_registerReadOnlyUlongScalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( u_long ),
-        ASN01_UNSIGNED, subhandler, HANDLER_CAN_RONLY);
+        asnUNSIGNED, subhandler, HANDLER_CAN_RONLY);
 }
 
 int
@@ -554,7 +554,7 @@ Watcher_registerLongScalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( long ),
-        ASN01_INTEGER, subhandler, HANDLER_CAN_RWRITE);
+        asnINTEGER, subhandler, HANDLER_CAN_RWRITE);
 }
 
 int
@@ -566,7 +566,7 @@ Watcher_registerReadOnlyLongScalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( long ),
-        ASN01_INTEGER, subhandler, HANDLER_CAN_RONLY);
+        asnINTEGER, subhandler, HANDLER_CAN_RONLY);
 }
 
 int
@@ -578,7 +578,7 @@ Watcher_registerIntScalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( int ),
-        ASN01_INTEGER, subhandler, HANDLER_CAN_RWRITE);
+        asnINTEGER, subhandler, HANDLER_CAN_RWRITE);
 }
 
 int
@@ -590,7 +590,7 @@ Watcher_registerReadOnlyIntScalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( int ),
-        ASN01_INTEGER, subhandler, HANDLER_CAN_RONLY);
+        asnINTEGER, subhandler, HANDLER_CAN_RONLY);
 }
 
 int
@@ -602,5 +602,5 @@ Watcher_registerReadOnlyCounter32Scalar(const char *name,
     return Watcher_registerScalarWatcher(
         name, reg_oid, reg_oid_len,
         (void *)it, sizeof( u_long ),
-        ASN01_COUNTER, subhandler, HANDLER_CAN_RONLY);
+        asnCOUNTER, subhandler, HANDLER_CAN_RONLY);
 }

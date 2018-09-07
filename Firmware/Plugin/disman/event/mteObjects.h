@@ -28,7 +28,7 @@ struct mteObject {
     /*
      * Column values
      */
-    oid             mteObjectID[ASN01_MAX_OID_LEN];
+    oid             mteObjectID[asnMAX_OID_LEN];
     size_t          mteObjectID_len;
 
     long            flags;

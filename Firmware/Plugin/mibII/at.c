@@ -55,11 +55,11 @@ static int ARP_Scan_Next( in_addr_t*, char*, int*, u_long*, u_short* );
  * information at 
  */
 struct Variable1_s at_variables[] = {
-    { ATIFINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { ATIFINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 1 } },
-    { ATPHYSADDRESS, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { ATPHYSADDRESS, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 2 } },
-    { ATNETADDRESS, ASN01_IPADDRESS, IMPL_OLDAPI_RONLY,
+    { ATNETADDRESS, asnIPADDRESS, IMPL_OLDAPI_RONLY,
         var_atEntry, 1, { 3 } }
 };
 

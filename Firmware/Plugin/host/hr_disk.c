@@ -103,13 +103,13 @@ static void Remove_LVM_Disks( void );
 #define HRDISK_CAPACITY 4
 
 struct Variable4_s hrdisk_variables[] = {
-    { HRDISK_ACCESS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRDISK_ACCESS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrdisk, 2, { 1, 1 } },
-    { HRDISK_MEDIA, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRDISK_MEDIA, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrdisk, 2, { 1, 2 } },
-    { HRDISK_REMOVEABLE, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRDISK_REMOVEABLE, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrdisk, 2, { 1, 3 } },
-    { HRDISK_CAPACITY, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRDISK_CAPACITY, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrdisk, 2, { 1, 4 } }
 };
 oid hrdisk_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 6 };
@@ -397,7 +397,7 @@ int header_hrdisk( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRDISK_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int disk_idx, LowIndex = -1;
     int result;
 

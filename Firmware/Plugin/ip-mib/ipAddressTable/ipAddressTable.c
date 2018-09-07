@@ -27,7 +27,7 @@
 #include "PluginSettings.h"
 
 const oid ipAddressTable_oid[] = { IPADDRESSTABLE_OID };
-const int ipAddressTable_oid_size = ASN01_OID_LENGTH( ipAddressTable_oid );
+const int ipAddressTable_oid_size = asnOID_LENGTH( ipAddressTable_oid );
 
 ipAddressTable_registration ipAddressTable_user_context;
 static ipAddressTable_registration* ipAddressTable_user_context_p;
@@ -596,7 +596,7 @@ int ipAddressPrefix_get( ipAddressTable_rowreq_ctx* rowreq_ctx,
     oid** ipAddressPrefix_val_ptr_ptr,
     size_t* ipAddressPrefix_val_ptr_len_ptr )
 {
-    oid *dst, tmp_oid[ ASN01_MAX_OID_LEN ] = { 1, 3, 6, 1, 2, 1, 4, 32, 1, 5 };
+    oid *dst, tmp_oid[ asnMAX_OID_LEN ] = { 1, 3, 6, 1, 2, 1, 4, 32, 1, 5 };
     u_char tmp_buf[ NETSNMP_ACCESS_IPADDRESS_BUF_SIZE ];
     size_t len;
 

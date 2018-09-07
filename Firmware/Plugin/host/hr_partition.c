@@ -56,15 +56,15 @@ int header_hrpartition( struct Variable_s*, oid*, size_t*, int,
 #define HRPART_FSIDX 5
 
 struct Variable4_s hrpartition_variables[] = {
-    { HRPART_INDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRPART_INDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrpartition, 2, { 1, 1 } },
-    { HRPART_LABEL, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRPART_LABEL, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrpartition, 2, { 1, 2 } },
-    { HRPART_ID, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRPART_ID, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrpartition, 2, { 1, 3 } },
-    { HRPART_SIZE, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRPART_SIZE, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrpartition, 2, { 1, 4 } },
-    { HRPART_FSIDX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRPART_FSIDX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrpartition, 2, { 1, 5 } }
 };
 oid hrpartition_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 7 };
@@ -95,7 +95,7 @@ int header_hrpartition( struct Variable_s* vp,
 {
 #define HRPART_DISK_NAME_LENGTH 11
 #define HRPART_ENTRY_NAME_LENGTH 12
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int part_idx, LowDiskIndex = -1, LowPartIndex = -1;
     int result;
 

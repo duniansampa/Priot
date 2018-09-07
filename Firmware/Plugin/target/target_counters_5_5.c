@@ -11,7 +11,7 @@ void init_target_counters_5_5( void )
 
     GETSTATISTIC_REGISTER_STATISTIC_HANDLER(
         AgentHandler_createHandlerRegistration(
-            "target_counters", NULL, target_oid, ASN01_OID_LENGTH( target_oid ),
+            "target_counters", NULL, target_oid, asnOID_LENGTH( target_oid ),
             HANDLER_CAN_RONLY ),
         4, TARGET );
 }

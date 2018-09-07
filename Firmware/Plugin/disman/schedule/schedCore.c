@@ -59,7 +59,7 @@ _sched_callback( unsigned int reg, void* magic )
 
     memset( &assign, 0, sizeof( VariableList ) );
     Client_setVarObjid( &assign, entry->schedVariable, entry->schedVariable_len );
-    Client_setVarTypedValue( &assign, ASN01_INTEGER,
+    Client_setVarTypedValue( &assign, asnINTEGER,
         ( u_char* )&entry->schedValue,
         sizeof( entry->schedValue ) );
 
@@ -441,13 +441,13 @@ schedTable_createEntry( const char* schedOwner, const char* schedName )
      */
     if ( schedOwner ) {
         memcpy( entry->schedOwner, schedOwner, strlen( schedOwner ) );
-        TableTdata_rowAddIndex( row, ASN01_OCTET_STR,
+        TableTdata_rowAddIndex( row, asnOCTET_STR,
             entry->schedOwner, strlen( schedOwner ) );
     } else
-        TableTdata_rowAddIndex( row, ASN01_OCTET_STR, "", 0 );
+        TableTdata_rowAddIndex( row, asnOCTET_STR, "", 0 );
 
     memcpy( entry->schedName, schedName, strlen( schedName ) );
-    TableTdata_rowAddIndex( row, ASN01_OCTET_STR,
+    TableTdata_rowAddIndex( row, asnOCTET_STR,
         entry->schedName, strlen( schedName ) );
     /*
      * Set the (non-zero) default values in the row data structure.

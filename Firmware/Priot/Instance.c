@@ -162,7 +162,7 @@ Instance_registerReadOnlyUlongInstance(const char *name,
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RONLY),
                Watcher_createWatcherInfo(
                    (void *)it, sizeof(u_long),
-                   ASN01_UNSIGNED, WATCHER_FIXED_SIZE));
+                   asnUNSIGNED, WATCHER_FIXED_SIZE));
 }
 
 
@@ -177,7 +177,7 @@ Instance_registerUlongInstance(const char *name,
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RWRITE),
                Watcher_createWatcherInfo(
                    (void *)it, sizeof(u_long),
-                   ASN01_UNSIGNED, WATCHER_FIXED_SIZE));
+                   asnUNSIGNED, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -193,7 +193,7 @@ Instance_registerReadOnlyCounter32Instance(const char *name,
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RONLY),
                Watcher_createWatcherInfo(
                    (void *)it, sizeof(u_long),
-                   ASN01_COUNTER, WATCHER_FIXED_SIZE));
+                   asnCOUNTER, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -207,7 +207,7 @@ Instance_registerReadOnlyLongInstance(const char *name,
                AgentHandler_createHandlerRegistration(
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RONLY),
                Watcher_createWatcherInfo(
-                   (void *)it, sizeof(long), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+                   (void *)it, sizeof(long), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 
@@ -220,7 +220,7 @@ Instance_registerLongInstance(const char *name,
                AgentHandler_createHandlerRegistration(
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RWRITE),
                Watcher_createWatcherInfo(
-                   (void *)it, sizeof(long), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+                   (void *)it, sizeof(long), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 /* Watched 'int' instances are only writable on 32-bit systems  */
@@ -237,7 +237,7 @@ Instance_registerReadOnlyUintInstance(const char *name,
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RONLY),
                Watcher_createWatcherInfo(
                    (void *)it, sizeof(unsigned int),
-                   ASN01_UNSIGNED, WATCHER_FIXED_SIZE));
+                   asnUNSIGNED, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -250,7 +250,7 @@ Instance_registerUintInstance(const char *name,
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RWRITE),
                Watcher_createWatcherInfo(
                    (void *)it, sizeof(unsigned int),
-                   ASN01_UNSIGNED, WATCHER_FIXED_SIZE));
+                   asnUNSIGNED, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -262,7 +262,7 @@ Instance_registerReadOnlyIntInstance2(const char *name,
                AgentHandler_createHandlerRegistration(
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RONLY),
                Watcher_createWatcherInfo(
-                   (void *)it, sizeof(int), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+                   (void *)it, sizeof(int), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 /*
@@ -300,7 +300,7 @@ Instance_registerReadOnlyUlongInstanceContext(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(u_long), ASN01_UNSIGNED, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(u_long), asnUNSIGNED, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -317,7 +317,7 @@ Instance_registerUlongInstanceContext(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(u_long), ASN01_UNSIGNED, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(u_long), asnUNSIGNED, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -336,7 +336,7 @@ Instance_registerReadOnlyCounter32InstanceContext(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(u_long), ASN01_COUNTER, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(u_long), asnCOUNTER, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -355,7 +355,7 @@ Instance_registerReadOnlyLongInstanceContext(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(long), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(long), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -372,7 +372,7 @@ Instance_registerLongInstanceContext(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(long), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(long), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 
@@ -391,7 +391,7 @@ Instance_registerIntInstanceContext(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(int), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(int), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 int
@@ -409,7 +409,7 @@ Instance_registerReadOnlyIntInstanceContext2(const char *name,
       myreg->contextName = strdup(contextName);
     return Watcher_registerWatchedInstance2(
         myreg, Watcher_createWatcherInfo(
-            (void *)it, sizeof(int), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+            (void *)it, sizeof(int), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 /*
@@ -497,7 +497,7 @@ Instance_registerIntInstance(const char *name,
                AgentHandler_createHandlerRegistration(
                    name, subhandler, reg_oid, reg_oid_len, HANDLER_CAN_RWRITE),
                Watcher_createWatcherInfo(
-                   (void *)it, sizeof(int), ASN01_INTEGER, WATCHER_FIXED_SIZE));
+                   (void *)it, sizeof(int), asnINTEGER, WATCHER_FIXED_SIZE));
 }
 
 
@@ -537,7 +537,7 @@ Instance_numFileHandler(MibHandler *handler,
                                       PRIOT_NOSUCHINSTANCE);
             return PRIOT_ERR_NOERROR;
         }
-        rc = fscanf(nfi->filep, (nfi->type == ASN01_INTEGER) ? "%ld" : "%lu",
+        rc = fscanf(nfi->filep, (nfi->type == asnINTEGER) ? "%ld" : "%lu",
                     &it);
         fclose(nfi->filep);
         nfi->filep = NULL;
@@ -571,7 +571,7 @@ Instance_numFileHandler(MibHandler *handler,
         /*
          * store old info for undo later
          */
-        if (fscanf(nfi->filep, (nfi->type == ASN01_INTEGER) ? "%ld" : "%lu",
+        if (fscanf(nfi->filep, (nfi->type == asnINTEGER) ? "%ld" : "%lu",
                    &it) != 1) {
             Agent_setRequestError(reqinfo, requests,
                                       PRIOT_ERR_RESOURCEUNAVAILABLE);
@@ -598,7 +598,7 @@ Instance_numFileHandler(MibHandler *handler,
                     *(requests->requestvb->value.integer)));
         it = *(requests->requestvb->value.integer);
         rewind(nfi->filep); /* rewind to make sure we are at the beginning */
-        rc = fprintf(nfi->filep, (nfi->type == ASN01_INTEGER) ? "%ld" : "%lu",
+        rc = fprintf(nfi->filep, (nfi->type == asnINTEGER) ? "%ld" : "%lu",
                      it);
         if (rc < 0) {
             Agent_setRequestError(reqinfo, requests,
@@ -611,7 +611,7 @@ Instance_numFileHandler(MibHandler *handler,
         it =
             *((u_int *) AgentHandler_requestGetListData(requests,
                                                       INSTANCE_HANDLER_NAME));
-        rc = fprintf(nfi->filep, (nfi->type == ASN01_INTEGER) ? "%ld" : "%lu",
+        rc = fprintf(nfi->filep, (nfi->type == asnINTEGER) ? "%ld" : "%lu",
                      it);
         if (rc < 0)
             Agent_setRequestError(reqinfo, requests, PRIOT_ERR_UNDOFAILED);
@@ -702,7 +702,7 @@ Instance_helperHandler(MibHandler *handler,
             if (!requests->delegated &&
                 (requests->requestvb->type == PRIOT_NOSUCHINSTANCE ||
                  requests->requestvb->type == PRIOT_NOSUCHOBJECT)) {
-                requests->requestvb->type = ASN01_NULL;
+                requests->requestvb->type = asnNULL;
             }
             return ret;
         } else {

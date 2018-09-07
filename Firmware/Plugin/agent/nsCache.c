@@ -46,12 +46,12 @@ void init_nsCache( void )
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration(
             "nsCacheTimeout", handle_nsCacheTimeout,
-            nsCacheTimeout_oid, ASN01_OID_LENGTH( nsCacheTimeout_oid ),
+            nsCacheTimeout_oid, asnOID_LENGTH( nsCacheTimeout_oid ),
             HANDLER_CAN_RWRITE ) );
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration(
             "nsCacheEnabled", handle_nsCacheEnabled,
-            nsCacheEnabled_oid, ASN01_OID_LENGTH( nsCacheEnabled_oid ),
+            nsCacheEnabled_oid, asnOID_LENGTH( nsCacheEnabled_oid ),
             HANDLER_CAN_RWRITE ) );
 
     /*
@@ -63,7 +63,7 @@ void init_nsCache( void )
     if ( !table_info ) {
         return;
     }
-    Table_helperAddIndexes( table_info, ASN01_PRIV_IMPLIED_OBJECT_ID, 0 );
+    Table_helperAddIndexes( table_info, asnPRIV_IMPLIED_OBJECT_ID, 0 );
     table_info->min_column = NSCACHE_TIMEOUT;
     table_info->max_column = NSCACHE_STATUS;
 
@@ -84,7 +84,7 @@ void init_nsCache( void )
     TableIterator_registerTableIterator2(
         AgentHandler_createHandlerRegistration(
             "tzCacheTable", handle_nsCacheTable,
-            nsCacheTable_oid, ASN01_OID_LENGTH( nsCacheTable_oid ),
+            nsCacheTable_oid, asnOID_LENGTH( nsCacheTable_oid ),
             HANDLER_CAN_RWRITE ),
         iinfo );
 }
@@ -106,7 +106,7 @@ int handle_nsCacheTimeout( MibHandler* handler,
 
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
-            Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( request->requestvb, asnINTEGER,
                 ( u_char* )&cache_default_timeout,
                 sizeof( cache_default_timeout ) );
         }
@@ -117,7 +117,7 @@ int handle_nsCacheTimeout( MibHandler* handler,
             if ( request->status != 0 ) {
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
-            if ( request->requestvb->type != ASN01_INTEGER ) {
+            if ( request->requestvb->type != asnINTEGER ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -154,7 +154,7 @@ int handle_nsCacheEnabled( MibHandler* handler,
                 ? NSCACHE_STATUS_ENABLED /* Actually True/False */
                 : NSCACHE_STATUS_DISABLED );
         for ( request = requests; request; request = request->next ) {
-            Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( request->requestvb, asnINTEGER,
                 ( u_char* )&enabled, sizeof( enabled ) );
         }
         break;
@@ -164,7 +164,7 @@ int handle_nsCacheEnabled( MibHandler* handler,
             if ( request->status != 0 ) {
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
-            if ( request->requestvb->type != ASN01_INTEGER ) {
+            if ( request->requestvb->type != asnINTEGER ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -253,7 +253,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     continue;
                 }
                 status = cache_entry->timeout;
-                Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( request->requestvb, asnINTEGER,
                     ( u_char* )&status, sizeof( status ) );
                 break;
 
@@ -263,7 +263,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     continue;
                 }
                 status = ( cache_entry->enabled ? ( cache_entry->timestampM ? ( cache_entry->timeout >= 0 && !Time_readyMonotonic( cache_entry->timestampM, 1000 * cache_entry->timeout ) ? NSCACHE_STATUS_ACTIVE : NSCACHE_STATUS_EXPIRED ) : NSCACHE_STATUS_EMPTY ) : NSCACHE_STATUS_DISABLED );
-                Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( request->requestvb, asnINTEGER,
                     ( u_char* )&status, sizeof( status ) );
                 break;
 
@@ -290,7 +290,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_NOCREATION );
                     return PRIOT_ERR_NOCREATION;
                 }
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }
@@ -305,7 +305,7 @@ int handle_nsCacheTable( MibHandler* handler,
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_NOCREATION );
                     return PRIOT_ERR_NOCREATION;
                 }
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
                 }

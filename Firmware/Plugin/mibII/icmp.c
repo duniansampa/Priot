@@ -246,7 +246,7 @@ icmp_stats_next_entry( void** loop_context,
     /*
      *set IP version
      */
-    Client_setVarTypedValue( idx, ASN01_INTEGER, ( u_char* )&icmp_stats_table[ i ].ipVer,
+    Client_setVarTypedValue( idx, asnINTEGER, ( u_char* )&icmp_stats_table[ i ].ipVer,
         sizeof( uint32_t ) );
     idx = idx->next;
 
@@ -281,13 +281,13 @@ icmp_msg_stats_next_entry( void** loop_context,
         return NULL;
 
     /* set IP version */
-    Client_setVarTypedValue( idx, ASN01_INTEGER,
+    Client_setVarTypedValue( idx, asnINTEGER,
         ( u_char* )&icmp_msg_stats_table[ i ].ipVer,
         sizeof( uint32_t ) );
 
     /* set packet type */
     idx = idx->next;
-    Client_setVarTypedValue( idx, ASN01_INTEGER,
+    Client_setVarTypedValue( idx, asnINTEGER,
         ( u_char* )&icmp_msg_stats_table[ i ].icmpMsgStatsType,
         sizeof( uint32_t ) );
 
@@ -324,7 +324,7 @@ void init_icmp( void )
      */
     DEBUG_MSGTL( ( "mibII/icmp", "Initialising ICMP group\n" ) );
     scalar_reginfo = AgentHandler_createHandlerRegistration( "icmp", icmp_handler,
-        icmp_oid, ASN01_OID_LENGTH( icmp_oid ), HANDLER_CAN_RONLY );
+        icmp_oid, asnOID_LENGTH( icmp_oid ), HANDLER_CAN_RONLY );
     rc = ScalarGroup_registerScalarGroup( scalar_reginfo, ICMPINMSGS, ICMPOUTADDRMASKREPS );
     if ( rc != ErrorCode_SUCCESS )
         return;
@@ -335,7 +335,7 @@ void init_icmp( void )
     rc = AgentHandler_injectHandler( scalar_reginfo,
         CacheHandler_getCacheHandler( ICMP_STATS_CACHE_TIMEOUT,
                                          icmp_load, icmp_free,
-                                         icmp_oid, ASN01_OID_LENGTH( icmp_oid ) ) );
+                                         icmp_oid, asnOID_LENGTH( icmp_oid ) ) );
     if ( rc != ErrorCode_SUCCESS )
         goto bail;
 
@@ -343,7 +343,7 @@ void init_icmp( void )
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !table_info )
         goto bail;
-    Table_helperAddIndexes( table_info, ASN01_INTEGER, 0 );
+    Table_helperAddIndexes( table_info, asnINTEGER, 0 );
     table_info->min_column = ICMP_STAT_INMSG;
     table_info->max_column = ICMP_STAT_OUTERR;
 
@@ -356,7 +356,7 @@ void init_icmp( void )
 
     table_reginfo = AgentHandler_createHandlerRegistration( "icmpStatsTable",
         icmp_stats_table_handler, icmp_stats_tbl_oid,
-        ASN01_OID_LENGTH( icmp_stats_tbl_oid ), HANDLER_CAN_RONLY );
+        asnOID_LENGTH( icmp_stats_tbl_oid ), HANDLER_CAN_RONLY );
 
     rc = TableIterator_registerTableIterator2( table_reginfo, iinfo );
     if ( rc != ErrorCode_SUCCESS ) {
@@ -366,13 +366,13 @@ void init_icmp( void )
     AgentHandler_injectHandler( table_reginfo,
         CacheHandler_getCacheHandler( ICMP_STATS_CACHE_TIMEOUT,
                                     icmp_load, icmp_free,
-                                    icmp_stats_tbl_oid, ASN01_OID_LENGTH( icmp_stats_tbl_oid ) ) );
+                                    icmp_stats_tbl_oid, asnOID_LENGTH( icmp_stats_tbl_oid ) ) );
 
     /* register icmpMsgStatsTable */
     msg_stats_table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     if ( !msg_stats_table_info )
         goto bail;
-    Table_helperAddIndexes( msg_stats_table_info, ASN01_INTEGER, ASN01_INTEGER, 0 );
+    Table_helperAddIndexes( msg_stats_table_info, asnINTEGER, asnINTEGER, 0 );
     msg_stats_table_info->min_column = ICMP_MSG_STAT_IN_PKTS;
     msg_stats_table_info->max_column = ICMP_MSG_STAT_OUT_PKTS;
 
@@ -385,7 +385,7 @@ void init_icmp( void )
 
     msg_stats_reginfo = AgentHandler_createHandlerRegistration( "icmpMsgStatsTable",
         icmp_msg_stats_table_handler, icmp_msg_stats_tbl_oid,
-        ASN01_OID_LENGTH( icmp_msg_stats_tbl_oid ), HANDLER_CAN_RONLY );
+        asnOID_LENGTH( icmp_msg_stats_tbl_oid ), HANDLER_CAN_RONLY );
 
     rc = TableIterator_registerTableIterator2( msg_stats_reginfo, msg_stats_iinfo );
     if ( rc != ErrorCode_SUCCESS ) {
@@ -396,7 +396,7 @@ void init_icmp( void )
     AgentHandler_injectHandler( msg_stats_reginfo,
         CacheHandler_getCacheHandler( ICMP_STATS_CACHE_TIMEOUT,
                                     icmp_load, icmp_free,
-                                    icmp_msg_stats_tbl_oid, ASN01_OID_LENGTH( icmp_msg_stats_tbl_oid ) ) );
+                                    icmp_msg_stats_tbl_oid, asnOID_LENGTH( icmp_msg_stats_tbl_oid ) ) );
 
     if ( ++ip_module_count == 2 )
         REGISTER_SYSOR_TABLE( ip_module_oid, ip_module_oid_len,
@@ -452,7 +452,7 @@ int icmp_handler( MibHandler* handler,
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
             requestvb = request->requestvb;
-            subid = requestvb->name[ ASN01_OID_LENGTH( icmp_oid ) ]; /* XXX */
+            subid = requestvb->name[ asnOID_LENGTH( icmp_oid ) ]; /* XXX */
             DEBUG_MSGTL( ( "mibII/icmp", "oid: " ) );
             DEBUG_MSGOID( ( "mibII/icmp", requestvb->name,
                 requestvb->nameLength ) );
@@ -538,7 +538,7 @@ int icmp_handler( MibHandler* handler,
                 ret_value = icmpstat.icmpOutAddrMaskReps;
                 break;
             }
-            Client_setVarTypedValue( request->requestvb, ASN01_COUNTER,
+            Client_setVarTypedValue( request->requestvb, asnCOUNTER,
                 ( u_char* )&ret_value, sizeof( ret_value ) );
         }
         break;
@@ -592,19 +592,19 @@ int icmp_stats_table_handler( MibHandler* handler,
 
             switch ( subid ) {
             case ICMP_STAT_INMSG:
-                Client_setVarTypedValue( requestvb, ASN01_COUNTER,
+                Client_setVarTypedValue( requestvb, asnCOUNTER,
                     ( u_char* )&entry->icmpStatsInMsgs, sizeof( uint32_t ) );
                 break;
             case ICMP_STAT_INERR:
-                Client_setVarTypedValue( requestvb, ASN01_COUNTER,
+                Client_setVarTypedValue( requestvb, asnCOUNTER,
                     ( u_char* )&entry->icmpStatsInErrors, sizeof( uint32_t ) );
                 break;
             case ICMP_STAT_OUTMSG:
-                Client_setVarTypedValue( requestvb, ASN01_COUNTER,
+                Client_setVarTypedValue( requestvb, asnCOUNTER,
                     ( u_char* )&entry->icmpStatsOutMsgs, sizeof( uint32_t ) );
                 break;
             case ICMP_STAT_OUTERR:
-                Client_setVarTypedValue( requestvb, ASN01_COUNTER,
+                Client_setVarTypedValue( requestvb, asnCOUNTER,
                     ( u_char* )&entry->icmpStatsOutErrors, sizeof( uint32_t ) );
                 break;
             default:
@@ -661,7 +661,7 @@ int icmp_msg_stats_table_handler( MibHandler* handler,
             switch ( subid ) {
             case ICMP_MSG_STAT_IN_PKTS:
                 if ( entry->flags & ICMP_MSG_STATS_HAS_IN ) {
-                    Client_setVarTypedValue( requestvb, ASN01_COUNTER,
+                    Client_setVarTypedValue( requestvb, asnCOUNTER,
                         ( u_char* )&entry->icmpMsgStatsInPkts, sizeof( uint32_t ) );
                 } else {
                     requestvb->type = PRIOT_NOSUCHINSTANCE;
@@ -669,7 +669,7 @@ int icmp_msg_stats_table_handler( MibHandler* handler,
                 break;
             case ICMP_MSG_STAT_OUT_PKTS:
                 if ( entry->flags & ICMP_MSG_STATS_HAS_OUT ) {
-                    Client_setVarTypedValue( requestvb, ASN01_COUNTER,
+                    Client_setVarTypedValue( requestvb, asnCOUNTER,
                         ( u_char* )&entry->icmpMsgStatsOutPkts, sizeof( uint32_t ) );
                 } else {
                     requestvb->type = PRIOT_NOSUCHINSTANCE;

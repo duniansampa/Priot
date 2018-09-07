@@ -61,7 +61,7 @@ handle_snmp( MibHandler* handler,
     AgentRequestInfo* reqinfo,
     RequestInfo* requests )
 {
-    switch ( requests->requestvb->name[ ASN01_OID_LENGTH( snmp_oid ) ] ) {
+    switch ( requests->requestvb->name[ asnOID_LENGTH( snmp_oid ) ] ) {
     case 7:
     case 23:
     case 30:
@@ -84,7 +84,7 @@ void init_snmp_mib_5_5( void )
 
     GETSTATISTIC_REGISTER_STATISTIC_HANDLER(
         AgentHandler_createHandlerRegistration(
-            "mibII/snmp", handle_snmp, snmp_oid, ASN01_OID_LENGTH( snmp_oid ),
+            "mibII/snmp", handle_snmp, snmp_oid, asnOID_LENGTH( snmp_oid ),
             HANDLER_CAN_RONLY ),
         1, SNMP );
     {
@@ -93,7 +93,7 @@ void init_snmp_mib_5_5( void )
         HandlerRegistration* reg = netsnmp_create_update_handler_registration(
             "mibII/snmpEnableAuthenTraps",
             snmpEnableAuthenTraps_oid,
-            ASN01_OID_LENGTH( snmpEnableAuthenTraps_oid ),
+            asnOID_LENGTH( snmpEnableAuthenTraps_oid ),
             HANDLER_CAN_RWRITE, &trap_enableauthentrapsset );
 
         AgentHandler_injectHandler( reg, netsnmp_get_truthvalue() );
@@ -102,7 +102,7 @@ void init_snmp_mib_5_5( void )
             Watcher_initWatcherInfo(
                 &enableauthen_info,
                 &trap_enableauthentraps, sizeof( trap_enableauthentraps ),
-                ASN01_INTEGER, WATCHER_FIXED_SIZE ) );
+                asnINTEGER, WATCHER_FIXED_SIZE ) );
     }
 
     if ( ++systemMib_systemModuleCount == 3 )

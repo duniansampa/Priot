@@ -20,7 +20,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ipDefaultRouterTable_oid[] = { IPDEFAULTROUTERTABLE_OID };
-const int ipDefaultRouterTable_oid_size = ASN01_OID_LENGTH( ipDefaultRouterTable_oid );
+const int ipDefaultRouterTable_oid_size = asnOID_LENGTH( ipDefaultRouterTable_oid );
 
 ipDefaultRouterTable_registration ipDefaultRouterTable_user_context;
 static ipDefaultRouterTable_registration* ipDefaultRouterTable_user_context_p;

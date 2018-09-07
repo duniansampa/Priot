@@ -344,7 +344,7 @@ TableArray_buildNewOid(HandlerRegistration *reginfo,
               TableRequestInfo *tblreq_info,
               Types_Index *row, RequestInfo *current)
 {
-    oid             coloid[ASN01_MAX_OID_LEN];
+    oid             coloid[asnMAX_OID_LEN];
 
     if (!tblreq_info || !reginfo || !row || !current)
         return;

@@ -271,7 +271,7 @@ void netsnmp_arch_ip_scalars_register_handlers( void )
     static oid ipReasmTimeout_oid[] = { 1, 3, 6, 1, 2, 1, 4, 13, 0 };
 
     Instance_registerNumFileInstance( "ipReasmTimeout",
-        ipReasmTimeout_oid, ASN01_OID_LENGTH( ipReasmTimeout_oid ),
-        "/proc/sys/net/ipv4/ipfrag_time", ASN01_INTEGER,
+        ipReasmTimeout_oid, asnOID_LENGTH( ipReasmTimeout_oid ),
+        "/proc/sys/net/ipv4/ipfrag_time", asnINTEGER,
         HANDLER_CAN_RONLY, NULL, NULL );
 }

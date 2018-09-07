@@ -63,7 +63,7 @@ void init_tcp( void )
      */
     DEBUG_MSGTL( ( "mibII/tcpScalar", "Initialising TCP scalar group\n" ) );
     reginfo = AgentHandler_createHandlerRegistration( "tcp", tcp_handler,
-        tcp_oid, ASN01_OID_LENGTH( tcp_oid ), HANDLER_CAN_RONLY );
+        tcp_oid, asnOID_LENGTH( tcp_oid ), HANDLER_CAN_RONLY );
     rc = ScalarGroup_registerScalarGroup( reginfo, TCPRTOALGORITHM, TCPOUTRSTS );
     if ( rc != ErrorCode_SUCCESS )
         return;
@@ -75,7 +75,7 @@ void init_tcp( void )
     AgentHandler_injectHandler( reginfo,
         CacheHandler_getCacheHandler( TCP_STATS_CACHE_TIMEOUT,
                                     tcp_load, tcp_free,
-                                    tcp_oid, ASN01_OID_LENGTH( tcp_oid ) ) );
+                                    tcp_oid, asnOID_LENGTH( tcp_oid ) ) );
 
     REGISTER_SYSOR_ENTRY( tcp_module_oid,
         "The MIB module for managing TCP implementations" );
@@ -107,7 +107,7 @@ int tcp_handler( MibHandler* handler,
     VariableList* requestvb;
     long ret_value = -1;
     oid subid;
-    int type = ASN01_COUNTER;
+    int type = asnCOUNTER;
 
     /*
      * The cached data should already have been loaded by the
@@ -125,7 +125,7 @@ int tcp_handler( MibHandler* handler,
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
             requestvb = request->requestvb;
-            subid = requestvb->name[ ASN01_OID_LENGTH( tcp_oid ) ]; /* XXX */
+            subid = requestvb->name[ asnOID_LENGTH( tcp_oid ) ]; /* XXX */
 
             DEBUG_MSGTL( ( "mibII/tcpScalar", "oid: " ) );
             DEBUG_MSGOID( ( "mibII/tcpScalar", requestvb->name,
@@ -134,19 +134,19 @@ int tcp_handler( MibHandler* handler,
             switch ( subid ) {
             case TCPRTOALGORITHM:
                 ret_value = tcpstat.tcpRtoAlgorithm;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case TCPRTOMIN:
                 ret_value = tcpstat.tcpRtoMin;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case TCPRTOMAX:
                 ret_value = tcpstat.tcpRtoMax;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case TCPMAXCONN:
                 ret_value = tcpstat.tcpMaxConn;
-                type = ASN01_INTEGER;
+                type = asnINTEGER;
                 break;
             case TCPACTIVEOPENS:
                 ret_value = tcpstat.tcpActiveOpens;
@@ -162,7 +162,7 @@ int tcp_handler( MibHandler* handler,
                 break;
             case TCPCURRESTAB:
                 ret_value = tcpstat.tcpCurrEstab;
-                type = ASN01_GAUGE;
+                type = asnGAUGE;
                 break;
             case TCPINSEGS:
                 ret_value = tcpstat.tcpInSegs & 0xffffffff;

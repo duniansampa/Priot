@@ -79,10 +79,10 @@ void Iquery_initIquery( void )
 {
     char* type = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
-    DefaultStore_registerPremib( ASN01_OCTET_STR, type, "agentSecName",
+    DefaultStore_registerPremib( asnOCTET_STR, type, "agentSecName",
         DsStore_APPLICATION_ID,
         DsAgentString_INTERNAL_SECNAME );
-    DefaultStore_registerPremib( ASN01_OCTET_STR, type, "iquerySecName",
+    DefaultStore_registerPremib( asnOCTET_STR, type, "iquerySecName",
         DsStore_APPLICATION_ID,
         DsAgentString_INTERNAL_SECNAME );
 

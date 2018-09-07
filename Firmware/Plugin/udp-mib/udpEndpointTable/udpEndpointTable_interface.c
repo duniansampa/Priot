@@ -130,19 +130,19 @@ void _udpEndpointTable_initialize_interface( udpEndpointTable_registration*
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: udpEndpointLocalAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: udpEndpointLocalAddress */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: udpEndpointLocalPort */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: udpEndpointRemoteAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: udpEndpointRemoteAddress */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: udpEndpointRemotePort */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: udpEndpointInstance */
         0 );
 
@@ -336,25 +336,25 @@ int udpEndpointTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_udpEndpointLocalAddressType, 0x00,
         sizeof( var_udpEndpointLocalAddressType ) );
-    var_udpEndpointLocalAddressType.type = ASN01_INTEGER;
+    var_udpEndpointLocalAddressType.type = asnINTEGER;
     memset( &var_udpEndpointLocalAddress, 0x00,
         sizeof( var_udpEndpointLocalAddress ) );
-    var_udpEndpointLocalAddress.type = ASN01_OCTET_STR;
+    var_udpEndpointLocalAddress.type = asnOCTET_STR;
     memset( &var_udpEndpointLocalPort, 0x00,
         sizeof( var_udpEndpointLocalPort ) );
-    var_udpEndpointLocalPort.type = ASN01_UNSIGNED;
+    var_udpEndpointLocalPort.type = asnUNSIGNED;
     memset( &var_udpEndpointRemoteAddressType, 0x00,
         sizeof( var_udpEndpointRemoteAddressType ) );
-    var_udpEndpointRemoteAddressType.type = ASN01_INTEGER;
+    var_udpEndpointRemoteAddressType.type = asnINTEGER;
     memset( &var_udpEndpointRemoteAddress, 0x00,
         sizeof( var_udpEndpointRemoteAddress ) );
-    var_udpEndpointRemoteAddress.type = ASN01_OCTET_STR;
+    var_udpEndpointRemoteAddress.type = asnOCTET_STR;
     memset( &var_udpEndpointRemotePort, 0x00,
         sizeof( var_udpEndpointRemotePort ) );
-    var_udpEndpointRemotePort.type = ASN01_UNSIGNED;
+    var_udpEndpointRemotePort.type = asnUNSIGNED;
     memset( &var_udpEndpointInstance, 0x00,
         sizeof( var_udpEndpointInstance ) );
-    var_udpEndpointInstance.type = ASN01_UNSIGNED;
+    var_udpEndpointInstance.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -480,25 +480,25 @@ int udpEndpointTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_udpEndpointLocalAddressType, 0x00,
         sizeof( var_udpEndpointLocalAddressType ) );
-    var_udpEndpointLocalAddressType.type = ASN01_INTEGER;
+    var_udpEndpointLocalAddressType.type = asnINTEGER;
     memset( &var_udpEndpointLocalAddress, 0x00,
         sizeof( var_udpEndpointLocalAddress ) );
-    var_udpEndpointLocalAddress.type = ASN01_OCTET_STR;
+    var_udpEndpointLocalAddress.type = asnOCTET_STR;
     memset( &var_udpEndpointLocalPort, 0x00,
         sizeof( var_udpEndpointLocalPort ) );
-    var_udpEndpointLocalPort.type = ASN01_UNSIGNED;
+    var_udpEndpointLocalPort.type = asnUNSIGNED;
     memset( &var_udpEndpointRemoteAddressType, 0x00,
         sizeof( var_udpEndpointRemoteAddressType ) );
-    var_udpEndpointRemoteAddressType.type = ASN01_INTEGER;
+    var_udpEndpointRemoteAddressType.type = asnINTEGER;
     memset( &var_udpEndpointRemoteAddress, 0x00,
         sizeof( var_udpEndpointRemoteAddress ) );
-    var_udpEndpointRemoteAddress.type = ASN01_OCTET_STR;
+    var_udpEndpointRemoteAddress.type = asnOCTET_STR;
     memset( &var_udpEndpointRemotePort, 0x00,
         sizeof( var_udpEndpointRemotePort ) );
-    var_udpEndpointRemotePort.type = ASN01_UNSIGNED;
+    var_udpEndpointRemotePort.type = asnUNSIGNED;
     memset( &var_udpEndpointInstance, 0x00,
         sizeof( var_udpEndpointInstance ) );
-    var_udpEndpointInstance.type = ASN01_UNSIGNED;
+    var_udpEndpointInstance.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -745,7 +745,7 @@ _udpEndpointTable_get_column( udpEndpointTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_UDPENDPOINTPROCESS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = udpEndpointProcess_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -987,7 +987,7 @@ udpEndpointTable_row_find_by_mib_index( udpEndpointTable_mib_index*
         mib_idx )
 {
     udpEndpointTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

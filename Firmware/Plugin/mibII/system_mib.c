@@ -44,7 +44,7 @@ static char version_descr[ SYS_STRING_LEN ]
 static char sysContact[ SYS_STRING_LEN ] = SYS_CONTACT;
 static char sysName[ SYS_STRING_LEN ] = NETSNMP_SYS_NAME;
 static char sysLocation[ SYS_STRING_LEN ] = SYS_LOC;
-static oid sysObjectID[ ASN01_MAX_OID_LEN ];
+static oid sysObjectID[ asnMAX_OID_LEN ];
 static size_t sysObjectIDByteLength;
 
 static int sysServices = 72;
@@ -146,7 +146,7 @@ system_parse_config_sysServices( const char* token, char* cptr )
 static void
 system_parse_config_sysObjectID( const char* token, char* cptr )
 {
-    size_t sysObjectIDLength = ASN01_MAX_OID_LEN;
+    size_t sysObjectIDLength = asnMAX_OID_LEN;
     if ( !Mib_readObjid( cptr, sysObjectID, &sysObjectIDLength ) ) {
         ReadConfig_error( "sysobjectid token not a parsable OID:\n\t%s",
             cptr );
@@ -164,7 +164,7 @@ system_parse_config_sysObjectID( const char* token, char* cptr )
      *********************/
 
 oid systemMib_systemModuleOid[] = { PRIOT_OID_SNMPMODULES, 1 };
-int systemMib_systemModuleOidLen = ASN01_OID_LENGTH( systemMib_systemModuleOid );
+int systemMib_systemModuleOidLen = asnOID_LENGTH( systemMib_systemModuleOid );
 int systemMib_systemModuleCount = 0;
 
 static int
@@ -205,7 +205,7 @@ handle_sysUpTime( MibHandler* handler,
     AgentRequestInfo* reqinfo,
     RequestInfo* requests )
 {
-    Client_setVarTypedInteger( requests->requestvb, ASN01_TIMETICKS,
+    Client_setVarTypedInteger( requests->requestvb, asnTIMETICKS,
         Agent_getAgentUptime() );
     return PRIOT_ERR_NOERROR;
 }
@@ -233,10 +233,10 @@ void init_system_mib( void )
         static WatcherInfo sysDescr_winfo;
         Watcher_registerWatchedScalar(
             AgentHandler_createHandlerRegistration(
-                "mibII/sysDescr", NULL, sysDescr_oid, ASN01_OID_LENGTH( sysDescr_oid ),
+                "mibII/sysDescr", NULL, sysDescr_oid, asnOID_LENGTH( sysDescr_oid ),
                 HANDLER_CAN_RONLY ),
             Watcher_initWatcherInfo( &sysDescr_winfo, version_descr, 0,
-                ASN01_OCTET_STR, WATCHER_SIZE_STRLEN ) );
+                asnOCTET_STR, WATCHER_SIZE_STRLEN ) );
     }
     {
         const oid sysObjectID_oid[] = { 1, 3, 6, 1, 2, 1, 1, 2 };
@@ -244,19 +244,19 @@ void init_system_mib( void )
         Watcher_registerWatchedScalar(
             AgentHandler_createHandlerRegistration(
                 "mibII/sysObjectID", NULL,
-                sysObjectID_oid, ASN01_OID_LENGTH( sysObjectID_oid ),
+                sysObjectID_oid, asnOID_LENGTH( sysObjectID_oid ),
                 HANDLER_CAN_RONLY ),
             Watcher_initWatcherInfo6(
-                &sysObjectID_winfo, sysObjectID, 0, ASN01_OBJECT_ID,
+                &sysObjectID_winfo, sysObjectID, 0, asnOBJECT_ID,
                 WATCHER_MAX_SIZE | WATCHER_SIZE_IS_PTR,
-                ASN01_MAX_OID_LEN, &sysObjectIDByteLength ) );
+                asnMAX_OID_LEN, &sysObjectIDByteLength ) );
     }
     {
         const oid sysUpTime_oid[] = { 1, 3, 6, 1, 2, 1, 1, 3 };
         Scalar_registerScalar(
             AgentHandler_createHandlerRegistration(
                 "mibII/sysUpTime", handle_sysUpTime,
-                sysUpTime_oid, ASN01_OID_LENGTH( sysUpTime_oid ),
+                sysUpTime_oid, asnOID_LENGTH( sysUpTime_oid ),
                 HANDLER_CAN_RONLY ) );
     }
     {
@@ -264,21 +264,21 @@ void init_system_mib( void )
         static WatcherInfo sysContact_winfo;
         Watcher_registerWatchedScalar(
             netsnmp_create_update_handler_registration(
-                "mibII/sysContact", sysContact_oid, ASN01_OID_LENGTH( sysContact_oid ),
+                "mibII/sysContact", sysContact_oid, asnOID_LENGTH( sysContact_oid ),
                 HANDLER_CAN_RWRITE, &sysContactSet ),
             Watcher_initWatcherInfo(
                 &sysContact_winfo, sysContact, SYS_STRING_LEN - 1,
-                ASN01_OCTET_STR, WATCHER_MAX_SIZE | WATCHER_SIZE_STRLEN ) );
+                asnOCTET_STR, WATCHER_MAX_SIZE | WATCHER_SIZE_STRLEN ) );
     }
     {
         const oid sysName_oid[] = { 1, 3, 6, 1, 2, 1, 1, 5 };
         static WatcherInfo sysName_winfo;
         Watcher_registerWatchedScalar(
             netsnmp_create_update_handler_registration(
-                "mibII/sysName", sysName_oid, ASN01_OID_LENGTH( sysName_oid ),
+                "mibII/sysName", sysName_oid, asnOID_LENGTH( sysName_oid ),
                 HANDLER_CAN_RWRITE, &sysNameSet ),
             Watcher_initWatcherInfo(
-                &sysName_winfo, sysName, SYS_STRING_LEN - 1, ASN01_OCTET_STR,
+                &sysName_winfo, sysName, SYS_STRING_LEN - 1, asnOCTET_STR,
                 WATCHER_MAX_SIZE | WATCHER_SIZE_STRLEN ) );
     }
     {
@@ -287,16 +287,16 @@ void init_system_mib( void )
         Watcher_registerWatchedScalar(
             netsnmp_create_update_handler_registration(
                 "mibII/sysLocation", sysLocation_oid,
-                ASN01_OID_LENGTH( sysLocation_oid ),
+                asnOID_LENGTH( sysLocation_oid ),
                 HANDLER_CAN_RWRITE, &sysLocationSet ),
             Watcher_initWatcherInfo(
                 &sysLocation_winfo, sysLocation, SYS_STRING_LEN - 1,
-                ASN01_OCTET_STR, WATCHER_MAX_SIZE | WATCHER_SIZE_STRLEN ) );
+                asnOCTET_STR, WATCHER_MAX_SIZE | WATCHER_SIZE_STRLEN ) );
     }
     {
         const oid sysServices_oid[] = { 1, 3, 6, 1, 2, 1, 1, 7 };
         Watcher_registerReadOnlyIntScalar(
-            "mibII/sysServices", sysServices_oid, ASN01_OID_LENGTH( sysServices_oid ),
+            "mibII/sysServices", sysServices_oid, asnOID_LENGTH( sysServices_oid ),
             &sysServices, handle_sysServices );
     }
     if ( ++systemMib_systemModuleCount == 3 )

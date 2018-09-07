@@ -59,17 +59,17 @@ int header_hrdevice( struct Variable_s*, oid*, size_t*, int,
 #define HRDEV_ERRORS 6
 
 struct Variable4_s hrdevice_variables[] = {
-    { HRDEV_INDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRDEV_INDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrdevice, 2, { 1, 1 } },
-    { HRDEV_TYPE, ASN01_OBJECT_ID, IMPL_OLDAPI_RONLY,
+    { HRDEV_TYPE, asnOBJECT_ID, IMPL_OLDAPI_RONLY,
         var_hrdevice, 2, { 1, 2 } },
-    { HRDEV_DESCR, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRDEV_DESCR, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrdevice, 2, { 1, 3 } },
-    { HRDEV_ID, ASN01_OBJECT_ID, IMPL_OLDAPI_RONLY,
+    { HRDEV_ID, asnOBJECT_ID, IMPL_OLDAPI_RONLY,
         var_hrdevice, 2, { 1, 4 } },
-    { HRDEV_STATUS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRDEV_STATUS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrdevice, 2, { 1, 5 } },
-    { HRDEV_ERRORS, ASN01_COUNTER, IMPL_OLDAPI_RONLY,
+    { HRDEV_ERRORS, asnCOUNTER, IMPL_OLDAPI_RONLY,
         var_hrdevice, 2, { 1, 6 } }
 };
 oid hrdevice_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 2 };
@@ -119,7 +119,7 @@ int header_hrdevice( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRDEV_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int dev_idx, LowIndex = -1, LowType = -1;
     int result;
 

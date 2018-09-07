@@ -355,8 +355,8 @@ void TableContainer_rowInsert( RequestInfo* request,
     VariableList* this_index = NULL;
     VariableList* that_index = NULL;
     oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
-    oid this_oid[ ASN01_MAX_OID_LEN ];
-    oid that_oid[ ASN01_MAX_OID_LEN ];
+    oid this_oid[ asnMAX_OID_LEN ];
+    oid that_oid[ asnMAX_OID_LEN ];
     size_t this_oid_len, that_oid_len;
 
     if ( !request )
@@ -372,7 +372,7 @@ void TableContainer_rowInsert( RequestInfo* request,
 
     table_info = Table_extractTableInfo( request );
     this_index = table_info->indexes;
-    Mib_buildOidNoalloc( this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
+    Mib_buildOidNoalloc( this_oid, asnMAX_OID_LEN, &this_oid_len,
         base_oid, 2, this_index );
 
     /*
@@ -398,7 +398,7 @@ void TableContainer_rowInsert( RequestInfo* request,
 
         table_info = Table_extractTableInfo( req );
         that_index = table_info->indexes;
-        Mib_buildOidNoalloc( that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
+        Mib_buildOidNoalloc( that_oid, asnMAX_OID_LEN, &that_oid_len,
             base_oid, 2, that_index );
 
         /*
@@ -443,8 +443,8 @@ void TableContainer_rowRemove( RequestInfo* request,
     VariableList* this_index = NULL;
     VariableList* that_index = NULL;
     oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
-    oid this_oid[ ASN01_MAX_OID_LEN ];
-    oid that_oid[ ASN01_MAX_OID_LEN ];
+    oid this_oid[ asnMAX_OID_LEN ];
+    oid that_oid[ asnMAX_OID_LEN ];
     size_t this_oid_len, that_oid_len;
 
     if ( !request )
@@ -460,7 +460,7 @@ void TableContainer_rowRemove( RequestInfo* request,
 
     table_info = Table_extractTableInfo( request );
     this_index = table_info->indexes;
-    Mib_buildOidNoalloc( this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
+    Mib_buildOidNoalloc( this_oid, asnMAX_OID_LEN, &this_oid_len,
         base_oid, 2, this_index );
 
     /*
@@ -486,7 +486,7 @@ void TableContainer_rowRemove( RequestInfo* request,
 
         table_info = Table_extractTableInfo( req );
         that_index = table_info->indexes;
-        Mib_buildOidNoalloc( that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
+        Mib_buildOidNoalloc( that_oid, asnMAX_OID_LEN, &that_oid_len,
             base_oid, 2, that_index );
 
         /*

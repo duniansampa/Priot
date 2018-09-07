@@ -15,7 +15,7 @@ void init_hw_mem( void )
 {
     oid nsMemory[] = { 1, 3, 6, 1, 4, 1, 8072, 1, 31 };
     _mem_cache = CacheHandler_create( MEMORY_CACHE_SECONDS, netsnmp_mem_arch_load, NULL,
-        nsMemory, ASN01_OID_LENGTH( nsMemory ) );
+        nsMemory, asnOID_LENGTH( nsMemory ) );
 }
 
 netsnmp_memory_info* netsnmp_memory_get_first( int type )

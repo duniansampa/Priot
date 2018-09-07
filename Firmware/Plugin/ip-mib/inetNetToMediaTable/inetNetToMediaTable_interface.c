@@ -172,11 +172,11 @@ void _inetNetToMediaTable_initialize_interface( inetNetToMediaTable_registration
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: inetNetToMediaIfIndex */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: inetNetToMediaNetAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: inetNetToMediaNetAddress */
         0 );
 
@@ -375,13 +375,13 @@ int inetNetToMediaTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_inetNetToMediaIfIndex, 0x00,
         sizeof( var_inetNetToMediaIfIndex ) );
-    var_inetNetToMediaIfIndex.type = ASN01_INTEGER;
+    var_inetNetToMediaIfIndex.type = asnINTEGER;
     memset( &var_inetNetToMediaNetAddressType, 0x00,
         sizeof( var_inetNetToMediaNetAddressType ) );
-    var_inetNetToMediaNetAddressType.type = ASN01_INTEGER;
+    var_inetNetToMediaNetAddressType.type = asnINTEGER;
     memset( &var_inetNetToMediaNetAddress, 0x00,
         sizeof( var_inetNetToMediaNetAddress ) );
-    var_inetNetToMediaNetAddress.type = ASN01_OCTET_STR;
+    var_inetNetToMediaNetAddress.type = asnOCTET_STR;
 
     /*
      * chain temp index varbinds together
@@ -458,13 +458,13 @@ int inetNetToMediaTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_inetNetToMediaIfIndex, 0x00,
         sizeof( var_inetNetToMediaIfIndex ) );
-    var_inetNetToMediaIfIndex.type = ASN01_INTEGER;
+    var_inetNetToMediaIfIndex.type = asnINTEGER;
     memset( &var_inetNetToMediaNetAddressType, 0x00,
         sizeof( var_inetNetToMediaNetAddressType ) );
-    var_inetNetToMediaNetAddressType.type = ASN01_INTEGER;
+    var_inetNetToMediaNetAddressType.type = asnINTEGER;
     memset( &var_inetNetToMediaNetAddress, 0x00,
         sizeof( var_inetNetToMediaNetAddress ) );
-    var_inetNetToMediaNetAddress.type = ASN01_OCTET_STR;
+    var_inetNetToMediaNetAddress.type = asnOCTET_STR;
 
     /*
      * chain temp index varbinds together
@@ -820,7 +820,7 @@ _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
          * inetNetToMediaPhysAddress(4)/PhysAddress/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H 
          */
     case COLUMN_INETNETTOMEDIAPHYSADDRESS:
-        var->type = ASN01_OCTET_STR;
+        var->type = asnOCTET_STR;
         rc = inetNetToMediaPhysAddress_get( rowreq_ctx,
             ( char** )&var->value.string,
             &var->valueLength );
@@ -831,7 +831,7 @@ _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
          */
     case COLUMN_INETNETTOMEDIALASTUPDATED:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_TIMETICKS;
+        var->type = asnTIMETICKS;
         rc = inetNetToMediaLastUpdated_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -841,7 +841,7 @@ _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
          */
     case COLUMN_INETNETTOMEDIATYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = inetNetToMediaType_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -851,7 +851,7 @@ _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
          */
     case COLUMN_INETNETTOMEDIASTATE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = inetNetToMediaState_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -861,7 +861,7 @@ _inetNetToMediaTable_get_column( inetNetToMediaTable_rowreq_ctx*
          */
     case COLUMN_INETNETTOMEDIAROWSTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = inetNetToMediaRowStatus_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1066,7 +1066,7 @@ _inetNetToMediaTable_check_column( inetNetToMediaTable_rowreq_ctx*
          * inetNetToMediaPhysAddress(4)/PhysAddress/ASN_OCTET_STR/char(char)//L/A/W/e/R/d/H 
          */
     case COLUMN_INETNETTOMEDIAPHYSADDRESS:
-        rc = VariableList_checkType( var, ASN01_OCTET_STR );
+        rc = VariableList_checkType( var, asnOCTET_STR );
         /*
          * check defined range(s). 
          */
@@ -1101,7 +1101,7 @@ _inetNetToMediaTable_check_column( inetNetToMediaTable_rowreq_ctx*
          * inetNetToMediaType(6)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_INETNETTOMEDIATYPE:
-        rc = VariableList_checkType( var, ASN01_INTEGER );
+        rc = VariableList_checkType( var, asnINTEGER );
         /*
          * check that the value is one of defined enums 
          */
@@ -1875,7 +1875,7 @@ inetNetToMediaTable_row_find_by_mib_index( inetNetToMediaTable_mib_index*
         mib_idx )
 {
     inetNetToMediaTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

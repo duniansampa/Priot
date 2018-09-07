@@ -52,7 +52,7 @@ void shutdown_hrSWInstalledTable( void )
 void initialize_table_hrSWInstalledTable( void )
 {
     static oid hrSWInstalledTable_oid[] = { 1, 3, 6, 1, 2, 1, 25, 6, 3 };
-    size_t hrSWInstalledTable_oid_len = ASN01_OID_LENGTH( hrSWInstalledTable_oid );
+    size_t hrSWInstalledTable_oid_len = asnOID_LENGTH( hrSWInstalledTable_oid );
     HandlerRegistration* reg;
     MibHandler* handler = NULL;
     Container_Container* container = NULL;
@@ -82,7 +82,7 @@ void initialize_table_hrSWInstalledTable( void )
         goto bail;
     }
 
-    Table_helperAddIndexes( table_info, ASN01_INTEGER, /* index: hrSWInstalledIndex */
+    Table_helperAddIndexes( table_info, asnINTEGER, /* index: hrSWInstalledIndex */
         0 );
     table_info->min_column = COLUMN_HRSWINSTALLEDINDEX;
     table_info->max_column = COLUMN_HRSWINSTALLEDDATE;
@@ -186,24 +186,24 @@ int hrSWInstalledTable_handler( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case COLUMN_HRSWINSTALLEDINDEX:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->swIndex );
                 break;
             case COLUMN_HRSWINSTALLEDNAME: {
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )table_entry->swName,
                     table_entry->swName_len );
             } break;
             case COLUMN_HRSWINSTALLEDID:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( u_char* )&vars_nullOid, vars_nullOidLen );
                 break;
             case COLUMN_HRSWINSTALLEDTYPE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->swType );
                 break;
             case COLUMN_HRSWINSTALLEDDATE:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )table_entry->swDate,
                     table_entry->swDate_len );
                 break;

@@ -45,7 +45,7 @@ void shutdown_hrSWRunTable( void )
 }
 
 oid hrSWRunTable_oid[] = { 1, 3, 6, 1, 2, 1, 25, 4, 2 };
-size_t hrSWRunTable_oid_len = ASN01_OID_LENGTH( hrSWRunTable_oid );
+size_t hrSWRunTable_oid_len = asnOID_LENGTH( hrSWRunTable_oid );
 
 /** Initialize the hrSWRunTable table by defining its contents and how it's structured */
 void initialize_table_hrSWRunTable( void )
@@ -72,7 +72,7 @@ void initialize_table_hrSWRunTable( void )
         goto bail;
     }
 
-    Table_helperAddIndexes( table_info, ASN01_INTEGER, /* index: hrSWRunIndex */
+    Table_helperAddIndexes( table_info, asnINTEGER, /* index: hrSWRunIndex */
         0 );
     table_info->min_column = COLUMN_HRSWRUNINDEX;
     table_info->max_column = COLUMN_HRSWRUNSTATUS;
@@ -159,35 +159,35 @@ int hrSWRunTable_handler( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case COLUMN_HRSWRUNINDEX:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->hrSWRunIndex );
                 break;
             case COLUMN_HRSWRUNNAME:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )table_entry->hrSWRunName,
                     table_entry->hrSWRunName_len );
                 break;
             case COLUMN_HRSWRUNID:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
 
                     ( u_char* )&vars_nullOid, vars_nullOidLen );
                 break;
             case COLUMN_HRSWRUNPATH:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )table_entry->hrSWRunPath,
                     table_entry->hrSWRunPath_len );
                 break;
             case COLUMN_HRSWRUNPARAMETERS:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )table_entry->hrSWRunParameters,
                     table_entry->hrSWRunParameters_len );
                 break;
             case COLUMN_HRSWRUNTYPE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->hrSWRunType );
                 break;
             case COLUMN_HRSWRUNSTATUS:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->hrSWRunStatus );
                 break;
             default:

@@ -23,7 +23,7 @@
 //#include "tcpListenerTable_interface.h"
 
 const oid tcpListenerTable_oid[] = { TCPLISTENERTABLE_OID };
-const int tcpListenerTable_oid_size = ASN01_OID_LENGTH( tcpListenerTable_oid );
+const int tcpListenerTable_oid_size = asnOID_LENGTH( tcpListenerTable_oid );
 
 tcpListenerTable_registration tcpListenerTable_user_context;
 

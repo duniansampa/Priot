@@ -263,8 +263,8 @@ int Protocol_reallocBuildDouble( u_char** buf, size_t* buf_len,
     int tmp;
     u_char opaque_buffer[ 3 + sizeof( double ) ];
 
-    opaque_buffer[ 0 ] = ASN01_OPAQUE_TAG1;
-    opaque_buffer[ 1 ] = ASN01_OPAQUE_DOUBLE;
+    opaque_buffer[ 0 ] = asnOPAQUE_TAG1;
+    opaque_buffer[ 1 ] = asnOPAQUE_DOUBLE;
     opaque_buffer[ 2 ] = sizeof( double );
 
     du.doubleVal = double_val;
@@ -289,8 +289,8 @@ int Protocol_reallocBuildFloat( u_char** buf, size_t* buf_len,
     } fu;
     u_char opaque_buffer[ 3 + sizeof( float ) ];
 
-    opaque_buffer[ 0 ] = ASN01_OPAQUE_TAG1;
-    opaque_buffer[ 1 ] = ASN01_OPAQUE_FLOAT;
+    opaque_buffer[ 0 ] = asnOPAQUE_TAG1;
+    opaque_buffer[ 1 ] = asnOPAQUE_FLOAT;
     opaque_buffer[ 2 ] = sizeof( float );
 
     fu.floatVal = float_val;
@@ -308,18 +308,18 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
 {
     DEBUG_DUMPHEADER( "send", "VarBind" );
     DEBUG_DUMPHEADER( "send", "type" );
-    if ( ( vp->type == ASN01_OPAQUE_FLOAT ) || ( vp->type == ASN01_OPAQUE_DOUBLE )
-        || ( vp->type == ASN01_OPAQUE_I64 ) || ( vp->type == ASN01_OPAQUE_U64 )
-        || ( vp->type == ASN01_OPAQUE_COUNTER64 ) ) {
+    if ( ( vp->type == asnOPAQUE_FLOAT ) || ( vp->type == asnOPAQUE_DOUBLE )
+        || ( vp->type == asnOPAQUE_I64 ) || ( vp->type == asnOPAQUE_U64 )
+        || ( vp->type == asnOPAQUE_COUNTER64 ) ) {
         if ( !Protocol_reallocBuildShort( buf, buf_len, out_len, allow_realloc,
-                 ( unsigned short )ASN01_OPAQUE, network_order ) ) {
+                 ( unsigned short )asnOPAQUE, network_order ) ) {
             DEBUG_INDENTLESS();
             DEBUG_INDENTLESS();
             return 0;
         }
-    } else if ( vp->type == ASN01_PRIV_INCL_RANGE || vp->type == ASN01_PRIV_EXCL_RANGE ) {
+    } else if ( vp->type == asnPRIV_INCL_RANGE || vp->type == asnPRIV_EXCL_RANGE ) {
         if ( !Protocol_reallocBuildShort( buf, buf_len, out_len, allow_realloc,
-                 ( unsigned short )ASN01_OBJECT_ID, network_order ) ) {
+                 ( unsigned short )asnOBJECT_ID, network_order ) ) {
             DEBUG_INDENTLESS();
             DEBUG_INDENTLESS();
             return 0;
@@ -360,11 +360,11 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
     DEBUG_DUMPHEADER( "send", "value" );
     switch ( vp->type ) {
 
-    case ASN01_INTEGER:
-    case ASN01_COUNTER:
-    case ASN01_GAUGE:
-    case ASN01_TIMETICKS:
-    case ASN01_UINTEGER:
+    case asnINTEGER:
+    case asnCOUNTER:
+    case asnGAUGE:
+    case asnTIMETICKS:
+    case asnUINTEGER:
         if ( !Protocol_reallocBuildInt( buf, buf_len, out_len, allow_realloc,
                  *( vp->value.integer ), network_order ) ) {
             DEBUG_INDENTLESS();
@@ -373,7 +373,7 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
         }
         break;
 
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         DEBUG_DUMPHEADER( "send", "Build Opaque Float" );
         DEBUG_PRINTINDENT( "dumpv_send" );
         DEBUG_MSG( ( "dumpv_send", "  Float:\t%f\n", *( vp->value.floatValue ) ) );
@@ -387,7 +387,7 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
         DEBUG_INDENTLESS();
         break;
 
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         DEBUG_DUMPHEADER( "send", "Build Opaque Double" );
         DEBUG_PRINTINDENT( "dumpv_send" );
         DEBUG_MSG( ( "dumpv_send", "  Double:\t%f\n", *( vp->value.doubleValue ) ) );
@@ -401,17 +401,17 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
         DEBUG_INDENTLESS();
         break;
 
-    case ASN01_OPAQUE_I64:
-    case ASN01_OPAQUE_U64:
-    case ASN01_OPAQUE_COUNTER64:
+    case asnOPAQUE_I64:
+    case asnOPAQUE_U64:
+    case asnOPAQUE_COUNTER64:
     /*
          * XXX - TODO - encode as raw OPAQUE for now (so fall through
          * here).
          */
 
-    case ASN01_OCTET_STR:
-    case ASN01_IPADDRESS:
-    case ASN01_OPAQUE:
+    case asnOCTET_STR:
+    case asnIPADDRESS:
+    case asnOPAQUE:
         if ( !Protocol_reallocBuildString( buf, buf_len, out_len, allow_realloc, vp->value.string,
                  vp->valueLength, network_order ) ) {
             DEBUG_INDENTLESS();
@@ -420,9 +420,9 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
         }
         break;
 
-    case ASN01_OBJECT_ID:
-    case ASN01_PRIV_EXCL_RANGE:
-    case ASN01_PRIV_INCL_RANGE:
+    case asnOBJECT_ID:
+    case asnPRIV_EXCL_RANGE:
+    case asnPRIV_INCL_RANGE:
         if ( !Protocol_reallocBuildOid( buf, buf_len, out_len, allow_realloc, 1, vp->value.objectId,
                  vp->valueLength / sizeof( oid ), network_order ) ) {
             DEBUG_INDENTLESS();
@@ -431,7 +431,7 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
         }
         break;
 
-    case ASN01_COUNTER64:
+    case asnCOUNTER64:
         if ( network_order ) {
             DEBUG_DUMPHEADER( "send", "Build Counter64 (high, low)" );
             if ( !Protocol_reallocBuildInt( buf, buf_len, out_len, allow_realloc,
@@ -463,7 +463,7 @@ int Protocol_reallocBuildVarbind( u_char** buf, size_t* buf_len,
         }
         break;
 
-    case ASN01_NULL:
+    case asnNULL:
     case PRIOT_NOSUCHOBJECT:
     case PRIOT_NOSUCHINSTANCE:
     case PRIOT_ENDOFMIBVIEW:
@@ -771,7 +771,7 @@ _Protocol_reallocBuild( u_char** buf, size_t* buf_len, size_t* out_len,
     case AGENTX_MSG_GETNEXT:
         DEBUG_DUMPHEADER( "send", "Get* Variable List" );
         for ( vp = pdu->variables; vp != NULL; vp = vp->next ) {
-            inc = ( vp->type == ASN01_PRIV_INCL_RANGE );
+            inc = ( vp->type == asnPRIV_INCL_RANGE );
             if ( !Protocol_reallocBuildOid( buf, buf_len, out_len, allow_realloc, inc, vp->name,
                      vp->nameLength, network_order ) ) {
                 DEBUG_INDENTLESS();
@@ -1144,11 +1144,11 @@ Protocol_parseOpaque( u_char* data, size_t* length, int* type,
 
     buf = opaque_buf;
 
-    if ( ( *opaque_len <= 3 ) || ( buf[ 0 ] != ASN01_OPAQUE_TAG1 ) )
+    if ( ( *opaque_len <= 3 ) || ( buf[ 0 ] != asnOPAQUE_TAG1 ) )
         return cp; /* Unrecognised opaque type */
 
     switch ( buf[ 1 ] ) {
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         if ( ( *opaque_len != ( 3 + sizeof( float ) ) ) || ( buf[ 2 ] != sizeof( float ) ) )
             return cp; /* Encoding isn't right for FLOAT */
 
@@ -1156,11 +1156,11 @@ Protocol_parseOpaque( u_char* data, size_t* length, int* type,
         fu.intVal[ 0 ] = ntohl( fu.intVal[ 0 ] );
         *opaque_len = sizeof( float );
         memcpy( opaque_buf, &fu.c[ 0 ], sizeof( float ) );
-        *type = ASN01_OPAQUE_FLOAT;
+        *type = asnOPAQUE_FLOAT;
         DEBUG_MSG( ( "dumpv_recv", "Float: %f\n", fu.floatVal ) );
         return cp;
 
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         if ( ( *opaque_len != ( 3 + sizeof( double ) ) ) || ( buf[ 2 ] != sizeof( double ) ) )
             return cp; /* Encoding isn't right for DOUBLE */
 
@@ -1170,13 +1170,13 @@ Protocol_parseOpaque( u_char* data, size_t* length, int* type,
         fu.intVal[ 0 ] = tmp;
         *opaque_len = sizeof( double );
         memcpy( opaque_buf, &fu.c[ 0 ], sizeof( double ) );
-        *type = ASN01_OPAQUE_DOUBLE;
+        *type = asnOPAQUE_DOUBLE;
         DEBUG_MSG( ( "dumpv_recv", "Double: %f\n", fu.doubleVal ) );
         return cp;
 
-    case ASN01_OPAQUE_I64:
-    case ASN01_OPAQUE_U64:
-    case ASN01_OPAQUE_COUNTER64:
+    case asnOPAQUE_I64:
+    case asnOPAQUE_U64:
+    case asnOPAQUE_COUNTER64:
     default:
         return cp; /* Unrecognised opaque sub-type */
     }
@@ -1207,11 +1207,11 @@ Protocol_parseVarbind( u_char* data, size_t* length, int* type,
     }
 
     switch ( *type ) {
-    case ASN01_INTEGER:
-    case ASN01_COUNTER:
-    case ASN01_GAUGE:
-    case ASN01_TIMETICKS:
-    case ASN01_UINTEGER:
+    case asnINTEGER:
+    case asnCOUNTER:
+    case asnGAUGE:
+    case asnTIMETICKS:
+    case asnUINTEGER:
         int_val = Protocol_parseInt( bufp, network_byte_order );
         memmove( data_buf, &int_val, 4 );
         *data_len = 4;
@@ -1219,20 +1219,20 @@ Protocol_parseVarbind( u_char* data, size_t* length, int* type,
         *length -= 4;
         break;
 
-    case ASN01_OCTET_STR:
-    case ASN01_IPADDRESS:
+    case asnOCTET_STR:
+    case asnIPADDRESS:
         bufp = Protocol_parseString( bufp, length, data_buf, data_len,
             network_byte_order );
         break;
 
-    case ASN01_OPAQUE:
+    case asnOPAQUE:
         bufp = Protocol_parseOpaque( bufp, length, type, data_buf, data_len,
             network_byte_order );
         break;
 
-    case ASN01_PRIV_INCL_RANGE:
-    case ASN01_PRIV_EXCL_RANGE:
-    case ASN01_OBJECT_ID:
+    case asnPRIV_INCL_RANGE:
+    case asnPRIV_EXCL_RANGE:
+    case asnOBJECT_ID:
         bufp = Protocol_parseOid( bufp, length, NULL, ( oid* )data_buf,
             data_len, network_byte_order );
         *data_len *= sizeof( oid );
@@ -1241,7 +1241,7 @@ Protocol_parseVarbind( u_char* data, size_t* length, int* type,
          */
         break;
 
-    case ASN01_COUNTER64:
+    case asnCOUNTER64:
         memset( &tmp64, 0, sizeof( tmp64 ) );
         if ( network_byte_order ) {
             tmp64.high = Protocol_parseInt( bufp, network_byte_order );
@@ -1257,7 +1257,7 @@ Protocol_parseVarbind( u_char* data, size_t* length, int* type,
         *length -= 8;
         break;
 
-    case ASN01_NULL:
+    case asnNULL:
     case PRIOT_NOSUCHOBJECT:
     case PRIOT_NOSUCHINSTANCE:
     case PRIOT_ENDOFMIBVIEW:
@@ -1378,10 +1378,10 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
 {
     register u_char* bufp = data;
     u_char buffer[ API_MAX_MSG_SIZE ];
-    oid oid_buffer[ ASN01_MAX_OID_LEN ], end_oid_buf[ ASN01_MAX_OID_LEN ];
+    oid oid_buffer[ asnMAX_OID_LEN ], end_oid_buf[ asnMAX_OID_LEN ];
     size_t buf_len = sizeof( buffer );
-    size_t oid_buf_len = ASN01_MAX_OID_LEN;
-    size_t end_oid_buf_len = ASN01_MAX_OID_LEN;
+    size_t oid_buf_len = asnMAX_OID_LEN;
+    size_t end_oid_buf_len = asnMAX_OID_LEN;
 
     int range_bound; /* OID-range upper bound */
     int inc; /* Inclusive SearchRange flag */
@@ -1476,9 +1476,9 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
             return ErrorCode_ASN_PARSE_ERR;
         }
         Api_pduAddVariable( pdu, oid_buffer, oid_buf_len,
-            ASN01_OCTET_STR, buffer, buf_len );
+            asnOCTET_STR, buffer, buf_len );
 
-        oid_buf_len = ASN01_MAX_OID_LEN;
+        oid_buf_len = asnMAX_OID_LEN;
         buf_len = sizeof( buffer );
         break;
 
@@ -1533,13 +1533,13 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
             end_oid_buf[ pdu->range_subid - 1 ] = range_bound;
 
             Api_pduAddVariable( pdu, oid_buffer, oid_buf_len,
-                ASN01_PRIV_INCL_RANGE,
+                asnPRIV_INCL_RANGE,
                 ( u_char* )end_oid_buf, end_oid_buf_len );
         } else {
             Client_addNullVar( pdu, oid_buffer, oid_buf_len );
         }
 
-        oid_buf_len = ASN01_MAX_OID_LEN;
+        oid_buf_len = asnMAX_OID_LEN;
         break;
 
     case AGENTX_MSG_GETBULK:
@@ -1587,17 +1587,17 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
 
             if ( inc ) {
                 Api_pduAddVariable( pdu, oid_buffer, oid_buf_len,
-                    ASN01_PRIV_INCL_RANGE,
+                    asnPRIV_INCL_RANGE,
                     ( u_char* )end_oid_buf,
                     end_oid_buf_len );
             } else {
                 Api_pduAddVariable( pdu, oid_buffer, oid_buf_len,
-                    ASN01_PRIV_EXCL_RANGE,
+                    asnPRIV_EXCL_RANGE,
                     ( u_char* )end_oid_buf,
                     end_oid_buf_len );
             }
-            oid_buf_len = ASN01_MAX_OID_LEN;
-            end_oid_buf_len = ASN01_MAX_OID_LEN;
+            oid_buf_len = asnMAX_OID_LEN;
+            end_oid_buf_len = asnMAX_OID_LEN;
         }
 
         DEBUG_INDENTLESS();
@@ -1647,7 +1647,7 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
             Api_pduAddVariable( pdu, oid_buffer, oid_buf_len,
                 ( u_char )type, buffer, buf_len );
 
-            oid_buf_len = ASN01_MAX_OID_LEN;
+            oid_buf_len = asnMAX_OID_LEN;
             buf_len = sizeof( buffer );
         }
         DEBUG_INDENTLESS();
@@ -1677,9 +1677,9 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
         if ( bufp == NULL )
             return ErrorCode_ASN_PARSE_ERR;
         Api_pduAddVariable( pdu, oid_buffer, oid_buf_len,
-            ASN01_OCTET_STR, buffer, buf_len );
+            asnOCTET_STR, buffer, buf_len );
 
-        oid_buf_len = ASN01_MAX_OID_LEN;
+        oid_buf_len = asnMAX_OID_LEN;
         buf_len = sizeof( buffer );
         break;
 
@@ -1694,7 +1694,7 @@ int Protocol_parse( Types_Session* session, Types_Pdu* pdu, u_char* data,
             return ErrorCode_ASN_PARSE_ERR;
         Client_addNullVar( pdu, oid_buffer, oid_buf_len );
 
-        oid_buf_len = ASN01_MAX_OID_LEN;
+        oid_buf_len = asnMAX_OID_LEN;
         break;
 
     default:

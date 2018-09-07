@@ -203,7 +203,7 @@ void send_linkUpDownNotifications( oid* notification_oid, size_t notification_oi
      * the snmpTrapOID.0 object. Here is it's definition. 
      */
     oid objid_snmptrap[] = { 1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0 };
-    size_t objid_snmptrap_len = ASN01_OID_LENGTH( objid_snmptrap );
+    size_t objid_snmptrap_len = asnOID_LENGTH( objid_snmptrap );
 
     /*
      * define the OIDs for the varbinds we're going to include
@@ -213,11 +213,11 @@ void send_linkUpDownNotifications( oid* notification_oid, size_t notification_oi
      * IF-MIB::ifOperStatus
      */
     oid if_index_oid[] = { 1, 3, 6, 1, 2, 1, 2, 2, 1, 1, 0 };
-    size_t if_index_oid_len = ASN01_OID_LENGTH( if_index_oid );
+    size_t if_index_oid_len = asnOID_LENGTH( if_index_oid );
     oid if_admin_status_oid[] = { 1, 3, 6, 1, 2, 1, 2, 2, 1, 7, 0 };
-    size_t if_admin_status_oid_len = ASN01_OID_LENGTH( if_admin_status_oid );
+    size_t if_admin_status_oid_len = asnOID_LENGTH( if_admin_status_oid );
     oid if_oper_status_oid[] = { 1, 3, 6, 1, 2, 1, 2, 2, 1, 8, 0 };
-    size_t if_oper_status_oid_len = ASN01_OID_LENGTH( if_oper_status_oid );
+    size_t if_oper_status_oid_len = asnOID_LENGTH( if_oper_status_oid );
 
     /*
      * here is where we store the variables to be sent in the trap 
@@ -244,7 +244,7 @@ void send_linkUpDownNotifications( oid* notification_oid, size_t notification_oi
         /*
                                * value type is an OID 
                                */
-        ASN01_OBJECT_ID,
+        asnOBJECT_ID,
         /*
                                * value contents is our notification OID 
                                */
@@ -259,7 +259,7 @@ void send_linkUpDownNotifications( oid* notification_oid, size_t notification_oi
      */
     Api_varlistAddVariable( &notification_vars,
         if_index_oid, if_index_oid_len,
-        ASN01_INTEGER,
+        asnINTEGER,
         ( u_char* )&if_index,
         sizeof( if_index ) );
 
@@ -268,13 +268,13 @@ void send_linkUpDownNotifications( oid* notification_oid, size_t notification_oi
      */
     Api_varlistAddVariable( &notification_vars,
         if_admin_status_oid, if_admin_status_oid_len,
-        ASN01_INTEGER,
+        asnINTEGER,
         ( u_char* )&if_admin_status,
         sizeof( if_admin_status ) );
 
     Api_varlistAddVariable( &notification_vars,
         if_oper_status_oid, if_oper_status_oid_len,
-        ASN01_INTEGER,
+        asnINTEGER,
         ( u_char* )&if_oper_status,
         sizeof( if_oper_status ) );
 
@@ -393,13 +393,13 @@ _check_interface_entry_for_updates( ifTable_rowreq_ctx* rowreq_ctx,
         if ( rowreq_ctx->data.ifLinkUpDownTrapEnable == 1 ) {
             if ( rowreq_ctx->data.ifOperStatus == IFOPERSTATUS_UP ) {
                 oid notification_oid[] = { 1, 3, 6, 1, 6, 3, 1, 1, 5, 4 };
-                send_linkUpDownNotifications( notification_oid, ASN01_OID_LENGTH( notification_oid ),
+                send_linkUpDownNotifications( notification_oid, asnOID_LENGTH( notification_oid ),
                     rowreq_ctx->tbl_idx.ifIndex,
                     rowreq_ctx->data.ifAdminStatus,
                     rowreq_ctx->data.ifOperStatus );
             } else if ( rowreq_ctx->data.ifOperStatus == IFOPERSTATUS_DOWN ) {
                 oid notification_oid[] = { 1, 3, 6, 1, 6, 3, 1, 1, 5, 3 };
-                send_linkUpDownNotifications( notification_oid, ASN01_OID_LENGTH( notification_oid ),
+                send_linkUpDownNotifications( notification_oid, asnOID_LENGTH( notification_oid ),
                     rowreq_ctx->tbl_idx.ifIndex,
                     rowreq_ctx->data.ifAdminStatus,
                     rowreq_ctx->data.ifOperStatus );

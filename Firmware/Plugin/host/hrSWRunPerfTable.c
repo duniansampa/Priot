@@ -45,7 +45,7 @@ static TableRegistrationInfo* table_info;
 void initialize_table_hrSWRunPerfTable( void )
 {
     static oid hrSWRunPerfTable_oid[] = { 1, 3, 6, 1, 2, 1, 25, 5, 1 };
-    size_t hrSWRunPerfTable_oid_len = ASN01_OID_LENGTH( hrSWRunPerfTable_oid );
+    size_t hrSWRunPerfTable_oid_len = asnOID_LENGTH( hrSWRunPerfTable_oid );
     HandlerRegistration* reg;
     MibHandler* handler = NULL;
 
@@ -64,7 +64,7 @@ void initialize_table_hrSWRunPerfTable( void )
         Logger_log( LOGGER_PRIORITY_ERR, "error allocating table registration for " MYTABLE "\n" );
         goto bail;
     }
-    Table_helperAddIndexes( table_info, ASN01_INTEGER, /* index: hrSWRunIndex */
+    Table_helperAddIndexes( table_info, asnINTEGER, /* index: hrSWRunIndex */
         0 );
     table_info->min_column = COLUMN_HRSWRUNPERFCPU;
     table_info->max_column = COLUMN_HRSWRUNPERFMEM;
@@ -161,11 +161,11 @@ int hrSWRunPerfTable_handler( MibHandler* handler,
 
             switch ( table_info->colnum ) {
             case COLUMN_HRSWRUNPERFCPU:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->hrSWRunPerfCPU );
                 break;
             case COLUMN_HRSWRUNPERFMEM:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     table_entry->hrSWRunPerfMem );
                 break;
             default:

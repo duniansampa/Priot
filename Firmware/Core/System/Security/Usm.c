@@ -1,12 +1,12 @@
 #include "Usm.h"
 #include "Api.h"
 #include "Client.h"
-#include "Keytools.h"
+#include "KeyTools.h"
 #include "Engine.h"
 #include "Priot.h"
 #include "ReadConfig.h"
 #include "Scapi.h"
-#include "Secmod.h"
+#include "SecMod.h"
 #include "System/Util/Trace.h"
 #include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
@@ -301,10 +301,10 @@ int Usm_asnPredictIntLength( int type, long number, size_t len )
 int Usm_asnPredictLength( int type, u_char* ptr, size_t u_char_len )
 {
 
-    if ( type & ASN01_SEQUENCE )
+    if ( type & asnSEQUENCE )
         return 1 + 3 + u_char_len;
 
-    if ( type & ASN01_INTEGER ) {
+    if ( type & asnINTEGER ) {
         u_long value;
         memcpy( &value, ptr, u_char_len );
         u_char_len = Usm_asnPredictIntLength( type, value, u_char_len );
@@ -410,39 +410,39 @@ int Usm_calcOffsets( size_t globalDataLen, /* SNMPv3Message + HeaderData */
     /*
      * Calculate lengths.
      */
-    if ( ( engIDlen = Usm_asnPredictLength( ASN01_OCTET_STR,
+    if ( ( engIDlen = Usm_asnPredictLength( asnOCTET_STR,
                NULL, secEngineIDLen ) )
         == -1 ) {
         return -1;
     }
 
-    if ( ( engBtlen = Usm_asnPredictLength( ASN01_INTEGER,
+    if ( ( engBtlen = Usm_asnPredictLength( asnINTEGER,
                ( u_char* )&engineboots,
                sizeof( long ) ) )
         == -1 ) {
         return -1;
     }
 
-    if ( ( engTmlen = Usm_asnPredictLength( ASN01_INTEGER,
+    if ( ( engTmlen = Usm_asnPredictLength( asnINTEGER,
                ( u_char* )&engine_time,
                sizeof( long ) ) )
         == -1 ) {
         return -1;
     }
 
-    if ( ( namelen = Usm_asnPredictLength( ASN01_OCTET_STR,
+    if ( ( namelen = Usm_asnPredictLength( asnOCTET_STR,
                NULL, secNameLen ) )
         == -1 ) {
         return -1;
     }
 
-    if ( ( authlen = Usm_asnPredictLength( ASN01_OCTET_STR,
+    if ( ( authlen = Usm_asnPredictLength( asnOCTET_STR,
                NULL, *msgAuthParmLen ) )
         == -1 ) {
         return -1;
     }
 
-    if ( ( privlen = Usm_asnPredictLength( ASN01_OCTET_STR,
+    if ( ( privlen = Usm_asnPredictLength( asnOCTET_STR,
                NULL, *msgPrivParmLen ) )
         == -1 ) {
         return -1;
@@ -450,14 +450,14 @@ int Usm_calcOffsets( size_t globalDataLen, /* SNMPv3Message + HeaderData */
 
     *seq_len = engIDlen + engBtlen + engTmlen + namelen + authlen + privlen;
 
-    if ( ( ret = Usm_asnPredictLength( ASN01_SEQUENCE,
+    if ( ( ret = Usm_asnPredictLength( asnSEQUENCE,
                NULL, *seq_len ) )
         == -1 ) {
         return -1;
     }
     *otstlen = ( size_t )ret;
 
-    if ( ( ret = Usm_asnPredictLength( ASN01_OCTET_STR,
+    if ( ( ret = Usm_asnPredictLength( asnOCTET_STR,
                NULL, *otstlen ) )
         == -1 ) {
         return -1;
@@ -486,7 +486,7 @@ int Usm_calcOffsets( size_t globalDataLen, /* SNMPv3Message + HeaderData */
     if ( secLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
         scopedPduLen = UTILITIES_ROUND_UP8( scopedPduLen );
 
-        if ( ( ret = Usm_asnPredictLength( ASN01_OCTET_STR, NULL, scopedPduLen ) ) == -1 ) {
+        if ( ( ret = Usm_asnPredictLength( asnOCTET_STR, NULL, scopedPduLen ) ) == -1 ) {
             return -1;
         }
         *datalen = ( size_t )ret;
@@ -626,21 +626,21 @@ int Usm_setAesIv( u_char* iv,
     return 0;
 } /* end Usm_setSalt() */
 
-int Usm_secmodGenerateOutMsg( struct Secmod_OutgoingParams_s* parms )
+int Usm_secmodGenerateOutMsg( struct OutgoingParams_s* parms )
 {
     if ( !parms )
         return ErrorCode_GENERR;
 
     return Usm_generateOutMsg( parms->msgProcModel,
-        parms->globalData, parms->globalDataLen,
+        parms->globalData, parms->globalDataLength,
         parms->maxMsgSize, parms->secModel,
-        parms->secEngineID, parms->secEngineIDLen,
-        parms->secName, parms->secNameLen,
+        parms->secEngineId, parms->secEngineIdLength,
+        parms->secName, parms->secNameLength,
         parms->secLevel,
-        parms->scopedPdu, parms->scopedPduLen,
+        parms->scopedPdu, parms->scopedPduLength,
         parms->secStateRef,
-        parms->secParams, parms->secParamsLen,
-        parms->wholeMsg, parms->wholeMsgLen );
+        parms->secParams, parms->secParamsLength,
+        parms->wholeMsg, parms->wholeMsgLength );
 }
 
 /*******************************************************************-o-******
@@ -985,37 +985,37 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
 
     offSet = ptr_len - remaining;
     Asn01_buildHeader( &ptr[ offSet ], &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), otstlen );
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ), otstlen );
 
     offSet = ptr_len - remaining;
     Asn01_buildSequence( &ptr[ offSet ], &remaining,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), seq_len );
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ), seq_len );
 
     offSet = ptr_len - remaining;
     DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineID" );
     Asn01_buildString( &ptr[ offSet ], &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), theEngineID,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ), theEngineID,
         theEngineIDLength );
     DEBUG_INDENTLESS();
 
     offSet = ptr_len - remaining;
     DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineBoots" );
-    Asn01_buildInt( &ptr[ offSet ], &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+    Asn_buildInt( &ptr[ offSet ], &remaining,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ),
         &boots_long, sizeof( long ) );
     DEBUG_INDENTLESS();
 
     offSet = ptr_len - remaining;
     DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineTime" );
-    Asn01_buildInt( &ptr[ offSet ], &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ),
+    Asn_buildInt( &ptr[ offSet ], &remaining,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ),
         &time_long, sizeof( long ) );
     DEBUG_INDENTLESS();
 
     offSet = ptr_len - remaining;
     DEBUG_DUMPHEADER( "send", "msgUserName" );
     Asn01_buildString( &ptr[ offSet ], &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), ( u_char* )theName,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ), ( u_char* )theName,
         theNameLength );
     DEBUG_INDENTLESS();
 
@@ -1029,7 +1029,7 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
     offSet = ptr_len - remaining;
     Asn01_buildHeader( &ptr[ offSet ],
         &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), msgAuthParmLen );
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ), msgAuthParmLen );
 
     if ( theSecLevel == PRIOT_SEC_LEVEL_AUTHNOPRIV
         || theSecLevel == PRIOT_SEC_LEVEL_AUTHPRIV ) {
@@ -1048,7 +1048,7 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
     offSet = ptr_len - remaining;
     Asn01_buildHeader( &ptr[ offSet ],
         &remaining,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ), msgPrivParmLen );
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ), msgPrivParmLen );
 
     remaining -= msgPrivParmLen; /* Skipping the IV already there. */
 
@@ -1059,7 +1059,7 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
         offSet = ptr_len - remaining;
         Asn01_buildHeader( &ptr[ offSet ],
             &remaining,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ),
             theTotalLength - dataOffset );
     }
 
@@ -1071,7 +1071,7 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
      */
     remaining = theTotalLength;
     Asn01_buildSequence( ptr, &remaining,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         theTotalLength - 4 );
 
     /*
@@ -1127,20 +1127,20 @@ int Usm_generateOutMsg( int msgProcModel, /* (UNUSED) */
 
 } /* end Usm_generateOutMsg() */
 
-int Usm_secmodRgenerateOutMsg( struct Secmod_OutgoingParams_s* parms )
+int Usm_secmodRgenerateOutMsg( struct OutgoingParams_s* parms )
 {
     if ( !parms )
         return ErrorCode_GENERR;
 
     return Usm_rgenerateOutMsg( parms->msgProcModel,
-        parms->globalData, parms->globalDataLen,
+        parms->globalData, parms->globalDataLength,
         parms->maxMsgSize, parms->secModel,
-        parms->secEngineID, parms->secEngineIDLen,
-        parms->secName, parms->secNameLen,
+        parms->secEngineId, parms->secEngineIdLength,
+        parms->secName, parms->secNameLength,
         parms->secLevel,
-        parms->scopedPdu, parms->scopedPduLen,
+        parms->scopedPdu, parms->scopedPduLength,
         parms->secStateRef,
-        parms->wholeMsg, parms->wholeMsgLen,
+        parms->wholeMsg, parms->wholeMsgLength,
         parms->wholeMsgOffset );
 }
 
@@ -1401,7 +1401,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
 
         *offset = 0;
         rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
-            ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+            ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ),
             ciphertext, ciphertextlen );
         if ( rc == 0 ) {
             DEBUG_MSGTL( ( "usm", "Encryption failed.\n" ) );
@@ -1429,8 +1429,8 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      * msgPrivacyParameters (warning: assumes DES salt).
      */
     rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         iv,
         save_salt_length );
     DEBUG_INDENTLESS();
@@ -1451,8 +1451,8 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
     }
 
     rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         authParams,
         msgAuthParmLen );
     DEBUG_INDENTLESS();
@@ -1475,8 +1475,8 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      */
     DEBUG_DUMPHEADER( "send", "msgUserName" );
     rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         ( u_char* )theName, theNameLength );
     DEBUG_INDENTLESS();
     if ( rc == 0 ) {
@@ -1490,7 +1490,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      */
     DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineTime" );
     rc = Asn01_reallocRbuildInt( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &time_long,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &time_long,
         sizeof( long ) );
     DEBUG_INDENTLESS();
     if ( rc == 0 ) {
@@ -1505,7 +1505,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      */
     DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineBoots" );
     rc = Asn01_reallocRbuildInt( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ), &boots_long,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ), &boots_long,
         sizeof( long ) );
     DEBUG_INDENTLESS();
     if ( rc == 0 ) {
@@ -1517,8 +1517,8 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
 
     DEBUG_DUMPHEADER( "send", "msgAuthoritativeEngineID" );
     rc = Asn01_reallocRbuildString( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         theEngineID,
         theEngineIDLength );
     DEBUG_INDENTLESS();
@@ -1532,7 +1532,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      * USM msgSecurityParameters sequence header
      */
     rc = Asn01_reallocRbuildSequence( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ),
         *offset - sp_offset );
     if ( rc == 0 ) {
         DEBUG_MSGTL( ( "usm", "building usm security parameters failed.\n" ) );
@@ -1543,9 +1543,9 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
     /*
      * msgSecurityParameters OCTET STRING wrapper.
      */
-    rc = Asn01_reallocRbuildHeader( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                        | ASN01_OCTET_STR ),
+    rc = Asn01_reallocBuildHeader( wholeMsg, wholeMsgLen, offset, 1,
+        ( u_char )( asnUNIVERSAL | asnPRIMITIVE
+                                        | asnOCTET_STR ),
         *offset - sp_offset );
 
     if ( rc == 0 ) {
@@ -1572,7 +1572,7 @@ int Usm_rgenerateOutMsg( int msgProcModel, /* (UNUSED) */
      * Total packet sequence.
      */
     rc = Asn01_reallocRbuildSequence( wholeMsg, wholeMsgLen, offset, 1,
-        ( u_char )( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ), *offset );
+        ( u_char )( asnSEQUENCE | asnCONSTRUCTOR ), *offset );
     if ( rc == 0 ) {
         DEBUG_MSGTL( ( "usm", "building master packet sequence failed.\n" ) );
         Usm_freeUsmStateReference( secStateRef );
@@ -1672,7 +1672,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
      */
     if ( ( value_ptr = Asn01_parseSequence( parse_ptr, &octet_string_length,
                &type_value,
-               ( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ),
+               ( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ),
                "usm first octet" ) )
         == NULL ) {
         /*
@@ -1688,7 +1688,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
 
     if ( ( value_ptr = Asn01_parseSequence( parse_ptr, &sequence_length,
                &type_value,
-               ( ASN01_SEQUENCE | ASN01_CONSTRUCTOR ),
+               ( asnSEQUENCE | asnCONSTRUCTOR ),
                "usm sequence" ) )
         == NULL ) {
         /*
@@ -1714,7 +1714,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
     }
     DEBUG_INDENTLESS();
 
-    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
+    if ( type_value != ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -1;
@@ -1725,7 +1725,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
      * remaining_bytes are used (to accomodate the asn code).
      */
     DEBUG_DUMPHEADER( "recv", "msgAuthoritativeEngineBoots" );
-    if ( ( next_ptr = Asn01_parseInt( next_ptr, &remaining_bytes, &type_value,
+    if ( ( next_ptr = Asn_parseInt( next_ptr, &remaining_bytes, &type_value,
                &boots_long, sizeof( long ) ) )
         == NULL ) {
         DEBUG_INDENTLESS();
@@ -1735,7 +1735,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
     }
     DEBUG_INDENTLESS();
 
-    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ) ) {
+    if ( type_value != ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ) ) {
         DEBUG_INDENTLESS();
         /*
          * RETURN parse error
@@ -1748,7 +1748,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
      * Retrieve the time value.
      */
     DEBUG_DUMPHEADER( "recv", "msgAuthoritativeEngineTime" );
-    if ( ( next_ptr = Asn01_parseInt( next_ptr, &remaining_bytes, &type_value,
+    if ( ( next_ptr = Asn_parseInt( next_ptr, &remaining_bytes, &type_value,
                &time_long, sizeof( long ) ) )
         == NULL ) {
         /*
@@ -1757,7 +1757,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
     }
     DEBUG_INDENTLESS();
 
-    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_INTEGER ) ) {
+    if ( type_value != ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnINTEGER ) ) {
         /*
          * RETURN parse error
          */ return -1;
@@ -1807,7 +1807,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
 
     secName[ *secNameLen ] = '\0';
 
-    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
+    if ( type_value != ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -1;
@@ -1828,7 +1828,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
     }
     DEBUG_INDENTLESS();
 
-    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
+    if ( type_value != ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -1;
@@ -1856,7 +1856,7 @@ int Usm_parseSecurityParameters( u_char* secParams,
     }
     DEBUG_INDENTLESS();
 
-    if ( type_value != ( u_char )( ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OCTET_STR ) ) {
+    if ( type_value != ( u_char )( asnUNIVERSAL | asnPRIMITIVE | asnOCTET_STR ) ) {
         /*
          * RETURN parse error
          */ return -2;
@@ -2014,7 +2014,7 @@ int Usm_checkAndUpdateTimeliness( u_char* secEngineID,
 
 } /* end Usm_checkAndUpdateTimeliness() */
 
-int Usm_secmodProcessInMsg( struct Secmod_IncomingParams_s* parms )
+int Usm_secmodProcessInMsg( struct IncomingParams_s* parms )
 {
     if ( !parms )
         return ErrorCode_GENERR;
@@ -2025,16 +2025,16 @@ int Usm_secmodProcessInMsg( struct Secmod_IncomingParams_s* parms )
         parms->secModel,
         parms->secLevel,
         parms->wholeMsg,
-        parms->wholeMsgLen,
-        parms->secEngineID,
-        parms->secEngineIDLen,
+        parms->wholeMsgLength,
+        parms->secEngineId,
+        parms->secEngineIdLength,
         parms->secName,
         parms->secNameLen,
         parms->scopedPdu,
-        parms->scopedPduLen,
+        parms->scopedPduLength,
         parms->maxSizeResponse,
         parms->secStateRef,
-        parms->sess, parms->msg_flags );
+        parms->sess, parms->msgFlags );
 }
 
 /*******************************************************************-o-******
@@ -2322,8 +2322,8 @@ int Usm_processInMsg( int msgProcModel, /* (UNUSED) */
 
         if ( ( value_ptr = Asn01_parseSequence( data_ptr, &remaining,
                    &type_value,
-                   ( ASN01_UNIVERSAL | ASN01_PRIMITIVE
-                                                    | ASN01_OCTET_STR ),
+                   ( asnUNIVERSAL | asnPRIMITIVE
+                                                    | asnOCTET_STR ),
                    "encrypted sPDU" ) )
             == NULL ) {
             DEBUG_MSGTL( ( "usm", "%s\n",
@@ -2505,7 +2505,7 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
                                                                || ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                                         DsStr_PASSPHRASE ) ) ) ) {
         session->securityAuthKeyLen = USM_AUTH_KU_LEN;
-        if ( Keytools_generateKu( session->securityAuthProto,
+        if ( KeyTools_generateKu( session->securityAuthProto,
                  session->securityAuthProtoLen,
                  ( u_char* )cp, strlen( cp ),
                  session->securityAuthKey,
@@ -2532,7 +2532,7 @@ int Usm_sessionInit( Types_Session* in_session, Types_Session* session )
                                                                || ( cp = DefaultStore_getString( DsStore_LIBRARY_ID,
                                                                         DsStr_PASSPHRASE ) ) ) ) {
         session->securityPrivKeyLen = USM_PRIV_KU_LEN;
-        if ( Keytools_generateKu( session->securityAuthProto,
+        if ( KeyTools_generateKu( session->securityAuthProto,
                  session->securityAuthProtoLen,
                  ( u_char* )cp, strlen( cp ),
                  session->securityPrivKey,
@@ -2667,13 +2667,13 @@ int Usm_createUserFromSession( Types_Session* session )
         } else if ( session->securityAuthKey != NULL
             && session->securityAuthKeyLen != 0 ) {
             MEMORY_FREE( user->authKey );
-            user->authKey = ( u_char* )calloc( 1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK );
+            user->authKey = ( u_char* )calloc( 1, keyUSM_LENGTH_KU_HASHBLOCK );
             if ( user->authKey == NULL ) {
                 Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
-            user->authKeyLen = KEYTOOLS_USM_LENGTH_KU_HASHBLOCK;
-            if ( Keytools_generateKul( user->authProtocol, user->authProtocolLen,
+            user->authKeyLen = keyUSM_LENGTH_KU_HASHBLOCK;
+            if ( KeyTools_generateKul( user->authProtocol, user->authProtocolLen,
                      session->securityEngineID,
                      session->securityEngineIDLen,
                      session->securityAuthKey,
@@ -2716,13 +2716,13 @@ int Usm_createUserFromSession( Types_Session* session )
         } else if ( session->securityPrivKey != NULL
             && session->securityPrivKeyLen != 0 ) {
             MEMORY_FREE( user->privKey );
-            user->privKey = ( u_char* )calloc( 1, KEYTOOLS_USM_LENGTH_KU_HASHBLOCK );
+            user->privKey = ( u_char* )calloc( 1, keyUSM_LENGTH_KU_HASHBLOCK );
             if ( user->privKey == NULL ) {
                 Usm_freeUser( user );
                 return ErrorCode_GENERR;
             }
-            user->privKeyLen = KEYTOOLS_USM_LENGTH_KU_HASHBLOCK;
-            if ( Keytools_generateKul( user->authProtocol, user->authProtocolLen,
+            user->privKeyLen = keyUSM_LENGTH_KU_HASHBLOCK;
+            if ( KeyTools_generateKul( user->authProtocol, user->authProtocolLen,
                      session->securityEngineID,
                      session->securityEngineIDLen,
                      session->securityPrivKey,
@@ -2879,7 +2879,7 @@ int Usm_discoverEngineid( void* slpv, Types_Session* session )
 
 void Usm_initUsm( void )
 {
-    struct Secmod_Def_s* def;
+    struct SecModDefinition_s* def;
     char* type;
 
     DEBUG_MSGTL( ( "init_usm", "unit_usm: %"
@@ -2894,21 +2894,21 @@ void Usm_initUsm( void )
     /*
      * register ourselves as a security service
      */
-    def = MEMORY_MALLOC_STRUCT( Secmod_Def_s );
+    def = MEMORY_MALLOC_STRUCT( SecModDefinition_s );
     if ( def == NULL )
         return;
     /*
      * XXX: def->init_sess_secmod move stuff from snmp_api.c
      */
-    def->encode_reverse = Usm_secmodRgenerateOutMsg;
-    def->encode_forward = Usm_secmodGenerateOutMsg;
-    def->decode = Usm_secmodProcessInMsg;
-    def->pdu_free_state_ref = Usm_freeUsmStateReference;
-    def->session_setup = Usm_sessionInit;
-    def->handle_report = Usm_handleReport;
-    def->probe_engineid = Usm_discoverEngineid;
-    def->post_probe_engineid = Usm_createUserFromSessionHook;
-    Secmod_register( USM_SEC_MODEL_NUMBER, "usm", def );
+    def->encodeReverseFunction = Usm_secmodRgenerateOutMsg;
+    def->encodeForwardFunction = Usm_secmodGenerateOutMsg;
+    def->decodeFunction = Usm_secmodProcessInMsg;
+    def->pduFreeStateRefFunction = Usm_freeUsmStateReference;
+    def->sessionSetupFunction = Usm_sessionInit;
+    def->handleReportFunction = Usm_handleReport;
+    def->probeEngineIdFunction = Usm_discoverEngineid;
+    def->postProbeEngineIdFunction = Usm_createUserFromSessionHook;
+    SecMod_register( USM_SEC_MODEL_NUMBER, "usm", def );
 
     Callback_register( CallbackMajor_LIBRARY,
         CallbackMinor_POST_PREMIB_READ_CONFIG,
@@ -3865,7 +3865,7 @@ void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line
             ReadConfig_configPerror( "missing user password" );
             return;
         }
-        ret = Keytools_generateKu( user->authProtocol, user->authProtocolLen,
+        ret = KeyTools_generateKu( user->authProtocol, user->authProtocolLen,
             ( u_char* )cp, strlen( cp ), userKey, &userKeyLen );
 
         if ( ret != ErrorCode_SUCCESS ) {
@@ -3884,7 +3884,7 @@ void Usm_setUserPassword( struct Usm_User_s* user, const char* token, char* line
     if ( type < 2 ) {
         *key = ( u_char* )malloc( UTILITIES_MAX_BUFFER_SMALL );
         *keyLen = UTILITIES_MAX_BUFFER_SMALL;
-        ret = Keytools_generateKul( user->authProtocol, user->authProtocolLen,
+        ret = KeyTools_generateKul( user->authProtocol, user->authProtocolLen,
             engineID, engineIDLen,
             userKey, userKeyLen, *key, keyLen );
         if ( ret != ErrorCode_SUCCESS ) {
@@ -4011,7 +4011,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
     } else if ( strcmp( buf, "-l" ) != 0 ) {
         /* a password is specified */
         userKeyLen = sizeof( userKey );
-        ret2 = Keytools_generateKu( newuser->authProtocol, newuser->authProtocolLen,
+        ret2 = KeyTools_generateKu( newuser->authProtocol, newuser->authProtocolLen,
             ( u_char* )buf, strlen( buf ), userKey, &userKeyLen );
         if ( ret2 != ErrorCode_SUCCESS ) {
             ReadConfig_configPerror( "could not generate the authentication key from the "
@@ -4051,7 +4051,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
         }
     } else {
         newuser->authKeyLen = ret2;
-        ret2 = Keytools_generateKul( newuser->authProtocol, newuser->authProtocolLen,
+        ret2 = KeyTools_generateKul( newuser->authProtocol, newuser->authProtocolLen,
             newuser->engineID, newuser->engineIDLen,
             userKey, userKeyLen,
             newuser->authKey, &newuser->authKeyLen );
@@ -4119,7 +4119,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
         } else if ( strcmp( buf, "-l" ) != 0 ) {
             /* a password is specified */
             userKeyLen = sizeof( userKey );
-            ret2 = Keytools_generateKu( newuser->authProtocol, newuser->authProtocolLen,
+            ret2 = KeyTools_generateKu( newuser->authProtocol, newuser->authProtocolLen,
                 ( u_char* )buf, strlen( buf ), userKey, &userKeyLen );
             if ( ret2 != ErrorCode_SUCCESS ) {
                 ReadConfig_configPerror( "could not generate the privacy key from the "
@@ -4155,7 +4155,7 @@ void Usm_parseCreateUsmUser( const char* token, char* line )
             }
         } else {
             newuser->privKeyLen = ret2;
-            ret2 = Keytools_generateKul( newuser->authProtocol, newuser->authProtocolLen,
+            ret2 = KeyTools_generateKul( newuser->authProtocol, newuser->authProtocolLen,
                 newuser->engineID, newuser->engineIDLen,
                 userKey, userKeyLen,
                 newuser->privKey, &newuser->privKeyLen );

@@ -38,13 +38,13 @@ void init_errormib( void )
      * information at 
      */
     struct Variable2_s extensible_error_variables[] = {
-        { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_errors, 1, { MIBINDEX } },
-        { ERRORNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORNAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_errors, 1, { ERRORNAME } },
-        { ERRORFLAG, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { ERRORFLAG, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_errors, 1, { ERRORFLAG } },
-        { ERRORMSG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORMSG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_errors, 1, { ERRORMSG } }
     };
 

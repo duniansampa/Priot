@@ -18,7 +18,7 @@
 void init_mteTriggerDeltaTable( void )
 {
     static oid mteTDeltaTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 2, 3 };
-    size_t mteTDeltaTable_oid_len = ASN01_OID_LENGTH( mteTDeltaTable_oid );
+    size_t mteTDeltaTable_oid_len = asnOID_LENGTH( mteTDeltaTable_oid );
     HandlerRegistration* reg;
 
     TableRegistrationInfo* table_info;
@@ -40,9 +40,9 @@ void init_mteTriggerDeltaTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner       */
+        asnOCTET_STR, /* index: mteOwner       */
         /* index: mteTriggerName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTETRIGGERDELTADISCONTINUITYID;
@@ -95,16 +95,16 @@ int mteTriggerDeltaTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERDELTADISCONTINUITYID:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( u_char* )entry->mteDeltaDiscontID,
                     entry->mteDeltaDiscontID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDWILDCARD:
                 ret = ( entry->flags & MTE_TRIGGER_FLAG_DWILD ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERDELTADISCONTINUITYIDTYPE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteDeltaDiscontIDType );
                 break;
             }

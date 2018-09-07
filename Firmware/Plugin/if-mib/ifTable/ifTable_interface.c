@@ -205,7 +205,7 @@ void _ifTable_initialize_interface( ifTable_registration* reg_ptr, u_long flags 
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: ifIndex */
         0 );
 
@@ -351,11 +351,11 @@ void _ifTable_initialize_interface( ifTable_registration* reg_ptr, u_long flags 
     {
         const oid iftlc_oid[] = { IFTABLE_LAST_CHANGE };
         Watcher_registerWatchedScalar2( AgentHandler_createHandlerRegistration( "ifTableLastChanged", NULL,
-                                            iftlc_oid, ASN01_OID_LENGTH( iftlc_oid ),
+                                            iftlc_oid, asnOID_LENGTH( iftlc_oid ),
                                             HANDLER_CAN_RONLY ),
             Watcher_createWatcherInfo( ( void* )&ifTable_if_ctx.last_changed,
                                             sizeof( u_long ),
-                                            ASN01_TIMETICKS,
+                                            asnTIMETICKS,
                                             WATCHER_FIXED_SIZE ) );
     }
 
@@ -398,7 +398,7 @@ int ifTable_index_to_oid( Types_Index* oid_idx, ifTable_mib_index* mib_idx )
      * set up varbinds
      */
     memset( &var_ifIndex, 0x00, sizeof( var_ifIndex ) );
-    var_ifIndex.type = ASN01_INTEGER;
+    var_ifIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -449,7 +449,7 @@ int ifTable_index_from_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ifIndex, 0x00, sizeof( var_ifIndex ) );
-    var_ifIndex.type = ASN01_INTEGER;
+    var_ifIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -721,7 +721,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          * (INDEX) ifIndex(1)/InterfaceIndex/ASN_INTEGER/long(long)//l/A/w/e/R/d/H 
          */
     case COLUMN_IFINDEX:
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         var->valueLength = sizeof( long );
         ( *var->value.integer ) = rowreq_ctx->tbl_idx.ifIndex;
         break;
@@ -730,7 +730,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          * ifDescr(2)/DisplayString/ASN_OCTET_STR/char(char)//L/A/w/e/R/d/H 
          */
     case COLUMN_IFDESCR:
-        var->type = ASN01_OCTET_STR;
+        var->type = asnOCTET_STR;
         rc = ifDescr_get( rowreq_ctx, ( char** )&var->value.string,
             &var->valueLength );
         break;
@@ -740,7 +740,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFTYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ifType_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -749,7 +749,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFMTU:
         var->valueLength = sizeof( long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ifMtu_get( rowreq_ctx, ( long* )var->value.string );
         break;
 
@@ -758,7 +758,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFSPEED:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_GAUGE;
+        var->type = asnGAUGE;
         rc = ifSpeed_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -766,7 +766,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          * ifPhysAddress(6)/PhysAddress/ASN_OCTET_STR/char(char)//L/A/w/e/r/d/H 
          */
     case COLUMN_IFPHYSADDRESS:
-        var->type = ASN01_OCTET_STR;
+        var->type = asnOCTET_STR;
         rc = ifPhysAddress_get( rowreq_ctx, ( char** )&var->value.string,
             &var->valueLength );
         break;
@@ -776,7 +776,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFADMINSTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ifAdminStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -785,7 +785,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOPERSTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ifOperStatus_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -794,7 +794,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFLASTCHANGE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_TIMETICKS;
+        var->type = asnTIMETICKS;
         rc = ifLastChange_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -803,7 +803,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINOCTETS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifInOctets_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -812,7 +812,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINUCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifInUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -821,7 +821,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINNUCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifInNUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -830,7 +830,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINDISCARDS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifInDiscards_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -839,7 +839,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINERRORS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifInErrors_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -848,7 +848,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFINUNKNOWNPROTOS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifInUnknownProtos_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -857,7 +857,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOUTOCTETS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifOutOctets_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -866,7 +866,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOUTUCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifOutUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -875,7 +875,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOUTNUCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifOutNUcastPkts_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -884,7 +884,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOUTDISCARDS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifOutDiscards_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -893,7 +893,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOUTERRORS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ifOutErrors_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -902,7 +902,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IFOUTQLEN:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_GAUGE;
+        var->type = asnGAUGE;
         rc = ifOutQLen_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -910,7 +910,7 @@ _ifTable_get_column( ifTable_rowreq_ctx* rowreq_ctx,
          * ifSpecific(22)/OBJECTID/ASN_OBJECT_ID/oid(oid)//L/A/w/e/r/d/h 
          */
     case COLUMN_IFSPECIFIC:
-        var->type = ASN01_OBJECT_ID;
+        var->type = asnOBJECT_ID;
         rc = ifSpecific_get( rowreq_ctx, ( oid** )&var->value.string,
             &var->valueLength );
         break;
@@ -1068,7 +1068,7 @@ _ifTable_check_column( ifTable_rowreq_ctx* rowreq_ctx,
          ** for storage, so we can't use sizeof on data context. So we
          ** just check that it's the expected size. The enum tests below
          ** will ensure that there is no data overflow. */
-        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, asnINTEGER,
             sizeof( u_long ) );
         /*
          * check that the value is one of defined enums 
@@ -1906,7 +1906,7 @@ ifTable_rowreq_ctx*
 ifTable_row_find_by_mib_index( ifTable_mib_index* mib_idx )
 {
     ifTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

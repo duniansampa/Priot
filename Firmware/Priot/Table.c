@@ -250,7 +250,7 @@ int Table_helperHandler( MibHandler* handler,
             /*
          * this should probably be handled further up
          */
-            if ( ( reqinfo->mode == MODE_GET ) && ( var->type != ASN01_NULL ) ) {
+            if ( ( reqinfo->mode == MODE_GET ) && ( var->type != asnNULL ) ) {
                 /*
              * valid request if ASN01_NULL
              */
@@ -465,7 +465,7 @@ int Table_helperHandler( MibHandler* handler,
                     tbl_req_info->index_oid_len = var->nameLength - oid_index_pos;
                     DEBUG_MSGTL( ( "helper:table", "    have %lu bytes of index\n",
                         ( unsigned long )tbl_req_info->index_oid_len ) );
-                    Assert_assert( tbl_req_info->index_oid_len < ASN01_MAX_OID_LEN );
+                    Assert_assert( tbl_req_info->index_oid_len < asnMAX_OID_LEN );
                     memcpy( tbl_req_info->index_oid, &var->name[ oid_index_pos ],
                         tbl_req_info->index_oid_len * sizeof( oid ) );
                     tmp_name = tbl_req_info->index_oid;
@@ -670,7 +670,7 @@ _Table_sparseTableHelperHandler( MibHandler* handler,
 {
     int status = PRIOT_ERR_NOERROR;
     RequestInfo* request;
-    oid coloid[ ASN01_MAX_OID_LEN ];
+    oid coloid[ asnMAX_OID_LEN ];
     TableRequestInfo* table_info;
 
     /*
@@ -694,7 +694,7 @@ _Table_sparseTableHelperHandler( MibHandler* handler,
 
     if ( reqinfo->mode == MODE_GETNEXT ) {
         for ( request = requests; request; request = request->next ) {
-            if ( ( request->requestvb->type == ASN01_NULL && request->processed ) || request->delegated )
+            if ( ( request->requestvb->type == asnNULL && request->processed ) || request->delegated )
                 continue;
             if ( request->requestvb->type == PRIOT_NOSUCHINSTANCE ) {
                 /*
@@ -702,7 +702,7 @@ _Table_sparseTableHelperHandler( MibHandler* handler,
                  * need to keep searching forward
                  */
                 DEBUG_MSGT( ( "sparse", "retry for NOSUCHINSTANCE\n" ) );
-                request->requestvb->type = ASN01_PRIV_RETRY;
+                request->requestvb->type = asnPRIV_RETRY;
             }
             if ( request->requestvb->type == PRIOT_NOSUCHOBJECT || request->requestvb->type == PRIOT_ENDOFMIBVIEW ) {
                 /*
@@ -720,13 +720,13 @@ _Table_sparseTableHelperHandler( MibHandler* handler,
                     Client_setVarObjid( request->requestvb,
                         coloid, reginfo->rootoid_len + 2 );
 
-                    request->requestvb->type = ASN01_PRIV_RETRY;
+                    request->requestvb->type = asnPRIV_RETRY;
                 } else {
                     /*
                      * If we don't have column info, reset to null so
                      * the agent will move on to the next table.
                      */
-                    request->requestvb->type = ASN01_NULL;
+                    request->requestvb->type = asnNULL;
                 }
             }
         }
@@ -822,7 +822,7 @@ int Table_buildOid( HandlerRegistration* reginfo,
     RequestInfo* reqinfo,
     TableRequestInfo* table_info )
 {
-    oid tmpoid[ ASN01_MAX_OID_LEN ];
+    oid tmpoid[ asnMAX_OID_LEN ];
     VariableList* var;
 
     if ( !reginfo || !reqinfo || !table_info )
@@ -858,7 +858,7 @@ int Table_buildOidFromIndex( HandlerRegistration* reginfo,
     RequestInfo* reqinfo,
     TableRequestInfo* table_info )
 {
-    oid tmpoid[ ASN01_MAX_OID_LEN ];
+    oid tmpoid[ asnMAX_OID_LEN ];
     VariableList* var;
     int len;
 
@@ -917,10 +917,10 @@ int Table_checkGetnextReply( RequestInfo* request,
     VariableList* newvar,
     VariableList** outvar )
 {
-    oid myname[ ASN01_MAX_OID_LEN ];
+    oid myname[ asnMAX_OID_LEN ];
     size_t myname_len;
 
-    Mib_buildOidNoalloc( myname, ASN01_MAX_OID_LEN, &myname_len,
+    Mib_buildOidNoalloc( myname, asnMAX_OID_LEN, &myname_len,
         prefix, prefix_len, newvar );
     /*
      * is the build of the new indexes less than our current result

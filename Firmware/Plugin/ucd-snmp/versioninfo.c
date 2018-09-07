@@ -21,27 +21,27 @@ void init_versioninfo( void )
      * information at 
      */
     struct Variable2_s extensible_version_variables[] = {
-        { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_version, 1, { MIBINDEX } },
-        { VERTAG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { VERTAG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_version, 1, { VERTAG } },
-        { VERDATE, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { VERDATE, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_version, 1, { VERDATE } },
-        { VERCDATE, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { VERCDATE, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_version, 1, { VERCDATE } },
-        { VERIDENT, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { VERIDENT, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_version, 1, { VERIDENT } },
-        { VERCONFIG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { VERCONFIG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_version, 1, { VERCONFIG } },
-        { VERCLEARCACHE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VERCLEARCACHE, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_extensible_version, 1, { VERCLEARCACHE } },
-        { VERUPDATECONFIG, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VERUPDATECONFIG, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_extensible_version, 1, { VERUPDATECONFIG } },
-        { VERRESTARTAGENT, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VERRESTARTAGENT, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_extensible_version, 1, { VERRESTARTAGENT } },
-        { VERSAVEPERSISTENT, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VERSAVEPERSISTENT, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_extensible_version, 1, { VERSAVEPERSISTENT } },
-        { VERDEBUGGING, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VERDEBUGGING, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_extensible_version, 1, { VERDEBUGGING } }
     };
 
@@ -139,7 +139,7 @@ int update_hook( int action,
 {
     long tmp = 0;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         Logger_log( LOGGER_PRIORITY_ERR, "Wrong type != int\n" );
         return PRIOT_ERR_WRONGTYPE;
     }
@@ -158,7 +158,7 @@ int debugging_hook( int action,
 {
     long tmp = 0;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         DEBUG_MSGTL( ( "versioninfo", "Wrong type != int\n" ) );
         return PRIOT_ERR_WRONGTYPE;
     }
@@ -175,7 +175,7 @@ int save_persistent( int action,
     size_t var_val_len,
     u_char* statP, oid* name, size_t name_len )
 {
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         DEBUG_MSGTL( ( "versioninfo", "Wrong type != int\n" ) );
         return PRIOT_ERR_WRONGTYPE;
     }

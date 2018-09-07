@@ -22,7 +22,7 @@ struct Variable2_s extensible_passthru_variables[] = {
     /*
      * bogus entry.  Only some of it is actually used. 
      */
-    { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_extensible_pass, 0, { MIBINDEX } },
 };
 

@@ -133,11 +133,11 @@ void _ipDefaultRouterTable_initialize_interface( ipDefaultRouterTable_registrati
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: ipDefaultRouterAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: ipDefaultRouterAddress */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: ipDefaultRouterIfIndex */
         0 );
 
@@ -316,13 +316,13 @@ int ipDefaultRouterTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_ipDefaultRouterAddressType, 0x00,
         sizeof( var_ipDefaultRouterAddressType ) );
-    var_ipDefaultRouterAddressType.type = ASN01_INTEGER;
+    var_ipDefaultRouterAddressType.type = asnINTEGER;
     memset( &var_ipDefaultRouterAddress, 0x00,
         sizeof( var_ipDefaultRouterAddress ) );
-    var_ipDefaultRouterAddress.type = ASN01_OCTET_STR;
+    var_ipDefaultRouterAddress.type = asnOCTET_STR;
     memset( &var_ipDefaultRouterIfIndex, 0x00,
         sizeof( var_ipDefaultRouterIfIndex ) );
-    var_ipDefaultRouterIfIndex.type = ASN01_INTEGER;
+    var_ipDefaultRouterIfIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -400,13 +400,13 @@ int ipDefaultRouterTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_ipDefaultRouterAddressType, 0x00,
         sizeof( var_ipDefaultRouterAddressType ) );
-    var_ipDefaultRouterAddressType.type = ASN01_INTEGER;
+    var_ipDefaultRouterAddressType.type = asnINTEGER;
     memset( &var_ipDefaultRouterAddress, 0x00,
         sizeof( var_ipDefaultRouterAddress ) );
-    var_ipDefaultRouterAddress.type = ASN01_OCTET_STR;
+    var_ipDefaultRouterAddress.type = asnOCTET_STR;
     memset( &var_ipDefaultRouterIfIndex, 0x00,
         sizeof( var_ipDefaultRouterIfIndex ) );
-    var_ipDefaultRouterIfIndex.type = ASN01_INTEGER;
+    var_ipDefaultRouterIfIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -668,7 +668,7 @@ _ipDefaultRouterTable_get_column( ipDefaultRouterTable_rowreq_ctx*
          */
     case COLUMN_IPDEFAULTROUTERLIFETIME:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipDefaultRouterLifetime_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -678,7 +678,7 @@ _ipDefaultRouterTable_get_column( ipDefaultRouterTable_rowreq_ctx*
          */
     case COLUMN_IPDEFAULTROUTERPREFERENCE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipDefaultRouterPreference_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -929,7 +929,7 @@ ipDefaultRouterTable_row_find_by_mib_index( ipDefaultRouterTable_mib_index*
         mib_idx )
 {
     ipDefaultRouterTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

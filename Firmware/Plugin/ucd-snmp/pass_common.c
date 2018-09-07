@@ -100,7 +100,7 @@ netsnmp_internal_pass_parse( char* buf,
     static long long_ret;
     static in_addr_t addr_ret;
     int newlen;
-    static oid objid[ ASN01_MAX_OID_LEN ];
+    static oid objid[ asnMAX_OID_LEN ];
 
     /*
      * buf contains the return type, and buf2 contains the data
@@ -110,7 +110,7 @@ netsnmp_internal_pass_parse( char* buf,
         if ( buf2[ strlen( buf2 ) - 1 ] == '\r' )
             buf2[ strlen( buf2 ) - 1 ] = 0; /* zap the carriage-return */
         *var_len = strlen( buf2 );
-        vp->type = ASN01_OCTET_STR;
+        vp->type = asnOCTET_STR;
         return ( ( unsigned char* )buf2 );
     } else if ( !strncasecmp( buf, "integer64", 9 ) ) {
         static Counter64 c64;
@@ -118,17 +118,17 @@ netsnmp_internal_pass_parse( char* buf,
         c64.high = ( unsigned long )( v64 >> 32 );
         c64.low = ( unsigned long )( v64 & 0xffffffff );
         *var_len = sizeof( c64 );
-        vp->type = ASN01_INTEGER64;
+        vp->type = asnINTEGER64;
         return ( ( unsigned char* )&c64 );
     } else if ( !strncasecmp( buf, "integer", 7 ) ) {
         *var_len = sizeof( long_ret );
         long_ret = strtol( buf2, NULL, 10 );
-        vp->type = ASN01_INTEGER;
+        vp->type = asnINTEGER;
         return ( ( unsigned char* )&long_ret );
     } else if ( !strncasecmp( buf, "unsigned", 8 ) ) {
         *var_len = sizeof( long_ret );
         long_ret = strtoul( buf2, NULL, 10 );
-        vp->type = ASN01_UNSIGNED;
+        vp->type = asnUNSIGNED;
         return ( ( unsigned char* )&long_ret );
     } else if ( !strncasecmp( buf, "counter64", 9 ) ) {
         static Counter64 c64;
@@ -136,35 +136,35 @@ netsnmp_internal_pass_parse( char* buf,
         c64.high = ( unsigned long )( v64 >> 32 );
         c64.low = ( unsigned long )( v64 & 0xffffffff );
         *var_len = sizeof( c64 );
-        vp->type = ASN01_COUNTER64;
+        vp->type = asnCOUNTER64;
         return ( ( unsigned char* )&c64 );
     } else if ( !strncasecmp( buf, "counter", 7 ) ) {
         *var_len = sizeof( long_ret );
         long_ret = strtoul( buf2, NULL, 10 );
-        vp->type = ASN01_COUNTER;
+        vp->type = asnCOUNTER;
         return ( ( unsigned char* )&long_ret );
     } else if ( !strncasecmp( buf, "octet", 5 ) ) {
         *var_len = netsnmp_internal_asc2bin( buf2 );
-        vp->type = ASN01_OCTET_STR;
+        vp->type = asnOCTET_STR;
         return ( ( unsigned char* )buf2 );
     } else if ( !strncasecmp( buf, "opaque", 6 ) ) {
         *var_len = netsnmp_internal_asc2bin( buf2 );
-        vp->type = ASN01_OPAQUE;
+        vp->type = asnOPAQUE;
         return ( ( unsigned char* )buf2 );
     } else if ( !strncasecmp( buf, "gauge", 5 ) ) {
         *var_len = sizeof( long_ret );
         long_ret = strtoul( buf2, NULL, 10 );
-        vp->type = ASN01_GAUGE;
+        vp->type = asnGAUGE;
         return ( ( unsigned char* )&long_ret );
     } else if ( !strncasecmp( buf, "objectid", 8 ) ) {
         newlen = parse_miboid( buf2, objid );
         *var_len = newlen * sizeof( oid );
-        vp->type = ASN01_OBJECT_ID;
+        vp->type = asnOBJECT_ID;
         return ( ( unsigned char* )objid );
     } else if ( !strncasecmp( buf, "timetick", 8 ) ) {
         *var_len = sizeof( long_ret );
         long_ret = strtoul( buf2, NULL, 10 );
-        vp->type = ASN01_TIMETICKS;
+        vp->type = asnTIMETICKS;
         return ( ( unsigned char* )&long_ret );
     } else if ( !strncasecmp( buf, "ipaddress", 9 ) ) {
         newlen = parse_miboid( buf2, objid );
@@ -176,7 +176,7 @@ netsnmp_internal_pass_parse( char* buf,
         addr_ret = ( objid[ 0 ] << ( 8 * 3 ) ) + ( objid[ 1 ] << ( 8 * 2 ) ) + ( objid[ 2 ] << 8 ) + objid[ 3 ];
         addr_ret = htonl( addr_ret );
         *var_len = sizeof( addr_ret );
-        vp->type = ASN01_IPADDRESS;
+        vp->type = asnIPADDRESS;
         return ( ( unsigned char* )&addr_ret );
     }
     *var_len = 0;
@@ -193,27 +193,27 @@ void netsnmp_internal_pass_set_format( char* buf,
     unsigned long utmp;
 
     switch ( var_val_type ) {
-    case ASN01_INTEGER:
-    case ASN01_COUNTER:
-    case ASN01_GAUGE:
-    case ASN01_TIMETICKS:
+    case asnINTEGER:
+    case asnCOUNTER:
+    case asnGAUGE:
+    case asnTIMETICKS:
         tmp = *( ( const long* )var_val );
         switch ( var_val_type ) {
-        case ASN01_INTEGER:
+        case asnINTEGER:
             sprintf( buf, "integer %d\n", ( int )tmp );
             break;
-        case ASN01_COUNTER:
+        case asnCOUNTER:
             sprintf( buf, "counter %d\n", ( int )tmp );
             break;
-        case ASN01_GAUGE:
+        case asnGAUGE:
             sprintf( buf, "gauge %d\n", ( int )tmp );
             break;
-        case ASN01_TIMETICKS:
+        case asnTIMETICKS:
             sprintf( buf, "timeticks %d\n", ( int )tmp );
             break;
         }
         break;
-    case ASN01_IPADDRESS:
+    case asnIPADDRESS:
         utmp = *( ( const u_long* )var_val );
         utmp = ntohl( utmp );
         sprintf( buf, "ipaddress %d.%d.%d.%d\n",
@@ -222,7 +222,7 @@ void netsnmp_internal_pass_set_format( char* buf,
             ( int )( ( utmp & 0xff00 ) >> ( 8 ) ),
             ( int )( ( utmp & 0xff ) ) );
         break;
-    case ASN01_OCTET_STR:
+    case asnOCTET_STR:
         memcpy( buf2, var_val, var_val_len );
         if ( var_val_len == 0 )
             sprintf( buf, "string \"\"\n" );
@@ -232,7 +232,7 @@ void netsnmp_internal_pass_set_format( char* buf,
             snprintf( buf, UTILITIES_MAX_BUFFER, "octet \"%s\"\n", buf2 );
         buf[ UTILITIES_MAX_BUFFER - 1 ] = 0;
         break;
-    case ASN01_OBJECT_ID:
+    case asnOBJECT_ID:
         sprint_mib_oid( buf2, ( const oid* )var_val, var_val_len / sizeof( oid ) );
         snprintf( buf, UTILITIES_MAX_BUFFER, "objectid \"%s\"\n", buf2 );
         buf[ UTILITIES_MAX_BUFFER - 1 ] = 0;

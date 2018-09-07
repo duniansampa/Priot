@@ -48,7 +48,7 @@
      struct targetAddrTable_struct {
          char           *nameData;
          unsigned char   nameLen;
-         oid             tDomain[ASN01_MAX_OID_LEN];
+         oid             tDomain[asnMAX_OID_LEN];
          int             tDomainLen;
          unsigned char  *tAddress;
          size_t          tAddressLen;

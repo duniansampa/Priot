@@ -14,7 +14,7 @@
 Tdata* trigger_table_data;
 
 oid _sysUpTime_instance[] = { 1, 3, 6, 1, 2, 1, 1, 3, 0 };
-size_t _sysUpTime_inst_len = ASN01_OID_LENGTH( _sysUpTime_instance );
+size_t _sysUpTime_inst_len = asnOID_LENGTH( _sysUpTime_instance );
 
 long mteTriggerFailures;
 
@@ -106,11 +106,11 @@ mteTrigger_createEntry( const char* mteOwner, char* mteTName, int fixed )
      */
     if ( mteOwner )
         memcpy( entry->mteOwner, mteOwner, mteOwner_len );
-    TableData_rowAddIndex( row, ASN01_OCTET_STR,
+    TableData_rowAddIndex( row, asnOCTET_STR,
         entry->mteOwner, mteOwner_len );
     if ( mteTName )
         memcpy( entry->mteTName, mteTName, mteTName_len );
-    TableData_rowAddIndex( row, ASN01_PRIV_IMPLIED_OCTET_STR,
+    TableData_rowAddIndex( row, asnPRIV_IMPLIED_OCTET_STR,
         entry->mteTName, mteTName_len );
 
     /* entry->mteTriggerTest         = MTE_TRIGGER_BOOLEAN; */
@@ -258,8 +258,8 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
         switch ( vp1->type ) {
         case PRIOT_NOSUCHINSTANCE:
         case PRIOT_NOSUCHOBJECT:
-        case ASN01_PRIV_RETRY: /* Internal only ? */
-            vp1->type = ASN01_NULL;
+        case asnPRIV_RETRY: /* Internal only ? */
+            vp1->type = asnNULL;
         }
         /*
             * Keep track of how many entries have been retrieved.
@@ -288,7 +288,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                     Api_freeVarbind( var );
                     return;
                 }
-                vtmp->type = ASN01_NULL;
+                vtmp->type = asnNULL;
                 Client_setVarObjid( vtmp, vp1->name, vp1->nameLength );
                 vtmp->next = vp2;
                 if ( vp2_prev ) {
@@ -317,7 +317,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  * XXX - check how this is best done.
                  *
                  */
-                if ( vp2->type != ASN01_NULL ) {
+                if ( vp2->type != asnNULL ) {
                     vtmp = MEMORY_MALLOC_TYPEDEF( VariableList );
                     if ( !vtmp ) {
                         _mteTrigger_failure(
@@ -325,7 +325,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                         Api_freeVarbind( var );
                         return;
                     }
-                    vtmp->type = ASN01_NULL;
+                    vtmp->type = asnNULL;
                     Client_setVarObjid( vtmp, vp2->name, vp2->nameLength );
                     vtmp->next = vp1;
                     if ( vp1_prev ) {
@@ -367,7 +367,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                     Api_freeVarbind( var );
                     return;
                 }
-                vtmp->type = ASN01_NULL;
+                vtmp->type = asnNULL;
                 Client_setVarObjid( vtmp, vp1->name, vp1->nameLength );
                 vtmp->next = vp2_prev->next;
                 vp2_prev->next = vtmp;
@@ -428,7 +428,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
              *   which rows of the table "ought" to exist, but don't?)
              */
             if ( entry->mteTExTest & entry->mteTExStartup & MTE_EXIST_ABSENT ) {
-                if ( !( entry->flags & MTE_TRIGGER_FLAG_VWILD ) && var->type == ASN01_NULL ) {
+                if ( !( entry->flags & MTE_TRIGGER_FLAG_VWILD ) && var->type == asnNULL ) {
                     DEBUG_MSGTL( ( "disman:event:trigger:fire",
                         "Firing initial existence test: " ) );
                     DEBUG_MSGOID( ( "disman:event:trigger:fire",
@@ -466,12 +466,12 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 entry->mteTriggerFired = NULL;
                 reason = NULL;
 
-                if ( ( entry->mteTExTest & MTE_EXIST_PRESENT ) && ( vp1->type != ASN01_NULL ) && ( vp2->type == ASN01_NULL ) ) {
+                if ( ( entry->mteTExTest & MTE_EXIST_PRESENT ) && ( vp1->type != asnNULL ) && ( vp2->type == asnNULL ) ) {
                     /* A new instance has appeared */
                     entry->mteTriggerFired = vp1;
                     reason = "(present)";
 
-                } else if ( ( entry->mteTExTest & MTE_EXIST_ABSENT ) && ( vp1->type == ASN01_NULL ) && ( vp2->type != ASN01_NULL ) ) {
+                } else if ( ( entry->mteTExTest & MTE_EXIST_ABSENT ) && ( vp1->type == asnNULL ) && ( vp2->type != asnNULL ) ) {
 
                     /*
                      * A previous instance has disappeared.
@@ -539,15 +539,15 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
          *  instances of a given object should have the same syntax.
          */
         switch ( var->type ) {
-        case ASN01_INTEGER:
-        case ASN01_COUNTER:
-        case ASN01_GAUGE:
-        case ASN01_TIMETICKS:
-        case ASN01_UINTEGER:
-        case ASN01_COUNTER64:
-        case ASN01_OPAQUE_COUNTER64:
-        case ASN01_OPAQUE_U64:
-        case ASN01_OPAQUE_I64:
+        case asnINTEGER:
+        case asnCOUNTER:
+        case asnGAUGE:
+        case asnTIMETICKS:
+        case asnUINTEGER:
+        case asnCOUNTER64:
+        case asnOPAQUE_COUNTER64:
+        case asnOPAQUE_U64:
+        case asnOPAQUE_I64:
             /* OK */
             break;
         default:
@@ -754,7 +754,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                      * Validate this particular sample against
                      *   the relevant wildcarded marker...
                      */
-                    if ( ( dv1->type == ASN01_NULL ) || ( dv1->type != dv2->type ) || ( *dv1->value.integer != *dv2->value.integer ) ) {
+                    if ( ( dv1->type == asnNULL ) || ( dv1->type != dv2->type ) || ( *dv1->value.integer != *dv2->value.integer ) ) {
                         /*
                          * Bogus or changed discontinuity marker.
                          * Need to skip this sample.
@@ -772,7 +772,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *   the delta value against (regardless of whether the
                  *   discontinuity marker was wildcarded or not).
                  */
-                if ( vp2->type == ASN01_NULL ) {
+                if ( vp2->type == asnNULL ) {
                     DEBUG_MSGTL( ( "disman:event:delta", "missing sample: " ) );
                     DEBUG_MSGOID( ( "disman:event:delta", vp1->name,
                         vp1->nameLength ) );
@@ -892,7 +892,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                      * Validate this particular sample against
                      *   the relevant wildcarded marker...
                      */
-                    if ( ( dv1->type == ASN01_NULL ) || ( dv1->type != dv2->type ) || ( *dv1->value.integer != *dv2->value.integer ) ) {
+                    if ( ( dv1->type == asnNULL ) || ( dv1->type != dv2->type ) || ( *dv1->value.integer != *dv2->value.integer ) ) {
                         /*
                          * Bogus or changed discontinuity marker.
                          * Need to skip this sample.
@@ -906,7 +906,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                  *   the delta value against (regardless of whether the
                  *   discontinuity marker was wildcarded or not).
                  */
-                if ( vp2->type == ASN01_NULL ) {
+                if ( vp2->type == asnNULL ) {
                     vp2 = vp2->next;
                     continue;
                 }
@@ -1012,7 +1012,7 @@ void mteTrigger_run( unsigned int reg, void* clientarg )
                 if ( !vp2 ) {
                     break; /* Run out of 'old' values */
                 }
-                if ( ( !vp1->value.integer ) || ( vp2->type == ASN01_NULL ) ) {
+                if ( ( !vp1->value.integer ) || ( vp2->type == asnNULL ) ) {
                     vp2 = vp2->next;
                     continue;
                 }

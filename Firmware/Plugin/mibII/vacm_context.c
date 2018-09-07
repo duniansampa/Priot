@@ -88,7 +88,7 @@ void init_vacm_context( void )
         return;
     }
 
-    Table_helperAddIndex( table_info, ASN01_OCTET_STR )
+    Table_helperAddIndex( table_info, asnOCTET_STR )
         table_info->min_column
         = 1;
     table_info->max_column = 1;
@@ -132,7 +132,7 @@ int vacm_context_handler( MibHandler* handler,
             /*
              * only one column should ever reach us, so don't check it 
              */
-            Client_setVarTypedValue( var, ASN01_OCTET_STR,
+            Client_setVarTypedValue( var, asnOCTET_STR,
                 context_ptr->context_name,
                 strlen( context_ptr->context_name ) );
 

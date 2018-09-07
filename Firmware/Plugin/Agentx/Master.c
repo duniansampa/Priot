@@ -504,7 +504,7 @@ int Master_handler( MibHandler* handler,
                     request->range_end_len ) );
 
                 DEBUG_MSG( ( "agentx/master", "\n" ) );
-                Api_pduAddVariable( pdu, nptr, nlen, ASN01_PRIV_INCL_RANGE,
+                Api_pduAddVariable( pdu, nptr, nlen, asnPRIV_INCL_RANGE,
                     ( u_char* )request->range_end,
                     request->range_end_len * sizeof( oid ) );
                 request->inclusive = 0;
@@ -520,7 +520,7 @@ int Master_handler( MibHandler* handler,
                     request->range_end_len ) );
 
                 DEBUG_MSG( ( "agentx/master", "\n" ) );
-                Api_pduAddVariable( pdu, nptr, nlen, ASN01_PRIV_EXCL_RANGE,
+                Api_pduAddVariable( pdu, nptr, nlen, asnPRIV_EXCL_RANGE,
                     ( u_char* )request->range_end,
                     request->range_end_len * sizeof( oid ) );
             }

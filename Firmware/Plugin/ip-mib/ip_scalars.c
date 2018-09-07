@@ -57,27 +57,27 @@ void init_ip_scalars( void )
 
     Scalar_registerScalar( AgentHandler_createHandlerRegistration( "ipForwarding", handle_ipForwarding,
         ipForwarding_oid,
-        ASN01_OID_LENGTH( ipForwarding_oid ),
+        asnOID_LENGTH( ipForwarding_oid ),
         HANDLER_CAN_RWRITE ) );
 
     Scalar_registerScalar( AgentHandler_createHandlerRegistration( "ipDefaultTTL", handle_ipDefaultTTL,
         ipDefaultTTL_oid,
-        ASN01_OID_LENGTH( ipDefaultTTL_oid ),
+        asnOID_LENGTH( ipDefaultTTL_oid ),
         HANDLER_CAN_RWRITE ) );
 
     Scalar_registerScalar( AgentHandler_createHandlerRegistration( "ipv6IpForwarding", handle_ipv6IpForwarding,
         ipv6IpForwarding_oid,
-        ASN01_OID_LENGTH( ipv6IpForwarding_oid ),
+        asnOID_LENGTH( ipv6IpForwarding_oid ),
         HANDLER_CAN_RWRITE ) );
 
     Scalar_registerScalar( AgentHandler_createHandlerRegistration( "ipv6IpDefaultHopLimit", handle_ipv6IpDefaultHopLimit,
         ipv6IpDefaultHopLimit_oid,
-        ASN01_OID_LENGTH( ipv6IpDefaultHopLimit_oid ),
+        asnOID_LENGTH( ipv6IpDefaultHopLimit_oid ),
         HANDLER_CAN_RWRITE ) );
 
     Scalar_registerScalar( AgentHandler_createHandlerRegistration( "ipAddressSpinLock", handle_ipAddressSpinLock,
         ipAddressSpinLock_oid,
-        ASN01_OID_LENGTH( ipAddressSpinLock_oid ),
+        asnOID_LENGTH( ipAddressSpinLock_oid ),
         HANDLER_CAN_RWRITE ) );
 
     /* Initialize spin lock with random value */
@@ -108,7 +108,7 @@ handle_ipForwarding( MibHandler* handler,
                 PRIOT_NOSUCHINSTANCE );
         } else {
             value = value ? 1 : 2;
-            Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( requests->requestvb, asnINTEGER,
                 ( u_char* )&value, sizeof( value ) );
         }
         break;
@@ -201,7 +201,7 @@ handle_ipDefaultTTL( MibHandler* handler,
             Agent_setRequestError( reqinfo, requests,
                 PRIOT_NOSUCHINSTANCE );
         } else {
-            Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( requests->requestvb, asnINTEGER,
                 ( u_char* )&value, sizeof( value ) );
         }
         break;
@@ -298,7 +298,7 @@ handle_ipv6IpForwarding( MibHandler* handler,
                 PRIOT_NOSUCHINSTANCE );
         } else {
             value = value ? 1 : 2;
-            Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( requests->requestvb, asnINTEGER,
                 ( u_char* )&value, sizeof( value ) );
         }
         break;
@@ -387,7 +387,7 @@ handle_ipAddressSpinLock( MibHandler* handler,
     switch ( reqinfo->mode ) {
 
     case MODE_GET:
-        Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+        Client_setVarTypedValue( requests->requestvb, asnINTEGER,
             ( u_char* )&ipAddressSpinLockValue,
             sizeof( ipAddressSpinLockValue ) );
         break;
@@ -464,7 +464,7 @@ handle_ipv6IpDefaultHopLimit( MibHandler* handler,
             Agent_setRequestError( reqinfo, requests,
                 PRIOT_NOSUCHINSTANCE );
         } else {
-            Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( requests->requestvb, asnINTEGER,
                 ( u_char* )&value, sizeof( value ) );
         }
 

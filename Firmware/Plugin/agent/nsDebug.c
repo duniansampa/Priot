@@ -40,17 +40,17 @@ void init_nsDebug( void )
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration(
             "nsDebugEnabled", handle_nsDebugEnabled,
-            nsDebugEnabled_oid, ASN01_OID_LENGTH( nsDebugEnabled_oid ),
+            nsDebugEnabled_oid, asnOID_LENGTH( nsDebugEnabled_oid ),
             HANDLER_CAN_RWRITE ) );
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration(
             "nsDebugOutputAll", handle_nsDebugOutputAll,
-            nsDebugOutputAll_oid, ASN01_OID_LENGTH( nsDebugOutputAll_oid ),
+            nsDebugOutputAll_oid, asnOID_LENGTH( nsDebugOutputAll_oid ),
             HANDLER_CAN_RWRITE ) );
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration(
             "nsDebugDumpPdu", handle_nsDebugDumpPdu,
-            nsDebugDumpPdu_oid, ASN01_OID_LENGTH( nsDebugDumpPdu_oid ),
+            nsDebugDumpPdu_oid, asnOID_LENGTH( nsDebugDumpPdu_oid ),
             HANDLER_CAN_RWRITE ) );
 
     /*
@@ -62,7 +62,7 @@ void init_nsDebug( void )
     if ( !table_info ) {
         return;
     }
-    Table_helperAddIndexes( table_info, ASN01_PRIV_IMPLIED_OCTET_STR, 0 );
+    Table_helperAddIndexes( table_info, asnPRIV_IMPLIED_OCTET_STR, 0 );
     table_info->min_column = DBGTOKEN_STATUS;
     table_info->max_column = DBGTOKEN_STATUS;
 
@@ -83,7 +83,7 @@ void init_nsDebug( void )
     TableIterator_registerTableIterator2(
         AgentHandler_createHandlerRegistration(
             "tzDebugTable", handle_nsDebugTable,
-            nsDebugTokenTable_oid, ASN01_OID_LENGTH( nsDebugTokenTable_oid ),
+            nsDebugTokenTable_oid, asnOID_LENGTH( nsDebugTokenTable_oid ),
             HANDLER_CAN_RWRITE ),
         iinfo );
 }
@@ -105,7 +105,7 @@ int handle_nsDebugEnabled( MibHandler* handler,
         for ( request = requests; request; request = request->next ) {
             if ( request->processed != 0 )
                 continue;
-            Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( request->requestvb, asnINTEGER,
                 ( u_char* )&enabled, sizeof( enabled ) );
         }
         break;
@@ -117,7 +117,7 @@ int handle_nsDebugEnabled( MibHandler* handler,
             if ( request->status != 0 ) {
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
-            if ( request->requestvb->type != ASN01_INTEGER ) {
+            if ( request->requestvb->type != asnINTEGER ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -156,7 +156,7 @@ int handle_nsDebugOutputAll( MibHandler* handler,
         for ( request = requests; request; request = request->next ) {
             if ( request->processed != 0 )
                 continue;
-            Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( request->requestvb, asnINTEGER,
                 ( u_char* )&enabled, sizeof( enabled ) );
         }
         break;
@@ -168,7 +168,7 @@ int handle_nsDebugOutputAll( MibHandler* handler,
             if ( request->status != 0 ) {
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
-            if ( request->requestvb->type != ASN01_INTEGER ) {
+            if ( request->requestvb->type != asnINTEGER ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -208,7 +208,7 @@ int handle_nsDebugDumpPdu( MibHandler* handler,
         for ( request = requests; request; request = request->next ) {
             if ( request->processed != 0 )
                 continue;
-            Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( request->requestvb, asnINTEGER,
                 ( u_char* )&enabled, sizeof( enabled ) );
         }
         break;
@@ -220,7 +220,7 @@ int handle_nsDebugDumpPdu( MibHandler* handler,
             if ( request->status != 0 ) {
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
-            if ( request->requestvb->type != ASN01_INTEGER ) {
+            if ( request->requestvb->type != asnINTEGER ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -314,7 +314,7 @@ int handle_nsDebugTable( MibHandler* handler,
             if ( !debug_entry )
                 continue;
             status = ( debug_entry->enabled ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE );
-            Client_setVarTypedValue( request->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( request->requestvb, asnINTEGER,
                 ( u_char* )&status, sizeof( status ) );
         }
         break;
@@ -326,7 +326,7 @@ int handle_nsDebugTable( MibHandler* handler,
             if ( request->status != 0 ) {
                 return PRIOT_ERR_NOERROR; /* Already got an error */
             }
-            if ( request->requestvb->type != ASN01_INTEGER ) {
+            if ( request->requestvb->type != asnINTEGER ) {
                 Agent_setRequestError( reqinfo, request, PRIOT_ERR_WRONGTYPE );
                 return PRIOT_ERR_WRONGTYPE;
             }

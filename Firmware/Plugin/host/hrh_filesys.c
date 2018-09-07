@@ -65,23 +65,23 @@ int header_hrhfilesys( struct Variable_s*, oid*, size_t*, int,
 #define HRFSYS_PARTDUMP 9
 
 struct Variable4_s hrfsys_variables[] = {
-    { HRFSYS_INDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRFSYS_INDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 1 } },
-    { HRFSYS_MOUNT, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRFSYS_MOUNT, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 2 } },
-    { HRFSYS_RMOUNT, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRFSYS_RMOUNT, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 3 } },
-    { HRFSYS_TYPE, ASN01_OBJECT_ID, IMPL_OLDAPI_RONLY,
+    { HRFSYS_TYPE, asnOBJECT_ID, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 4 } },
-    { HRFSYS_ACCESS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRFSYS_ACCESS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 5 } },
-    { HRFSYS_BOOT, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRFSYS_BOOT, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 6 } },
-    { HRFSYS_STOREIDX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRFSYS_STOREIDX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 7 } },
-    { HRFSYS_FULLDUMP, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRFSYS_FULLDUMP, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 8 } },
-    { HRFSYS_PARTDUMP, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRFSYS_PARTDUMP, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrhfilesys, 2, { 1, 9 } },
 };
 oid hrfsys_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 8 };
@@ -110,7 +110,7 @@ int header_hrhfilesys( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRFSYS_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int fsys_idx, LowIndex = -1;
     int result;
 

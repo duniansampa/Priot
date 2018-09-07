@@ -32,7 +32,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ifTable_oid[] = { IFTABLE_OID };
-const int ifTable_oid_size = ASN01_OID_LENGTH( ifTable_oid );
+const int ifTable_oid_size = asnOID_LENGTH( ifTable_oid );
 
 ifTable_registration ifTable_user_context;
 static ifTable_registration* ifTable_user_context_p;
@@ -130,7 +130,7 @@ void initialize_table_ifTable( void )
         myreg = AgentHandler_createHandlerRegistration( "if number",
             _if_number_handler,
             reg_oid,
-            ASN01_OID_LENGTH( reg_oid ),
+            asnOID_LENGTH( reg_oid ),
             HANDLER_CAN_RONLY );
         Scalar_registerScalar( myreg );
     }
@@ -2195,7 +2195,7 @@ _if_number_handler( MibHandler* handler,
 {
     if ( MODE_GET == reqinfo->mode ) {
         int val = ifTable_container_size();
-        Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+        Client_setVarTypedValue( requests->requestvb, asnINTEGER,
             ( u_char* )&val, sizeof( val ) );
     } else
         Assert_assert( "bad mode in RO handler" );

@@ -181,7 +181,7 @@ void AgentxConfig_init( void )
         /*
          * set up callbacks to initiate master agent pings for this session
          */
-        DefaultStore_registerConfig( ASN01_INTEGER,
+        DefaultStore_registerConfig( asnINTEGER,
             DefaultStore_getString( DsStore_LIBRARY_ID,
                                          DsStr_APPTYPE ),
             "agentxPingInterval",

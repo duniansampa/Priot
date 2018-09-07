@@ -18,7 +18,7 @@ void init_vmstat( void )
     DEBUG_MSGTL( ( "vmstat", "Initializing\n" ) );
     ScalarGroup_registerScalarGroup(
         AgentHandler_createHandlerRegistration( "vmstat", vmstat_handler,
-            vmstat_oid, ASN01_OID_LENGTH( vmstat_oid ),
+            vmstat_oid, asnOID_LENGTH( vmstat_oid ),
             HANDLER_CAN_RONLY ),
         MIBINDEX, CPUNUMCPUS );
 }
@@ -39,12 +39,12 @@ int vmstat_handler( MibHandler* handler,
 
         switch ( obj ) {
         case MIBINDEX: /* dummy value */
-            Client_setVarTypedInteger( requests->requestvb, ASN01_INTEGER, 1 );
+            Client_setVarTypedInteger( requests->requestvb, asnINTEGER, 1 );
             break;
 
         case ERRORNAME: /* dummy name */
             sprintf( cp, "systemStats" );
-            Client_setVarTypedValue( requests->requestvb, ASN01_OCTET_STR,
+            Client_setVarTypedValue( requests->requestvb, asnOCTET_STR,
                 cp, strlen( cp ) );
             break;
 
@@ -71,11 +71,11 @@ int vmstat_handler( MibHandler* handler,
          *        aren't supported on a given architecture.
          */
         case CPURAWUSER:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->user_ticks & 0xffffffff );
             break;
         case CPURAWNICE:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->nice_ticks & 0xffffffff );
             break;
         case CPURAWSYSTEM:
@@ -86,43 +86,43 @@ int vmstat_handler( MibHandler* handler,
               *   so use this value in preference to 'sys_ticks'
               *   if it has a non-zero value.
               */
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 ( info->sys2_ticks ? info->sys2_ticks : info->sys_ticks ) & 0xffffffff );
             break;
         case CPURAWIDLE:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->idle_ticks & 0xffffffff );
             break;
         case CPURAWWAIT:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->wait_ticks & 0xffffffff );
             break;
         case CPURAWKERNEL:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->kern_ticks & 0xffffffff );
             break;
         case CPURAWINTR:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->intrpt_ticks & 0xffffffff );
             break;
         case CPURAWSOFTIRQ:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->sirq_ticks & 0xffffffff );
             break;
         case CPURAWSTEAL:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->steal_ticks & 0xffffffff );
             break;
         case CPURAWGUEST:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->guest_ticks & 0xffffffff );
             break;
         case CPURAWGUESTNICE:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->guestnice_ticks & 0xffffffff );
             break;
         case CPUNUMCPUS:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedInteger( requests->requestvb, asnINTEGER,
                 cpu_num & 0x7fffffff );
             break;
 
@@ -147,7 +147,7 @@ int vmstat_handler( MibHandler* handler,
                 else
                     value = 0; /* or skip this entry */
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
         case CPUSYSTEM:
@@ -159,7 +159,7 @@ int vmstat_handler( MibHandler* handler,
                 else
                     value = 0; /* or skip this entry */
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
         case CPUIDLE:
@@ -170,7 +170,7 @@ int vmstat_handler( MibHandler* handler,
                 else
                     value = 0; /* or skip this entry */
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
 
@@ -179,25 +179,25 @@ int vmstat_handler( MibHandler* handler,
          *   (raw and per-second, calculated over the last minute)
          */
         case SYSRAWINTERRUPTS:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->nInterrupts & 0xffffffff );
             break;
         case SYSRAWCONTEXT:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->nCtxSwitches & 0xffffffff );
             break;
         case SYSINTERRUPTS:
             if ( info->history && info->history[ 0 ].total_hist ) {
                 value = ( info->nInterrupts - info->history[ 0 ].intr_hist ) / 60;
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
         case SYSCONTEXT:
             if ( info->history && info->history[ 0 ].total_hist ) {
                 value = ( info->nCtxSwitches - info->history[ 0 ].ctx_hist ) / 60;
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
 
@@ -205,11 +205,11 @@ int vmstat_handler( MibHandler* handler,
          * Similarly for the Swap statistics...
          */
         case RAWSWAPIN:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->swapIn & 0xffffffff );
             break;
         case RAWSWAPOUT:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->swapOut & 0xffffffff );
             break;
         case SWAPIN:
@@ -217,7 +217,7 @@ int vmstat_handler( MibHandler* handler,
                 value = ( info->swapIn - info->history[ 0 ].swpi_hist ) / 60;
                 /* ??? value *= PAGE_SIZE;  */
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
         case SWAPOUT:
@@ -225,7 +225,7 @@ int vmstat_handler( MibHandler* handler,
                 value = ( info->swapOut - info->history[ 0 ].swpo_hist ) / 60;
                 /* ??? value *= PAGE_SIZE;  */
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
 
@@ -233,25 +233,25 @@ int vmstat_handler( MibHandler* handler,
          * ... and the I/O statistics.
          */
         case IORAWSENT:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->pageOut & 0xffffffff );
             break;
         case IORAWRECEIVE:
-            Client_setVarTypedInteger( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedInteger( requests->requestvb, asnCOUNTER,
                 info->pageIn & 0xffffffff );
             break;
         case IOSENT:
             if ( info->history && info->history[ 0 ].total_hist ) {
                 value = ( info->pageOut - info->history[ 0 ].pageo_hist ) / 60;
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
         case IORECEIVE:
             if ( info->history && info->history[ 0 ].total_hist ) {
                 value = ( info->pageIn - info->history[ 0 ].pagei_hist ) / 60;
                 Client_setVarTypedInteger( requests->requestvb,
-                    ASN01_INTEGER, value & 0x7fffffff );
+                    asnINTEGER, value & 0x7fffffff );
             }
             break;
 

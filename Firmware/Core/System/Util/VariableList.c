@@ -112,7 +112,7 @@ int VariableList_checkOidMaxLength( const VariableList* var )
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    rc = VariableList_checkType( var, ASN01_OBJECT_ID );
+    rc = VariableList_checkType( var, asnOBJECT_ID );
 
     if ( rc == PRIOT_ERR_NOERROR )
         rc = VariableList_checkMaxLength( var, TYPES_MAX_OID_LEN * sizeof( oid ) );
@@ -125,7 +125,7 @@ int VariableList_checkIntLength( const VariableList* var )
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    return VariableList_checkTypeAndLength( var, ASN01_INTEGER, sizeof( long ) );
+    return VariableList_checkTypeAndLength( var, asnINTEGER, sizeof( long ) );
 }
 
 int VariableList_checkUIntLength( const VariableList* var )
@@ -133,7 +133,7 @@ int VariableList_checkUIntLength( const VariableList* var )
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    return VariableList_checkTypeAndLength( var, ASN01_UNSIGNED, sizeof( long ) );
+    return VariableList_checkTypeAndLength( var, asnUNSIGNED, sizeof( long ) );
 }
 
 int VariableList_checkIntLengthAndRange( const VariableList* var, int low, int high )
@@ -143,7 +143,7 @@ int VariableList_checkIntLengthAndRange( const VariableList* var, int low, int h
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER, sizeof( long ) );
+    rc = VariableList_checkTypeAndLength( var, asnINTEGER, sizeof( long ) );
 
     if ( rc == PRIOT_ERR_NOERROR ) {
         if ( ( *var->value.integer < low ) || ( *var->value.integer > high ) ) {
@@ -161,7 +161,7 @@ int VariableList_checkBoolLengthAndValue( const VariableList* var )
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER, sizeof( long ) );
+    rc = VariableList_checkTypeAndLength( var, asnINTEGER, sizeof( long ) );
 
     if ( rc == PRIOT_ERR_NOERROR )
         rc = VariableList_checkIntLengthAndRange( var, 1, 2 );
@@ -176,7 +176,7 @@ int VariableList_checkRowStatusLengthAndRange( const VariableList* var )
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER, sizeof( long ) );
+    rc = VariableList_checkTypeAndLength( var, asnINTEGER, sizeof( long ) );
 
     if ( rc == PRIOT_ERR_NOERROR ) {
         if ( *var->value.integer == tcROW_STATUS_NOTREADY )
@@ -229,7 +229,7 @@ int VariableList_checkStorageType( const VariableList* var, int old_value )
     if ( NULL == var )
         return PRIOT_ERR_GENERR;
 
-    rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER, sizeof( long ) );
+    rc = VariableList_checkTypeAndLength( var, asnINTEGER, sizeof( long ) );
 
     if ( rc == PRIOT_ERR_NOERROR ) {
         rc = VariableList_checkIntLengthAndRange( var, PRIOT_STORAGE_NONE, PRIOT_STORAGE_READONLY );

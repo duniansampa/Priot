@@ -2,8 +2,8 @@
 #include "Api.h"
 #include "Priot.h"
 #include "ReadConfig.h"
-#include "Secmod.h"
 #include "System/Security/Engine.h"
+#include "System/Security/SecMod.h"
 #include "System/Security/Usm.h"
 #include "System/String.h"
 #include "System/Util/DefaultStore.h"
@@ -735,7 +735,7 @@ void V3_initV3( const char* type )
      * NOTE: this must be after the callbacks are registered above,
      * since they need to be called before the USM callbacks.
      */
-    Secmod_init();
+    SecMod_init();
 
     /*
      * register all our configuration handlers (ack, there's a lot)
@@ -760,29 +760,29 @@ void V3_initV3( const char* type )
     /*
      * default store config entries
      */
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defSecurityName",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defSecurityName",
         DsStore_LIBRARY_ID, DsStr_SECNAME );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defContext",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defContext",
         DsStore_LIBRARY_ID, DsStr_CONTEXT );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPassphrase",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defPassphrase",
         DsStore_LIBRARY_ID,
         DsStr_PASSPHRASE );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defAuthPassphrase",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defAuthPassphrase",
         DsStore_LIBRARY_ID,
         DsStr_AUTHPASSPHRASE );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPrivPassphrase",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defPrivPassphrase",
         DsStore_LIBRARY_ID,
         DsStr_PRIVPASSPHRASE );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defAuthMasterKey",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defAuthMasterKey",
         DsStore_LIBRARY_ID,
         DsStr_AUTHMASTERKEY );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPrivMasterKey",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defPrivMasterKey",
         DsStore_LIBRARY_ID,
         DsStr_PRIVMASTERKEY );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defAuthLocalizedKey",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defAuthLocalizedKey",
         DsStore_LIBRARY_ID,
         DsStr_AUTHLOCALIZEDKEY );
-    DefaultStore_registerConfig( ASN01_OCTET_STR, "priot", "defPrivLocalizedKey",
+    DefaultStore_registerConfig( asnOCTET_STR, "priot", "defPrivLocalizedKey",
         DsStore_LIBRARY_ID,
         DsStr_PRIVLOCALIZEDKEY );
     ReadConfig_registerConfigHandler( "priot", "defVersion", V3_versionConf, NULL,

@@ -67,8 +67,8 @@ void init_udpTable( void )
     if ( !table_info ) {
         return;
     }
-    Table_helperAddIndexes( table_info, ASN01_IPADDRESS,
-        ASN01_INTEGER, 0 );
+    Table_helperAddIndexes( table_info, asnIPADDRESS,
+        asnINTEGER, 0 );
     table_info->min_column = UDPLOCALADDRESS;
     table_info->max_column = UDPLOCALPORT;
 
@@ -89,7 +89,7 @@ void init_udpTable( void )
      */
     reginfo = AgentHandler_createHandlerRegistration( "udpTable",
         udpTable_handler,
-        udpTable_oid, ASN01_OID_LENGTH( udpTable_oid ),
+        udpTable_oid, asnOID_LENGTH( udpTable_oid ),
         HANDLER_CAN_RONLY ),
     rc = TableIterator_registerTableIterator2( reginfo, iinfo );
     if ( rc != ErrorCode_SUCCESS )
@@ -101,7 +101,7 @@ void init_udpTable( void )
     AgentHandler_injectHandler( reginfo,
         CacheHandler_getCacheHandler( UDP_STATS_CACHE_TIMEOUT,
                                     udpTable_load, udpTable_free,
-                                    udpTable_oid, ASN01_OID_LENGTH( udpTable_oid ) ) );
+                                    udpTable_oid, asnOID_LENGTH( udpTable_oid ) ) );
 }
 
 int udpTable_handler( MibHandler* handler,
@@ -137,13 +137,13 @@ int udpTable_handler( MibHandler* handler,
             switch ( subid ) {
             case UDPLOCALADDRESS:
                 addr = UDP_ADDRESS_TO_HOST_ORDER( entry->UDPTABLE_LOCALADDRESS );
-                Client_setVarTypedValue( requestvb, ASN01_IPADDRESS,
+                Client_setVarTypedValue( requestvb, asnIPADDRESS,
                     ( u_char* )&addr,
                     sizeof( uint32_t ) );
                 break;
             case UDPLOCALPORT:
                 port = UDP_PORT_TO_HOST_ORDER( ( u_short )entry->UDPTABLE_LOCALPORT );
-                Client_setVarTypedValue( requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( requestvb, asnINTEGER,
                     ( u_char* )&port, sizeof( port ) );
                 break;
             }

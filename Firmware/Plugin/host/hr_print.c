@@ -40,9 +40,9 @@ FILE* run_lpstat( int* );
 #define HRPRINT_ERROR 2
 
 struct Variable4_s hrprint_variables[] = {
-    { HRPRINT_STATUS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRPRINT_STATUS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrprint, 2, { 1, 1 } },
-    { HRPRINT_ERROR, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRPRINT_ERROR, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrprint, 2, { 1, 2 } }
 };
 oid hrprint_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 5 };
@@ -81,7 +81,7 @@ int header_hrprint( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRPRINT_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int print_idx, LowIndex = -1;
     int result;
 

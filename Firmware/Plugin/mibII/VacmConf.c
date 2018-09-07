@@ -8,9 +8,9 @@
 #include "Priot.h"
 #include "PriotSettings.h"
 #include "ReadConfig.h"
-#include "Secmod.h"
 #include "System/AccessControl/Vacm.h"
 #include "System/Containers/MapList.h"
+#include "System/Security/SecMod.h"
 #include "System/String.h"
 #include "System/Util/DefaultStore.h"
 #include "System/Util/Logger.h"
@@ -553,7 +553,7 @@ void VacmConf_parseView( const char* token, char* param )
     char *name, *type, *subtree, *mask;
     int inclexcl;
     struct Vacm_ViewEntry_s* vp;
-    oid suboid[ ASN01_MAX_OID_LEN ];
+    oid suboid[ asnMAX_OID_LEN ];
     size_t suboid_len = 0;
     size_t mask_len = 0;
     u_char viewMask[ VACM_VACMSTRINGLEN ];
@@ -588,7 +588,7 @@ void VacmConf_parseView( const char* token, char* param )
     suboid_len = strlen( subtree ) - 1;
     if ( subtree[ suboid_len ] == '.' )
         subtree[ suboid_len ] = '\0'; /* stamp on a trailing . */
-    suboid_len = ASN01_MAX_OID_LEN;
+    suboid_len = asnMAX_OID_LEN;
     if ( !Mib_parseOid( subtree, suboid, &suboid_len ) ) {
         ReadConfig_configPerror( "bad SUBTREE object id" );
         return;
@@ -1101,7 +1101,7 @@ int VacmConf_checkViewContents( Types_Pdu* pdu, oid* name, size_t namelen,
 #define CONTEXTNAMEINDEXLEN 32
     char contextNameIndex[ CONTEXTNAMEINDEXLEN + 1 ];
 
-    if ( Secmod_find( pdu->securityModel ) ) {
+    if ( SecMod_findDefBySecMod( pdu->securityModel ) ) {
         /*
          * any legal defined v3 security model
          */

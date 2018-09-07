@@ -67,7 +67,7 @@ ScalarGroup_helperHandler(MibHandler *handler,
     ScalarGroup *sgroup = (ScalarGroup *)handler->myvoid;
     int             ret, cmp;
     int             namelen;
-    oid             subid, root_tmp[ASN01_MAX_OID_LEN], *root_save;
+    oid             subid, root_tmp[asnMAX_OID_LEN], *root_save;
 
     DEBUG_MSGTL(("helper:scalar_group", "Got request:\n"));
     namelen = UTILITIES_MIN_VALUE(requests->requestvb->nameLength,
@@ -175,13 +175,13 @@ ScalarGroup_helperHandler(MibHandler *handler,
      *   set things up to retry again.
          */
         if (!requests->delegated &&
-            (requests->requestvb->type == ASN01_NULL ||
+            (requests->requestvb->type == asnNULL ||
              requests->requestvb->type == PRIOT_NOSUCHOBJECT ||
              requests->requestvb->type == PRIOT_NOSUCHINSTANCE)) {
              Client_setVarObjid(requests->requestvb,
                                reginfo->rootoid, reginfo->rootoid_len - 1);
             requests->requestvb->name[reginfo->rootoid_len - 2] = ++subid;
-            requests->requestvb->type = ASN01_PRIV_RETRY;
+            requests->requestvb->type = asnPRIV_RETRY;
         }
         reginfo->rootoid = root_save;
         reginfo->rootoid_len -= 2;

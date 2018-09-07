@@ -20,7 +20,7 @@ static TableRegistrationInfo* table_info;
 void init_mteTriggerBooleanTable( void )
 {
     static oid mteTBoolTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 2, 5 };
-    size_t mteTBoolTable_oid_len = ASN01_OID_LENGTH( mteTBoolTable_oid );
+    size_t mteTBoolTable_oid_len = asnOID_LENGTH( mteTBoolTable_oid );
     HandlerRegistration* reg;
 
     /*
@@ -39,9 +39,9 @@ void init_mteTriggerBooleanTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner       */
+        asnOCTET_STR, /* index: mteOwner       */
         /* index: mteTriggerName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTETRIGGERBOOLEANCOMPARISON;
@@ -99,34 +99,34 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERBOOLEANCOMPARISON:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTBoolComparison );
                 break;
             case COLUMN_MTETRIGGERBOOLEANVALUE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTBoolValue );
                 break;
             case COLUMN_MTETRIGGERBOOLEANSTARTUP:
                 ret = ( entry->flags & MTE_TRIGGER_FLAG_BSTART ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_MTETRIGGERBOOLEANOBJECTSOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTBoolObjOwner,
                     strlen( entry->mteTBoolObjOwner ) );
                 break;
             case COLUMN_MTETRIGGERBOOLEANOBJECTS:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTBoolObjects,
                     strlen( entry->mteTBoolObjects ) );
                 break;
             case COLUMN_MTETRIGGERBOOLEANEVENTOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTBoolEvOwner,
                     strlen( entry->mteTBoolEvOwner ) );
                 break;
             case COLUMN_MTETRIGGERBOOLEANEVENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTBoolEvent,
                     strlen( entry->mteTBoolEvent ) );
                 break;
@@ -187,7 +187,7 @@ int mteTriggerBooleanTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERBOOLEANEVENTOWNER:
             case COLUMN_MTETRIGGERBOOLEANEVENT:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
+                    request->requestvb, asnOCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

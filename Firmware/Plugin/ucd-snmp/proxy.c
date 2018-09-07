@@ -147,7 +147,7 @@ void proxy_parse_config( const char* token, char* line )
 
     newp->sess = ss;
     DEBUG_MSGTL( ( "proxy_init", "name = %s\n", args[ arg ] ) );
-    newp->name_len = ASN01_MAX_OID_LEN;
+    newp->name_len = asnMAX_OID_LEN;
     if ( !Mib_parseOid( args[ arg++ ], newp->name, &newp->name_len ) ) {
         Api_perror( "proxy" );
         ReadConfig_configPerror( "illegal proxy oid specified\n" );
@@ -156,7 +156,7 @@ void proxy_parse_config( const char* token, char* line )
 
     if ( arg < argn ) {
         DEBUG_MSGTL( ( "proxy_init", "base = %s\n", args[ arg ] ) );
-        newp->base_len = ASN01_MAX_OID_LEN;
+        newp->base_len = asnMAX_OID_LEN;
         if ( !Mib_parseOid( args[ arg++ ], newp->base, &newp->base_len ) ) {
             Api_perror( "proxy" );
             ReadConfig_configPerror( "illegal variable name specified (base oid)\n" );
@@ -384,7 +384,7 @@ int proxy_handler( MibHandler* handler,
                 ourlength++;
             }
         } else if ( sp->base_len > 0 ) {
-            if ( ( ourlength - sp->name_len + sp->base_len ) > ASN01_MAX_OID_LEN ) {
+            if ( ( ourlength - sp->name_len + sp->base_len ) > asnMAX_OID_LEN ) {
                 /*
                  * too large 
                  */
@@ -447,8 +447,8 @@ int proxy_got_response( int operation, Types_Session* sess, int reqid,
     VariableList *vars, *var = NULL;
 
     struct simple_proxy* sp;
-    oid myname[ ASN01_MAX_OID_LEN ];
-    size_t myname_len = ASN01_MAX_OID_LEN;
+    oid myname[ asnMAX_OID_LEN ];
+    size_t myname_len = asnMAX_OID_LEN;
 
     cache = AgentHandler_handlerCheckCache( cache );
 
@@ -558,7 +558,7 @@ int proxy_got_response( int operation, Types_Session* sess, int reqid,
                     DEBUG_MSG( ( "proxy", " (%d) != ", ( int )sp->base_len ) );
                     DEBUG_MSGOID( ( "proxy", sp->base, sp->base_len ) );
                     DEBUG_MSG( ( "proxy", "\n" ) );
-                    Client_setVarTypedValue( request->requestvb, ASN01_NULL, NULL, 0 );
+                    Client_setVarTypedValue( request->requestvb, asnNULL, NULL, 0 );
 
                     continue;
                 } else if ( !sp->base_len && ( var->nameLength < sp->name_len || Api_oidCompare( var->name, sp->name_len, sp->name, sp->name_len ) != 0 ) ) {
@@ -567,7 +567,7 @@ int proxy_got_response( int operation, Types_Session* sess, int reqid,
                     DEBUG_MSG( ( "proxy", " (%d) != ", ( int )sp->name_len ) );
                     DEBUG_MSGOID( ( "proxy", sp->name, sp->name_len ) );
                     DEBUG_MSG( ( "proxy", "\n" ) );
-                    Client_setVarTypedValue( request->requestvb, ASN01_NULL, NULL, 0 );
+                    Client_setVarTypedValue( request->requestvb, asnNULL, NULL, 0 );
                     continue;
                 } else {
                     /*
@@ -580,7 +580,7 @@ int proxy_got_response( int operation, Types_Session* sess, int reqid,
                      */
                         memcpy( myname, sp->name, sizeof( oid ) * sp->name_len );
                         myname_len = sp->name_len + var->nameLength - sp->base_len;
-                        if ( myname_len > ASN01_MAX_OID_LEN ) {
+                        if ( myname_len > asnMAX_OID_LEN ) {
                             Logger_log( LOGGER_PRIORITY_WARNING,
                                 "proxy OID return length too long.\n" );
                             Agent_setRequestError( cache->reqinfo, requests,

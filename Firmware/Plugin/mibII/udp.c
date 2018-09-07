@@ -49,7 +49,7 @@ void init_udp( void )
      */
     DEBUG_MSGTL( ( "mibII/udpScalar", "Initialising UDP scalar group\n" ) );
     reginfo = AgentHandler_createHandlerRegistration( "udp", udp_handler,
-        udp_oid, ASN01_OID_LENGTH( udp_oid ), HANDLER_CAN_RONLY );
+        udp_oid, asnOID_LENGTH( udp_oid ), HANDLER_CAN_RONLY );
     rc = ScalarGroup_registerScalarGroup( reginfo, UDPINDATAGRAMS, UDPOUTDATAGRAMS );
     if ( rc != ErrorCode_SUCCESS )
         return;
@@ -61,7 +61,7 @@ void init_udp( void )
     AgentHandler_injectHandler( reginfo,
         CacheHandler_getCacheHandler( UDP_STATS_CACHE_TIMEOUT,
                                     udp_load, udp_free,
-                                    udp_oid, ASN01_OID_LENGTH( udp_oid ) ) );
+                                    udp_oid, asnOID_LENGTH( udp_oid ) ) );
 
     REGISTER_SYSOR_ENTRY( udp_module_oid,
         "The MIB module for managing UDP implementations" );
@@ -95,7 +95,7 @@ int udp_handler( MibHandler* handler,
     VariableList* requestvb;
     long ret_value = -1;
     oid subid;
-    int type = ASN01_COUNTER;
+    int type = asnCOUNTER;
 
     /*
      * The cached data should already have been loaded by the
@@ -113,7 +113,7 @@ int udp_handler( MibHandler* handler,
     case MODE_GET:
         for ( request = requests; request; request = request->next ) {
             requestvb = request->requestvb;
-            subid = requestvb->name[ ASN01_OID_LENGTH( udp_oid ) ]; /* XXX */
+            subid = requestvb->name[ asnOID_LENGTH( udp_oid ) ]; /* XXX */
             DEBUG_MSGTL( ( "mibII/udpScalar", "oid: " ) );
             DEBUG_MSGOID( ( "mibII/udpScalar", requestvb->name,
                 requestvb->nameLength ) );

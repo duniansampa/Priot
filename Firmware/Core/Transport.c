@@ -29,15 +29,15 @@ extern void UnixDomain_ctor();
  */
 
 oid             transport_uDPDomain[]   = { 1, 3, 6, 1, 6, 1, 1 };
-size_t           transport_uDPDomainLen = ASN01_OID_LENGTH(transport_uDPDomain);
+size_t           transport_uDPDomainLen = asnOID_LENGTH(transport_uDPDomain);
 oid             transport_cLNSDomain[]  = { 1, 3, 6, 1, 6, 1, 2 };
-size_t           transport_cLNSDomainLen = ASN01_OID_LENGTH(transport_cLNSDomain);
+size_t           transport_cLNSDomainLen = asnOID_LENGTH(transport_cLNSDomain);
 oid             transport_cONSDomain[] = { 1, 3, 6, 1, 6, 1, 3 };
-size_t           transport_cONSDomainLen = ASN01_OID_LENGTH(transport_cONSDomain);
+size_t           transport_cONSDomainLen = asnOID_LENGTH(transport_cONSDomain);
 oid             transport_dDPDomain[] = { 1, 3, 6, 1, 6, 1, 4 };
-size_t           transport_dDPDomainLen = ASN01_OID_LENGTH(transport_dDPDomain);
+size_t           transport_dDPDomainLen = asnOID_LENGTH(transport_dDPDomain);
 oid             transport_iPXDomain[] = { 1, 3, 6, 1, 6, 1, 5 };
-size_t           transport_iPXDomainLen = ASN01_OID_LENGTH(transport_iPXDomain);
+size_t           transport_iPXDomainLen = asnOID_LENGTH(transport_iPXDomain);
 
 
 
@@ -47,7 +47,7 @@ static void     _Transport_tdomainDump(void);
 
 void Transport_initTransport(void)
 {
-    DefaultStore_registerConfig(ASN01_BOOLEAN,
+    DefaultStore_registerConfig(asnBOOLEAN,
                                "priot", "dontLoadHostConfig",
                                DsStore_LIBRARY_ID,
                                DsBool_DONT_LOAD_HOST_FILES);
@@ -447,7 +447,7 @@ Transport_tdomainTransportFull(const char *application,
         /* register a "transport" specifier */
         if (!have_added_handler) {
             have_added_handler = 1;
-            DefaultStore_registerConfig(ASN01_OCTET_STR,
+            DefaultStore_registerConfig(asnOCTET_STR,
                                        "priot", "transport",
                                        DsStore_LIBRARY_ID,
                                        DsStr_HOSTNAME);

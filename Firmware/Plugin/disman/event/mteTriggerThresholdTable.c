@@ -19,7 +19,7 @@ static TableRegistrationInfo* table_info;
 void init_mteTriggerThresholdTable( void )
 {
     static oid mteTThreshTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 2, 6 };
-    size_t mteTThreshTable_oid_len = ASN01_OID_LENGTH( mteTThreshTable_oid );
+    size_t mteTThreshTable_oid_len = asnOID_LENGTH( mteTThreshTable_oid );
     HandlerRegistration* reg;
 
     /*
@@ -38,9 +38,9 @@ void init_mteTriggerThresholdTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner       */
+        asnOCTET_STR, /* index: mteOwner       */
         /* index: mteTriggerName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTETRIGGERTHRESHOLDSTARTUP;
@@ -98,72 +98,72 @@ int mteTriggerThresholdTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGERTHRESHOLDSTARTUP:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTThStartup );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDRISING:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTThRiseValue );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDFALLING:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTThFallValue );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISING:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTThDRiseValue );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLING:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteTThDFallValue );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDOBJECTSOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThObjOwner,
                     strlen( entry->mteTThObjOwner ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDOBJECTS:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThObjects,
                     strlen( entry->mteTThObjects ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDRISINGEVENTOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThRiseOwner,
                     strlen( entry->mteTThRiseOwner ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDRISINGEVENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThRiseEvent,
                     strlen( entry->mteTThRiseEvent ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDFALLINGEVENTOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThFallOwner,
                     strlen( entry->mteTThFallOwner ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDFALLINGEVENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThFallEvent,
                     strlen( entry->mteTThFallEvent ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISINGEVENTOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThDRiseOwner,
                     strlen( entry->mteTThDRiseOwner ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTARISINGEVENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThDRiseEvent,
                     strlen( entry->mteTThDRiseEvent ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENTOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThDFallOwner,
                     strlen( entry->mteTThDFallOwner ) );
                 break;
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTThDFallEvent,
                     strlen( entry->mteTThDFallEvent ) );
                 break;
@@ -227,7 +227,7 @@ int mteTriggerThresholdTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENTOWNER:
             case COLUMN_MTETRIGGERTHRESHOLDDELTAFALLINGEVENT:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
+                    request->requestvb, asnOCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

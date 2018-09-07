@@ -35,7 +35,7 @@ int Agent_addQueued( AgentSession* asp );
 int Agent_removeFromDelegated( AgentSession* asp );
 
 oid agent_versionSysoid[] = { NETSNMP_SYSTEM_MIB };
-int agent_versionSysoidLen = ASN01_OID_LENGTH( agent_versionSysoid );
+int agent_versionSysoidLen = asnOID_LENGTH( agent_versionSysoid );
 
 #define SNMP_ADDRCACHE_SIZE 10
 #define SNMP_ADDRCACHE_MAXAGE 300 /* in seconds */
@@ -1745,12 +1745,12 @@ Agent_addVarbindToCache( AgentSession* asp, int vbcount,
         if ( !MODE_IS_SET( asp->pdu->command ) ) {
             DEBUG_MSGTL( ( "verbose:asp", "asp %p reqinfo %p assigned to request\n",
                 asp, asp->reqinfo ) );
-            if ( varbind_ptr->type == ASN01_PRIV_INCL_RANGE ) {
+            if ( varbind_ptr->type == asnPRIV_INCL_RANGE ) {
                 DEBUG_MSGTL( ( "snmp_agent", "varbind %d is inclusive\n",
                     request->index ) );
                 request->inclusive = 1;
             }
-            varbind_ptr->type = ASN01_NULL;
+            varbind_ptr->type = asnNULL;
         }
 
         /*
@@ -1855,7 +1855,7 @@ int Agent_checkAcm( AgentSession* asp, u_char type )
             for ( j = request->repeat, vb = request->requestvb_start;
                   vb && j > -1;
                   j--, vb = vb->next ) {
-                if ( vb->type != ASN01_NULL && vb->type != ASN01_PRIV_RETRY ) { /* not yet processed */
+                if ( vb->type != asnNULL && vb->type != asnPRIV_RETRY ) { /* not yet processed */
                     view = AgentRegistry_inAView( vb->name, &vb->nameLength,
                         asp->pdu, vb->type );
 
@@ -1876,7 +1876,7 @@ int Agent_checkAcm( AgentSession* asp, u_char type )
                               move the contents up the chain and fill
                               in at the end else we won't end up
                               lexographically sorted properly */
-                            if ( j > -1 && vb->next && vb->next->type != ASN01_NULL && vb->next->type != ASN01_PRIV_RETRY ) {
+                            if ( j > -1 && vb->next && vb->next->type != asnNULL && vb->next->type != asnPRIV_RETRY ) {
                                 for ( k = j, vbc = vb, vb2 = vb->next;
                                       k > -2 && vbc && vb2;
                                       k--, vbc = vb2, vb2 = vb2->next ) {
@@ -2015,7 +2015,7 @@ int Agent_createSubtreeCache( AgentSession* asp )
                         } else {
                             vbptr = vbptr->next;
                             vbptr->nameLength = 0;
-                            vbptr->type = ASN01_NULL;
+                            vbptr->type = asnNULL;
                             asp->bulkcache[ bulkcount++ ] = vbptr;
                         }
                     }
@@ -2130,17 +2130,17 @@ int Agent_reassignRequests( AgentSession* asp )
             */
             continue;
         }
-        if ( asp->requests[ i ].requestvb->type == ASN01_NULL ) {
+        if ( asp->requests[ i ].requestvb->type == asnNULL ) {
             if ( !Agent_addVarbindToCache( asp, asp->requests[ i ].index,
                      asp->requests[ i ].requestvb,
                      asp->requests[ i ].subtree->next ) ) {
                 MEMORY_FREE( old_treecache );
             }
-        } else if ( asp->requests[ i ].requestvb->type == ASN01_PRIV_RETRY ) {
+        } else if ( asp->requests[ i ].requestvb->type == asnPRIV_RETRY ) {
             /*
             * re-add the same subtree
             */
-            asp->requests[ i ].requestvb->type = ASN01_NULL;
+            asp->requests[ i ].requestvb->type = asnNULL;
             if ( !Agent_addVarbindToCache( asp, asp->requests[ i ].index,
                      asp->requests[ i ].requestvb,
                      asp->requests[ i ].subtree ) ) {
@@ -2565,14 +2565,14 @@ int Agent_checkGetnextResults( AgentSession* asp )
                         "request %d wasn't inclusive\n",
                         request->index ) );
                     Client_setVarTypedValue( request->requestvb,
-                        ASN01_PRIV_RETRY, NULL, 0 );
-                } else if ( request->requestvb->type == ASN01_NULL || request->requestvb->type == PRIOT_NOSUCHINSTANCE || request->requestvb->type == PRIOT_NOSUCHOBJECT ) {
+                        asnPRIV_RETRY, NULL, 0 );
+                } else if ( request->requestvb->type == asnNULL || request->requestvb->type == PRIOT_NOSUCHINSTANCE || request->requestvb->type == PRIOT_NOSUCHOBJECT ) {
                     /*
                     * it was inclusive, but no results.  Still retry this
                     * search.
                     */
                     Client_setVarTypedValue( request->requestvb,
-                        ASN01_PRIV_RETRY, NULL, 0 );
+                        asnPRIV_RETRY, NULL, 0 );
                 }
             }
 
@@ -2611,7 +2611,7 @@ int Agent_checkGetnextResults( AgentSession* asp )
                 Client_setVarObjid( request->requestvb,
                     request->range_end,
                     request->range_end_len );
-                Client_setVarTypedValue( request->requestvb, ASN01_NULL,
+                Client_setVarTypedValue( request->requestvb, asnNULL,
                     NULL, 0 );
             }
 
@@ -2623,11 +2623,11 @@ int Agent_checkGetnextResults( AgentSession* asp )
                 * illegal response from a subagent.  Change it back to NULL
                 *  xxx-rks: err, how do we know this is a subagent?
                 */
-                request->requestvb->type = ASN01_NULL;
+                request->requestvb->type = asnNULL;
                 request->inclusive = 1;
             }
 
-            if ( request->requestvb->type == ASN01_NULL || request->requestvb->type == ASN01_PRIV_RETRY || ( asp->reqinfo->mode == MODE_GETBULK
+            if ( request->requestvb->type == asnNULL || request->requestvb->type == asnPRIV_RETRY || ( asp->reqinfo->mode == MODE_GETBULK
                                                                                                                && request->repeat > 0 ) )
                 count++;
         }
@@ -2658,7 +2658,7 @@ int Agent_handleGetnextLoop( AgentSession* asp )
         /*
         * check vacm against results
         */
-        Agent_checkAcm( asp, ASN01_PRIV_RETRY );
+        Agent_checkAcm( asp, asnPRIV_RETRY );
 
         /*
         * need to keep going we're not done yet.
@@ -2904,7 +2904,7 @@ int Agent_handlePdu( AgentSession* asp )
     case PRIOT_MSG_GETNEXT:
     case PRIOT_MSG_GETBULK:
         for ( v = asp->pdu->variables; v != NULL; v = v->next ) {
-            if ( v->type == ASN01_PRIV_INCL_RANGE ) {
+            if ( v->type == asnPRIV_INCL_RANGE ) {
                 /*
                 * Leave the type for now (it gets set to
                 * ASN01_NULL in Agent_addVarbindToCache,
@@ -2915,7 +2915,7 @@ int Agent_handlePdu( AgentSession* asp )
                 */
                 inclusives++;
             } else {
-                Client_setVarTypedValue( v, ASN01_NULL, NULL, 0 );
+                Client_setVarTypedValue( v, asnNULL, NULL, 0 );
             }
         }
     /*
@@ -2962,7 +2962,7 @@ int Agent_handlePdu( AgentSession* asp )
         * we couldn't find an appropriate tree).
         */
         if ( status == PRIOT_ERR_NOERROR )
-            Client_replaceVarTypes( asp->pdu->variables, ASN01_NULL,
+            Client_replaceVarTypes( asp->pdu->variables, asnNULL,
                 PRIOT_NOSUCHINSTANCE );
         break;
 

@@ -103,7 +103,7 @@ struct mteTrigger {
      */
     char            mteTriggerComment[MTE_STR2_LEN+1];
     char            mteTriggerTest;
-    oid             mteTriggerValueID[ASN01_MAX_OID_LEN];
+    oid             mteTriggerValueID[asnMAX_OID_LEN];
     size_t          mteTriggerValueID_len;
     char            mteTriggerTarget[ MTE_STR2_LEN+1];
     char            mteTriggerContext[MTE_STR2_LEN+1];
@@ -117,7 +117,7 @@ struct mteTrigger {
     /*
      * Column values for the mteTriggerDeltaTable
      */
-    oid             mteDeltaDiscontID[ASN01_MAX_OID_LEN];
+    oid             mteDeltaDiscontID[asnMAX_OID_LEN];
     size_t          mteDeltaDiscontID_len;
     long            mteDeltaDiscontIDType;
 

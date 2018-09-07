@@ -3,7 +3,7 @@
  * that may apply:
  */
 /*
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright C 2003 Sun Microsystems, Inc. All rights reserved.
  * Use is subject to license terms specified in the COPYING file
  * distributed with the Net-SNMP package.
  */
@@ -22,28 +22,28 @@ int fileCount;
 void init_file( void )
 {
     struct Variable2_s file_table[] = {
-        { FILE_INDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { FILE_INDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_file_table, 1, { 1 } },
-        { FILE_NAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { FILE_NAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_file_table, 1, { 2 } },
-        { FILE_SIZE, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { FILE_SIZE, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_file_table, 1, { 3 } },
-        { FILE_MAX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { FILE_MAX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_file_table, 1, { 4 } },
-        { FILE_ERROR, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { FILE_ERROR, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_file_table, 1, { 100 } },
-        { FILE_MSG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { FILE_MSG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_file_table, 1, { 101 } }
     };
 
     /*
      * Define the OID pointer to the top of the mib tree that we're
-     * registering underneath 
+     * registering underneath
      */
     oid file_variables_oid[] = { NETSNMP_UCDAVIS_MIB, 15, 1 };
 
     /*
-     * register ourselves with the agent to handle our mib tree 
+     * register ourselves with the agent to handle our mib tree
      */
     REGISTER_MIB( "ucd-snmp/file", file_table, Variable2_s,
         file_variables_oid );
@@ -89,7 +89,7 @@ void updateFile( int iindex )
 }
 
 /*
- * OID functions 
+ * OID functions
  */
 
 u_char*

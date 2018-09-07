@@ -62,10 +62,10 @@ void init_tcpTable( void )
     if ( !table_info ) {
         return;
     }
-    Table_helperAddIndexes( table_info, ASN01_IPADDRESS,
-        ASN01_INTEGER,
-        ASN01_IPADDRESS,
-        ASN01_INTEGER, 0 );
+    Table_helperAddIndexes( table_info, asnIPADDRESS,
+        asnINTEGER,
+        asnIPADDRESS,
+        asnINTEGER, 0 );
     table_info->min_column = TCPCONNSTATE;
     table_info->max_column = TCPCONNREMOTEPORT;
 
@@ -85,7 +85,7 @@ void init_tcpTable( void )
      */
     reginfo = AgentHandler_createHandlerRegistration( "tcpTable",
         tcpTable_handler,
-        tcpTable_oid, ASN01_OID_LENGTH( tcpTable_oid ),
+        tcpTable_oid, asnOID_LENGTH( tcpTable_oid ),
         HANDLER_CAN_RONLY ),
     rc = TableIterator_registerTableIterator2( reginfo, iinfo );
     if ( rc != ErrorCode_SUCCESS )
@@ -98,7 +98,7 @@ void init_tcpTable( void )
     AgentHandler_injectHandler( reginfo,
         CacheHandler_getCacheHandler( TCP_STATS_CACHE_TIMEOUT,
                                     tcpTable_load, tcpTable_free,
-                                    tcpTable_oid, ASN01_OID_LENGTH( tcpTable_oid ) ) );
+                                    tcpTable_oid, asnOID_LENGTH( tcpTable_oid ) ) );
 }
 
 int tcpTable_handler( MibHandler* handler,
@@ -134,30 +134,30 @@ int tcpTable_handler( MibHandler* handler,
             switch ( subid ) {
             case TCPCONNSTATE:
                 state = entry->TCPTABLE_STATE;
-                Client_setVarTypedValue( requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( requestvb, asnINTEGER,
                     ( u_char* )&state, sizeof( state ) );
                 break;
             case TCPCONNLOCALADDRESS:
 
-                Client_setVarTypedValue( requestvb, ASN01_IPADDRESS,
+                Client_setVarTypedValue( requestvb, asnIPADDRESS,
                     ( u_char* )&entry->TCPTABLE_LOCALADDRESS,
                     sizeof( entry->TCPTABLE_LOCALADDRESS ) );
 
                 break;
             case TCPCONNLOCALPORT:
                 port = TCP_PORT_TO_HOST_ORDER( ( u_short )entry->TCPTABLE_LOCALPORT );
-                Client_setVarTypedValue( requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( requestvb, asnINTEGER,
                     ( u_char* )&port, sizeof( port ) );
                 break;
             case TCPCONNREMOTEADDRESS:
 
-                Client_setVarTypedValue( requestvb, ASN01_IPADDRESS,
+                Client_setVarTypedValue( requestvb, asnIPADDRESS,
                     ( u_char* )&entry->TCPTABLE_REMOTEADDRESS,
                     sizeof( entry->TCPTABLE_REMOTEADDRESS ) );
                 break;
             case TCPCONNREMOTEPORT:
                 port = TCP_PORT_TO_HOST_ORDER( ( u_short )entry->TCPTABLE_REMOTEPORT );
-                Client_setVarTypedValue( requestvb, ASN01_INTEGER,
+                Client_setVarTypedValue( requestvb, asnINTEGER,
                     ( u_char* )&port, sizeof( port ) );
                 break;
             }

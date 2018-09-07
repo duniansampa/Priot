@@ -13,15 +13,15 @@
 #include "utilities/header_generic.h"
 
 struct Variable2_s snmpEngine_variables[] = {
-    { SNMPENGINEID, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { SNMPENGINEID, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_snmpEngine, 1, { 1 } },
     /* !NETSNMP_ENABLE_TESTING_CODE */
-    { SNMPENGINEBOOTS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { SNMPENGINEBOOTS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_snmpEngine, 1, { 2 } },
-    { SNMPENGINETIME, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { SNMPENGINETIME, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_snmpEngine, 1, { 3 } },
 
-    { SNMPENGINEMAXMESSAGESIZE, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { SNMPENGINEMAXMESSAGESIZE, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_snmpEngine, 1, { 4 } },
 };
 

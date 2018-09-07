@@ -12,10 +12,10 @@
 #include "AgentRegistry.h"
 #include "Impl.h"
 #include "ReadConfig.h"
-#include "Secmod.h"
+#include "System/Security/SecMod.h"
 #include "System/Util/Trace.h"
 
-#define snmpTargetParamsOIDLen 11 /*This is base+column, \
+#define snmpTargetParamsOIDLen 11 /* This is base+column, \
                                    * i.e. everything but index */
 
 oid snmpTargetParamsOID[ snmpTargetParamsOIDLen ] = { 1, 3, 6, 1, 6, 3, 12, 1, 3, 1, 0 };
@@ -229,17 +229,17 @@ int snmpTargetParams_rowStatusCheck( struct targetParamTable_struct* entry )
  */
 
 struct Variable2_s snmpTargetParamsEntry_variables[] = {
-    { SNMPTARGETPARAMSMPMODEL, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETPARAMSMPMODEL, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetParamsEntry, 1, { SNMPTARGETPARAMSMPMODELCOLUMN } },
-    { SNMPTARGETPARAMSSECURITYMODEL, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETPARAMSSECURITYMODEL, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetParamsEntry, 1, { SNMPTARGETPARAMSSECURITYMODELCOLUMN } },
-    { SNMPTARGETPARAMSSECURITYNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETPARAMSSECURITYNAME, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
         var_snmpTargetParamsEntry, 1, { SNMPTARGETPARAMSSECURITYNAMECOLUMN } },
-    { SNMPTARGETPARAMSSECURITYLEVEL, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETPARAMSSECURITYLEVEL, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetParamsEntry, 1, { SNMPTARGETPARAMSSECURITYLEVELCOLUMN } },
-    { SNMPTARGETPARAMSSTORAGETYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETPARAMSSTORAGETYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetParamsEntry, 1, { SNMPTARGETPARAMSSTORAGETYPECOLUMN } },
-    { SNMPTARGETPARAMSROWSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { SNMPTARGETPARAMSROWSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_snmpTargetParamsEntry, 1, { SNMPTARGETPARAMSROWSTATUSCOLUMN } }
 };
 
@@ -674,7 +674,7 @@ int write_snmpTargetParamsMPModel( int action,
     struct targetParamTable_struct* params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsMPModel: not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -769,7 +769,7 @@ int write_snmpTargetParamsSecModel( int action,
     struct targetParamTable_struct* params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsSecModel: not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -784,7 +784,7 @@ int write_snmpTargetParamsSecModel( int action,
                 "write to snmpTargetParamsSecModel: secModel out of range\n" ) );
             return PRIOT_ERR_WRONGVALUE;
         }
-        if ( Secmod_find( long_ret ) == NULL && long_ret >= 3 ) {
+        if ( SecMod_findDefBySecMod( long_ret ) == NULL && long_ret >= 3 ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsSecModel: secModel %ld unsupported\n",
                 long_ret ) );
@@ -871,7 +871,7 @@ int write_snmpTargetParamsSecLevel( int action,
     struct targetParamTable_struct* params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsSecLevel: not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -967,7 +967,7 @@ int write_snmpTargetParamsStorageType( int action,
     struct targetParamTable_struct* params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsStorageType: not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1042,7 +1042,7 @@ int write_snmpTargetParamsSecName( int action,
     struct targetParamTable_struct* params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsSecName: not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1176,7 +1176,7 @@ int write_snmpTargetParamsRowStatus( int action,
     struct targetParamTable_struct* params = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "snmpTargetParamsEntry",
                 "write to snmpTargetParamsRowStatus not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;

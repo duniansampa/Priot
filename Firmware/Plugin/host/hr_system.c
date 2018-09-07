@@ -59,19 +59,19 @@ extern int swrun_count_processes( void );
 #define HRSYS_MAXPROCS 7
 
 struct Variable2_s hrsystem_variables[] = {
-    { HRSYS_UPTIME, ASN01_TIMETICKS, IMPL_OLDAPI_RONLY,
+    { HRSYS_UPTIME, asnTIMETICKS, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 1 } },
-    { HRSYS_DATE, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRSYS_DATE, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 2 } },
-    { HRSYS_LOAD_DEV, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRSYS_LOAD_DEV, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 3 } },
-    { HRSYS_LOAD_PARAM, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { HRSYS_LOAD_PARAM, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 4 } },
-    { HRSYS_USERS, ASN01_GAUGE, IMPL_OLDAPI_RONLY,
+    { HRSYS_USERS, asnGAUGE, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 5 } },
-    { HRSYS_PROCS, ASN01_GAUGE, IMPL_OLDAPI_RONLY,
+    { HRSYS_PROCS, asnGAUGE, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 6 } },
-    { HRSYS_MAXPROCS, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRSYS_MAXPROCS, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrsys, 1, { 7 } }
 };
 
@@ -101,7 +101,7 @@ int header_hrsys( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRSYS_NAME_LENGTH 9
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int result;
 
     DEBUG_MSGTL( ( "host/hr_system", "var_hrsys: " ) );
@@ -199,7 +199,7 @@ int ns_set_time( int action,
     switch ( action ) {
     case IMPL_RESERVE1:
         /* check type */
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             Logger_log( LOGGER_PRIORITY_ERR, "write to ns_set_time not ASN01_OCTET_STR\n" );
             return PRIOT_ERR_WRONGTYPE;
         }

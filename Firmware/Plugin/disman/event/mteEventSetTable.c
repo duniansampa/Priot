@@ -20,7 +20,7 @@ static TableRegistrationInfo* table_info;
 void init_mteEventSetTable( void )
 {
     static oid mteEventSetTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 4, 4 };
-    size_t mteEventSetTable_oid_len = ASN01_OID_LENGTH( mteEventSetTable_oid );
+    size_t mteEventSetTable_oid_len = asnOID_LENGTH( mteEventSetTable_oid );
     HandlerRegistration* reg;
 
     /*
@@ -39,9 +39,9 @@ void init_mteEventSetTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner     */
+        asnOCTET_STR, /* index: mteOwner     */
         /* index: mteEventName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTEEVENTSETOBJECT;
@@ -98,31 +98,31 @@ int mteEventSetTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTSETOBJECT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( u_char* )entry->mteSetOID,
                     entry->mteSetOID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTEEVENTSETOBJECTWILDCARD:
                 ret = ( entry->flags & MTE_SET_FLAG_OBJWILD ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_MTEEVENTSETVALUE:
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER,
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER,
                     entry->mteSetValue );
                 break;
             case COLUMN_MTEEVENTSETTARGETTAG:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteSetTarget,
                     strlen( entry->mteSetTarget ) );
                 break;
             case COLUMN_MTEEVENTSETCONTEXTNAME:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteSetContext,
                     strlen( entry->mteSetContext ) );
                 break;
             case COLUMN_MTEEVENTSETCONTEXTNAMEWILDCARD:
                 ret = ( entry->flags & MTE_SET_FLAG_CTXWILD ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             }
         }
@@ -178,7 +178,7 @@ int mteEventSetTable_handler( MibHandler* handler,
             case COLUMN_MTEEVENTSETTARGETTAG:
             case COLUMN_MTEEVENTSETCONTEXTNAME:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, MTE_STR2_LEN );
+                    request->requestvb, asnOCTET_STR, MTE_STR2_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

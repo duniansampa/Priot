@@ -41,7 +41,7 @@ int header_hrnet( struct Variable_s*, oid*, size_t*, int,
 #define HRNET_IFINDEX 1
 
 struct Variable4_s hrnet_variables[] = {
-    { HRNET_IFINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRNET_IFINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrnet, 2, { 1, 1 } }
 };
 oid hrnet_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 4 };
@@ -79,7 +79,7 @@ int header_hrnet( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRNET_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int net_idx;
     int result;
     int LowIndex = -1;

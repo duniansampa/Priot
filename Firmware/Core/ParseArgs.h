@@ -13,6 +13,7 @@
 
 /** Don't enable any logging even if there is no -L argument */
 #define PARSEARGS_NOLOGGING 0x0001
+
 /** Don't zero out sensitive arguments as they are not on the command line
  *  anyway, typically used when the function is called from an internal
  *  config-line handler

@@ -342,7 +342,7 @@ int Mib_sprintReallocOctetString( u_char** buf, size_t* buf_len,
     u_char* cp;
     int output_format, cnt;
 
-    if ( var->type != ASN01_OCTET_STR ) {
+    if ( var->type != asnOCTET_STR ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             const char str[] = "Wrong Type (should be OCTET STRING): ";
             if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -605,7 +605,7 @@ int Mib_sprintReallocFloat( u_char** buf, size_t* buf_len,
     const struct Parse_EnumList_s* enums,
     const char* hint, const char* units )
 {
-    if ( var->type != ASN01_OPAQUE_FLOAT ) {
+    if ( var->type != asnOPAQUE_FLOAT ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Float): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -668,7 +668,7 @@ int Mib_sprintReallocDouble( u_char** buf, size_t* buf_len,
     const struct Parse_EnumList_s* enums,
     const char* hint, const char* units )
 {
-    if ( var->type != ASN01_OPAQUE_DOUBLE ) {
+    if ( var->type != asnOPAQUE_DOUBLE ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Double): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -735,9 +735,9 @@ int Mib_sprintReallocCounter64( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     char a64buf[ INTEGER64_STRING_SIZE + 1 ];
 
-    if ( var->type != ASN01_COUNTER64
-        && var->type != ASN01_OPAQUE_COUNTER64
-        && var->type != ASN01_OPAQUE_I64 && var->type != ASN01_OPAQUE_U64 ) {
+    if ( var->type != asnCOUNTER64
+        && var->type != asnOPAQUE_COUNTER64
+        && var->type != asnOPAQUE_I64 && var->type != asnOPAQUE_U64 ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Counter64): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -749,30 +749,30 @@ int Mib_sprintReallocCounter64( u_char** buf, size_t* buf_len, size_t* out_len,
     }
 
     if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
-        if ( var->type != ASN01_COUNTER64 ) {
+        if ( var->type != asnCOUNTER64 ) {
             if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Opaque: " ) ) {
                 return 0;
             }
         }
         switch ( var->type ) {
-        case ASN01_OPAQUE_U64:
+        case asnOPAQUE_U64:
             if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "UInt64: " ) ) {
                 return 0;
             }
             break;
-        case ASN01_OPAQUE_I64:
+        case asnOPAQUE_I64:
             if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Int64: " ) ) {
                 return 0;
             }
             break;
-        case ASN01_COUNTER64:
-        case ASN01_OPAQUE_COUNTER64:
+        case asnCOUNTER64:
+        case asnOPAQUE_COUNTER64:
             if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, "Counter64: " ) ) {
                 return 0;
             }
         }
     }
-    if ( var->type == ASN01_OPAQUE_I64 ) {
+    if ( var->type == asnOPAQUE_I64 ) {
         Integer64_int64ToString( a64buf, var->value.counter64 );
         if ( !STRING_appendRealloc( buf, buf_len, out_len, allow_realloc, a64buf ) ) {
             return 0;
@@ -816,11 +816,11 @@ int Mib_sprintReallocOpaque( u_char** buf, size_t* buf_len,
     const struct Parse_EnumList_s* enums,
     const char* hint, const char* units )
 {
-    if ( var->type != ASN01_OPAQUE
-        && var->type != ASN01_OPAQUE_COUNTER64
-        && var->type != ASN01_OPAQUE_U64
-        && var->type != ASN01_OPAQUE_I64
-        && var->type != ASN01_OPAQUE_FLOAT && var->type != ASN01_OPAQUE_DOUBLE ) {
+    if ( var->type != asnOPAQUE
+        && var->type != asnOPAQUE_COUNTER64
+        && var->type != asnOPAQUE_U64
+        && var->type != asnOPAQUE_I64
+        && var->type != asnOPAQUE_FLOAT && var->type != asnOPAQUE_DOUBLE ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Opaque): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -829,23 +829,23 @@ int Mib_sprintReallocOpaque( u_char** buf, size_t* buf_len,
         return Mib_sprintReallocByType( buf, buf_len, out_len, allow_realloc, var, NULL, NULL, NULL );
     }
     switch ( var->type ) {
-    case ASN01_OPAQUE_COUNTER64:
-    case ASN01_OPAQUE_U64:
-    case ASN01_OPAQUE_I64:
+    case asnOPAQUE_COUNTER64:
+    case asnOPAQUE_U64:
+    case asnOPAQUE_I64:
         return Mib_sprintReallocCounter64( buf, buf_len, out_len, allow_realloc, var, enums, hint, units );
         break;
 
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         return Mib_sprintReallocFloat( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
         break;
 
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         return Mib_sprintReallocDouble( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
         break;
 
-    case ASN01_OPAQUE:
+    case asnOPAQUE:
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICK_PRINT ) ) {
             u_char str[] = "OPAQUE: ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) ) {
@@ -894,7 +894,7 @@ int Mib_sprintReallocObjectIdentifier( u_char** buf, size_t* buf_len,
 {
     int buf_overflow = 0;
 
-    if ( var->type != ASN01_OBJECT_ID ) {
+    if ( var->type != asnOBJECT_ID ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be OBJECT IDENTIFIER): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -958,7 +958,7 @@ int Mib_sprintReallocTimeTicks( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     char timebuf[ 40 ];
 
-    if ( var->type != ASN01_TIMETICKS ) {
+    if ( var->type != asnTIMETICKS ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Timeticks): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1115,7 +1115,7 @@ int Mib_sprintReallocInteger( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     char* enum_string = NULL;
 
-    if ( var->type != ASN01_INTEGER ) {
+    if ( var->type != asnINTEGER ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be INTEGER): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1210,7 +1210,7 @@ int Mib_sprintReallocUinteger( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     char* enum_string = NULL;
 
-    if ( var->type != ASN01_UINTEGER ) {
+    if ( var->type != asnUINTEGER ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be UInteger32): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1298,7 +1298,7 @@ int Mib_sprintReallocGauge( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     char tmp[ 32 ];
 
-    if ( var->type != ASN01_GAUGE ) {
+    if ( var->type != asnGAUGE ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Gauge32 or Unsigned32): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1365,7 +1365,7 @@ int Mib_sprintReallocCounter( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     char tmp[ 32 ];
 
-    if ( var->type != ASN01_COUNTER ) {
+    if ( var->type != asnCOUNTER ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be Counter32): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1423,7 +1423,7 @@ int Mib_sprintReallocNetworkAddress( u_char** buf, size_t* buf_len,
 {
     size_t i;
 
-    if ( var->type != ASN01_IPADDRESS ) {
+    if ( var->type != asnIPADDRESS ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be NetworkAddress): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1486,7 +1486,7 @@ int Mib_sprintReallocIpAddress( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     u_char* ip = var->value.string;
 
-    if ( var->type != ASN01_IPADDRESS ) {
+    if ( var->type != asnIPADDRESS ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be IpAddress): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1543,7 +1543,7 @@ int Mib_sprintReallocNull( u_char** buf, size_t* buf_len, size_t* out_len,
 {
     u_char str[] = "NULL";
 
-    if ( var->type != ASN01_NULL ) {
+    if ( var->type != asnNULL ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be NULL): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1587,7 +1587,7 @@ int Mib_sprintReallocBitString( u_char** buf, size_t* buf_len, size_t* out_len,
     u_char* cp;
     char* enum_string;
 
-    if ( var->type != ASN01_BIT_STR && var->type != ASN01_OCTET_STR ) {
+    if ( var->type != asnBIT_STR && var->type != asnOCTET_STR ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be BITS): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1664,7 +1664,7 @@ int Mib_sprintReallocNsapAddress( u_char** buf, size_t* buf_len,
     const struct Parse_EnumList_s* enums, const char* hint,
     const char* units )
 {
-    if ( var->type != ASN01_NSAP ) {
+    if ( var->type != asnNSAP ) {
         if ( !DefaultStore_getBoolean( DsStore_LIBRARY_ID, DsBool_QUICKE_PRINT ) ) {
             u_char str[] = "Wrong Type (should be NsapAddress): ";
             if ( !String_appendRealloc( buf, buf_len, out_len, allow_realloc, str ) )
@@ -1747,56 +1747,56 @@ int Mib_sprintReallocByType( u_char** buf, size_t* buf_len, size_t* out_len,
     DEBUG_MSGTL( ( "output", "sprintByType, type %d\n", var->type ) );
 
     switch ( var->type ) {
-    case ASN01_INTEGER:
+    case asnINTEGER:
         return Mib_sprintReallocInteger( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
-    case ASN01_OCTET_STR:
+    case asnOCTET_STR:
         return Mib_sprintReallocOctetString( buf, buf_len, out_len,
             allow_realloc, var, enums, hint,
             units );
-    case ASN01_BIT_STR:
+    case asnBIT_STR:
         return Mib_sprintReallocBitString( buf, buf_len, out_len,
             allow_realloc, var, enums, hint,
             units );
-    case ASN01_OPAQUE:
+    case asnOPAQUE:
         return Mib_sprintReallocOpaque( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
-    case ASN01_OBJECT_ID:
+    case asnOBJECT_ID:
         return Mib_sprintReallocObjectIdentifier( buf, buf_len, out_len,
             allow_realloc, var, enums,
             hint, units );
-    case ASN01_TIMETICKS:
+    case asnTIMETICKS:
         return Mib_sprintReallocTimeTicks( buf, buf_len, out_len,
             allow_realloc, var, enums, hint,
             units );
-    case ASN01_GAUGE:
+    case asnGAUGE:
         return Mib_sprintReallocGauge( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
-    case ASN01_COUNTER:
+    case asnCOUNTER:
         return Mib_sprintReallocCounter( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
-    case ASN01_IPADDRESS:
+    case asnIPADDRESS:
         return Mib_sprintReallocIpAddress( buf, buf_len, out_len,
             allow_realloc, var, enums, hint,
             units );
-    case ASN01_NULL:
+    case asnNULL:
         return Mib_sprintReallocNull( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
-    case ASN01_UINTEGER:
+    case asnUINTEGER:
         return Mib_sprintReallocUinteger( buf, buf_len, out_len,
             allow_realloc, var, enums, hint,
             units );
-    case ASN01_COUNTER64:
-    case ASN01_OPAQUE_U64:
-    case ASN01_OPAQUE_I64:
-    case ASN01_OPAQUE_COUNTER64:
+    case asnCOUNTER64:
+    case asnOPAQUE_U64:
+    case asnOPAQUE_I64:
+    case asnOPAQUE_COUNTER64:
         return Mib_sprintReallocCounter64( buf, buf_len, out_len,
             allow_realloc, var, enums, hint,
             units );
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         return Mib_sprintReallocFloat( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         return Mib_sprintReallocDouble( buf, buf_len, out_len, allow_realloc,
             var, enums, hint, units );
     default:
@@ -2094,26 +2094,26 @@ void Mib_registerMibHandlers( void )
      * parsing behaviour
      */
 
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "showMibErrors", DsStore_LIBRARY_ID, DsBool_MIB_ERRORS );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "commentToEOL", DsStore_LIBRARY_ID, DsBool_MIB_COMMENT_TERM ); /* Describes actual behaviour */
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "strictCommentTerm", DsStore_LIBRARY_ID, DsBool_MIB_COMMENT_TERM ); /* Backward compatibility */
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "mibAllowUnderline", DsStore_LIBRARY_ID, DsBool_MIB_PARSE_LABEL );
-    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "mibWarningLevel", DsStore_LIBRARY_ID, DsInt_MIB_WARNINGS );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "mibReplaceWithLatest", DsStore_LIBRARY_ID, DsBool_MIB_REPLACE );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "showMibErrors", DsStore_LIBRARY_ID, DsBool_MIB_ERRORS );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "commentToEOL", DsStore_LIBRARY_ID, DsBool_MIB_COMMENT_TERM ); /* Describes actual behaviour */
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "strictCommentTerm", DsStore_LIBRARY_ID, DsBool_MIB_COMMENT_TERM ); /* Backward compatibility */
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "mibAllowUnderline", DsStore_LIBRARY_ID, DsBool_MIB_PARSE_LABEL );
+    DefaultStore_registerPremib( asnINTEGER, "priot", "mibWarningLevel", DsStore_LIBRARY_ID, DsInt_MIB_WARNINGS );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "mibReplaceWithLatest", DsStore_LIBRARY_ID, DsBool_MIB_REPLACE );
 
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "printNumericEnums", DsStore_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "printNumericEnums", DsStore_LIBRARY_ID, DsBool_PRINT_NUMERIC_ENUM );
     ReadConfig_registerPrenetMibHandler( "priot", "printNumericOids", _Mib_handlePrintNumeric, NULL, "(1|yes|true|0|no|false)" );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "escapeQuotes", DsStore_LIBRARY_ID, DsBool_ESCAPE_QUOTES );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "dontBreakdownOids", DsStore_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "quickPrinting", DsStore_LIBRARY_ID, DsBool_QUICK_PRINT );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "numericTimeticks", DsStore_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS );
-    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "oidOutputFormat", DsStore_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
-    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "suffixPrinting", DsStore_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "extendedIndex", DsStore_LIBRARY_ID, DsBool_EXTENDED_INDEX );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "printHexText", DsStore_LIBRARY_ID, DsBool_PRINT_HEX_TEXT );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "printValueOnly", DsStore_LIBRARY_ID, DsBool_PRINT_BARE_VALUE );
-    DefaultStore_registerPremib( ASN01_BOOLEAN, "priot", "dontPrintUnits", DsStore_LIBRARY_ID, DsBool_DONT_PRINT_UNITS );
-    DefaultStore_registerPremib( ASN01_INTEGER, "priot", "hexOutputLength", DsStore_LIBRARY_ID, DsInt_HEX_OUTPUT_LENGTH );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "escapeQuotes", DsStore_LIBRARY_ID, DsBool_ESCAPE_QUOTES );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "dontBreakdownOids", DsStore_LIBRARY_ID, DsBool_DONT_BREAKDOWN_OIDS );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "quickPrinting", DsStore_LIBRARY_ID, DsBool_QUICK_PRINT );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "numericTimeticks", DsStore_LIBRARY_ID, DsBool_NUMERIC_TIMETICKS );
+    DefaultStore_registerPremib( asnINTEGER, "priot", "oidOutputFormat", DsStore_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    DefaultStore_registerPremib( asnINTEGER, "priot", "suffixPrinting", DsStore_LIBRARY_ID, DsInt_OID_OUTPUT_FORMAT );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "extendedIndex", DsStore_LIBRARY_ID, DsBool_EXTENDED_INDEX );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "printHexText", DsStore_LIBRARY_ID, DsBool_PRINT_HEX_TEXT );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "printValueOnly", DsStore_LIBRARY_ID, DsBool_PRINT_BARE_VALUE );
+    DefaultStore_registerPremib( asnBOOLEAN, "priot", "dontPrintUnits", DsStore_LIBRARY_ID, DsBool_DONT_PRINT_UNITS );
+    DefaultStore_registerPremib( asnINTEGER, "priot", "hexOutputLength", DsStore_LIBRARY_ID, DsInt_HEX_OUTPUT_LENGTH );
 }
 
 /*
@@ -3214,16 +3214,16 @@ int Mib_buildOidSegment( VariableList* var )
     if ( var->name && var->name != var->nameLoc )
         MEMORY_FREE( var->name );
     switch ( var->type ) {
-    case ASN01_INTEGER:
-    case ASN01_COUNTER:
-    case ASN01_GAUGE:
-    case ASN01_TIMETICKS:
+    case asnINTEGER:
+    case asnCOUNTER:
+    case asnGAUGE:
+    case asnTIMETICKS:
         var->nameLength = 1;
         var->name = var->nameLoc;
         var->name[ 0 ] = *( var->value.integer );
         break;
 
-    case ASN01_IPADDRESS:
+    case asnIPADDRESS:
         var->nameLength = 4;
         var->name = var->nameLoc;
         memcpy( &ipaddr, var->value.string, sizeof( ipaddr ) );
@@ -3233,7 +3233,7 @@ int Mib_buildOidSegment( VariableList* var )
         var->name[ 3 ] = ( ipaddr >> 0 ) & 0xff;
         break;
 
-    case ASN01_PRIV_IMPLIED_OBJECT_ID:
+    case asnPRIV_IMPLIED_OBJECT_ID:
         var->nameLength = var->valueLength / sizeof( oid );
         if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
@@ -3246,7 +3246,7 @@ int Mib_buildOidSegment( VariableList* var )
             var->name[ i ] = var->value.objectId[ i ];
         break;
 
-    case ASN01_OBJECT_ID:
+    case asnOBJECT_ID:
         var->nameLength = var->valueLength / sizeof( oid ) + 1;
         if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
@@ -3260,7 +3260,7 @@ int Mib_buildOidSegment( VariableList* var )
             var->name[ i + 1 ] = var->value.objectId[ i ];
         break;
 
-    case ASN01_PRIV_IMPLIED_OCTET_STR:
+    case asnPRIV_IMPLIED_OCTET_STR:
         var->nameLength = var->valueLength;
         if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
@@ -3273,8 +3273,8 @@ int Mib_buildOidSegment( VariableList* var )
             var->name[ i ] = ( oid )var->value.string[ i ];
         break;
 
-    case ASN01_OPAQUE:
-    case ASN01_OCTET_STR:
+    case asnOPAQUE:
+    case asnOCTET_STR:
         var->nameLength = var->valueLength + 1;
         if ( var->nameLength > ( sizeof( var->nameLoc ) / sizeof( oid ) ) )
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
@@ -3403,10 +3403,10 @@ int Mib_parseOneOidIndex( oid** oidStart, size_t* oidLen,
         return ErrorCode_GENERR;
     else {
         switch ( var->type ) {
-        case ASN01_INTEGER:
-        case ASN01_COUNTER:
-        case ASN01_GAUGE:
-        case ASN01_TIMETICKS:
+        case asnINTEGER:
+        case asnCOUNTER:
+        case asnGAUGE:
+        case asnTIMETICKS:
             if ( *oidLen ) {
                 Client_setVarValue( var, ( u_char* )oidIndex++,
                     sizeof( oid ) );
@@ -3419,7 +3419,7 @@ int Mib_parseOneOidIndex( oid** oidStart, size_t* oidLen,
                 *var->value.integer ) );
             break;
 
-        case ASN01_IPADDRESS:
+        case asnIPADDRESS:
             if ( ( 4 > *oidLen ) && ( complete == 0 ) )
                 return ErrorCode_GENERR;
 
@@ -3449,9 +3449,9 @@ int Mib_parseOneOidIndex( oid** oidStart, size_t* oidLen,
                 var->value.string[ 2 ], var->value.string[ 3 ] ) );
             break;
 
-        case ASN01_OBJECT_ID:
-        case ASN01_PRIV_IMPLIED_OBJECT_ID:
-            if ( var->type == ASN01_PRIV_IMPLIED_OBJECT_ID ) {
+        case asnOBJECT_ID:
+        case asnPRIV_IMPLIED_OBJECT_ID:
+            if ( var->type == asnPRIV_IMPLIED_OBJECT_ID ) {
                 /*
                  * might not be implied, might be fixed len. check if
                  * caller set up val len, and use it if they did.
@@ -3497,10 +3497,10 @@ int Mib_parseOneOidIndex( oid** oidStart, size_t* oidLen,
             DEBUG_MSG( ( "parseOidIndexes", "\n" ) );
             break;
 
-        case ASN01_OPAQUE:
-        case ASN01_OCTET_STR:
-        case ASN01_PRIV_IMPLIED_OCTET_STR:
-            if ( var->type == ASN01_PRIV_IMPLIED_OCTET_STR ) {
+        case asnOPAQUE:
+        case asnOCTET_STR:
+        case asnPRIV_IMPLIED_OCTET_STR:
+            if ( var->type == asnPRIV_IMPLIED_OCTET_STR ) {
                 /*
                  * might not be implied, might be fixed len. check if
                  * caller set up val len, and use it if they did.
@@ -3895,7 +3895,7 @@ static struct Parse_Tree_s* _Mib_getReallocSymbol( const oid* objid, size_t obji
                     goto goto_finishIt;
                 for ( i = 0; i < ( int )numids; i++ )
                     buffer[ i ] = ( u_char )objid[ i ];
-                var.type = ASN01_OCTET_STR;
+                var.type = asnOCTET_STR;
                 var.value.string = buffer;
                 var.valueLength = numids;
                 if ( !*buf_overflow ) {
@@ -5810,46 +5810,46 @@ u_char Mib_toAsnType( int mib_type )
 {
     switch ( mib_type ) {
     case PARSE_TYPE_OBJID:
-        return ASN01_OBJECT_ID;
+        return asnOBJECT_ID;
 
     case PARSE_TYPE_OCTETSTR:
-        return ASN01_OCTET_STR;
+        return asnOCTET_STR;
 
     case PARSE_TYPE_NETADDR:
     case PARSE_TYPE_IPADDR:
-        return ASN01_IPADDRESS;
+        return asnIPADDRESS;
 
     case PARSE_TYPE_INTEGER32:
     case PARSE_TYPE_INTEGER:
-        return ASN01_INTEGER;
+        return asnINTEGER;
 
     case PARSE_TYPE_COUNTER:
-        return ASN01_COUNTER;
+        return asnCOUNTER;
 
     case PARSE_TYPE_GAUGE:
-        return ASN01_GAUGE;
+        return asnGAUGE;
 
     case PARSE_TYPE_TIMETICKS:
-        return ASN01_TIMETICKS;
+        return asnTIMETICKS;
 
     case PARSE_TYPE_OPAQUE:
-        return ASN01_OPAQUE;
+        return asnOPAQUE;
 
     case PARSE_TYPE_NULL:
-        return ASN01_NULL;
+        return asnNULL;
 
     case PARSE_TYPE_COUNTER64:
-        return ASN01_COUNTER64;
+        return asnCOUNTER64;
 
     case PARSE_TYPE_BITSTRING:
-        return ASN01_BIT_STR;
+        return asnBIT_STR;
 
     case PARSE_TYPE_UINTEGER:
     case PARSE_TYPE_UNSIGNED32:
-        return ASN01_UNSIGNED;
+        return asnUNSIGNED;
 
     case PARSE_TYPE_NSAPADDRESS:
-        return ASN01_NSAP;
+        return asnNSAP;
     }
     return -1;
 }

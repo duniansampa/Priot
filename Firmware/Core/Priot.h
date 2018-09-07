@@ -45,28 +45,28 @@
 /*
  * PDU types in SNMPv1, SNMPsec, SNMPv2p, SNMPv2c, SNMPv2u, SNMPv2*, and SNMPv3
  */
-#define PRIOT_MSG_GET        (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x0) /* a0=160 */
-#define PRIOT_MSG_GETNEXT    (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x1) /* a1=161 */
-#define PRIOT_MSG_RESPONSE   (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x2) /* a2=162 */
-#define PRIOT_MSG_SET        (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x3) /* a3=163 */
+#define PRIOT_MSG_GET        (asnCONTEXT | asnCONSTRUCTOR | 0x0) /* a0=160 */
+#define PRIOT_MSG_GETNEXT    (asnCONTEXT | asnCONSTRUCTOR | 0x1) /* a1=161 */
+#define PRIOT_MSG_RESPONSE   (asnCONTEXT | asnCONSTRUCTOR | 0x2) /* a2=162 */
+#define PRIOT_MSG_SET        (asnCONTEXT | asnCONSTRUCTOR | 0x3) /* a3=163 */
 
 
 /*
  * PDU types in SNMPv1 and SNMPsec
  */
-#define PRIOT_MSG_TRAP       (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x4) /* a4=164 */
+#define PRIOT_MSG_TRAP       (asnCONTEXT | asnCONSTRUCTOR | 0x4) /* a4=164 */
 
 /*
  * PDU types in SNMPv3
  */
-#define PRIOT_MSG_GETBULK    (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x5) /* a5=165 */
-#define PRIOT_MSG_INFORM     (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x6) /* a6=166 */
-#define PRIOT_MSG_TRAP2      (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x7) /* a7=167 */
+#define PRIOT_MSG_GETBULK    (asnCONTEXT | asnCONSTRUCTOR | 0x5) /* a5=165 */
+#define PRIOT_MSG_INFORM     (asnCONTEXT | asnCONSTRUCTOR | 0x6) /* a6=166 */
+#define PRIOT_MSG_TRAP2      (asnCONTEXT | asnCONSTRUCTOR | 0x7) /* a7=167 */
 
 /*
  * PDU types in SNMPv3
  */
-#define PRIOT_MSG_REPORT     (ASN01_CONTEXT | ASN01_CONSTRUCTOR | 0x8) /* a8=168 */
+#define PRIOT_MSG_REPORT     (asnCONTEXT | asnCONSTRUCTOR | 0x8) /* a8=168 */
 
 
 /*
@@ -116,9 +116,9 @@
 /*
  * Exception values for SNMPv3
  */
-#define PRIOT_NOSUCHOBJECT    (ASN01_CONTEXT | ASN01_PRIMITIVE | 0x0) /* 80=128 */
-#define PRIOT_NOSUCHINSTANCE  (ASN01_CONTEXT | ASN01_PRIMITIVE | 0x1) /* 81=129 */
-#define PRIOT_ENDOFMIBVIEW    (ASN01_CONTEXT | ASN01_PRIMITIVE | 0x2) /* 82=130 */
+#define PRIOT_NOSUCHOBJECT    (asnCONTEXT | asnPRIMITIVE | 0x0) /* 80=128 */
+#define PRIOT_NOSUCHINSTANCE  (asnCONTEXT | asnPRIMITIVE | 0x1) /* 81=129 */
+#define PRIOT_ENDOFMIBVIEW    (asnCONTEXT | asnPRIMITIVE | 0x2) /* 82=130 */
 
 /*
  * Error codes (the value of the field error-status in PDUs)

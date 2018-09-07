@@ -30,7 +30,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid inetCidrRouteTable_oid[] = { INETCIDRROUTETABLE_OID };
-const int inetCidrRouteTable_oid_size = ASN01_OID_LENGTH( inetCidrRouteTable_oid );
+const int inetCidrRouteTable_oid_size = asnOID_LENGTH( inetCidrRouteTable_oid );
 
 inetCidrRouteTable_registration inetCidrRouteTable_user_context;
 static inetCidrRouteTable_registration* inetCidrRouteTable_user_context_p;
@@ -119,7 +119,7 @@ void initialize_table_inetCidrRouteTable( void )
         myreg = AgentHandler_createHandlerRegistration( "route number",
             _route_number_handler,
             reg_oid,
-            ASN01_OID_LENGTH( reg_oid ),
+            asnOID_LENGTH( reg_oid ),
             HANDLER_CAN_RONLY );
         /*
          * snarf cache to use w/cache handler to make sure the
@@ -2590,7 +2590,7 @@ int _route_number_handler( MibHandler* handler,
 {
     if ( MODE_GET == reqinfo->mode ) {
         int val = inetCidrRouteTable_container_size();
-        Client_setVarTypedValue( requests->requestvb, ASN01_UNSIGNED,
+        Client_setVarTypedValue( requests->requestvb, asnUNSIGNED,
             ( u_char* )&val, sizeof( val ) );
     } else
         Assert_assert( "bad mode in RO handler" );

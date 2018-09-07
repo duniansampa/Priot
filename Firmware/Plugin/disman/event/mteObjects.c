@@ -129,14 +129,14 @@ mteObjects_createEntry( const char* owner, const char* oname, int index, int fla
      */
     if ( owner )
         memcpy( entry->mteOwner, owner, owner_len );
-    TableTdata_rowAddIndex( row, ASN01_OCTET_STR,
+    TableTdata_rowAddIndex( row, asnOCTET_STR,
         entry->mteOwner, owner_len );
     if ( oname )
         memcpy( entry->mteOName, oname, oname_len );
-    TableTdata_rowAddIndex( row, ASN01_OCTET_STR,
+    TableTdata_rowAddIndex( row, asnOCTET_STR,
         entry->mteOName, oname_len );
     entry->mteOIndex = index;
-    TableTdata_rowAddIndex( row, ASN01_INTEGER,
+    TableTdata_rowAddIndex( row, asnINTEGER,
         &entry->mteOIndex, sizeof( long ) );
 
     entry->mteObjectID_len = 2; /* .0.0 */
@@ -189,10 +189,10 @@ mteObjects_addOID( const char* owner, const char* oname, int index,
 {
     TdataRow* row;
     struct mteObject* entry;
-    oid name_buf[ ASN01_MAX_OID_LEN ];
+    oid name_buf[ asnMAX_OID_LEN ];
     size_t name_buf_len;
 
-    name_buf_len = ASN01_MAX_OID_LEN;
+    name_buf_len = asnMAX_OID_LEN;
     if ( !Mib_parseOid( oid_name_buf, name_buf, &name_buf_len ) ) {
         Logger_log( LOGGER_PRIORITY_ERR, "payload OID: %s\n", oid_name_buf );
         ReadConfig_configPerror( "unknown payload OID" );
@@ -236,9 +236,9 @@ void mteObjects_removeEntries( const char* owner, char* oname )
 
     memset( &owner_var, 0, sizeof( owner_var ) );
     memset( &oname_var, 0, sizeof( oname_var ) );
-    Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR,
+    Client_setVarTypedValue( &owner_var, asnOCTET_STR,
         owner, strlen( owner ) );
-    Client_setVarTypedValue( &oname_var, ASN01_OCTET_STR,
+    Client_setVarTypedValue( &oname_var, asnOCTET_STR,
         oname, strlen( oname ) );
     owner_var.next = &oname_var;
 
@@ -265,7 +265,7 @@ int mteObjects_vblist( VariableList* vblist,
     struct mteObject* entry;
     VariableList owner_var, oname_var;
     VariableList* var = vblist;
-    oid name[ ASN01_MAX_OID_LEN ];
+    oid name[ asnMAX_OID_LEN ];
     size_t name_len;
 
     if ( !oname || !*oname ) {
@@ -283,9 +283,9 @@ int mteObjects_vblist( VariableList* vblist,
      */
     memset( &owner_var, 0, sizeof( owner_var ) );
     memset( &oname_var, 0, sizeof( oname_var ) );
-    Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR,
+    Client_setVarTypedValue( &owner_var, asnOCTET_STR,
         owner, strlen( owner ) );
-    Client_setVarTypedValue( &oname_var, ASN01_OCTET_STR,
+    Client_setVarTypedValue( &oname_var, asnOCTET_STR,
         oname, strlen( oname ) );
     owner_var.next = &oname_var;
 
@@ -294,7 +294,7 @@ int mteObjects_vblist( VariableList* vblist,
     while ( row && !TableTdata_compareSubtreeIdx( row, &owner_var ) ) {
         entry = ( struct mteObject* )TableTdata_rowEntry( row );
 
-        memset( name, 0, ASN01_MAX_OID_LEN );
+        memset( name, 0, asnMAX_OID_LEN );
         memcpy( name, entry->mteObjectID,
             entry->mteObjectID_len * sizeof( oid ) );
         name_len = entry->mteObjectID_len;
@@ -309,7 +309,7 @@ int mteObjects_vblist( VariableList* vblist,
             memcpy( &name[ name_len ], suffix, sfx_len * sizeof( oid ) );
             name_len += sfx_len;
         }
-        Api_varlistAddVariable( &var, name, name_len, ASN01_NULL, NULL, 0 );
+        Api_varlistAddVariable( &var, name, name_len, asnNULL, NULL, 0 );
 
         row = TableTdata_rowNext( objects_table_data, row );
     }
@@ -340,23 +340,23 @@ int mteObjects_internal_vblist( VariableList* vblist,
     if ( !strcmp( oname, "_triggerFire" ) ) {
 
         Api_varlistAddVariable( &var,
-            mteHotTrigger, ASN01_OID_LENGTH( mteHotTrigger ),
-            ASN01_OCTET_STR, trigger->mteTName,
+            mteHotTrigger, asnOID_LENGTH( mteHotTrigger ),
+            asnOCTET_STR, trigger->mteTName,
             strlen( trigger->mteTName ) );
         Api_varlistAddVariable( &var,
-            mteHotTarget, ASN01_OID_LENGTH( mteHotTarget ),
-            ASN01_OCTET_STR, trigger->mteTriggerTarget,
+            mteHotTarget, asnOID_LENGTH( mteHotTarget ),
+            asnOCTET_STR, trigger->mteTriggerTarget,
             strlen( trigger->mteTriggerTarget ) );
         Api_varlistAddVariable( &var,
-            mteHotContext, ASN01_OID_LENGTH( mteHotContext ),
-            ASN01_OCTET_STR, trigger->mteTriggerContext,
+            mteHotContext, asnOID_LENGTH( mteHotContext ),
+            asnOCTET_STR, trigger->mteTriggerContext,
             strlen( trigger->mteTriggerContext ) );
         Api_varlistAddVariable( &var,
-            mteHotOID, ASN01_OID_LENGTH( mteHotOID ),
-            ASN01_OBJECT_ID, ( char* )trigger->mteTriggerFired->name,
+            mteHotOID, asnOID_LENGTH( mteHotOID ),
+            asnOBJECT_ID, ( char* )trigger->mteTriggerFired->name,
             trigger->mteTriggerFired->nameLength * sizeof( oid ) );
         Api_varlistAddVariable( &var,
-            mteHotValue, ASN01_OID_LENGTH( mteHotValue ),
+            mteHotValue, asnOID_LENGTH( mteHotValue ),
             trigger->mteTriggerFired->type,
             trigger->mteTriggerFired->value.string,
             trigger->mteTriggerFired->valueLength );
@@ -378,21 +378,21 @@ int mteObjects_internal_vblist( VariableList* vblist,
         ifAdminStatus[ 10 ] = if_index;
         ifOperStatus[ 10 ] = if_index;
         Api_varlistAddVariable( &var,
-            ifIndexOid, ASN01_OID_LENGTH( ifIndexOid ),
-            ASN01_INTEGER, &if_index, sizeof( if_index ) );
+            ifIndexOid, asnOID_LENGTH( ifIndexOid ),
+            asnINTEGER, &if_index, sizeof( if_index ) );
 
         /* Set up a dummy varbind for ifAdminStatus... */
         Api_varlistAddVariable( &var,
-            ifAdminStatus, ASN01_OID_LENGTH( ifAdminStatus ),
-            ASN01_INTEGER,
+            ifAdminStatus, asnOID_LENGTH( ifAdminStatus ),
+            asnINTEGER,
             trigger->mteTriggerFired->value.integer,
             trigger->mteTriggerFired->valueLength );
         /* ... then retrieve the actual value */
         Client_queryGet( var->next, sess );
 
         Api_varlistAddVariable( &var,
-            ifOperStatus, ASN01_OID_LENGTH( ifOperStatus ),
-            ASN01_INTEGER,
+            ifOperStatus, asnOID_LENGTH( ifOperStatus ),
+            asnINTEGER,
             trigger->mteTriggerFired->value.integer,
             trigger->mteTriggerFired->valueLength );
     } else {

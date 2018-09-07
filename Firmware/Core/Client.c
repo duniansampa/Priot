@@ -54,7 +54,7 @@ Client_pduCreate( int command )
 VariableList*
 Client_addNullVar( Types_Pdu* pdu, const oid* name, size_t name_length )
 {
-    return Api_pduAddVariable( pdu, name, name_length, ASN01_NULL, NULL, 0 );
+    return Api_pduAddVariable( pdu, name, name_length, asnNULL, NULL, 0 );
 }
 
 static int
@@ -233,7 +233,7 @@ static Types_Pdu*
 _Client_clonePduHeader( Types_Pdu* pdu )
 {
     Types_Pdu* newpdu;
-    struct Secmod_Def_s* sptr;
+    struct SecModDefinition_s* sptr;
     int ret;
 
     newpdu = ( Types_Pdu* )malloc( sizeof( Types_Pdu ) );
@@ -286,11 +286,11 @@ _Client_clonePduHeader( Types_Pdu* pdu )
         }
     }
 
-    if ( ( sptr = Secmod_find( newpdu->securityModel ) ) != NULL && sptr->pdu_clone != NULL ) {
+    if ( ( sptr = SecMod_findDefBySecMod( newpdu->securityModel ) ) != NULL && sptr->pduCloneFunction != NULL ) {
         /*
          * call security model if it needs to know about this
          */
-        ( *sptr->pdu_clone )( pdu, newpdu );
+        ( *sptr->pduCloneFunction )( pdu, newpdu );
     }
 
     return newpdu;
@@ -654,13 +654,13 @@ int Client_setVarValue( VariableList* vars,
 
     vars->valueLength = len;
     switch ( vars->type ) {
-    case ASN01_INTEGER:
-    case ASN01_UNSIGNED:
-    case ASN01_TIMETICKS:
-    case ASN01_COUNTER:
-    case ASN01_UINTEGER:
+    case asnINTEGER:
+    case asnUNSIGNED:
+    case asnTIMETICKS:
+    case asnCOUNTER:
+    case asnUINTEGER:
         if ( vars->valueLength == sizeof( int ) ) {
-            if ( ASN01_INTEGER == vars->type ) {
+            if ( asnINTEGER == vars->type ) {
                 const int* val_int
                     = ( const int* )value;
                 *( vars->value.integer ) = ( long )*val_int;
@@ -678,7 +678,7 @@ int Client_setVarValue( VariableList* vars,
                 *( vars->value.integer ) &= 0xffffffff;
             }
         } else if ( vars->valueLength == sizeof( short ) ) {
-            if ( ASN01_INTEGER == vars->type ) {
+            if ( asnINTEGER == vars->type ) {
                 const short* val_short
                     = ( const short* )value;
                 *( vars->value.integer ) = ( long )*val_short;
@@ -688,7 +688,7 @@ int Client_setVarValue( VariableList* vars,
                 *( vars->value.integer ) = ( unsigned long )*val_ushort;
             }
         } else if ( vars->valueLength == sizeof( char ) ) {
-            if ( ASN01_INTEGER == vars->type ) {
+            if ( asnINTEGER == vars->type ) {
                 const char* val_char
                     = ( const char* )value;
                 *( vars->value.integer ) = ( long )*val_char;
@@ -705,10 +705,10 @@ int Client_setVarValue( VariableList* vars,
         vars->valueLength = sizeof( long );
         break;
 
-    case ASN01_OBJECT_ID:
-    case ASN01_PRIV_IMPLIED_OBJECT_ID:
-    case ASN01_PRIV_INCL_RANGE:
-    case ASN01_PRIV_EXCL_RANGE:
+    case asnOBJECT_ID:
+    case asnPRIV_IMPLIED_OBJECT_ID:
+    case asnPRIV_INCL_RANGE:
+    case asnPRIV_EXCL_RANGE:
         if ( largeval ) {
             vars->value.objectId = ( oid* )malloc( vars->valueLength );
         }
@@ -719,16 +719,16 @@ int Client_setVarValue( VariableList* vars,
         memmove( vars->value.objectId, value, vars->valueLength );
         break;
 
-    case ASN01_IPADDRESS: /* snmp_build_var_op treats IPADDR like a string */
+    case asnIPADDRESS: /* snmp_build_var_op treats IPADDR like a string */
         if ( 4 != vars->valueLength ) {
             Assert_assert( "ipaddress length == 4" );
         }
     /** FALL THROUGH */
-    case ASN01_PRIV_IMPLIED_OCTET_STR:
-    case ASN01_OCTET_STR:
-    case ASN01_BIT_STR:
-    case ASN01_OPAQUE:
-    case ASN01_NSAP:
+    case asnPRIV_IMPLIED_OCTET_STR:
+    case asnOCTET_STR:
+    case asnBIT_STR:
+    case asnOPAQUE:
+    case asnNSAP:
         if ( vars->valueLength >= sizeof( vars->buffer ) ) {
             vars->value.string = ( u_char* )malloc( vars->valueLength + 1 );
         }
@@ -748,14 +748,14 @@ int Client_setVarValue( VariableList* vars,
     case PRIOT_NOSUCHOBJECT:
     case PRIOT_NOSUCHINSTANCE:
     case PRIOT_ENDOFMIBVIEW:
-    case ASN01_NULL:
+    case asnNULL:
         vars->valueLength = 0;
         vars->value.string = NULL;
         break;
 
-    case ASN01_OPAQUE_U64:
-    case ASN01_OPAQUE_I64:
-    case ASN01_COUNTER64:
+    case asnOPAQUE_U64:
+    case asnOPAQUE_I64:
+    case asnCOUNTER64:
         if ( largeval ) {
             Logger_log( LOGGER_PRIORITY_ERR, "bad size for counter 64 (%d)\n",
                 ( int )vars->valueLength );
@@ -765,7 +765,7 @@ int Client_setVarValue( VariableList* vars,
         memmove( vars->value.counter64, value, vars->valueLength );
         break;
 
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         if ( largeval ) {
             Logger_log( LOGGER_PRIORITY_ERR, "bad size for opaque float (%d)\n",
                 ( int )vars->valueLength );
@@ -775,7 +775,7 @@ int Client_setVarValue( VariableList* vars,
         memmove( vars->value.floatValue, value, vars->valueLength );
         break;
 
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         if ( largeval ) {
             Logger_log( LOGGER_PRIORITY_ERR, "bad size for opaque double (%d)\n",
                 ( int )vars->valueLength );

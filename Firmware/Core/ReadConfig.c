@@ -1994,20 +1994,20 @@ char* ReadConfig_readData( int type, char* readfrom, void* dataptr,
 
     if ( dataptr && readfrom )
         switch ( type ) {
-        case ASN01_INTEGER:
+        case asnINTEGER:
             intp = ( int* )dataptr;
             *intp = atoi( readfrom );
             readfrom = ReadConfig_skipToken( readfrom );
             return readfrom;
 
-        case ASN01_TIMETICKS:
-        case ASN01_UNSIGNED:
+        case asnTIMETICKS:
+        case asnUNSIGNED:
             uintp = ( unsigned int* )dataptr;
             *uintp = strtoul( readfrom, NULL, 0 );
             readfrom = ReadConfig_skipToken( readfrom );
             return readfrom;
 
-        case ASN01_IPADDRESS:
+        case asnIPADDRESS:
             intp = ( int* )dataptr;
             *intp = inet_addr( readfrom );
             if ( ( *intp == -1 ) && ( strncmp( readfrom, "255.255.255.255", 15 ) != 0 ) )
@@ -2015,13 +2015,13 @@ char* ReadConfig_readData( int type, char* readfrom, void* dataptr,
             readfrom = ReadConfig_skipToken( readfrom );
             return readfrom;
 
-        case ASN01_OCTET_STR:
-        case ASN01_BIT_STR:
+        case asnOCTET_STR:
+        case asnBIT_STR:
             charpp = ( char** )dataptr;
             return ReadConfig_readOctetString( readfrom,
                 ( u_char** )charpp, len );
 
-        case ASN01_OBJECT_ID:
+        case asnOBJECT_ID:
             oidpp = ( oid** )dataptr;
             return ReadConfig_readObjid( readfrom, oidpp, len );
 
@@ -2051,7 +2051,7 @@ char* ReadConfig_readMemory( int type, char* readfrom,
         return NULL;
 
     switch ( type ) {
-    case ASN01_INTEGER:
+    case asnINTEGER:
         if ( *len < sizeof( int ) )
             return NULL;
         intp = ( int* )dataptr;
@@ -2060,9 +2060,9 @@ char* ReadConfig_readMemory( int type, char* readfrom,
         *len = sizeof( int );
         return readfrom;
 
-    case ASN01_COUNTER:
-    case ASN01_TIMETICKS:
-    case ASN01_UNSIGNED:
+    case asnCOUNTER:
+    case asnTIMETICKS:
+    case asnUNSIGNED:
         if ( *len < sizeof( unsigned int ) )
             return NULL;
         uintp = ( unsigned int* )dataptr;
@@ -2071,7 +2071,7 @@ char* ReadConfig_readMemory( int type, char* readfrom,
         *len = sizeof( unsigned int );
         return readfrom;
 
-    case ASN01_IPADDRESS:
+    case asnIPADDRESS:
         if ( *len < sizeof( int ) )
             return NULL;
         intp = ( int* )dataptr;
@@ -2082,19 +2082,19 @@ char* ReadConfig_readMemory( int type, char* readfrom,
         *len = sizeof( int );
         return readfrom;
 
-    case ASN01_OCTET_STR:
-    case ASN01_BIT_STR:
-    case ASN01_PRIV_IMPLIED_OCTET_STR:
+    case asnOCTET_STR:
+    case asnBIT_STR:
+    case asnPRIV_IMPLIED_OCTET_STR:
         return ReadConfig_readOctetString( readfrom,
             ( u_char** )&dataptr, len );
 
-    case ASN01_PRIV_IMPLIED_OBJECT_ID:
-    case ASN01_OBJECT_ID:
+    case asnPRIV_IMPLIED_OBJECT_ID:
+    case asnOBJECT_ID:
         readfrom = ReadConfig_readObjid( readfrom, ( oid** )&dataptr, len );
         *len *= sizeof( oid );
         return readfrom;
 
-    case ASN01_COUNTER64:
+    case asnCOUNTER64:
         if ( *len < sizeof( Integer64 ) )
             return NULL;
         *len = sizeof( Integer64 );
@@ -2151,29 +2151,29 @@ char* ReadConfig_storeDataPrefix( char prefix, int type, char* storeto,
 
     if ( dataptr && storeto )
         switch ( type ) {
-        case ASN01_INTEGER:
+        case asnINTEGER:
             intp = ( int* )dataptr;
             sprintf( storeto, "%c%d", prefix, *intp );
             return ( storeto + strlen( storeto ) );
 
-        case ASN01_TIMETICKS:
-        case ASN01_UNSIGNED:
+        case asnTIMETICKS:
+        case asnUNSIGNED:
             uintp = ( unsigned int* )dataptr;
             sprintf( storeto, "%c%u", prefix, *uintp );
             return ( storeto + strlen( storeto ) );
 
-        case ASN01_IPADDRESS:
+        case asnIPADDRESS:
             in.s_addr = *( unsigned int* )dataptr;
             sprintf( storeto, "%c%s", prefix, inet_ntoa( in ) );
             return ( storeto + strlen( storeto ) );
 
-        case ASN01_OCTET_STR:
-        case ASN01_BIT_STR:
+        case asnOCTET_STR:
+        case asnBIT_STR:
             *storeto++ = prefix;
             charpp = ( u_char** )dataptr;
             return ReadConfig_saveOctetString( storeto, *charpp, len );
 
-        case ASN01_OBJECT_ID:
+        case asnOBJECT_ID:
             *storeto++ = prefix;
             oidpp = ( oid** )dataptr;
             return ReadConfig_saveObjid( storeto, *oidpp, len );

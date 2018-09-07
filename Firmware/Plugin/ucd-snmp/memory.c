@@ -28,16 +28,16 @@ void init_memory( void )
 
     ScalarGroup_registerScalarGroup(
         AgentHandler_createHandlerRegistration( "memory", handle_memory,
-            memory_oid, ASN01_OID_LENGTH( memory_oid ),
+            memory_oid, asnOID_LENGTH( memory_oid ),
             HANDLER_CAN_RONLY ),
         1, 17 );
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration( "memSwapError", handle_memory,
-            memSwapError_oid, ASN01_OID_LENGTH( memSwapError_oid ),
+            memSwapError_oid, asnOID_LENGTH( memSwapError_oid ),
             HANDLER_CAN_RONLY ) );
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration( "memSwapErrMsg", handle_memory,
-            memSwapErrMsg_oid, ASN01_OID_LENGTH( memSwapErrMsg_oid ),
+            memSwapErrMsg_oid, asnOID_LENGTH( memSwapErrMsg_oid ),
             HANDLER_CAN_RONLY ) );
 
     AgentReadConfig_priotdRegisterConfigHandler( "swap", memory_parse_config,
@@ -79,7 +79,7 @@ int handle_memory( MibHandler* handler,
             break;
         case MEMORY_ERRNAME:
             sprintf( buf, "swap" );
-            Client_setVarTypedValue( requests->requestvb, ASN01_OCTET_STR,
+            Client_setVarTypedValue( requests->requestvb, asnOCTET_STR,
                 ( u_char* )buf, strlen( buf ) );
             return PRIOT_ERR_NOERROR;
         case MEMORY_SWAP_TOTAL:
@@ -199,7 +199,7 @@ int handle_memory( MibHandler* handler,
                 buf[ 0 ] = 0;
             else
                 sprintf( buf, "Running out of swap space (%ld)", mem_info->free );
-            Client_setVarTypedValue( requests->requestvb, ASN01_OCTET_STR,
+            Client_setVarTypedValue( requests->requestvb, asnOCTET_STR,
                 ( u_char* )buf, strlen( buf ) );
             return PRIOT_ERR_NOERROR;
         default:
@@ -216,7 +216,7 @@ int handle_memory( MibHandler* handler,
          * All non-integer objects (and errors) have already been
          * processed.  So return the integer value.
          */
-        Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+        Client_setVarTypedValue( requests->requestvb, asnINTEGER,
             ( u_char* )&val, sizeof( val ) );
         break;
 

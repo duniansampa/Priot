@@ -21,7 +21,7 @@ void init_mteObjectsTable( void )
 
 {
     static oid mteObjectsTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 3, 1 };
-    size_t mteObjectsTable_oid_len = ASN01_OID_LENGTH( mteObjectsTable_oid );
+    size_t mteObjectsTable_oid_len = asnOID_LENGTH( mteObjectsTable_oid );
     HandlerRegistration* reg;
 
     /*
@@ -40,9 +40,9 @@ void init_mteObjectsTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner */
-        ASN01_OCTET_STR, /* index: mteObjectsName */
-        ASN01_UNSIGNED, /* index: mteObjectsIndex */
+        asnOCTET_STR, /* index: mteOwner */
+        asnOCTET_STR, /* index: mteObjectsName */
+        asnUNSIGNED, /* index: mteObjectsIndex */
         0 );
 
     table_info->min_column = COLUMN_MTEOBJECTSID;
@@ -94,17 +94,17 @@ int mteObjectsTable_handler( MibHandler* handler,
             }
             switch ( tinfo->colnum ) {
             case COLUMN_MTEOBJECTSID:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( u_char* )entry->mteObjectID,
                     entry->mteObjectID_len * sizeof( oid ) );
                 break;
             case COLUMN_MTEOBJECTSIDWILDCARD:
                 ret = ( entry->flags & MTE_OBJECT_FLAG_WILD ) ? tcTRUE : tcFALSE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             case COLUMN_MTEOBJECTSENTRYSTATUS:
                 ret = ( entry->flags & MTE_OBJECT_FLAG_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE;
-                Client_setVarTypedInteger( request->requestvb, ASN01_INTEGER, ret );
+                Client_setVarTypedInteger( request->requestvb, asnINTEGER, ret );
                 break;
             }
         }

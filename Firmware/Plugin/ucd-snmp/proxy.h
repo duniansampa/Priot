@@ -5,9 +5,9 @@
 
 struct simple_proxy {
     struct variable2 *variables;
-    oid             name[ASN01_MAX_OID_LEN];
+    oid             name[asnMAX_OID_LEN];
     size_t          name_len;
-    oid             base[ASN01_MAX_OID_LEN];
+    oid             base[asnMAX_OID_LEN];
     size_t          base_len;
     char           *context;
     Types_Session *sess;

@@ -456,7 +456,7 @@ TableData_helperHandler(MibHandler *handler,
         switch (reqinfo->mode) {
         case MODE_GETNEXT:
         case MODE_GETBULK:     /* XXXWWW */
-            if (request->requestvb->type != ASN01_NULL)
+            if (request->requestvb->type != asnNULL)
                 continue;
             /*
              * loop through data till we find the next row
@@ -548,14 +548,14 @@ TableData_helperHandler(MibHandler *handler,
                 TableData_buildResult(reginfo, reqinfo, request,
                                                 row,
                                                 table_info->colnum,
-                                                ASN01_NULL, NULL, 0);
+                                                asnNULL, NULL, 0);
             } else {            /* no decent result found.  Give up. It's beyond us. */
                 request->processed = 1;
             }
             break;
 
         case MODE_GET:
-            if (request->requestvb->type != ASN01_NULL)
+            if (request->requestvb->type != asnNULL)
                 continue;
             /*
              * find the row in question
@@ -684,8 +684,8 @@ TableData_insertTableRow(RequestInfo *request,
     VariableList      *this_index = NULL;
     VariableList      *that_index = NULL;
     oid      base_oid[] = {0, 0};	/* Make sure index OIDs are legal! */
-    oid      this_oid[ASN01_MAX_OID_LEN];
-    oid      that_oid[ASN01_MAX_OID_LEN];
+    oid      this_oid[asnMAX_OID_LEN];
+    oid      that_oid[asnMAX_OID_LEN];
     size_t   this_oid_len, that_oid_len;
 
     if (!request)
@@ -701,7 +701,7 @@ TableData_insertTableRow(RequestInfo *request,
 
     table_info = Table_extractTableInfo(request);
     this_index = table_info->indexes;
-    Mib_buildOidNoalloc(this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
+    Mib_buildOidNoalloc(this_oid, asnMAX_OID_LEN, &this_oid_len,
                       base_oid, 2, this_index);
 
     /*
@@ -724,7 +724,7 @@ TableData_insertTableRow(RequestInfo *request,
     for (; req; req=req->next) {
         table_info = Table_extractTableInfo(req);
         that_index = table_info->indexes;
-        Mib_buildOidNoalloc(that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
+        Mib_buildOidNoalloc(that_oid, asnMAX_OID_LEN, &that_oid_len,
                           base_oid, 2, that_index);
 
         /*
@@ -750,7 +750,7 @@ TableData_buildResult(HandlerRegistration *reginfo,
                                 u_char * result_data,
                                 size_t result_data_len)
 {
-    oid             build_space[ASN01_MAX_OID_LEN];
+    oid             build_space[asnMAX_OID_LEN];
 
     if (!reginfo || !reqinfo || !request)
         return ErrorCode_GENERR;
@@ -805,10 +805,10 @@ TableRow *
 TableData_get(TableData *table,
                        VariableList * indexes)
 {
-    oid             searchfor[ASN01_MAX_OID_LEN];
-    size_t          searchfor_len = ASN01_MAX_OID_LEN;
+    oid             searchfor[asnMAX_OID_LEN];
+    size_t          searchfor_len = asnMAX_OID_LEN;
 
-    Mib_buildOidNoalloc(searchfor, ASN01_MAX_OID_LEN, &searchfor_len, NULL, 0,
+    Mib_buildOidNoalloc(searchfor, asnMAX_OID_LEN, &searchfor_len, NULL, 0,
                       indexes);
     return TableData_getFromOid(table, searchfor,
                                            searchfor_len);
@@ -908,13 +908,13 @@ TableRow *
 TableData_rowNextByidx(TableData    *table,
                                   VariableList *indexes)
 {
-    oid    instance[ASN01_MAX_OID_LEN];
-    size_t len    = ASN01_MAX_OID_LEN;
+    oid    instance[asnMAX_OID_LEN];
+    size_t len    = asnMAX_OID_LEN;
 
     if (!table || !indexes)
         return NULL;
 
-    Mib_buildOidNoalloc(instance, ASN01_MAX_OID_LEN, &len, NULL, 0, indexes);
+    Mib_buildOidNoalloc(instance, asnMAX_OID_LEN, &len, NULL, 0, indexes);
     return TableData_rowNextByoid(table, instance, len);
 }
 

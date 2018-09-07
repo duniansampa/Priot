@@ -56,11 +56,11 @@ void parse_mteOTable( const char* token, char* line )
     memset( oname, 0, sizeof( oname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = oname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
-    line = ReadConfig_readData( ASN01_UNSIGNED, line, &index, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnUNSIGNED, line, &index, &len );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s, %lu) ", owner, oname, index ) );
 
@@ -71,9 +71,9 @@ void parse_mteOTable( const char* token, char* line )
     /*
      * Read in the accessible column values
      */
-    entry->mteObjectID_len = ASN01_MAX_OID_LEN;
+    entry->mteObjectID_len = asnMAX_OID_LEN;
     vp = entry->mteObjectID;
-    line = ReadConfig_readData( ASN01_OBJECT_ID, line, &vp,
+    line = ReadConfig_readData( asnOBJECT_ID, line, &vp,
         &entry->mteObjectID_len );
 
     if ( !strcasecmp( token, "mteObjectsTable" ) ) {
@@ -82,17 +82,17 @@ void parse_mteOTable( const char* token, char* line )
          *   these fields as separate (integer) values
          * Accept this (for backwards compatability)
          */
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmpint, &len );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmpint, &len );
         if ( tmpint == tcTRUE )
             entry->flags |= MTE_OBJECT_FLAG_WILD;
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmpint, &len );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmpint, &len );
         if ( tmpint == tcROW_STATUS_ACTIVE )
             entry->flags |= MTE_OBJECT_FLAG_ACTIVE;
     } else {
         /*
          * This implementation saves the (relevant) flag bits directly
          */
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmpint, &len );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmpint, &len );
         if ( tmpint & MTE_OBJECT_FLAG_WILD )
             entry->flags |= MTE_OBJECT_FLAG_WILD;
         if ( tmpint & MTE_OBJECT_FLAG_ACTIVE )
@@ -134,17 +134,17 @@ int store_mteOTable( int majorID, int minorID, void* serverarg, void* clientarg 
 
         cp = entry->mteOwner;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->mteOName;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr,
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr,
             &entry->mteOIndex, NULL );
         vp = entry->mteObjectID;
-        cptr = ReadConfig_storeData( ASN01_OBJECT_ID, cptr, &vp,
+        cptr = ReadConfig_storeData( asnOBJECT_ID, cptr, &vp,
             &entry->mteObjectID_len );
         tint = entry->flags & ( MTE_OBJECT_FLAG_WILD | MTE_OBJECT_FLAG_ACTIVE );
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
         AgentReadConfig_priotdStoreConfig( line );
     }
 
@@ -161,7 +161,7 @@ int clear_mteOTable( int majorID, int minorID, void* serverarg, void* clientarg 
      * We're only interested in entries set up via the config files
      */
     memset( &owner_var, 0, sizeof( VariableList ) );
-    Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR,
+    Client_setVarTypedValue( &owner_var, asnOCTET_STR,
         "priotd.conf", strlen( "priotd.conf" ) );
     while ( ( row = TableTdata_rowNextByidx( objects_table_data,
                   &owner_var ) ) ) {

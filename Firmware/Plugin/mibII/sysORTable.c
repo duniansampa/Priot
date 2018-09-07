@@ -155,17 +155,17 @@ static int sysORTable_handler( MibHandler* handler,
         } else {
             switch ( table_info->colnum ) {
             case COLUMN_SYSORID:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( const u_char* )table_entry->data->OR_oid,
                     table_entry->data->OR_oidlen * sizeof( oid ) );
                 break;
             case COLUMN_SYSORDESCR:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( const u_char* )table_entry->data->OR_descr,
                     strlen( table_entry->data->OR_descr ) );
                 break;
             case COLUMN_SYSORUPTIME:
-                Client_setVarTypedInteger( request->requestvb, ASN01_TIMETICKS,
+                Client_setVarTypedInteger( request->requestvb, asnTIMETICKS,
                     table_entry->data->OR_uptime );
                 break;
             default:
@@ -207,23 +207,23 @@ void init_sysORTable( void )
     table->containerName = strdup( "sysORTable" );
 
     Table_helperAddIndexes( sysORTable_table_info,
-        ASN01_INTEGER, /** index: sysORIndex */
+        asnINTEGER, /** index: sysORIndex */
         0 );
     sysORTable_table_info->min_column = COLUMN_SYSORID;
     sysORTable_table_info->max_column = COLUMN_SYSORUPTIME;
 
     sysORLastChange_reg = AgentHandler_createHandlerRegistration(
         "mibII/sysORLastChange", NULL, sysORLastChange_oid,
-        ASN01_OID_LENGTH( sysORLastChange_oid ), HANDLER_CAN_RONLY );
+        asnOID_LENGTH( sysORLastChange_oid ), HANDLER_CAN_RONLY );
     Watcher_initWatcherInfo( &sysORLastChange_winfo, &sysORLastChange,
-        sizeof( u_long ), ASN01_TIMETICKS,
+        sizeof( u_long ), asnTIMETICKS,
         WATCHER_FIXED_SIZE );
     Watcher_registerWatchedScalar( sysORLastChange_reg,
         &sysORLastChange_winfo );
 
     sysORTable_reg = AgentHandler_createHandlerRegistration(
         "mibII/sysORTable", sysORTable_handler, sysORTable_oid,
-        ASN01_OID_LENGTH( sysORTable_oid ), HANDLER_CAN_RONLY );
+        asnOID_LENGTH( sysORTable_oid ), HANDLER_CAN_RONLY );
     TableContainer_register( sysORTable_reg, sysORTable_table_info,
         table, TABLE_CONTAINER_KEY_NETSNMP_INDEX );
 

@@ -19,7 +19,7 @@ static TableRegistrationInfo* table_info;
 void init_mteEventNotificationTable( void )
 {
     static oid mteEventNotificationTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 4, 3 };
-    size_t mteEventNotificationTable_oid_len = ASN01_OID_LENGTH( mteEventNotificationTable_oid );
+    size_t mteEventNotificationTable_oid_len = asnOID_LENGTH( mteEventNotificationTable_oid );
     HandlerRegistration* reg;
 
     /*
@@ -38,9 +38,9 @@ void init_mteEventNotificationTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner */
+        asnOCTET_STR, /* index: mteOwner */
         /* index: mteEventName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTEEVENTNOTIFICATION;
@@ -96,17 +96,17 @@ int mteEventNotificationTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTEEVENTNOTIFICATION:
-                Client_setVarTypedValue( request->requestvb, ASN01_OBJECT_ID,
+                Client_setVarTypedValue( request->requestvb, asnOBJECT_ID,
                     ( u_char* )entry->mteNotification,
                     entry->mteNotification_len * sizeof( oid ) );
                 break;
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTSOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteNotifyOwner,
                     strlen( entry->mteNotifyOwner ) );
                 break;
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTS:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteNotifyObjects,
                     strlen( entry->mteNotifyObjects ) );
                 break;
@@ -150,7 +150,7 @@ int mteEventNotificationTable_handler( MibHandler* handler,
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTSOWNER:
             case COLUMN_MTEEVENTNOTIFICATIONOBJECTS:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
+                    request->requestvb, asnOCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

@@ -17,7 +17,7 @@ _GetStatistic_getStatisticHelperHandler(MibHandler *handler,
         if (idx > API_STAT_MAX_STATS)
             return PRIOT_ERR_GENERR;
         value = Api_getStatistic(idx);
-        Client_setVarTypedValue(requests->requestvb, ASN01_COUNTER,
+        Client_setVarTypedValue(requests->requestvb, asnCOUNTER,
                                  (const u_char*)&value, sizeof(value));
         return PRIOT_ERR_NOERROR;
     }

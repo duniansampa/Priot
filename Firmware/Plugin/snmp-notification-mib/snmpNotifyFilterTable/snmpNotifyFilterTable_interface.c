@@ -170,9 +170,9 @@ _snmpNotifyFilterTable_initialize_interface( snmpNotifyFilterTable_registration*
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_OCTET_STR,
+    Table_helperAddIndexes( tbl_info, asnOCTET_STR,
         /** index: snmpNotifyFilterProfileName */
-        ASN01_PRIV_IMPLIED_OBJECT_ID,
+        asnPRIV_IMPLIED_OBJECT_ID,
         /** index: snmpNotifyFilterSubtree */
         0 );
 
@@ -367,10 +367,10 @@ int snmpNotifyFilterTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_snmpNotifyFilterProfileName, 0x00,
         sizeof( var_snmpNotifyFilterProfileName ) );
-    var_snmpNotifyFilterProfileName.type = ASN01_OCTET_STR;
+    var_snmpNotifyFilterProfileName.type = asnOCTET_STR;
     memset( &var_snmpNotifyFilterSubtree, 0x00,
         sizeof( var_snmpNotifyFilterSubtree ) );
-    var_snmpNotifyFilterSubtree.type = ASN01_PRIV_IMPLIED_OBJECT_ID;
+    var_snmpNotifyFilterSubtree.type = asnPRIV_IMPLIED_OBJECT_ID;
 
     /*
      * chain temp index varbinds together
@@ -436,10 +436,10 @@ int snmpNotifyFilterTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_snmpNotifyFilterProfileName, 0x00,
         sizeof( var_snmpNotifyFilterProfileName ) );
-    var_snmpNotifyFilterProfileName.type = ASN01_OCTET_STR;
+    var_snmpNotifyFilterProfileName.type = asnOCTET_STR;
     memset( &var_snmpNotifyFilterSubtree, 0x00,
         sizeof( var_snmpNotifyFilterSubtree ) );
-    var_snmpNotifyFilterSubtree.type = ASN01_PRIV_IMPLIED_OBJECT_ID;
+    var_snmpNotifyFilterSubtree.type = asnPRIV_IMPLIED_OBJECT_ID;
 
     /*
      * chain temp index varbinds together
@@ -811,7 +811,7 @@ _snmpNotifyFilterTable_get_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterMask(2)/OCTETSTR/ASN_OCTET_STR/char(char)//L/A/W/e/R/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERMASK:
-        var->type = ASN01_OCTET_STR;
+        var->type = asnOCTET_STR;
         rc = snmpNotifyFilterMask_get( rowreq_ctx,
             ( char** )&var->value.string,
             &var->valueLength );
@@ -822,7 +822,7 @@ _snmpNotifyFilterTable_get_column( snmpNotifyFilterTable_rowreq_ctx*
          */
     case COLUMN_SNMPNOTIFYFILTERTYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = snmpNotifyFilterType_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -832,7 +832,7 @@ _snmpNotifyFilterTable_get_column( snmpNotifyFilterTable_rowreq_ctx*
          */
     case COLUMN_SNMPNOTIFYFILTERSTORAGETYPE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = snmpNotifyFilterStorageType_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -842,7 +842,7 @@ _snmpNotifyFilterTable_get_column( snmpNotifyFilterTable_rowreq_ctx*
          */
     case COLUMN_SNMPNOTIFYFILTERROWSTATUS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = snmpNotifyFilterRowStatus_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -998,7 +998,7 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterMask(2)/OCTETSTR/ASN_OCTET_STR/char(char)//L/A/W/e/R/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERMASK:
-        rc = VariableList_checkTypeAndMaxLength( var, ASN01_OCTET_STR,
+        rc = VariableList_checkTypeAndMaxLength( var, asnOCTET_STR,
             sizeof( rowreq_ctx->data.snmpNotifyFilterMask ) );
         /*
          * check defined range(s). 
@@ -1027,7 +1027,7 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterType(3)/INTEGER/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERTYPE:
-        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, asnINTEGER,
             sizeof( rowreq_ctx->data.snmpNotifyFilterType ) );
         /*
          * check that the value is one of defined enums 
@@ -1056,7 +1056,7 @@ _snmpNotifyFilterTable_check_column( snmpNotifyFilterTable_rowreq_ctx*
          * snmpNotifyFilterStorageType(4)/StorageType/ASN_INTEGER/long(u_long)//l/A/W/E/r/D/h 
          */
     case COLUMN_SNMPNOTIFYFILTERSTORAGETYPE:
-        rc = VariableList_checkTypeAndLength( var, ASN01_INTEGER,
+        rc = VariableList_checkTypeAndLength( var, asnINTEGER,
             sizeof( rowreq_ctx->data.snmpNotifyFilterStorageType ) );
         /*
          * check that the value is one of defined enums 
@@ -1992,7 +1992,7 @@ _snmpNotifyFilterTable_container_row_restore( const char* token, char* buf )
      * pull out index and create default row
      */
     index.oids = tmp_oid;
-    index.len = ASN01_OID_LENGTH( tmp_oid );
+    index.len = asnOID_LENGTH( tmp_oid );
     buf = ReadConfig_readObjid( buf, &index.oids, &index.len );
     if ( NULL == buf ) {
         Logger_log( LOGGER_PRIORITY_ERR, "error reading row index in "
@@ -2146,26 +2146,26 @@ static char* _snmpNotifyFilterTable_container_col_restore( snmpNotifyFilterTable
 
     case COLUMN_SNMPNOTIFYFILTERMASK: /** OCTETSTR = ASN01_OCTET_STR */
         rowreq_ctx->data.snmpNotifyFilterMask_len = sizeof( rowreq_ctx->data.snmpNotifyFilterMask );
-        buf = ReadConfig_readMemory( ASN01_OCTET_STR, buf,
+        buf = ReadConfig_readMemory( asnOCTET_STR, buf,
             ( char* )&rowreq_ctx->data.snmpNotifyFilterMask,
             ( size_t* )&rowreq_ctx->data.snmpNotifyFilterMask_len );
         break;
 
     case COLUMN_SNMPNOTIFYFILTERTYPE: /** INTEGER = ASN01_INTEGER */
         len = sizeof( rowreq_ctx->data.snmpNotifyFilterType );
-        buf = ReadConfig_readMemory( ASN01_INTEGER, buf,
+        buf = ReadConfig_readMemory( asnINTEGER, buf,
             ( char* )&rowreq_ctx->data.snmpNotifyFilterType, &len );
         break;
 
     case COLUMN_SNMPNOTIFYFILTERSTORAGETYPE: /** StorageType = ASN01_INTEGER */
         len = sizeof( rowreq_ctx->data.snmpNotifyFilterStorageType );
-        buf = ReadConfig_readMemory( ASN01_INTEGER, buf,
+        buf = ReadConfig_readMemory( asnINTEGER, buf,
             ( char* )&rowreq_ctx->data.snmpNotifyFilterStorageType, &len );
         break;
 
     case COLUMN_SNMPNOTIFYFILTERROWSTATUS: /** RowStatus = ASN01_INTEGER */
         len = sizeof( rowreq_ctx->data.snmpNotifyFilterRowStatus );
-        buf = ReadConfig_readMemory( ASN01_INTEGER, buf,
+        buf = ReadConfig_readMemory( asnINTEGER, buf,
             ( char* )&rowreq_ctx->data.snmpNotifyFilterRowStatus, &len );
         break;
 
@@ -2184,7 +2184,7 @@ snmpNotifyFilterTable_rowreq_ctx*
 snmpNotifyFilterTable_row_find_by_mib_index( snmpNotifyFilterTable_mib_index* mib_idx )
 {
     snmpNotifyFilterTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

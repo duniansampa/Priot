@@ -19,7 +19,7 @@ static TableRegistrationInfo* table_info;
 void init_mteTriggerExistenceTable( void )
 {
     static oid mteTExistTable_oid[] = { 1, 3, 6, 1, 2, 1, 88, 1, 2, 4 };
-    size_t mteTExistTable_oid_len = ASN01_OID_LENGTH( mteTExistTable_oid );
+    size_t mteTExistTable_oid_len = asnOID_LENGTH( mteTExistTable_oid );
     HandlerRegistration* reg;
     int rc;
 
@@ -39,9 +39,9 @@ void init_mteTriggerExistenceTable( void )
 
     table_info = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
     Table_helperAddIndexes( table_info,
-        ASN01_OCTET_STR, /* index: mteOwner       */
+        asnOCTET_STR, /* index: mteOwner       */
         /* index: mteTriggerName */
-        ASN01_PRIV_IMPLIED_OCTET_STR,
+        asnPRIV_IMPLIED_OCTET_STR,
         0 );
 
     table_info->min_column = COLUMN_MTETRIGGEREXISTENCETEST;
@@ -95,30 +95,30 @@ int mteTriggerExistenceTable_handler( MibHandler* handler,
 
             switch ( tinfo->colnum ) {
             case COLUMN_MTETRIGGEREXISTENCETEST:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )&entry->mteTExTest, 1 );
                 break;
             case COLUMN_MTETRIGGEREXISTENCESTARTUP:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )&entry->mteTExStartup, 1 );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEOBJECTSOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTExObjOwner,
                     strlen( entry->mteTExObjOwner ) );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEOBJECTS:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTExObjects,
                     strlen( entry->mteTExObjects ) );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEEVENTOWNER:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTExEvOwner,
                     strlen( entry->mteTExEvOwner ) );
                 break;
             case COLUMN_MTETRIGGEREXISTENCEEVENT:
-                Client_setVarTypedValue( request->requestvb, ASN01_OCTET_STR,
+                Client_setVarTypedValue( request->requestvb, asnOCTET_STR,
                     ( u_char* )entry->mteTExEvent,
                     strlen( entry->mteTExEvent ) );
                 break;
@@ -155,7 +155,7 @@ int mteTriggerExistenceTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGEREXISTENCETEST:
             case COLUMN_MTETRIGGEREXISTENCESTARTUP:
                 ret = VariableList_checkTypeAndLength(
-                    request->requestvb, ASN01_OCTET_STR, 1 );
+                    request->requestvb, asnOCTET_STR, 1 );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;
@@ -167,7 +167,7 @@ int mteTriggerExistenceTable_handler( MibHandler* handler,
             case COLUMN_MTETRIGGEREXISTENCEEVENTOWNER:
             case COLUMN_MTETRIGGEREXISTENCEEVENT:
                 ret = VariableList_checkTypeAndMaxLength(
-                    request->requestvb, ASN01_OCTET_STR, MTE_STR1_LEN );
+                    request->requestvb, asnOCTET_STR, MTE_STR1_LEN );
                 if ( ret != PRIOT_ERR_NOERROR ) {
                     Agent_setRequestError( reqinfo, request, ret );
                     return PRIOT_ERR_NOERROR;

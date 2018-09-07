@@ -572,36 +572,36 @@ var_logmatch_table( struct Variable_s* vp,
 void init_logmatch( void )
 {
     struct Variable2_s logmatch_info[] = {
-        { LOGMATCH_INFO, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_INFO, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 0 }
     };
 
     struct Variable2_s logmatch_table[] = {
-        { LOGMATCH_INDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_INDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 1 } },
-        { LOGMATCH_NAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_NAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 2 } },
-        { LOGMATCH_FILENAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_FILENAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 3 } },
-        { LOGMATCH_REGEX, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_REGEX, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 4 } },
-        { LOGMATCH_GLOBALCTR, ASN01_COUNTER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_GLOBALCTR, asnCOUNTER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 5 } },
-        { LOGMATCH_GLOBALCNT, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_GLOBALCNT, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 6 } },
-        { LOGMATCH_CURRENTCTR, ASN01_COUNTER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_CURRENTCTR, asnCOUNTER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 7 } },
-        { LOGMATCH_CURRENTCNT, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_CURRENTCNT, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 8 } },
-        { LOGMATCH_COUNTER, ASN01_COUNTER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_COUNTER, asnCOUNTER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 9 } },
-        { LOGMATCH_COUNT, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_COUNT, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 10 } },
-        { LOGMATCH_FREQ, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_FREQ, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 11 } },
-        { LOGMATCH_ERROR, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_ERROR, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 100 } },
-        { LOGMATCH_MSG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { LOGMATCH_MSG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_logmatch_table, 1, { 101 } }
     };
 

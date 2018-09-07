@@ -130,13 +130,13 @@ void _ipAddressPrefixTable_initialize_interface( ipAddressPrefixTable_registrati
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: ipAddressPrefixIfIndex */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: ipAddressPrefixType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: ipAddressPrefixPrefix */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: ipAddressPrefixLength */
         0 );
 
@@ -319,16 +319,16 @@ int ipAddressPrefixTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_ipAddressPrefixIfIndex, 0x00,
         sizeof( var_ipAddressPrefixIfIndex ) );
-    var_ipAddressPrefixIfIndex.type = ASN01_INTEGER;
+    var_ipAddressPrefixIfIndex.type = asnINTEGER;
     memset( &var_ipAddressPrefixType, 0x00,
         sizeof( var_ipAddressPrefixType ) );
-    var_ipAddressPrefixType.type = ASN01_INTEGER;
+    var_ipAddressPrefixType.type = asnINTEGER;
     memset( &var_ipAddressPrefixPrefix, 0x00,
         sizeof( var_ipAddressPrefixPrefix ) );
-    var_ipAddressPrefixPrefix.type = ASN01_OCTET_STR;
+    var_ipAddressPrefixPrefix.type = asnOCTET_STR;
     memset( &var_ipAddressPrefixLength, 0x00,
         sizeof( var_ipAddressPrefixLength ) );
-    var_ipAddressPrefixLength.type = ASN01_UNSIGNED;
+    var_ipAddressPrefixLength.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -418,16 +418,16 @@ int ipAddressPrefixTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_ipAddressPrefixIfIndex, 0x00,
         sizeof( var_ipAddressPrefixIfIndex ) );
-    var_ipAddressPrefixIfIndex.type = ASN01_INTEGER;
+    var_ipAddressPrefixIfIndex.type = asnINTEGER;
     memset( &var_ipAddressPrefixType, 0x00,
         sizeof( var_ipAddressPrefixType ) );
-    var_ipAddressPrefixType.type = ASN01_INTEGER;
+    var_ipAddressPrefixType.type = asnINTEGER;
     memset( &var_ipAddressPrefixPrefix, 0x00,
         sizeof( var_ipAddressPrefixPrefix ) );
-    var_ipAddressPrefixPrefix.type = ASN01_OCTET_STR;
+    var_ipAddressPrefixPrefix.type = asnOCTET_STR;
     memset( &var_ipAddressPrefixLength, 0x00,
         sizeof( var_ipAddressPrefixLength ) );
-    var_ipAddressPrefixLength.type = ASN01_UNSIGNED;
+    var_ipAddressPrefixLength.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -665,7 +665,7 @@ _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
          */
     case COLUMN_IPADDRESSPREFIXORIGIN:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressPrefixOrigin_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -675,7 +675,7 @@ _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
          */
     case COLUMN_IPADDRESSPREFIXONLINKFLAG:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressPrefixOnLinkFlag_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -685,7 +685,7 @@ _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
          */
     case COLUMN_IPADDRESSPREFIXAUTONOMOUSFLAG:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_INTEGER;
+        var->type = asnINTEGER;
         rc = ipAddressPrefixAutonomousFlag_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -695,7 +695,7 @@ _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
          */
     case COLUMN_IPADDRESSPREFIXADVPREFERREDLIFETIME:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipAddressPrefixAdvPreferredLifetime_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -705,7 +705,7 @@ _ipAddressPrefixTable_get_column( ipAddressPrefixTable_rowreq_ctx*
          */
     case COLUMN_IPADDRESSPREFIXADVVALIDLIFETIME:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipAddressPrefixAdvValidLifetime_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -951,7 +951,7 @@ ipAddressPrefixTable_row_find_by_mib_index( ipAddressPrefixTable_mib_index*
         mib_idx )
 {
     ipAddressPrefixTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

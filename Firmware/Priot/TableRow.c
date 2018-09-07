@@ -84,7 +84,7 @@ TableRow_register(HandlerRegistration *reginfo,
 {
     HandlerRegistration *reg2;
     MibHandler *handler;
-    oid    row_oid[ASN01_MAX_OID_LEN];
+    oid    row_oid[asnMAX_OID_LEN];
     size_t row_oid_len, len;
     char   tmp[UTILITIES_MAX_BUFFER_MEDIUM];
 
@@ -119,7 +119,7 @@ TableRow_register(HandlerRegistration *reginfo,
     reginfo->range_ubound  = tabreg->max_column;
     reginfo->range_subid   = row_oid_len-1;
     Mib_buildOidNoalloc(&row_oid[row_oid_len],
-                      ASN01_MAX_OID_LEN-row_oid_len, &len, NULL, 0, index);
+                      asnMAX_OID_LEN-row_oid_len, &len, NULL, 0, index);
     row_oid_len += len;
     free(reginfo->rootoid);
     reginfo->rootoid = Api_duplicateObjid(row_oid, row_oid_len);

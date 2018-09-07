@@ -233,7 +233,7 @@ int write_rte( int action,
 
         if ( action == IMPL_RESERVE1 ) {
 
-            if ( var_val_type != ASN01_IPADDRESS ) {
+            if ( var_val_type != asnIPADDRESS ) {
                 Logger_log( LOGGER_PRIORITY_ERR, "not IP address" );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -250,7 +250,7 @@ int write_rte( int action,
     case IPROUTEMETRIC1:
 
         if ( action == IMPL_RESERVE1 ) {
-            if ( var_val_type != ASN01_INTEGER ) {
+            if ( var_val_type != asnINTEGER ) {
                 Logger_log( LOGGER_PRIORITY_ERR, "not int1" );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -279,7 +279,7 @@ int write_rte( int action,
     case IPROUTEIFINDEX:
 
         if ( action == IMPL_RESERVE1 ) {
-            if ( var_val_type != ASN01_INTEGER ) {
+            if ( var_val_type != asnINTEGER ) {
                 Logger_log( LOGGER_PRIORITY_ERR, "not right2" );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -302,7 +302,7 @@ int write_rte( int action,
 
         if ( action == IMPL_RESERVE1 ) {
 
-            if ( var_val_type != ASN01_IPADDRESS ) {
+            if ( var_val_type != asnIPADDRESS ) {
                 Logger_log( LOGGER_PRIORITY_ERR, "not right4" );
                 return PRIOT_ERR_WRONGTYPE;
             }
@@ -328,7 +328,7 @@ int write_rte( int action,
          */
 
         if ( action == IMPL_RESERVE1 ) {
-            if ( var_val_type != ASN01_INTEGER ) {
+            if ( var_val_type != asnINTEGER ) {
                 return PRIOT_ERR_WRONGTYPE;
             }
 

@@ -51,7 +51,7 @@ struct mteEvent {
     /*
      * Column values for Notification events (mteEventNotificationTable)
      */
-    oid             mteNotification[ASN01_MAX_OID_LEN];
+    oid             mteNotification[asnMAX_OID_LEN];
     size_t          mteNotification_len;
     char            mteNotifyOwner[  MTE_STR1_LEN+1];
     char            mteNotifyObjects[MTE_STR1_LEN+1];
@@ -59,7 +59,7 @@ struct mteEvent {
     /*
      * Column values for Set events  (mteEventSetTable)
      */
-    oid             mteSetOID[ASN01_MAX_OID_LEN];
+    oid             mteSetOID[asnMAX_OID_LEN];
     size_t          mteSetOID_len;
     long            mteSetValue;
     char            mteSetTarget[ MTE_STR2_LEN+1];

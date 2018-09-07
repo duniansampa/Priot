@@ -644,7 +644,7 @@ AgentRegistry_subtreeSplit( Subtree* current, oid name[], int name_len )
     }
 
     /* Delegated trees should retain their variables regardless */
-    if ( current->variables_len > 0 && ASN01_IS_DELEGATED( ( u_char )current->variables[ 0 ].type ) ) {
+    if ( current->variables_len > 0 && asnIS_DELEGATED( ( u_char )current->variables[ 0 ].type ) ) {
         new_sub->variables_len = 1;
         new_sub->variables = current->variables;
     }

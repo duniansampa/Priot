@@ -18,14 +18,14 @@ void init_mteScalars( void )
 
     ScalarGroup_registerScalarGroup(
         AgentHandler_createHandlerRegistration( "mteResource", handle_mteResourceGroup,
-            mteResource_oid, ASN01_OID_LENGTH( mteResource_oid ),
+            mteResource_oid, asnOID_LENGTH( mteResource_oid ),
             HANDLER_CAN_RONLY ),
         MTE_RESOURCE_SAMPLE_MINFREQ, MTE_RESOURCE_SAMPLE_LACKS );
 
     Scalar_registerScalar(
         AgentHandler_createHandlerRegistration( "mteTriggerFailures",
             handle_mteTriggerFailures,
-            mteTriggerFail_oid, ASN01_OID_LENGTH( mteTriggerFail_oid ),
+            mteTriggerFail_oid, asnOID_LENGTH( mteTriggerFail_oid ),
             HANDLER_CAN_RONLY ) );
 }
 
@@ -43,33 +43,33 @@ int handle_mteResourceGroup( MibHandler* handler,
         switch ( obj ) {
         case MTE_RESOURCE_SAMPLE_MINFREQ:
             value = 1; /* Fixed minimum sample frequency */
-            Client_setVarTypedValue( requests->requestvb, ASN01_INTEGER,
+            Client_setVarTypedValue( requests->requestvb, asnINTEGER,
                 ( u_char* )&value, sizeof( value ) );
             break;
 
         case MTE_RESOURCE_SAMPLE_MAX_INST:
             value = 0; /* No fixed maximum */
-            Client_setVarTypedValue( requests->requestvb, ASN01_UNSIGNED,
+            Client_setVarTypedValue( requests->requestvb, asnUNSIGNED,
                 ( u_char* )&value, sizeof( value ) );
             break;
 
         case MTE_RESOURCE_SAMPLE_INSTANCES:
             value = mteTrigger_getNumEntries( 0 );
 
-            Client_setVarTypedValue( requests->requestvb, ASN01_GAUGE,
+            Client_setVarTypedValue( requests->requestvb, asnGAUGE,
                 ( u_char* )&value, sizeof( value ) );
             break;
 
         case MTE_RESOURCE_SAMPLE_HIGH:
             value = mteTrigger_getNumEntries( 1 );
 
-            Client_setVarTypedValue( requests->requestvb, ASN01_GAUGE,
+            Client_setVarTypedValue( requests->requestvb, asnGAUGE,
                 ( u_char* )&value, sizeof( value ) );
             break;
 
         case MTE_RESOURCE_SAMPLE_LACKS:
             value = 0; /* mteResSampleInstMax not used */
-            Client_setVarTypedValue( requests->requestvb, ASN01_COUNTER,
+            Client_setVarTypedValue( requests->requestvb, asnCOUNTER,
                 ( u_char* )&value, sizeof( value ) );
             break;
 
@@ -104,7 +104,7 @@ int handle_mteTriggerFailures( MibHandler* handler,
 
     switch ( reqinfo->mode ) {
     case MODE_GET:
-        Client_setVarTypedValue( requests->requestvb, ASN01_COUNTER,
+        Client_setVarTypedValue( requests->requestvb, asnCOUNTER,
             ( u_char* )&mteTriggerFailures,
             sizeof( mteTriggerFailures ) );
         break;

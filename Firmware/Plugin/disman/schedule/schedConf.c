@@ -54,8 +54,8 @@ void parse_sched_periodic( const char* token, char* line )
     long frequency;
     long value;
     size_t tmpint;
-    oid variable[ ASN01_MAX_OID_LEN ], *var_ptr = variable;
-    size_t var_len = ASN01_MAX_OID_LEN;
+    oid variable[ asnMAX_OID_LEN ], *var_ptr = variable;
+    size_t var_len = asnMAX_OID_LEN;
 
     schedEntries++;
     sprintf( buf, "_conf%03d", schedEntries );
@@ -71,7 +71,7 @@ void parse_sched_periodic( const char* token, char* line )
         return;
     }
 
-    line = ReadConfig_readData( ASN01_OBJECT_ID, line, &var_ptr, &var_len );
+    line = ReadConfig_readData( asnOBJECT_ID, line, &var_ptr, &var_len );
     if ( var_len == 0 ) {
         ReadConfig_configPerror( "invalid specification for schedVariable" );
         return;
@@ -87,7 +87,7 @@ void parse_sched_periodic( const char* token, char* line )
             line++;
         }
     }
-    line = ReadConfig_readData( ASN01_INTEGER, line, &value, &tmpint );
+    line = ReadConfig_readData( asnINTEGER, line, &value, &tmpint );
 
     /*
      * Create an entry in the schedTable
@@ -197,8 +197,8 @@ void parse_sched_timed( const char* token, char* line )
 
     long value;
     size_t tmpint;
-    oid variable[ ASN01_MAX_OID_LEN ], *var_ptr = variable;
-    size_t var_len = ASN01_MAX_OID_LEN;
+    oid variable[ asnMAX_OID_LEN ], *var_ptr = variable;
+    size_t var_len = asnMAX_OID_LEN;
 
     schedEntries++;
     sprintf( buf, "_conf%03d", schedEntries );
@@ -208,21 +208,21 @@ void parse_sched_timed( const char* token, char* line )
      *  Parse the configure directive line
      */
     cp = minConf;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &cp, &min_len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &cp, &min_len );
     cp = hourConf;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &cp, &hour_len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &cp, &hour_len );
     cp = dateConf;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &cp, &date_len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &cp, &date_len );
     cp = monConf;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &cp, &mon_len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &cp, &mon_len );
     cp = dayConf;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &cp, &day_len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &cp, &day_len );
     if ( !line ) {
         ReadConfig_configPerror( "invalid schedule time specification" );
         return;
     }
 
-    line = ReadConfig_readData( ASN01_OBJECT_ID, line, &var_ptr, &var_len );
+    line = ReadConfig_readData( asnOBJECT_ID, line, &var_ptr, &var_len );
     if ( var_len == 0 ) {
         ReadConfig_configPerror( "invalid specification for schedVariable" );
         return;
@@ -238,7 +238,7 @@ void parse_sched_timed( const char* token, char* line )
             line++;
         }
     }
-    line = ReadConfig_readData( ASN01_INTEGER, line, &value, &tmpint );
+    line = ReadConfig_readData( asnINTEGER, line, &value, &tmpint );
 
     /*
      * Convert from cron-style specifications into bits
@@ -310,10 +310,10 @@ void parse_schedTable( const char* token, char* line )
     memset( name, 0, sizeof( name ) );
     len = SCHED_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = SCHED_STR1_LEN;
     vp = name;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     row = schedTable_createEntry( owner, name );
     if ( !row || !row->data ) {
         ReadConfig_configPerror( "create schedule entry failure" );
@@ -327,13 +327,13 @@ void parse_schedTable( const char* token, char* line )
      */
     len = SCHED_STR2_LEN;
     vp = entry->schedDescr;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
-    line = ReadConfig_readData( ASN01_UNSIGNED, line,
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnUNSIGNED, line,
         &entry->schedInterval, NULL );
     /* Unpick the various timed bits */
     len = 22;
     vp = time_bits;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry->schedWeekDay = time_bits[ 0 ];
     entry->schedMonth[ 0 ] = time_bits[ 1 ];
     entry->schedMonth[ 1 ] = time_bits[ 2 ];
@@ -345,16 +345,16 @@ void parse_schedTable( const char* token, char* line )
 
     len = SCHED_STR1_LEN;
     vp = entry->schedContextName;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
-    len = ASN01_MAX_OID_LEN;
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
+    len = asnMAX_OID_LEN;
     vp = entry->schedVariable;
-    line = ReadConfig_readData( ASN01_OBJECT_ID, line, &vp, &len );
+    line = ReadConfig_readData( asnOBJECT_ID, line, &vp, &len );
     entry->schedVariable_len = len;
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &entry->schedValue, NULL );
-    line = ReadConfig_readData( ASN01_UNSIGNED, line,
+    line = ReadConfig_readData( asnUNSIGNED, line,
         &entry->schedType, NULL );
-    line = ReadConfig_readData( ASN01_UNSIGNED, line, &len, NULL );
+    line = ReadConfig_readData( asnUNSIGNED, line, &len, NULL );
     entry->flags |= ( len /* & WHAT ?? */ );
     /* XXX - Will need to read in the 'iquery' access information */
     entry->flags |= SCHEDULE_FLAG_VALID;
@@ -400,15 +400,15 @@ int store_schedTable( int majorID, int minorID, void* serverarg, void* clientarg
 
         cp = entry->schedOwner;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->schedName;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->schedDescr;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         tint = entry->schedInterval;
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
 
         /* Combine all the timed bits into a single field */
         time_bits[ 0 ] = entry->schedWeekDay;
@@ -421,20 +421,20 @@ int store_schedTable( int majorID, int minorID, void* serverarg, void* clientarg
         memcpy( time_bits + 14, entry->schedMinute, 8 );
         vp = time_bits;
         tint = 22;
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &vp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &vp, &tint );
 
         cp = entry->schedContextName;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         vp = entry->schedVariable;
         tint = entry->schedVariable_len;
-        cptr = ReadConfig_storeData( ASN01_OBJECT_ID, cptr, &vp, &tint );
+        cptr = ReadConfig_storeData( asnOBJECT_ID, cptr, &vp, &tint );
         tint = entry->schedValue;
-        cptr = ReadConfig_storeData( ASN01_INTEGER, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnINTEGER, cptr, &tint, NULL );
         tint = entry->schedType;
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
         tint = entry->flags /* & WHAT ?? */;
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
         /* XXX - Need to store the 'iquery' access information */
         AgentReadConfig_priotdStoreConfig( line );
     }

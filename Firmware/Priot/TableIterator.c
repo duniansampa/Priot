@@ -258,8 +258,8 @@ void TableIterator_insertIteratorContext( RequestInfo* request, void* data )
     VariableList* this_index = NULL;
     VariableList* that_index = NULL;
     oid base_oid[] = { 0, 0 }; /* Make sure index OIDs are legal! */
-    oid this_oid[ ASN01_MAX_OID_LEN ];
-    oid that_oid[ ASN01_MAX_OID_LEN ];
+    oid this_oid[ asnMAX_OID_LEN ];
+    oid that_oid[ asnMAX_OID_LEN ];
     size_t this_oid_len, that_oid_len;
 
     if ( !request )
@@ -275,7 +275,7 @@ void TableIterator_insertIteratorContext( RequestInfo* request, void* data )
 
     table_info = Table_extractTableInfo( request );
     this_index = table_info->indexes;
-    Mib_buildOidNoalloc( this_oid, ASN01_MAX_OID_LEN, &this_oid_len,
+    Mib_buildOidNoalloc( this_oid, asnMAX_OID_LEN, &this_oid_len,
         base_oid, 2, this_index );
 
     /*
@@ -298,7 +298,7 @@ void TableIterator_insertIteratorContext( RequestInfo* request, void* data )
     for ( ; req; req = req->next ) {
         table_info = Table_extractTableInfo( req );
         that_index = table_info->indexes;
-        Mib_buildOidNoalloc( that_oid, ASN01_MAX_OID_LEN, &that_oid_len,
+        Mib_buildOidNoalloc( that_oid, asnMAX_OID_LEN, &that_oid_len,
             base_oid, 2, that_index );
 
         /*
@@ -317,7 +317,7 @@ void TableIterator_insertIteratorContext( RequestInfo* request, void* data )
 #define TI_REQUEST_CACHE "tiCache"
 
 typedef struct TiCacheInfo_s {
-    oid best_match[ ASN01_MAX_OID_LEN ];
+    oid best_match[ asnMAX_OID_LEN ];
     size_t best_match_len;
     void* data_context;
     FreeDataContextFT* free_context;
@@ -351,7 +351,7 @@ _TableIterator_remember( RequestInfo* request,
 {
     TiCacheInfo* ti_info;
 
-    if ( !request || !oid_to_save || oid_to_save_len > ASN01_MAX_OID_LEN )
+    if ( !request || !oid_to_save || oid_to_save_len > asnMAX_OID_LEN )
         return NULL;
 
     /* extract existing cached state */
@@ -397,10 +397,10 @@ int TableIterator_helperHandler( MibHandler* handler,
 {
     TableRegistrationInfo* tbl_info;
     TableRequestInfo* table_info = NULL;
-    oid coloid[ ASN01_MAX_OID_LEN ];
+    oid coloid[ asnMAX_OID_LEN ];
     size_t coloid_len;
     int ret = PRIOT_ERR_NOERROR;
-    static oid myname[ ASN01_MAX_OID_LEN ];
+    static oid myname[ asnMAX_OID_LEN ];
     size_t myname_len;
     int oldmode = 0;
     IteratorInfo* iinfo;
@@ -600,7 +600,7 @@ int TableIterator_helperHandler( MibHandler* handler,
                     case MODE_GET:
                     case MODE_SET_RESERVE1:
                         /* looking for exact matches */
-                        Mib_buildOidNoalloc( myname, ASN01_MAX_OID_LEN, &myname_len,
+                        Mib_buildOidNoalloc( myname, asnMAX_OID_LEN, &myname_len,
                             coloid, coloid_len, index_search );
                         if ( Api_oidCompare( myname, myname_len,
                                  request->requestvb->name,
@@ -636,7 +636,7 @@ int TableIterator_helperHandler( MibHandler* handler,
 
                     case MODE_GET_STASH:
                         /* collect data for each column for every row */
-                        Mib_buildOidNoalloc( myname, ASN01_MAX_OID_LEN, &myname_len,
+                        Mib_buildOidNoalloc( myname, asnMAX_OID_LEN, &myname_len,
                             coloid, coloid_len, index_search );
                         reqinfo->mode = MODE_GET;
                         if ( reqtmp )
@@ -666,13 +666,13 @@ int TableIterator_helperHandler( MibHandler* handler,
                                     Api_freeVarbind( free_this_index_search );
                                 return PRIOT_ERR_GENERR;
                             }
-                            vb->type = ASN01_NULL;
+                            vb->type = asnNULL;
                             Client_setVarObjid( vb, myname, myname_len );
                             AgentHandler_callNextHandler( handler, reginfo,
                                 reqinfo, reqtmp );
                             reqtmp->requestvb = NULL;
                             reqtmp->processed = 0;
-                            if ( vb->type != ASN01_NULL ) { /* XXX, not all */
+                            if ( vb->type != asnNULL ) { /* XXX, not all */
                                 OidStash_addData( cinfo, myname,
                                     myname_len, vb );
                             } else {
@@ -948,13 +948,13 @@ void* TableIterator_rowGetByidx( IteratorInfo* iinfo,
     VariableList* indexes )
 {
     oid dummy[] = { 0, 0 }; /* Keep 'build_oid' happy */
-    oid instance[ ASN01_MAX_OID_LEN ];
-    size_t len = ASN01_MAX_OID_LEN;
+    oid instance[ asnMAX_OID_LEN ];
+    size_t len = asnMAX_OID_LEN;
 
     if ( !iinfo || !indexes )
         return NULL;
 
-    Mib_buildOidNoalloc( instance, ASN01_MAX_OID_LEN, &len,
+    Mib_buildOidNoalloc( instance, asnMAX_OID_LEN, &len,
         dummy, 2, indexes );
     return TableIterator_rowGetByoid( iinfo, instance + 2, len - 2 );
 }
@@ -963,13 +963,13 @@ void* TableIterator_rowNextByidx( IteratorInfo* iinfo,
     VariableList* indexes )
 {
     oid dummy[] = { 0, 0 };
-    oid instance[ ASN01_MAX_OID_LEN ];
-    size_t len = ASN01_MAX_OID_LEN;
+    oid instance[ asnMAX_OID_LEN ];
+    size_t len = asnMAX_OID_LEN;
 
     if ( !iinfo || !indexes )
         return NULL;
 
-    Mib_buildOidNoalloc( instance, ASN01_MAX_OID_LEN, &len,
+    Mib_buildOidNoalloc( instance, asnMAX_OID_LEN, &len,
         dummy, 2, indexes );
     return TableIterator_rowNextByoid( iinfo, instance + 2, len - 2 );
 }
@@ -978,7 +978,7 @@ void* TableIterator_rowGetByoid( IteratorInfo* iinfo,
     oid* instance, size_t len )
 {
     oid dummy[] = { 0, 0 };
-    oid this_inst[ ASN01_MAX_OID_LEN ];
+    oid this_inst[ asnMAX_OID_LEN ];
     size_t this_len;
     VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
@@ -999,8 +999,8 @@ void* TableIterator_rowGetByoid( IteratorInfo* iinfo,
     /* XXX - free context ? */
 
     while ( vp2 ) {
-        this_len = ASN01_MAX_OID_LEN;
-        Mib_buildOidNoalloc( this_inst, ASN01_MAX_OID_LEN, &this_len, dummy, 2, vp2 );
+        this_len = asnMAX_OID_LEN;
+        Mib_buildOidNoalloc( this_inst, asnMAX_OID_LEN, &this_len, dummy, 2, vp2 );
         n = Api_oidCompare( instance, len, this_inst + 2, this_len - 2 );
         if ( n == 0 )
             break; /* Found matching row */
@@ -1026,9 +1026,9 @@ void* TableIterator_rowNextByoid( IteratorInfo* iinfo,
     oid* instance, size_t len )
 {
     oid dummy[] = { 0, 0 };
-    oid this_inst[ ASN01_MAX_OID_LEN ];
+    oid this_inst[ asnMAX_OID_LEN ];
     size_t this_len;
-    oid best_inst[ ASN01_MAX_OID_LEN ];
+    oid best_inst[ asnMAX_OID_LEN ];
     size_t best_len = 0;
     VariableList *vp1, *vp2;
     void *ctx1, *ctx2;
@@ -1051,8 +1051,8 @@ void* TableIterator_rowNextByoid( IteratorInfo* iinfo,
     /* XXX - free context ? */
 
     while ( vp2 ) {
-        this_len = ASN01_MAX_OID_LEN;
-        Mib_buildOidNoalloc( this_inst, ASN01_MAX_OID_LEN, &this_len, dummy, 2, vp2 );
+        this_len = asnMAX_OID_LEN;
+        Mib_buildOidNoalloc( this_inst, asnMAX_OID_LEN, &this_len, dummy, 2, vp2 );
         n = Api_oidCompare( instance, len, this_inst + 2, this_len - 2 );
 
         /*

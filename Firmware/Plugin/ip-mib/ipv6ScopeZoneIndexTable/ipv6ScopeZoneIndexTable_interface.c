@@ -131,7 +131,7 @@ void _ipv6ScopeZoneIndexTable_initialize_interface( ipv6ScopeZoneIndexTable_regi
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: ipv6ScopeZoneIndexIfIndex */
         0 );
 
@@ -299,7 +299,7 @@ int ipv6ScopeZoneIndexTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_ipv6ScopeZoneIndexIfIndex, 0x00,
         sizeof( var_ipv6ScopeZoneIndexIfIndex ) );
-    var_ipv6ScopeZoneIndexIfIndex.type = ASN01_INTEGER;
+    var_ipv6ScopeZoneIndexIfIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -353,7 +353,7 @@ int ipv6ScopeZoneIndexTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_ipv6ScopeZoneIndexIfIndex, 0x00,
         sizeof( var_ipv6ScopeZoneIndexIfIndex ) );
-    var_ipv6ScopeZoneIndexIfIndex.type = ASN01_INTEGER;
+    var_ipv6ScopeZoneIndexIfIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -670,7 +670,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXLINKLOCAL:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexLinkLocal_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -680,7 +680,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEX3:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndex3_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -690,7 +690,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXADMINLOCAL:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexAdminLocal_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -700,7 +700,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXSITELOCAL:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexSiteLocal_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -710,7 +710,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEX6:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndex6_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -720,7 +720,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEX7:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndex7_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -730,7 +730,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXORGANIZATIONLOCAL:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexOrganizationLocal_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -740,7 +740,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEX9:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndex9_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -750,7 +750,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXA:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexA_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -760,7 +760,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXB:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexB_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -770,7 +770,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXC:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexC_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -780,7 +780,7 @@ _ipv6ScopeZoneIndexTable_get_column( ipv6ScopeZoneIndexTable_rowreq_ctx*
          */
     case COLUMN_IPV6SCOPEZONEINDEXD:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipv6ScopeZoneIndexD_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -983,7 +983,7 @@ ipv6ScopeZoneIndexTable_rowreq_ctx*
 ipv6ScopeZoneIndexTable_row_find_by_mib_index( ipv6ScopeZoneIndexTable_mib_index* mib_idx )
 {
     ipv6ScopeZoneIndexTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

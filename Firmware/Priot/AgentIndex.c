@@ -49,7 +49,7 @@ AgentIndex_registerStringIndex( oid*  name,
     VariableList varbind, *res;
 
     memset(&varbind, 0, sizeof(VariableList));
-    varbind.type = ASN01_OCTET_STR;
+    varbind.type = asnOCTET_STR;
     Client_setVarObjid(&varbind, name, name_len);
     if (cp != ANY_STRING_INDEX) {
         Client_setVarValue(&varbind, (u_char *) cp, strlen(cp));
@@ -79,7 +79,7 @@ AgentIndex_registerIntIndex( oid*  name,
     VariableList varbind, *res;
 
     memset(&varbind, 0, sizeof(VariableList));
-    varbind.type = ASN01_INTEGER;
+    varbind.type = asnINTEGER;
     Client_setVarObjid(&varbind, name, name_len);
     varbind.value.string = varbind.buffer;
     if (val != ANY_INTEGER_INDEX) {
@@ -113,7 +113,7 @@ AgentIndex_registerOidIndex( oid*  name,
     VariableList varbind;
 
     memset(&varbind, 0, sizeof(VariableList));
-    varbind.type = ASN01_OBJECT_ID;
+    varbind.type = asnOBJECT_ID;
     Client_setVarObjid(&varbind, name, name_len);
     if (value != ANY_OID_INDEX) {
         Client_setVarValue(&varbind, (u_char *) value,
@@ -195,19 +195,19 @@ AgentIndex_registerIndex( VariableList* varbind,
             for (idxptr2 = idxptr; idxptr2 != NULL;
                  prev_idx_ptr = idxptr2, idxptr2 = idxptr2->next_idx) {
                 switch (varbind->type) {
-                case ASN01_INTEGER:
+                case asnINTEGER:
                     res2 =
                         (*varbind->value.integer -
                          *idxptr2->varbind->value.integer);
                     break;
-                case ASN01_OCTET_STR:
+                case asnOCTET_STR:
                     i = UTILITIES_MIN_VALUE(varbind->valueLength,
                                  idxptr2->varbind->valueLength);
                     res2 =
                         memcmp(varbind->value.string,
                                idxptr2->varbind->value.string, i);
                     break;
-                case ASN01_OBJECT_ID:
+                case asnOBJECT_ID:
                     res2 =
                         Api_oidCompare(varbind->value.objectId,
                                          varbind->valueLength / sizeof(oid),
@@ -292,7 +292,7 @@ AgentIndex_registerIndex( VariableList* varbind,
     new_index->session = ss;
     new_index->allocated = 1;
 
-    if (varbind->type == ASN01_OCTET_STR && flags == ALLOCATE_THIS_INDEX)
+    if (varbind->type == asnOCTET_STR && flags == ALLOCATE_THIS_INDEX)
         new_index->varbind->value.string[new_index->varbind->valueLength] = 0;
 
     /*
@@ -312,14 +312,14 @@ AgentIndex_registerIndex( VariableList* varbind,
             new_index->varbind->value.string = new_index->varbind->buffer;
 
         switch (varbind->type) {
-        case ASN01_INTEGER:
+        case asnINTEGER:
             if (prev_idx_ptr) {
                 (*new_index->varbind->value.integer)++;
             } else
                 *(new_index->varbind->value.integer) = 1;
             new_index->varbind->valueLength = sizeof(long);
             break;
-        case ASN01_OCTET_STR:
+        case asnOCTET_STR:
             if (prev_idx_ptr) {
                 i = new_index->varbind->valueLength - 1;
                 while (new_index->varbind->buffer[i] == 'z') {
@@ -337,7 +337,7 @@ AgentIndex_registerIndex( VariableList* varbind,
             new_index->varbind->valueLength =
                 strlen((char *) new_index->varbind->buffer);
             break;
-        case ASN01_OBJECT_ID:
+        case asnOBJECT_ID:
             if (prev_idx_ptr) {
                 i = prev_idx_ptr->varbind->valueLength / sizeof(oid) - 1;
                 while (new_index->varbind->value.objectId[i] == 255) {
@@ -497,19 +497,19 @@ AgentIndex_unregisterIndex( VariableList* varbind,
     for (idxptr2 = idxptr; idxptr2 != NULL;
          prev_idx_ptr = idxptr2, idxptr2 = idxptr2->next_idx) {
         switch (varbind->type) {
-        case ASN01_INTEGER:
+        case asnINTEGER:
             res2 =
                 (*varbind->value.integer -
                  *idxptr2->varbind->value.integer);
             break;
-        case ASN01_OCTET_STR:
+        case asnOCTET_STR:
             i = UTILITIES_MIN_VALUE(varbind->valueLength,
                          idxptr2->varbind->valueLength);
             res2 =
                 memcmp(varbind->value.string,
                        idxptr2->varbind->value.string, i);
             break;
-        case ASN01_OBJECT_ID:
+        case asnOBJECT_ID:
             res2 =
                 Api_oidCompare(varbind->value.objectId,
                                  varbind->valueLength / sizeof(oid),
@@ -575,7 +575,7 @@ AgentIndex_unregisterStringIndex( oid*  name,
     VariableList varbind;
 
     memset(&varbind, 0, sizeof(VariableList));
-    varbind.type = ASN01_OCTET_STR;
+    varbind.type = asnOCTET_STR;
     Client_setVarObjid(&varbind, name, name_len);
     Client_setVarValue(&varbind, (u_char *) cp, strlen(cp));
     return (AgentIndex_unregisterIndex(&varbind, FALSE, agent_mainSession));
@@ -589,7 +589,7 @@ AgentIndex_unregisterIntIndex( oid*  name,
     VariableList varbind;
 
     memset(&varbind, 0, sizeof(VariableList));
-    varbind.type = ASN01_INTEGER;
+    varbind.type = asnINTEGER;
     Client_setVarObjid(&varbind, name, name_len);
     varbind.value.string = varbind.buffer;
     varbind.valueLength = sizeof(long);
@@ -606,7 +606,7 @@ AgentIndex_unregisterOidIndex( oid*  name,
     VariableList varbind;
 
     memset(&varbind, 0, sizeof(VariableList));
-    varbind.type = ASN01_OBJECT_ID;
+    varbind.type = asnOBJECT_ID;
     Client_setVarObjid(&varbind, name, name_len);
     Client_setVarValue(&varbind, (u_char *) value,
                        value_len * sizeof(oid));
@@ -638,17 +638,17 @@ AgentIndex_dumpIdxRegistry( void )
         for (idxptr2 = idxptr; idxptr2 != NULL;
              idxptr2 = idxptr2->next_idx) {
             switch (idxptr2->varbind->type) {
-            case ASN01_INTEGER:
+            case asnINTEGER:
                 printf("    %ld for session %8p, allocated %d\n",
                        *idxptr2->varbind->value.integer, idxptr2->session,
                        idxptr2->allocated);
                 break;
-            case ASN01_OCTET_STR:
+            case asnOCTET_STR:
                 printf("    \"%s\" for session %8p, allocated %d\n",
                        idxptr2->varbind->value.string, idxptr2->session,
                        idxptr2->allocated);
                 break;
-            case ASN01_OBJECT_ID:
+            case asnOBJECT_ID:
                 eout_len = 0;
                 if (Mib_sprintReallocObjid2(&ebuf, &ebuf_len, &eout_len, 1,
                                          idxptr2->varbind->value.objectId,

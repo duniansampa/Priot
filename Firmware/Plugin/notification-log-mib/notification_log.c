@@ -173,7 +173,7 @@ static void
 initialize_table_nlmLogVariableTable( const char* context )
 {
     static oid nlmLogVariableTable_oid[] = { 1, 3, 6, 1, 2, 1, 92, 1, 3, 2 };
-    size_t nlmLogVariableTable_oid_len = ASN01_OID_LENGTH( nlmLogVariableTable_oid );
+    size_t nlmLogVariableTable_oid_len = asnOID_LENGTH( nlmLogVariableTable_oid );
     TableDataSet* table_set;
     HandlerRegistration* reginfo;
 
@@ -192,19 +192,19 @@ initialize_table_nlmLogVariableTable( const char* context )
      */
     DEBUG_MSGTL( ( "initialize_table_nlmLogVariableTable",
         "adding index nlmLogName of type ASN01_OCTET_STR to table nlmLogVariableTable\n" ) );
-    TableDataset_addIndex( table_set, ASN01_OCTET_STR );
+    TableDataset_addIndex( table_set, asnOCTET_STR );
     /*
      * declaring the nlmLogIndex index
      */
     DEBUG_MSGTL( ( "initialize_table_nlmLogVariableTable",
         "adding index nlmLogIndex of type ASN01_UNSIGNED to table nlmLogVariableTable\n" ) );
-    TableDataset_addIndex( table_set, ASN01_UNSIGNED );
+    TableDataset_addIndex( table_set, asnUNSIGNED );
     /*
      * declaring the nlmLogVariableIndex index
      */
     DEBUG_MSGTL( ( "initialize_table_nlmLogVariableTable",
         "adding index nlmLogVariableIndex of type ASN01_UNSIGNED to table nlmLogVariableTable\n" ) );
-    TableDataset_addIndex( table_set, ASN01_UNSIGNED );
+    TableDataset_addIndex( table_set, asnUNSIGNED );
 
     /*
      * adding column nlmLogVariableID of type ASN01_OBJECT_ID and access of
@@ -213,7 +213,7 @@ initialize_table_nlmLogVariableTable( const char* context )
     DEBUG_MSGTL( ( "initialize_table_nlmLogVariableTable",
         "adding column nlmLogVariableID (#2) of type ASN01_OBJECT_ID to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set, COLUMN_NLMLOGVARIABLEID,
-        ASN01_OBJECT_ID, 0, NULL, 0 );
+        asnOBJECT_ID, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableValueType of type ASN01_INTEGER and
      * access of ReadOnly
@@ -222,7 +222,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableValueType (#3) of type ASN01_INTEGER to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEVALUETYPE,
-        ASN01_INTEGER, 0, NULL, 0 );
+        asnINTEGER, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableCounter32Val of type ASN01_COUNTER and
      * access of ReadOnly
@@ -231,7 +231,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableCounter32Val (#4) of type ASN01_COUNTER to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLECOUNTER32VAL,
-        ASN01_COUNTER, 0, NULL, 0 );
+        asnCOUNTER, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableUnsigned32Val of type ASN01_UNSIGNED and
      * access of ReadOnly
@@ -240,7 +240,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableUnsigned32Val (#5) of type ASN01_UNSIGNED to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEUNSIGNED32VAL,
-        ASN01_UNSIGNED, 0, NULL, 0 );
+        asnUNSIGNED, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableTimeTicksVal of type ASN01_TIMETICKS and
      * access of ReadOnly
@@ -249,7 +249,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableTimeTicksVal (#6) of type ASN01_TIMETICKS to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLETIMETICKSVAL,
-        ASN01_TIMETICKS, 0, NULL, 0 );
+        asnTIMETICKS, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableInteger32Val of type ASN01_INTEGER and
      * access of ReadOnly
@@ -258,7 +258,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableInteger32Val (#7) of type ASN01_INTEGER to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEINTEGER32VAL,
-        ASN01_INTEGER, 0, NULL, 0 );
+        asnINTEGER, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableOctetStringVal of type ASN01_OCTET_STR
      * and access of ReadOnly
@@ -267,7 +267,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableOctetStringVal (#8) of type ASN01_OCTET_STR to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEOCTETSTRINGVAL,
-        ASN01_OCTET_STR, 0, NULL, 0 );
+        asnOCTET_STR, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableIpAddressVal of type ASN01_IPADDRESS and
      * access of ReadOnly
@@ -276,7 +276,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableIpAddressVal (#9) of type ASN01_IPADDRESS to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEIPADDRESSVAL,
-        ASN01_IPADDRESS, 0, NULL, 0 );
+        asnIPADDRESS, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableOidVal of type ASN01_OBJECT_ID and access
      * of ReadOnly
@@ -285,7 +285,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableOidVal (#10) of type ASN01_OBJECT_ID to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEOIDVAL,
-        ASN01_OBJECT_ID, 0, NULL, 0 );
+        asnOBJECT_ID, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableCounter64Val of type ASN01_COUNTER64 and
      * access of ReadOnly
@@ -294,7 +294,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableCounter64Val (#11) of type ASN01_COUNTER64 to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLECOUNTER64VAL,
-        ASN01_COUNTER64, 0, NULL, 0 );
+        asnCOUNTER64, 0, NULL, 0 );
     /*
      * adding column nlmLogVariableOpaqueVal of type ASN01_OPAQUE and access
      * of ReadOnly
@@ -303,7 +303,7 @@ initialize_table_nlmLogVariableTable( const char* context )
         "adding column nlmLogVariableOpaqueVal (#12) of type ASN01_OPAQUE to table nlmLogVariableTable\n" ) );
     TableDataset_addDefaultRow( table_set,
         COLUMN_NLMLOGVARIABLEOPAQUEVAL,
-        ASN01_OPAQUE, 0, NULL, 0 );
+        asnOPAQUE, 0, NULL, 0 );
 
     /*
      * registering the table with the master agent
@@ -327,7 +327,7 @@ static void
 initialize_table_nlmLogTable( const char* context )
 {
     static oid nlmLogTable_oid[] = { 1, 3, 6, 1, 2, 1, 92, 1, 3, 1 };
-    size_t nlmLogTable_oid_len = ASN01_OID_LENGTH( nlmLogTable_oid );
+    size_t nlmLogTable_oid_len = asnOID_LENGTH( nlmLogTable_oid );
     HandlerRegistration* reginfo;
 
     /*
@@ -343,11 +343,11 @@ initialize_table_nlmLogTable( const char* context )
      */
     DEBUG_MSGTL( ( "initialize_table_nlmLogTable",
         "adding index nlmLogName of type ASN01_OCTET_STR to table nlmLogTable\n" ) );
-    TableDataset_addIndex( nlmLogTable, ASN01_OCTET_STR );
+    TableDataset_addIndex( nlmLogTable, asnOCTET_STR );
 
     DEBUG_MSGTL( ( "initialize_table_nlmLogTable",
         "adding index nlmLogIndex of type ASN01_UNSIGNED to table nlmLogTable\n" ) );
-    TableDataset_addIndex( nlmLogTable, ASN01_UNSIGNED );
+    TableDataset_addIndex( nlmLogTable, asnUNSIGNED );
 
     /*
      * adding column nlmLogTime of type ASN01_TIMETICKS and access of
@@ -356,7 +356,7 @@ initialize_table_nlmLogTable( const char* context )
     DEBUG_MSGTL( ( "initialize_table_nlmLogTable",
         "adding column nlmLogTime (#2) of type ASN01_TIMETICKS to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable, COLUMN_NLMLOGTIME,
-        ASN01_TIMETICKS, 0, NULL, 0 );
+        asnTIMETICKS, 0, NULL, 0 );
     /*
      * adding column nlmLogDateAndTime of type ASN01_OCTET_STR and access of
      * ReadOnly
@@ -365,7 +365,7 @@ initialize_table_nlmLogTable( const char* context )
         "adding column nlmLogDateAndTime (#3) of type ASN01_OCTET_STR to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable,
         COLUMN_NLMLOGDATEANDTIME,
-        ASN01_OCTET_STR, 0, NULL, 0 );
+        asnOCTET_STR, 0, NULL, 0 );
     /*
      * adding column nlmLogEngineID of type ASN01_OCTET_STR and access of
      * ReadOnly
@@ -373,7 +373,7 @@ initialize_table_nlmLogTable( const char* context )
     DEBUG_MSGTL( ( "initialize_table_nlmLogTable",
         "adding column nlmLogEngineID (#4) of type ASN01_OCTET_STR to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable, COLUMN_NLMLOGENGINEID,
-        ASN01_OCTET_STR, 0, NULL, 0 );
+        asnOCTET_STR, 0, NULL, 0 );
     /*
      * adding column nlmLogEngineTAddress of type ASN01_OCTET_STR and access
      * of ReadOnly
@@ -382,7 +382,7 @@ initialize_table_nlmLogTable( const char* context )
         "adding column nlmLogEngineTAddress (#5) of type ASN01_OCTET_STR to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable,
         COLUMN_NLMLOGENGINETADDRESS,
-        ASN01_OCTET_STR, 0, NULL, 0 );
+        asnOCTET_STR, 0, NULL, 0 );
     /*
      * adding column nlmLogEngineTDomain of type ASN01_OBJECT_ID and access
      * of ReadOnly
@@ -391,7 +391,7 @@ initialize_table_nlmLogTable( const char* context )
         "adding column nlmLogEngineTDomain (#6) of type ASN01_OBJECT_ID to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable,
         COLUMN_NLMLOGENGINETDOMAIN,
-        ASN01_OBJECT_ID, 0, NULL, 0 );
+        asnOBJECT_ID, 0, NULL, 0 );
     /*
      * adding column nlmLogContextEngineID of type ASN01_OCTET_STR and
      * access of ReadOnly
@@ -400,7 +400,7 @@ initialize_table_nlmLogTable( const char* context )
         "adding column nlmLogContextEngineID (#7) of type ASN01_OCTET_STR to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable,
         COLUMN_NLMLOGCONTEXTENGINEID,
-        ASN01_OCTET_STR, 0, NULL, 0 );
+        asnOCTET_STR, 0, NULL, 0 );
     /*
      * adding column nlmLogContextName of type ASN01_OCTET_STR and access of
      * ReadOnly
@@ -409,7 +409,7 @@ initialize_table_nlmLogTable( const char* context )
         "adding column nlmLogContextName (#8) of type ASN01_OCTET_STR to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable,
         COLUMN_NLMLOGCONTEXTNAME,
-        ASN01_OCTET_STR, 0, NULL, 0 );
+        asnOCTET_STR, 0, NULL, 0 );
     /*
      * adding column nlmLogNotificationID of type ASN01_OBJECT_ID and access
      * of ReadOnly
@@ -418,7 +418,7 @@ initialize_table_nlmLogTable( const char* context )
         "adding column nlmLogNotificationID (#9) of type ASN01_OBJECT_ID to table nlmLogTable\n" ) );
     TableDataset_addDefaultRow( nlmLogTable,
         COLUMN_NLMLOGNOTIFICATIONID,
-        ASN01_OBJECT_ID, 0, NULL, 0 );
+        asnOBJECT_ID, 0, NULL, 0 );
 
     /*
      * registering the table with the master agent
@@ -478,24 +478,24 @@ void init_notification_log( void )
      */
     Instance_registerReadOnlyCounter32InstanceContext( "nlmStatsGlobalNotificationsLogged",
         my_nlmStatsGlobalNotificationsLogged_oid,
-        ASN01_OID_LENGTH( my_nlmStatsGlobalNotificationsLogged_oid ),
+        asnOID_LENGTH( my_nlmStatsGlobalNotificationsLogged_oid ),
         &num_received, NULL, context );
 
     Instance_registerReadOnlyCounter32InstanceContext( "nlmStatsGlobalNotificationsBumped",
         my_nlmStatsGlobalNotificationsBumped_oid,
-        ASN01_OID_LENGTH( my_nlmStatsGlobalNotificationsBumped_oid ),
+        asnOID_LENGTH( my_nlmStatsGlobalNotificationsBumped_oid ),
         &num_deleted, NULL, context );
 
     Instance_registerUlongInstanceContext( "nlmConfigGlobalEntryLimit",
         my_nlmConfigGlobalEntryLimit_oid,
-        ASN01_OID_LENGTH( my_nlmConfigGlobalEntryLimit_oid ),
+        asnOID_LENGTH( my_nlmConfigGlobalEntryLimit_oid ),
         &max_logged,
         notification_log_config_handler,
         context );
 
     Instance_registerUlongInstanceContext( "nlmConfigGlobalAgeOut",
         my_nlmConfigGlobalAgeOut_oid,
-        ASN01_OID_LENGTH( my_nlmConfigGlobalAgeOut_oid ),
+        asnOID_LENGTH( my_nlmConfigGlobalAgeOut_oid ),
         &max_age,
         notification_log_config_handler,
         context );
@@ -511,10 +511,10 @@ void init_notification_log( void )
      */
     apptype = DefaultStore_getString( DsStore_LIBRARY_ID,
         DsStr_APPTYPE );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, apptype, "dontRetainLogs",
+    DefaultStore_registerConfig( asnBOOLEAN, apptype, "dontRetainLogs",
         DsStore_APPLICATION_ID,
         DsAgentBoolean_DONT_RETAIN_NOTIFICATIONS );
-    DefaultStore_registerConfig( ASN01_BOOLEAN, apptype, "doNotRetainNotificationLogs",
+    DefaultStore_registerConfig( asnBOOLEAN, apptype, "doNotRetainNotificationLogs",
         DsStore_APPLICATION_ID,
         DsAgentBoolean_DONT_RETAIN_NOTIFICATIONS );
 
@@ -540,7 +540,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
     static u_long default_num = 0;
 
     static oid snmptrapoid[] = { 1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0 };
-    size_t snmptrapoid_len = ASN01_OID_LENGTH( snmptrapoid );
+    size_t snmptrapoid_len = asnOID_LENGTH( snmptrapoid );
     VariableList* vptr;
     u_char* logdate;
     size_t logdate_size;
@@ -566,22 +566,22 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
     /*
      * indexes to the table
      */
-    TableData_rowAddIndex( row, ASN01_OCTET_STR, "default",
+    TableData_rowAddIndex( row, asnOCTET_STR, "default",
         strlen( "default" ) );
-    TableData_rowAddIndex( row, ASN01_UNSIGNED, &default_num,
+    TableData_rowAddIndex( row, asnUNSIGNED, &default_num,
         sizeof( default_num ) );
 
     /*
      * add the data
      */
     tmpl = Agent_getAgentUptime();
-    TableDataset_setRowColumn( row, COLUMN_NLMLOGTIME, ASN01_TIMETICKS,
+    TableDataset_setRowColumn( row, COLUMN_NLMLOGTIME, asnTIMETICKS,
         &tmpl, sizeof( tmpl ) );
     time( &timetnow );
     logdate = Time_convertDateAndTimeToString( &timetnow, &logdate_size );
-    TableDataset_setRowColumn( row, COLUMN_NLMLOGDATEANDTIME, ASN01_OCTET_STR,
+    TableDataset_setRowColumn( row, COLUMN_NLMLOGDATEANDTIME, asnOCTET_STR,
         logdate, logdate_size );
-    TableDataset_setRowColumn( row, COLUMN_NLMLOGENGINEID, ASN01_OCTET_STR,
+    TableDataset_setRowColumn( row, COLUMN_NLMLOGENGINEID, asnOCTET_STR,
         pdu->securityEngineID,
         pdu->securityEngineIDLen );
     if ( transport && transport->domain == transport_uDPDomain ) {
@@ -597,19 +597,19 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
             memcpy( buf + sizeof( in_addr_t ), &portnum,
                 sizeof( addr->sin_port ) );
             TableDataset_setRowColumn( row, COLUMN_NLMLOGENGINETADDRESS,
-                ASN01_OCTET_STR, buf,
+                asnOCTET_STR, buf,
                 sizeof( in_addr_t ) + sizeof( addr->sin_port ) );
         }
     }
     if ( transport )
         TableDataset_setRowColumn( row, COLUMN_NLMLOGENGINETDOMAIN,
-            ASN01_OBJECT_ID,
+            asnOBJECT_ID,
             transport->domain,
             sizeof( oid ) * transport->domain_length );
     TableDataset_setRowColumn( row, COLUMN_NLMLOGCONTEXTENGINEID,
-        ASN01_OCTET_STR, pdu->contextEngineID,
+        asnOCTET_STR, pdu->contextEngineID,
         pdu->contextEngineIDLen );
-    TableDataset_setRowColumn( row, COLUMN_NLMLOGCONTEXTNAME, ASN01_OCTET_STR,
+    TableDataset_setRowColumn( row, COLUMN_NLMLOGCONTEXTNAME, asnOCTET_STR,
         pdu->contextName, pdu->contextNameLen );
 
     if ( pdu->command == PRIOT_MSG_TRAP )
@@ -619,7 +619,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
                  vptr->name, vptr->nameLength )
             == 0 ) {
             TableDataset_setRowColumn( row, COLUMN_NLMLOGNOTIFICATIONID,
-                ASN01_OBJECT_ID, vptr->value.string,
+                asnOBJECT_ID, vptr->value.string,
                 vptr->valueLength );
         } else {
             TableRow* myrow;
@@ -628,66 +628,66 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
             /*
              * indexes to the table
              */
-            TableData_rowAddIndex( myrow, ASN01_OCTET_STR, "default",
+            TableData_rowAddIndex( myrow, asnOCTET_STR, "default",
                 strlen( "default" ) );
-            TableData_rowAddIndex( myrow, ASN01_UNSIGNED, &default_num,
+            TableData_rowAddIndex( myrow, asnUNSIGNED, &default_num,
                 sizeof( default_num ) );
             vbcount++;
-            TableData_rowAddIndex( myrow, ASN01_UNSIGNED, &vbcount,
+            TableData_rowAddIndex( myrow, asnUNSIGNED, &vbcount,
                 sizeof( vbcount ) );
 
             /*
              * OID
              */
             TableDataset_setRowColumn( myrow, COLUMN_NLMLOGVARIABLEID,
-                ASN01_OBJECT_ID, vptr->name,
+                asnOBJECT_ID, vptr->name,
                 vptr->nameLength * sizeof( oid ) );
 
             /*
              * value
              */
             switch ( vptr->type ) {
-            case ASN01_OBJECT_ID:
+            case asnOBJECT_ID:
                 tmpul = 7;
                 col = COLUMN_NLMLOGVARIABLEOIDVAL;
                 break;
 
-            case ASN01_INTEGER:
+            case asnINTEGER:
                 tmpul = 4;
                 col = COLUMN_NLMLOGVARIABLEINTEGER32VAL;
                 break;
 
-            case ASN01_UNSIGNED:
+            case asnUNSIGNED:
                 tmpul = 2;
                 col = COLUMN_NLMLOGVARIABLEUNSIGNED32VAL;
                 break;
 
-            case ASN01_COUNTER:
+            case asnCOUNTER:
                 tmpul = 1;
                 col = COLUMN_NLMLOGVARIABLECOUNTER32VAL;
                 break;
 
-            case ASN01_TIMETICKS:
+            case asnTIMETICKS:
                 tmpul = 3;
                 col = COLUMN_NLMLOGVARIABLETIMETICKSVAL;
                 break;
 
-            case ASN01_OCTET_STR:
+            case asnOCTET_STR:
                 tmpul = 6;
                 col = COLUMN_NLMLOGVARIABLEOCTETSTRINGVAL;
                 break;
 
-            case ASN01_IPADDRESS:
+            case asnIPADDRESS:
                 tmpul = 5;
                 col = COLUMN_NLMLOGVARIABLEIPADDRESSVAL;
                 break;
 
-            case ASN01_COUNTER64:
+            case asnCOUNTER64:
                 tmpul = 8;
                 col = COLUMN_NLMLOGVARIABLECOUNTER64VAL;
                 break;
 
-            case ASN01_OPAQUE:
+            case asnOPAQUE:
                 tmpul = 9;
                 col = COLUMN_NLMLOGVARIABLEOPAQUEVAL;
                 break;
@@ -702,7 +702,7 @@ void log_notification( Types_Pdu* pdu, Transport_Transport* transport )
                 continue;
             }
             TableDataset_setRowColumn( myrow, COLUMN_NLMLOGVARIABLEVALUETYPE,
-                ASN01_INTEGER, &tmpul,
+                asnINTEGER, &tmpul,
                 sizeof( tmpul ) );
             TableDataset_setRowColumn( myrow, col, vptr->type,
                 vptr->value.string, vptr->valueLength );

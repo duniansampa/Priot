@@ -21,7 +21,7 @@
 #include "udpEndpointTable_interface.h"
 
 const oid udpEndpointTable_oid[] = { UDPENDPOINTTABLE_OID };
-const int udpEndpointTable_oid_size = ASN01_OID_LENGTH( udpEndpointTable_oid );
+const int udpEndpointTable_oid_size = asnOID_LENGTH( udpEndpointTable_oid );
 
 udpEndpointTable_registration udpEndpointTable_user_context;
 static udpEndpointTable_registration* udpEndpointTable_user_context_p;

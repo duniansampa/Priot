@@ -2,6 +2,8 @@
 #include "System/Util/Logger.h"
 #include "System/Util/Trace.h"
 
+/** ============================[ Private Variables ]================== */
+
 /** to store the file descriptor for read fd. */
 static int _readFd[ evmNUMBER_OF_EXTERNAL_FDS ], _readFdLength = 0;
 
@@ -45,6 +47,8 @@ static void* _exceptionFdData[ evmNUMBER_OF_EXTERNAL_FDS ];
  * Then, they will be called by dispatcher.
  */
 static int _isFdUnregistered = 1;
+
+/** =============================[ Public Functions ]================== */
 
 int FdEventManager_registerReadFD( int fd, FdEventCallback_fp function, void* data )
 {

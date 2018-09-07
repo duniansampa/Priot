@@ -41,39 +41,39 @@ void init_vacm_vars( void )
 #define PRIVRW ( NETSNMP_SNMPV2ANY | 0x5000 )
 
     struct Variable1_s vacm_sec2group[] = {
-        { VACM_SECURITYGROUP, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+        { VACM_SECURITYGROUP, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
             var_vacm_sec2group, 1, { 3 } },
-        { VACM_SECURITYSTORAGE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_SECURITYSTORAGE, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_sec2group, 1, { 4 } },
-        { VACM_SECURITYSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_SECURITYSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_sec2group, 1, { 5 } },
     };
 
     struct Variable1_s vacm_access[] = {
-        { VACM_ACCESSMATCH, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_ACCESSMATCH, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_access, 1, { 4 } },
-        { VACM_ACCESSREAD, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+        { VACM_ACCESSREAD, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
             var_vacm_access, 1, { 5 } },
-        { VACM_ACCESSWRITE, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+        { VACM_ACCESSWRITE, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
             var_vacm_access, 1, { 6 } },
-        { VACM_ACCESSNOTIFY, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+        { VACM_ACCESSNOTIFY, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
             var_vacm_access, 1, { 7 } },
-        { VACM_ACCESSSTORAGE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_ACCESSSTORAGE, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_access, 1, { 8 } },
-        { VACM_ACCESSSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_ACCESSSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_access, 1, { 9 } },
     };
 
     struct Variable3_s vacm_view[] = {
-        { VACM_VACMVIEWSPINLOCK, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_VACMVIEWSPINLOCK, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_view, 1, { 1 } },
-        { VACM_VIEWMASK, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+        { VACM_VIEWMASK, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
             var_vacm_view, 3, { 2, 1, 3 } },
-        { VACM_VIEWTYPE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_VIEWTYPE, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_view, 3, { 2, 1, 4 } },
-        { VACM_VIEWSTORAGE, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_VIEWSTORAGE, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_view, 3, { 2, 1, 5 } },
-        { VACM_VIEWSTATUS, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+        { VACM_VIEWSTATUS, asnINTEGER, IMPL_OLDAPI_RWRITE,
             var_vacm_view, 3, { 2, 1, 6 } },
     };
 
@@ -710,7 +710,7 @@ int write_vacmGroupName( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len < 1 || var_val_len > 32 ) {
@@ -752,7 +752,7 @@ int write_vacmSecurityToGroupStorageType( int action,
     static long long_ret;
     struct Vacm_GroupEntry_s* geptr;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         return PRIOT_ERR_WRONGTYPE;
     }
     if ( var_val_len > sizeof( long_ret ) ) {
@@ -791,7 +791,7 @@ int write_vacmSecurityToGroupStatus( int action,
     struct Vacm_GroupEntry_s* geptr;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long_ret ) ) {
@@ -1028,7 +1028,7 @@ int write_vacmAccessStatus( int action,
     struct Vacm_AccessEntry_s* aptr = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long_ret ) ) {
@@ -1176,7 +1176,7 @@ int write_vacmAccessStorageType( int action,
     static long long_ret;
     struct Vacm_AccessEntry_s* aptr;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         DEBUG_MSGTL( ( "mibII/vacm_vars",
             "write to vacmSecurityToGroupStorageType not ASN01_INTEGER\n" ) );
         return PRIOT_ERR_WRONGTYPE;
@@ -1223,7 +1223,7 @@ int write_vacmAccessContextMatch( int action,
     static long long_ret;
     struct Vacm_AccessEntry_s* aptr;
 
-    if ( var_val_type != ASN01_INTEGER ) {
+    if ( var_val_type != asnINTEGER ) {
         DEBUG_MSGTL( ( "mibII/vacm_vars",
             "write to vacmAccessContextMatch not ASN01_INTEGER\n" ) );
         return PRIOT_ERR_WRONGTYPE;
@@ -1262,7 +1262,7 @@ int write_vacmAccessReadViewName( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "mibII/vacm_vars",
                 "write to vacmAccessReadViewName not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1304,7 +1304,7 @@ int write_vacmAccessWriteViewName( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "mibII/vacm_vars",
                 "write to vacmAccessWriteViewName not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1346,7 +1346,7 @@ int write_vacmAccessNotifyViewName( int action,
 
     if ( action == IMPL_RESERVE1 ) {
         resetOnFail = 0;
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "mibII/vacm_vars",
                 "write to vacmAccessNotifyViewName not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;
@@ -1471,7 +1471,7 @@ int write_vacmViewStatus( int action,
     int rc = 0;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long_ret ) ) {
@@ -1621,7 +1621,7 @@ int write_vacmViewStorageType( int action,
     struct Vacm_ViewEntry_s* vptr = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -1660,7 +1660,7 @@ int write_vacmViewMask( int action,
     struct Vacm_ViewEntry_s* vptr = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len > 16 ) {
@@ -1695,7 +1695,7 @@ int write_vacmViewType( int action,
     struct Vacm_ViewEntry_s* vptr = NULL;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             return PRIOT_ERR_WRONGTYPE;
         }
         if ( var_val_len != sizeof( long ) ) {
@@ -1729,7 +1729,7 @@ int write_vacmViewSpinLock( int action,
     static long long_ret;
 
     if ( action == IMPL_RESERVE1 ) {
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             DEBUG_MSGTL( ( "mibII/vacm_vars",
                 "write to vacmViewSpinLock not ASN01_INTEGER\n" ) );
             return PRIOT_ERR_WRONGTYPE;

@@ -24,7 +24,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ipAddressPrefixTable_oid[] = { IPADDRESSPREFIXTABLE_OID };
-const int ipAddressPrefixTable_oid_size = ASN01_OID_LENGTH( ipAddressPrefixTable_oid );
+const int ipAddressPrefixTable_oid_size = asnOID_LENGTH( ipAddressPrefixTable_oid );
 
 ipAddressPrefixTable_registration ipAddressPrefixTable_user_context;
 static ipAddressPrefixTable_registration* ipAddressPrefixTable_user_context_p;

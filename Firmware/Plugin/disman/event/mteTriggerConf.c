@@ -88,8 +88,8 @@ _find_mteTrigger_entry( const char* owner, char* tname )
          */
     memset( &owner_var, 0, sizeof( VariableList ) );
     memset( &tname_var, 0, sizeof( VariableList ) );
-    Client_setVarTypedValue( &owner_var, ASN01_OCTET_STR, owner, strlen( owner ) );
-    Client_setVarTypedValue( &tname_var, ASN01_PRIV_IMPLIED_OCTET_STR,
+    Client_setVarTypedValue( &owner_var, asnOCTET_STR, owner, strlen( owner ) );
+    Client_setVarTypedValue( &tname_var, asnPRIV_IMPLIED_OCTET_STR,
         tname, strlen( tname ) );
     owner_var.next = &tname_var;
     row = TableTdata_rowGetByidx( trigger_table_data, &owner_var );
@@ -155,7 +155,7 @@ void parse_mteMonitor( const char* token, const char* line )
 
     int seen_name = 0;
     char oid_name_buf[ IMPL_SPRINT_MAX_LEN ];
-    oid name_buf[ ASN01_MAX_OID_LEN ];
+    oid name_buf[ asnMAX_OID_LEN ];
     size_t name_buf_len;
     u_char op = 0;
     long value = 0;
@@ -326,7 +326,7 @@ void parse_mteMonitor( const char* token, const char* line )
                     flags |= MTE_TRIGGER_FLAG_DWILD;
                 memset( oid_name_buf, 0, sizeof( oid_name_buf ) );
                 memset( name_buf, 0, sizeof( name_buf ) );
-                name_buf_len = ASN01_MAX_OID_LEN;
+                name_buf_len = asnMAX_OID_LEN;
                 cp = ReadConfig_copyNwordConst( cp, oid_name_buf, MTE_STR1_LEN );
                 if ( !Mib_parseOid( oid_name_buf, name_buf, &name_buf_len ) ) {
                     Logger_log( LOGGER_PRIORITY_ERR, "discontinuity OID: %s\n", oid_name_buf );
@@ -543,7 +543,7 @@ void parse_mteMonitor( const char* token, const char* line )
         memcpy( entry->mteDeltaDiscontID, name_buf, name_buf_len * sizeof( oid ) );
         entry->mteDeltaDiscontID_len = name_buf_len;
     }
-    name_buf_len = ASN01_MAX_OID_LEN;
+    name_buf_len = asnMAX_OID_LEN;
     if ( !Mib_parseOid( oid_name_buf, name_buf, &name_buf_len ) ) {
         Logger_log( LOGGER_PRIORITY_ERR, "trigger OID: %s\n", oid_name_buf );
         ReadConfig_configPerror( "unknown monitor OID" );
@@ -780,7 +780,7 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
 
     len = MTE_STR2_LEN;
     vp = entry->mteTriggerComment;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     if ( bcomp ) {
         /*
          * The newer style of config directive skips the
@@ -792,14 +792,14 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
          */
         len = 1;
         vp = &entry->mteTriggerTest;
-        line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         if ( tmp == 2 )
             entry->flags |= MTE_TRIGGER_FLAG_DELTA;
     }
     vp = entry->mteTriggerValueID;
-    entry->mteTriggerValueID_len = ASN01_MAX_OID_LEN;
-    line = ReadConfig_readData( ASN01_OBJECT_ID, line, &vp,
+    entry->mteTriggerValueID_len = asnMAX_OID_LEN;
+    line = ReadConfig_readData( asnOBJECT_ID, line, &vp,
         &entry->mteTriggerValueID_len );
     if ( bcomp ) {
         /*
@@ -807,31 +807,31 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
          *   into a single field (which comes later).
          * Backwards compatability means reading these individually. 
          */
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_VWILD;
     }
     len = MTE_STR2_LEN;
     vp = entry->mteTriggerTarget;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR2_LEN;
     vp = entry->mteTriggerContext;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     if ( bcomp ) {
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_CWILD;
     }
 
-    line = ReadConfig_readData( ASN01_UNSIGNED, line,
+    line = ReadConfig_readData( asnUNSIGNED, line,
         &entry->mteTriggerFrequency, NULL );
 
     len = MTE_STR1_LEN;
     vp = entry->mteTriggerOOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTriggerObjects;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     /*
      * Assorted boolean flag values, combined into a single field
@@ -841,10 +841,10 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
          * Backwards compatability stores the mteTriggerEnabled
          *   and mteTriggerEntryStatus values separately...
          */
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_ENABLED;
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         if ( tmp == tcROW_STATUS_ACTIVE )
             entry->flags |= MTE_TRIGGER_FLAG_ACTIVE;
     } else {
@@ -852,7 +852,7 @@ char* _parse_mteTCols( char* line, struct mteTrigger* entry, int bcomp )
          * ... while the newer style combines all the assorted
          *       boolean values into this single field.
          */
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         entry->flags |= ( tmp & ( MTE_TRIGGER_FLAG_VWILD | MTE_TRIGGER_FLAG_CWILD | MTE_TRIGGER_FLAG_ENABLED | MTE_TRIGGER_FLAG_ACTIVE ) );
     }
 
@@ -877,10 +877,10 @@ void parse_mteTTable( const char* token, char* line )
     memset( tname, 0, sizeof( tname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = tname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry = _find_mteTrigger_entry( owner, tname );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s) ", owner, tname ) );
@@ -906,11 +906,11 @@ char* _parse_mteTDCols( char* line, struct mteTrigger* entry, int bcomp )
     void* vp;
     size_t tmp;
 
-    entry->mteDeltaDiscontID_len = ASN01_MAX_OID_LEN;
+    entry->mteDeltaDiscontID_len = asnMAX_OID_LEN;
     vp = entry->mteDeltaDiscontID;
-    line = ReadConfig_readData( ASN01_OBJECT_ID, line, &vp,
+    line = ReadConfig_readData( asnOBJECT_ID, line, &vp,
         &entry->mteDeltaDiscontID_len );
-    line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+    line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
     if ( bcomp ) {
         if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_DWILD;
@@ -918,7 +918,7 @@ char* _parse_mteTDCols( char* line, struct mteTrigger* entry, int bcomp )
         if ( tmp & MTE_TRIGGER_FLAG_DWILD )
             entry->flags |= MTE_TRIGGER_FLAG_DWILD;
     }
-    line = ReadConfig_readData( ASN01_UNSIGNED, line,
+    line = ReadConfig_readData( asnUNSIGNED, line,
         &entry->mteDeltaDiscontIDType, NULL );
 
     return line;
@@ -942,10 +942,10 @@ void parse_mteTDTable( const char* token, char* line )
     memset( tname, 0, sizeof( tname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = tname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry = _find_mteTrigger_entry( owner, tname );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s) ", owner, tname ) );
@@ -973,12 +973,12 @@ char* _parse_mteTExCols( char* line, struct mteTrigger* entry, int bcomp )
     if ( bcomp ) {
         len = 1;
         vp = &entry->mteTExTest;
-        line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+        line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
         len = 1;
         vp = &entry->mteTExStartup;
-        line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+        line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     } else {
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         entry->mteTExStartup = ( tmp & 0xff );
         tmp >>= 8;
         entry->mteTExTest = ( tmp & 0xff );
@@ -986,17 +986,17 @@ char* _parse_mteTExCols( char* line, struct mteTrigger* entry, int bcomp )
 
     len = MTE_STR1_LEN;
     vp = entry->mteTExObjOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTExObjects;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     len = MTE_STR1_LEN;
     vp = entry->mteTExEvOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTExEvent;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     return line;
 }
@@ -1019,10 +1019,10 @@ void parse_mteTExTable( const char* token, char* line )
     memset( tname, 0, sizeof( tname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = tname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry = _find_mteTrigger_entry( owner, tname );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s) ", owner, tname ) );
@@ -1050,34 +1050,34 @@ char* _parse_mteTBlCols( char* line, struct mteTrigger* entry, int bcomp )
     size_t len;
 
     if ( bcomp ) {
-        line = ReadConfig_readData( ASN01_UNSIGNED, line,
+        line = ReadConfig_readData( asnUNSIGNED, line,
             &entry->mteTBoolComparison, NULL );
-        line = ReadConfig_readData( ASN01_INTEGER, line,
+        line = ReadConfig_readData( asnINTEGER, line,
             &entry->mteTBoolValue, NULL );
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         if ( tmp == tcTRUE )
             entry->flags |= MTE_TRIGGER_FLAG_BSTART;
     } else {
-        line = ReadConfig_readData( ASN01_UNSIGNED, line, &tmp, NULL );
+        line = ReadConfig_readData( asnUNSIGNED, line, &tmp, NULL );
         entry->mteTBoolComparison = ( tmp & 0x0f );
         entry->flags |= ( tmp & MTE_TRIGGER_FLAG_BSTART );
-        line = ReadConfig_readData( ASN01_INTEGER, line,
+        line = ReadConfig_readData( asnINTEGER, line,
             &entry->mteTBoolValue, NULL );
     }
 
     len = MTE_STR1_LEN;
     vp = entry->mteTBoolObjOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTBoolObjects;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     len = MTE_STR1_LEN;
     vp = entry->mteTBoolEvOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTBoolEvent;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     return line;
 }
@@ -1100,10 +1100,10 @@ void parse_mteTBlTable( const char* token, char* line )
     memset( tname, 0, sizeof( tname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = tname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry = _find_mteTrigger_entry( owner, tname );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s) ", owner, tname ) );
@@ -1129,49 +1129,49 @@ char* _parse_mteTThCols( char* line, struct mteTrigger* entry, int bcomp )
     void* vp;
     size_t len;
 
-    line = ReadConfig_readData( ASN01_UNSIGNED, line,
+    line = ReadConfig_readData( asnUNSIGNED, line,
         &entry->mteTThStartup, NULL );
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &entry->mteTThRiseValue, NULL );
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &entry->mteTThFallValue, NULL );
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &entry->mteTThDRiseValue, NULL );
-    line = ReadConfig_readData( ASN01_INTEGER, line,
+    line = ReadConfig_readData( asnINTEGER, line,
         &entry->mteTThDFallValue, NULL );
 
     len = MTE_STR1_LEN;
     vp = entry->mteTThObjOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThObjects;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     len = MTE_STR1_LEN;
     vp = entry->mteTThRiseOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThRiseEvent;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThFallOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThFallEvent;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     len = MTE_STR1_LEN;
     vp = entry->mteTThDRiseOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThDRiseEvent;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThDFallOwner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = entry->mteTThDFallEvent;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
 
     return line;
 }
@@ -1194,10 +1194,10 @@ void parse_mteTThTable( const char* token, char* line )
     memset( tname, 0, sizeof( tname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = tname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry = _find_mteTrigger_entry( owner, tname );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s) ", owner, tname ) );
@@ -1235,10 +1235,10 @@ void parse_mteTriggerTable( const char* token, char* line )
     memset( tname, 0, sizeof( tname ) );
     len = MTE_STR1_LEN;
     vp = owner;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     len = MTE_STR1_LEN;
     vp = tname;
-    line = ReadConfig_readData( ASN01_OCTET_STR, line, &vp, &len );
+    line = ReadConfig_readData( asnOCTET_STR, line, &vp, &len );
     entry = _find_mteTrigger_entry( owner, tname );
 
     DEBUG_MSG( ( "disman:event:conf", "(%s, %s) ", owner, tname ) );
@@ -1303,36 +1303,36 @@ int store_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
 
         cp = entry->mteOwner;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->mteTName;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->mteTriggerComment;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         /*
          * ... (but skip the mteTriggerTest and
          *      assorted boolean flag fields)...
          */
         vp = entry->mteTriggerValueID;
         tint = entry->mteTriggerValueID_len;
-        cptr = ReadConfig_storeData( ASN01_OBJECT_ID, cptr, &vp, &tint );
+        cptr = ReadConfig_storeData( asnOBJECT_ID, cptr, &vp, &tint );
         cp = entry->mteTriggerTarget;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->mteTriggerContext;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         tint = entry->mteTriggerFrequency;
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
         cp = entry->mteTriggerOOwner;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         cp = entry->mteTriggerObjects;
         tint = strlen( cp );
-        cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+        cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
         tint = entry->flags & ( MTE_TRIGGER_FLAG_VWILD | MTE_TRIGGER_FLAG_CWILD | MTE_TRIGGER_FLAG_ENABLED | MTE_TRIGGER_FLAG_ACTIVE );
-        cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+        cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
         /* XXX - Need to store the 'iquery' access information */
         AgentReadConfig_priotdStoreConfig( line );
 
@@ -1347,19 +1347,19 @@ int store_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
 
             cp = entry->mteOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTName;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             vp = entry->mteDeltaDiscontID;
             tint = entry->mteDeltaDiscontID_len;
-            cptr = ReadConfig_storeData( ASN01_OBJECT_ID, cptr, &vp, &tint );
+            cptr = ReadConfig_storeData( asnOBJECT_ID, cptr, &vp, &tint );
 
             tint = entry->flags & MTE_TRIGGER_FLAG_DWILD;
-            cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+            cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
             tint = entry->mteDeltaDiscontIDType;
-            cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+            cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
 
             AgentReadConfig_priotdStoreConfig( line );
         }
@@ -1374,28 +1374,28 @@ int store_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
 
             cp = entry->mteOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTName;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             tint = ( entry->mteTExTest & 0xff ) << 8;
             tint |= ( entry->mteTExStartup & 0xff );
-            cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+            cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
 
             cp = entry->mteTExObjOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTExObjects;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             cp = entry->mteTExEvOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTExEvent;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             AgentReadConfig_priotdStoreConfig( line );
         }
@@ -1406,30 +1406,30 @@ int store_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
 
             cp = entry->mteOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTName;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             tint = entry->mteTBoolComparison;
             tint |= ( entry->flags & MTE_TRIGGER_FLAG_BSTART );
-            cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr, &tint, NULL );
+            cptr = ReadConfig_storeData( asnUNSIGNED, cptr, &tint, NULL );
             tint = entry->mteTBoolValue;
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr, &tint, NULL );
+            cptr = ReadConfig_storeData( asnINTEGER, cptr, &tint, NULL );
 
             cp = entry->mteTBoolObjOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTBoolObjects;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             cp = entry->mteTBoolEvOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTBoolEvent;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             AgentReadConfig_priotdStoreConfig( line );
         }
@@ -1440,54 +1440,54 @@ int store_mteTTable( int majorID, int minorID, void* serverarg, void* clientarg 
 
             cp = entry->mteOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTName;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
-            cptr = ReadConfig_storeData( ASN01_UNSIGNED, cptr,
+            cptr = ReadConfig_storeData( asnUNSIGNED, cptr,
                 &entry->mteTThStartup, NULL );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &entry->mteTThRiseValue, NULL );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &entry->mteTThFallValue, NULL );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &entry->mteTThDRiseValue, NULL );
-            cptr = ReadConfig_storeData( ASN01_INTEGER, cptr,
+            cptr = ReadConfig_storeData( asnINTEGER, cptr,
                 &entry->mteTThDFallValue, NULL );
 
             cp = entry->mteTThObjOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThObjects;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             cp = entry->mteTThRiseOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThRiseEvent;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThFallOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThFallEvent;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             cp = entry->mteTThDRiseOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThDRiseEvent;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThDFallOwner;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
             cp = entry->mteTThDFallEvent;
             tint = strlen( cp );
-            cptr = ReadConfig_storeData( ASN01_OCTET_STR, cptr, &cp, &tint );
+            cptr = ReadConfig_storeData( asnOCTET_STR, cptr, &cp, &tint );
 
             AgentReadConfig_priotdStoreConfig( line );
         }

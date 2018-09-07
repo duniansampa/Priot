@@ -91,7 +91,7 @@ typedef struct TableRequestInfo_s {
 /** contents freed by helper upon exit */
     VariableList *indexes;
 
-    oid    index_oid[ASN01_MAX_OID_LEN];
+    oid    index_oid[asnMAX_OID_LEN];
     size_t index_oid_len;
     TableRegistrationInfo *reg_info;
 } TableRequestInfo;

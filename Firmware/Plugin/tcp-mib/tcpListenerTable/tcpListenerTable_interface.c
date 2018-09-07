@@ -131,11 +131,11 @@ void _tcpListenerTable_initialize_interface( tcpListenerTable_registration*
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: tcpListenerLocalAddressType */
-        ASN01_OCTET_STR,
+        asnOCTET_STR,
         /** index: tcpListenerLocalAddress */
-        ASN01_UNSIGNED,
+        asnUNSIGNED,
         /** index: tcpListenerLocalPort */
         0 );
 
@@ -313,13 +313,13 @@ int tcpListenerTable_index_to_oid( Types_Index* oid_idx,
      */
     memset( &var_tcpListenerLocalAddressType, 0x00,
         sizeof( var_tcpListenerLocalAddressType ) );
-    var_tcpListenerLocalAddressType.type = ASN01_INTEGER;
+    var_tcpListenerLocalAddressType.type = asnINTEGER;
     memset( &var_tcpListenerLocalAddress, 0x00,
         sizeof( var_tcpListenerLocalAddress ) );
-    var_tcpListenerLocalAddress.type = ASN01_OCTET_STR;
+    var_tcpListenerLocalAddress.type = asnOCTET_STR;
     memset( &var_tcpListenerLocalPort, 0x00,
         sizeof( var_tcpListenerLocalPort ) );
-    var_tcpListenerLocalPort.type = ASN01_UNSIGNED;
+    var_tcpListenerLocalPort.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -397,13 +397,13 @@ int tcpListenerTable_index_from_oid( Types_Index* oid_idx,
      */
     memset( &var_tcpListenerLocalAddressType, 0x00,
         sizeof( var_tcpListenerLocalAddressType ) );
-    var_tcpListenerLocalAddressType.type = ASN01_INTEGER;
+    var_tcpListenerLocalAddressType.type = asnINTEGER;
     memset( &var_tcpListenerLocalAddress, 0x00,
         sizeof( var_tcpListenerLocalAddress ) );
-    var_tcpListenerLocalAddress.type = ASN01_OCTET_STR;
+    var_tcpListenerLocalAddress.type = asnOCTET_STR;
     memset( &var_tcpListenerLocalPort, 0x00,
         sizeof( var_tcpListenerLocalPort ) );
-    var_tcpListenerLocalPort.type = ASN01_UNSIGNED;
+    var_tcpListenerLocalPort.type = asnUNSIGNED;
 
     /*
      * chain temp index varbinds together
@@ -666,7 +666,7 @@ _tcpListenerTable_get_column( tcpListenerTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_TCPLISTENERPROCESS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = tcpListenerProcess_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -910,7 +910,7 @@ tcpListenerTable_row_find_by_mib_index( tcpListenerTable_mib_index*
         mib_idx )
 {
     tcpListenerTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

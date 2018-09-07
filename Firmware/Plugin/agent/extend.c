@@ -54,19 +54,19 @@ WriteMethodFT fixExec2Error;
 FindVarMethodFT var_extensible_old;
 oid old_extensible_variables_oid[] = { NETSNMP_UCDAVIS_MIB, NETSNMP_SHELLMIBNUM, 1 };
 struct Variable2_s old_extensible_variables[] = {
-    { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_extensible_old, 1, { MIBINDEX } },
-    { ERRORNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { ERRORNAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_extensible_old, 1, { ERRORNAME } },
-    { SHELLCOMMAND, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { SHELLCOMMAND, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_extensible_old, 1, { SHELLCOMMAND } },
-    { ERRORFLAG, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { ERRORFLAG, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_extensible_old, 1, { ERRORFLAG } },
-    { ERRORMSG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { ERRORMSG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_extensible_old, 1, { ERRORMSG } },
-    { ERRORFIX, ASN01_INTEGER, IMPL_OLDAPI_RWRITE,
+    { ERRORFIX, asnINTEGER, IMPL_OLDAPI_RWRITE,
         var_extensible_old, 1, { ERRORFIX } },
-    { ERRORFIXCMD, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+    { ERRORFIXCMD, asnOCTET_STR, IMPL_OLDAPI_RONLY,
         var_extensible_old, 1, { ERRORFIXCMD } }
 };
 
@@ -93,7 +93,7 @@ extend_registration_block*
 _register_extend( oid* base, size_t len )
 {
     extend_registration_block* eptr;
-    oid oid_buf[ ASN01_MAX_OID_LEN ];
+    oid oid_buf[ asnMAX_OID_LEN ];
 
     TableData* dinfo;
     TableRegistrationInfo* tinfo;
@@ -125,7 +125,7 @@ _register_extend( oid* base, size_t len )
          * Register the configuration table
          */
     tinfo = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
-    Table_helperAddIndexes( tinfo, ASN01_OCTET_STR, 0 );
+    Table_helperAddIndexes( tinfo, asnOCTET_STR, 0 );
     tinfo->min_column = COLUMN_EXTCFG_FIRST_COLUMN;
     tinfo->max_column = COLUMN_EXTCFG_LAST_COLUMN;
     oid_buf[ len ] = 2;
@@ -147,7 +147,7 @@ _register_extend( oid* base, size_t len )
          *   and implement the AUGMENTS behaviour
          */
     tinfo = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
-    Table_helperAddIndexes( tinfo, ASN01_OCTET_STR, 0 );
+    Table_helperAddIndexes( tinfo, asnOCTET_STR, 0 );
     tinfo->min_column = COLUMN_EXTOUT1_FIRST_COLUMN;
     tinfo->max_column = COLUMN_EXTOUT1_LAST_COLUMN;
     oid_buf[ len ] = 3;
@@ -169,7 +169,7 @@ _register_extend( oid* base, size_t len )
          * Still, it was nice while it lasted...
          */
     tinfo = MEMORY_MALLOC_TYPEDEF( TableRegistrationInfo );
-    Table_helperAddIndexes( tinfo, ASN01_OCTET_STR, ASN01_INTEGER, 0 );
+    Table_helperAddIndexes( tinfo, asnOCTET_STR, asnINTEGER, 0 );
     tinfo->min_column = COLUMN_EXTOUT2_FIRST_COLUMN;
     tinfo->max_column = COLUMN_EXTOUT2_LAST_COLUMN;
     oid_buf[ len ] = 4;
@@ -191,7 +191,7 @@ _register_extend( oid* base, size_t len )
         oid_buf, len + 1, HANDLER_CAN_RONLY );
     winfo = Watcher_createWatcherInfo(
         &( eptr->num_entries ), sizeof( eptr->num_entries ),
-        ASN01_INTEGER, WATCHER_FIXED_SIZE );
+        asnINTEGER, WATCHER_FIXED_SIZE );
     rc = Watcher_registerWatchedScalar2( reg, winfo );
     if ( rc != ErrorCode_SUCCESS )
         goto bail;
@@ -257,7 +257,7 @@ void init_extend( void )
     AgentReadConfig_priotdRegisterConfigHandler( "exec2", extend_parse_config, NULL, NULL );
     AgentReadConfig_priotdRegisterConfigHandler( "sh2", extend_parse_config, NULL, NULL );
     AgentReadConfig_priotdRegisterConfigHandler( "execFix2", extend_parse_config, NULL, NULL );
-    ( void )_register_extend( ns_extend_oid, ASN01_OID_LENGTH( ns_extend_oid ) );
+    ( void )_register_extend( ns_extend_oid, asnOID_LENGTH( ns_extend_oid ) );
 
     AgentReadConfig_priotdRegisterConfigHandler( "exec", extend_parse_config, NULL, NULL );
     AgentReadConfig_priotdRegisterConfigHandler( "sh", extend_parse_config, NULL, NULL );
@@ -430,7 +430,7 @@ _new_extension( char* exec_name, int exec_flags, extend_registration_block* ereg
     }
     row->data = ( void* )extension;
     extension->row = row;
-    TableData_rowAddIndex( row, ASN01_OCTET_STR,
+    TableData_rowAddIndex( row, asnOCTET_STR,
         exec_name, strlen( exec_name ) );
     if ( TableData_addRow( dinfo, row ) != ErrorCode_SUCCESS ) {
         /* _free_extension( extension, ereg ); */
@@ -472,14 +472,14 @@ void extend_parse_config( const char* token, char* cptr )
     char exec_name[ STRMAX ];
     char exec_name2[ STRMAX ]; /* For use with UCD execFix directive */
     char exec_command[ STRMAX ];
-    oid oid_buf[ ASN01_MAX_OID_LEN ];
+    oid oid_buf[ asnMAX_OID_LEN ];
     size_t oid_len;
     extend_registration_block* eptr;
     int flags;
 
     cptr = ReadConfig_copyNword( cptr, exec_name, sizeof( exec_name ) );
     if ( *exec_name == '.' ) {
-        oid_len = ASN01_MAX_OID_LEN - 2;
+        oid_len = asnMAX_OID_LEN - 2;
         if ( 0 == Mib_readObjid( exec_name, oid_buf, &oid_len ) ) {
             ReadConfig_configPerror( "ERROR: Unrecognised OID" );
             return;
@@ -491,7 +491,7 @@ void extend_parse_config( const char* token, char* cptr )
         }
     } else {
         memcpy( oid_buf, ns_extend_oid, sizeof( ns_extend_oid ) );
-        oid_len = ASN01_OID_LENGTH( ns_extend_oid );
+        oid_len = asnOID_LENGTH( ns_extend_oid );
     }
     cptr = ReadConfig_copyNword( cptr, exec_command, sizeof( exec_command ) );
     /* XXX - check 'exec_command' exists & is executable */
@@ -592,50 +592,50 @@ int handle_nsExtendConfigTable( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_COMMAND:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_OCTET_STR,
+                    request->requestvb, asnOCTET_STR,
                     extension->command,
                     ( extension->command ) ? strlen( extension->command ) : 0 );
                 break;
             case COLUMN_EXTCFG_ARGS:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_OCTET_STR,
+                    request->requestvb, asnOCTET_STR,
                     extension->args,
                     ( extension->args ) ? strlen( extension->args ) : 0 );
                 break;
             case COLUMN_EXTCFG_INPUT:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_OCTET_STR,
+                    request->requestvb, asnOCTET_STR,
                     extension->input,
                     ( extension->input ) ? strlen( extension->input ) : 0 );
                 break;
             case COLUMN_EXTCFG_CACHETIME:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&extension->cache->timeout, sizeof( int ) );
                 break;
             case COLUMN_EXTCFG_EXECTYPE:
                 i = ( ( extension->flags & NS_EXTEND_FLAGS_SHELL ) ? NS_EXTEND_ETYPE_SHELL : NS_EXTEND_ETYPE_EXEC );
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&i, sizeof( i ) );
                 break;
             case COLUMN_EXTCFG_RUNTYPE:
                 i = ( ( extension->flags & NS_EXTEND_FLAGS_WRITEABLE ) ? NS_EXTEND_RTYPE_RWRITE : NS_EXTEND_RTYPE_RONLY );
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&i, sizeof( i ) );
                 break;
 
             case COLUMN_EXTCFG_STORAGE:
                 i = ( ( extension->flags & NS_EXTEND_FLAGS_CONFIG ) ? tcSTORAGE_TYPE_PERMANENT : tcSTORAGE_TYPE_VOLATILE );
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&i, sizeof( i ) );
                 break;
             case COLUMN_EXTCFG_STATUS:
                 i = ( ( extension->flags & NS_EXTEND_FLAGS_ACTIVE ) ? tcROW_STATUS_ACTIVE : tcROW_STATUS_NOTINSERVICE );
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&i, sizeof( i ) );
                 break;
 
@@ -666,7 +666,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
              */
             switch ( table_info->colnum ) {
             case COLUMN_EXTCFG_COMMAND:
-                if ( request->requestvb->type != ASN01_OCTET_STR ) {
+                if ( request->requestvb->type != asnOCTET_STR ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
@@ -697,7 +697,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
 
             case COLUMN_EXTCFG_ARGS:
             case COLUMN_EXTCFG_INPUT:
-                if ( request->requestvb->type != ASN01_OCTET_STR ) {
+                if ( request->requestvb->type != asnOCTET_STR ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
@@ -714,7 +714,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_CACHETIME:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
@@ -733,7 +733,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_EXECTYPE:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
@@ -755,7 +755,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_RUNTYPE:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
@@ -792,7 +792,7 @@ int handle_nsExtendConfigTable( MibHandler* handler,
                 break;
 
             case COLUMN_EXTCFG_STATUS:
-                if ( request->requestvb->type != ASN01_INTEGER ) {
+                if ( request->requestvb->type != asnINTEGER ) {
                     Agent_setRequestError( reqinfo, request,
                         PRIOT_ERR_WRONGTYPE );
                     return PRIOT_ERR_WRONGTYPE;
@@ -1070,7 +1070,7 @@ int handle_nsExtendOutput1Table( MibHandler* handler,
             switch ( table_info->colnum ) {
             case COLUMN_EXTOUT1_OUTLEN:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&extension->out_len, sizeof( int ) );
                 break;
             case COLUMN_EXTOUT1_OUTPUT1:
@@ -1087,23 +1087,23 @@ int handle_nsExtendOutput1Table( MibHandler* handler,
                     len = 0;
                 }
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_OCTET_STR,
+                    request->requestvb, asnOCTET_STR,
                     extension->output, len );
                 break;
             case COLUMN_EXTOUT1_OUTPUT2:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_OCTET_STR,
+                    request->requestvb, asnOCTET_STR,
                     extension->output,
                     ( extension->output ) ? extension->out_len : 0 );
                 break;
             case COLUMN_EXTOUT1_NUMLINES:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&extension->numlines, sizeof( int ) );
                 break;
             case COLUMN_EXTOUT1_RESULT:
                 Client_setVarTypedValue(
-                    request->requestvb, ASN01_INTEGER,
+                    request->requestvb, asnINTEGER,
                     ( u_char* )&extension->result, sizeof( int ) );
                 break;
             default:
@@ -1137,7 +1137,7 @@ _extend_find_entry( RequestInfo* request,
     netsnmp_extend* eptr;
     extend_registration_block* ereg;
     unsigned int line_idx;
-    oid oid_buf[ ASN01_MAX_OID_LEN ];
+    oid oid_buf[ asnMAX_OID_LEN ];
     int oid_len;
     int i;
     char* token;
@@ -1357,7 +1357,7 @@ int handle_nsExtendOutput2Table( MibHandler* handler,
                     len = 0;
 
                 Client_setVarTypedValue( request->requestvb,
-                    ASN01_OCTET_STR, cp, len );
+                    asnOCTET_STR, cp, len );
                 break;
             default:
                 Agent_setRequestError( reqinfo, request, PRIOT_NOSUCHOBJECT );
@@ -1485,7 +1485,7 @@ int fixExec2Error( int action,
 
     switch ( action ) {
     case MODE_SET_RESERVE1:
-        if ( var_val_type != ASN01_INTEGER ) {
+        if ( var_val_type != asnINTEGER ) {
             Logger_log( LOGGER_PRIORITY_ERR, "Wrong type != int\n" );
             return PRIOT_ERR_WRONGTYPE;
         }

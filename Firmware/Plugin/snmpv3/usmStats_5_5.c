@@ -19,7 +19,7 @@ static oid usmMIBCompliance[] = { usmMIBCompliances, 1 };
 void init_usmStats_5_5( void )
 {
     HandlerRegistration* s = AgentHandler_createHandlerRegistration(
-        "usmStats", NULL, usmStats, ASN01_OID_LENGTH( usmStats ),
+        "usmStats", NULL, usmStats, asnOID_LENGTH( usmStats ),
         HANDLER_CAN_RONLY );
     if ( s && GETSTATISTIC_REGISTER_STATISTIC_HANDLER( s, 1, USM ) == MIB_REGISTERED_OK ) {
         REGISTER_SYSOR_ENTRY( usmMIBCompliance,

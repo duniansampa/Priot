@@ -119,7 +119,7 @@ AgentReadConfig_initAgentReadConfig(const char *app)
                                     "[snmpcmdargs] host");
     }
 
-    DefaultStore_registerConfig(ASN01_OCTET_STR, app, "v1trapaddress",
+    DefaultStore_registerConfig(asnOCTET_STR, app, "v1trapaddress",
                                DsStore_APPLICATION_ID,
                                DsAgentString_TRAP_ADDR);
     ReadConfig_registerAppConfigHandler("agentuser",
@@ -129,19 +129,19 @@ AgentReadConfig_initAgentReadConfig(const char *app)
     ReadConfig_registerAppConfigHandler("agentaddress",
                                 AgentReadConfig_priotdSetAgentAddress, NULL,
                                 "SNMP bind address");
-    DefaultStore_registerConfig(ASN01_BOOLEAN, app, "quit",
+    DefaultStore_registerConfig(asnBOOLEAN, app, "quit",
                    DsStore_APPLICATION_ID,
                    DsAgentBoolean_QUIT_IMMEDIATELY);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, app, "leave_pidfile",
+    DefaultStore_registerConfig(asnBOOLEAN, app, "leave_pidfile",
                    DsStore_APPLICATION_ID,
                    DsAgentBoolean_LEAVE_PIDFILE);
-    DefaultStore_registerConfig(ASN01_BOOLEAN, app, "dontLogTCPWrappersConnects",
+    DefaultStore_registerConfig(asnBOOLEAN, app, "dontLogTCPWrappersConnects",
                                DsStore_APPLICATION_ID,
                                DsAgentBoolean_DONT_LOG_TCPWRAPPERS_CONNECTS);
-    DefaultStore_registerConfig(ASN01_INTEGER, app, "maxGetbulkRepeats",
+    DefaultStore_registerConfig(asnINTEGER, app, "maxGetbulkRepeats",
                                DsStore_APPLICATION_ID,
                                DsAgentInterger_MAX_GETBULKREPEATS);
-    DefaultStore_registerConfig(ASN01_INTEGER, app, "maxGetbulkResponses",
+    DefaultStore_registerConfig(asnINTEGER, app, "maxGetbulkResponses",
                                DsStore_APPLICATION_ID,
                                DsAgentInterger_MAX_GETBULKRESPONSES);
     AgentHandler_initHandlerConf();

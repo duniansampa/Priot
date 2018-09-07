@@ -60,7 +60,7 @@ void init_setSerialNo( void )
     Watcher_registerWatchedSpinlock(
         AgentHandler_createHandlerRegistration( "snmpSetSerialNo", NULL,
             set_serial_oid,
-            ASN01_OID_LENGTH( set_serial_oid ),
+            asnOID_LENGTH( set_serial_oid ),
             HANDLER_CAN_RWRITE ),
         &setserialno );
 

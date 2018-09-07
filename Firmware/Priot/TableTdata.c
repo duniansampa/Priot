@@ -472,10 +472,10 @@ TdataRow *
 TableTdata_rowGetByidx(Tdata         *table,
                             VariableList *indexes)
 {
-    oid             searchfor[      ASN01_MAX_OID_LEN];
-    size_t          searchfor_len = ASN01_MAX_OID_LEN;
+    oid             searchfor[      asnMAX_OID_LEN];
+    size_t          searchfor_len = asnMAX_OID_LEN;
 
-    Mib_buildOidNoalloc(searchfor, ASN01_MAX_OID_LEN, &searchfor_len, NULL, 0,
+    Mib_buildOidNoalloc(searchfor, asnMAX_OID_LEN, &searchfor_len, NULL, 0,
                       indexes);
     return TableTdata_rowGetByoid(table, searchfor, searchfor_len);
 }
@@ -500,10 +500,10 @@ TdataRow *
 TableTdata_rowNextByidx(Tdata         *table,
                              VariableList *indexes)
 {
-    oid             searchfor[      ASN01_MAX_OID_LEN];
-    size_t          searchfor_len = ASN01_MAX_OID_LEN;
+    oid             searchfor[      asnMAX_OID_LEN];
+    size_t          searchfor_len = asnMAX_OID_LEN;
 
-    Mib_buildOidNoalloc(searchfor, ASN01_MAX_OID_LEN, &searchfor_len, NULL, 0,
+    Mib_buildOidNoalloc(searchfor, asnMAX_OID_LEN, &searchfor_len, NULL, 0,
                       indexes);
     return TableTdata_rowNextByoid(table, searchfor, searchfor_len);
 }
@@ -543,10 +543,10 @@ int
 TableTdata_compareIdx(TdataRow     *row,
                           VariableList *indexes)
 {
-    oid             searchfor[      ASN01_MAX_OID_LEN];
-    size_t          searchfor_len = ASN01_MAX_OID_LEN;
+    oid             searchfor[      asnMAX_OID_LEN];
+    size_t          searchfor_len = asnMAX_OID_LEN;
 
-    Mib_buildOidNoalloc(searchfor, ASN01_MAX_OID_LEN, &searchfor_len, NULL, 0,
+    Mib_buildOidNoalloc(searchfor, asnMAX_OID_LEN, &searchfor_len, NULL, 0,
                       indexes);
     return TableTdata_compareOid(row, searchfor, searchfor_len);
 }
@@ -565,10 +565,10 @@ int
 TableTdata_compareSubtreeIdx(TdataRow     *row,
                                   VariableList *indexes)
 {
-    oid             searchfor[      ASN01_MAX_OID_LEN];
-    size_t          searchfor_len = ASN01_MAX_OID_LEN;
+    oid             searchfor[      asnMAX_OID_LEN];
+    size_t          searchfor_len = asnMAX_OID_LEN;
 
-    Mib_buildOidNoalloc(searchfor, ASN01_MAX_OID_LEN, &searchfor_len, NULL, 0,
+    Mib_buildOidNoalloc(searchfor, asnMAX_OID_LEN, &searchfor_len, NULL, 0,
                       indexes);
     return TableTdata_compareSubtreeOid(row, searchfor, searchfor_len);
 }

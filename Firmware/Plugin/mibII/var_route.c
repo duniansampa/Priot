@@ -97,7 +97,7 @@ var_ipRouteEntry( struct Variable_s* vp,
     register int Save_Valid, result, RtIndex;
     static size_t saveNameLen = 0;
     static int saveExact = 0, saveRtIndex = 0;
-    static oid saveName[ ASN01_MAX_OID_LEN ], Current[ ASN01_MAX_OID_LEN ];
+    static oid saveName[ asnMAX_OID_LEN ], Current[ asnMAX_OID_LEN ];
     u_char* cp;
     oid* op;
     static in_addr_t addr_ret;
@@ -163,7 +163,7 @@ var_ipRouteEntry( struct Variable_s* vp,
          *  Save in the 'cache'
          */
         memcpy( ( char* )saveName, ( char* )name,
-            UTILITIES_MIN_VALUE( *length, ASN01_MAX_OID_LEN ) * sizeof( oid ) );
+            UTILITIES_MIN_VALUE( *length, asnMAX_OID_LEN ) * sizeof( oid ) );
         saveName[ 9 ] = 0;
         saveNameLen = *length;
         saveExact = exact;

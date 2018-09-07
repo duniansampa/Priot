@@ -38,9 +38,9 @@ netsnmp_cpu_info* HRP_cpu;
 #define HRPROC_LOAD 2
 
 struct Variable4_s hrproc_variables[] = {
-    { HRPROC_ID, ASN01_OBJECT_ID, IMPL_OLDAPI_RONLY,
+    { HRPROC_ID, asnOBJECT_ID, IMPL_OLDAPI_RONLY,
         var_hrproc, 2, { 1, 1 } },
-    { HRPROC_LOAD, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+    { HRPROC_LOAD, asnINTEGER, IMPL_OLDAPI_RONLY,
         var_hrproc, 2, { 1, 2 } }
 };
 oid hrproc_variables_oid[] = { 1, 3, 6, 1, 2, 1, 25, 3, 3 };
@@ -75,7 +75,7 @@ int header_hrproc( struct Variable_s* vp,
     int exact, size_t* var_len, WriteMethodFT** write_method )
 {
 #define HRPROC_ENTRY_NAME_LENGTH 11
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
     int proc_idx, LowIndex = -1;
     int result;
 

@@ -30,21 +30,21 @@ void init_loadave( void )
      * information at 
      */
     struct Variable2_s extensible_loadave_variables[] = {
-        { MIBINDEX, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { MIBINDEX, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { MIBINDEX } },
-        { ERRORNAME, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORNAME, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { ERRORNAME } },
-        { LOADAVE, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { LOADAVE, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { LOADAVE } },
-        { LOADMAXVAL, ASN01_OCTET_STR, IMPL_OLDAPI_RWRITE,
+        { LOADMAXVAL, asnOCTET_STR, IMPL_OLDAPI_RWRITE,
             var_extensible_loadave, 1, { LOADMAXVAL } },
-        { LOADAVEINT, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { LOADAVEINT, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { LOADAVEINT } },
-        { LOADAVEFLOAT, ASN01_OPAQUE_FLOAT, IMPL_OLDAPI_RONLY,
+        { LOADAVEFLOAT, asnOPAQUE_FLOAT, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { LOADAVEFLOAT } },
-        { ERRORFLAG, ASN01_INTEGER, IMPL_OLDAPI_RONLY,
+        { ERRORFLAG, asnINTEGER, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { ERRORFLAG } },
-        { ERRORMSG, ASN01_OCTET_STR, IMPL_OLDAPI_RONLY,
+        { ERRORMSG, asnOCTET_STR, IMPL_OLDAPI_RONLY,
             var_extensible_loadave, 1, { ERRORMSG } }
     };
 
@@ -159,7 +159,7 @@ write_laConfig( int action,
 
     switch ( action ) {
     case IMPL_RESERVE1: /* Check values for acceptability */
-        if ( var_val_type != ASN01_OCTET_STR ) {
+        if ( var_val_type != asnOCTET_STR ) {
             DEBUG_MSGTL( ( "ucd-snmp/loadave",
                 "write to laConfig not ASN01_OCTET_STR\n" ) );
             return PRIOT_ERR_WRONGTYPE;

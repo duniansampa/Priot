@@ -86,7 +86,7 @@ Priot_parseVarOp(u_char * data,
     u_char         *var_op_start = data;
 
     data = Asn01_parseSequence(data, &var_op_len, &var_op_type,
-                              (ASN01_SEQUENCE | ASN01_CONSTRUCTOR), "var_op");
+                              (asnSEQUENCE | asnCONSTRUCTOR), "var_op");
     if (data == NULL) {
         /*
          * msg detail is set
@@ -103,7 +103,7 @@ Priot_parseVarOp(u_char * data,
         return NULL;
     }
     if (var_op_type !=
-        (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE | ASN01_OBJECT_ID))
+        (u_char) (asnUNIVERSAL | asnPRIMITIVE | asnOBJECT_ID))
         return NULL;
     *var_val = data;            /* save pointer to this object */
     /*
@@ -158,8 +158,8 @@ Priot_buildVarOp(u_char * data,
     *listlength -= headerLen;
     DEBUG_DUMPHEADER("send", "Name");
     data = Asn01_buildObjid(data, listlength,
-                           (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                                     ASN01_OBJECT_ID), var_name,
+                           (u_char) (asnUNIVERSAL | asnPRIMITIVE |
+                                     asnOBJECT_ID), var_name,
                            *var_name_len);
     DEBUG_INDENTLESS();
     if (data == NULL) {
@@ -168,39 +168,39 @@ Priot_buildVarOp(u_char * data,
     }
     DEBUG_DUMPHEADER("send", "Value");
     switch (var_val_type) {
-    case ASN01_INTEGER:
-        data = Asn01_buildInt(data, listlength, var_val_type,
+    case asnINTEGER:
+        data = Asn_buildInt(data, listlength, var_val_type,
                              (long *) var_val, var_val_len);
         break;
-    case ASN01_GAUGE:
-    case ASN01_COUNTER:
-    case ASN01_TIMETICKS:
-    case ASN01_UINTEGER:
+    case asnGAUGE:
+    case asnCOUNTER:
+    case asnTIMETICKS:
+    case asnUINTEGER:
         data = Asn01_buildUnsignedInt(data, listlength, var_val_type,
                                       (u_long *) var_val, var_val_len);
         break;
-    case ASN01_OPAQUE_COUNTER64:
-    case ASN01_OPAQUE_U64:
-    case ASN01_COUNTER64:
+    case asnOPAQUE_COUNTER64:
+    case asnOPAQUE_U64:
+    case asnCOUNTER64:
         data = Asn01_buildUnsignedInt64(data, listlength, var_val_type,
                                         (Counter64 *) var_val,
                                         var_val_len);
         break;
-    case ASN01_OCTET_STR:
-    case ASN01_IPADDRESS:
-    case ASN01_OPAQUE:
-    case ASN01_NSAP:
+    case asnOCTET_STR:
+    case asnIPADDRESS:
+    case asnOPAQUE:
+    case asnNSAP:
         data = Asn01_buildString(data, listlength, var_val_type,
                                 var_val, var_val_len);
         break;
-    case ASN01_OBJECT_ID:
+    case asnOBJECT_ID:
         data = Asn01_buildObjid(data, listlength, var_val_type,
                                (oid *) var_val, var_val_len / sizeof(oid));
         break;
-    case ASN01_NULL:
+    case asnNULL:
         data = Asn01_buildNull(data, listlength, var_val_type);
         break;
-    case ASN01_BIT_STR:
+    case asnBIT_STR:
         data = Asn01_buildBitstring(data, listlength, var_val_type,
                                    var_val, var_val_len);
         break;
@@ -209,15 +209,15 @@ Priot_buildVarOp(u_char * data,
     case PRIOT_ENDOFMIBVIEW:
         data = Asn01_buildNull(data, listlength, var_val_type);
         break;
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         data = Asn01_buildFloat(data, listlength, var_val_type,
                                (float *) var_val, var_val_len);
         break;
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         data = Asn01_buildDouble(data, listlength, var_val_type,
                                 (double *) var_val, var_val_len);
         break;
-    case ASN01_OPAQUE_I64:
+    case asnOPAQUE_I64:
         data = Asn01_buildSignedInt64(data, listlength, var_val_type,
                                       (Counter64 *) var_val,
                                       var_val_len);
@@ -238,7 +238,7 @@ Priot_buildVarOp(u_char * data,
     dummyLen = (data - dataPtr) - headerLen;
 
     Asn01_buildSequence(dataPtr, &dummyLen,
-                       (u_char) (ASN01_SEQUENCE | ASN01_CONSTRUCTOR),
+                       (u_char) (asnSEQUENCE | asnCONSTRUCTOR),
                        dummyLen);
     return data;
 }
@@ -259,51 +259,51 @@ Priot_reallocRbuildVarOp(u_char ** pkt, size_t * pkt_len,
     DEBUG_DUMPHEADER("send", "Value");
 
     switch (var_val_type) {
-    case ASN01_INTEGER:
+    case asnINTEGER:
         rc = Asn01_reallocRbuildInt(pkt, pkt_len, offset, allow_realloc,
                                     var_val_type, (long *) var_val,
                                     var_val_len);
         break;
 
-    case ASN01_GAUGE:
-    case ASN01_COUNTER:
-    case ASN01_TIMETICKS:
-    case ASN01_UINTEGER:
+    case asnGAUGE:
+    case asnCOUNTER:
+    case asnTIMETICKS:
+    case asnUINTEGER:
         rc = Asn01_reallocRbuildUnsignedInt(pkt, pkt_len, offset,
                                              allow_realloc, var_val_type,
                                              (u_long *) var_val,
                                              var_val_len);
         break;
 
-    case ASN01_OPAQUE_COUNTER64:
-    case ASN01_OPAQUE_U64:
-    case ASN01_COUNTER64:
+    case asnOPAQUE_COUNTER64:
+    case asnOPAQUE_U64:
+    case asnCOUNTER64:
         rc = Asn01_reallocRbuildUnsignedInt64(pkt, pkt_len, offset,
                                                allow_realloc, var_val_type,
                                                (Counter64 *)
                                                var_val, var_val_len);
         break;
 
-    case ASN01_OCTET_STR:
-    case ASN01_IPADDRESS:
-    case ASN01_OPAQUE:
-    case ASN01_NSAP:
+    case asnOCTET_STR:
+    case asnIPADDRESS:
+    case asnOPAQUE:
+    case asnNSAP:
         rc = Asn01_reallocRbuildString(pkt, pkt_len, offset, allow_realloc,
                                        var_val_type, var_val, var_val_len);
         break;
 
-    case ASN01_OBJECT_ID:
+    case asnOBJECT_ID:
         rc = Asn01_reallocRbuildObjid(pkt, pkt_len, offset, allow_realloc,
                                       var_val_type, (oid *) var_val,
                                       var_val_len / sizeof(oid));
         break;
 
-    case ASN01_NULL:
+    case asnNULL:
         rc = Asn01_reallocRbuildNull(pkt, pkt_len, offset, allow_realloc,
                                      var_val_type);
         break;
 
-    case ASN01_BIT_STR:
+    case asnBIT_STR:
         rc = Asn01_reallocRbuildBitstring(pkt, pkt_len, offset,
                                           allow_realloc, var_val_type,
                                           var_val, var_val_len);
@@ -316,19 +316,19 @@ Priot_reallocRbuildVarOp(u_char ** pkt, size_t * pkt_len,
                                      var_val_type);
         break;
 
-    case ASN01_OPAQUE_FLOAT:
+    case asnOPAQUE_FLOAT:
         rc = Asn01_reallocRbuildFloat(pkt, pkt_len, offset, allow_realloc,
                                       var_val_type, (float *) var_val,
                                       var_val_len);
         break;
 
-    case ASN01_OPAQUE_DOUBLE:
+    case asnOPAQUE_DOUBLE:
         rc = Asn01_reallocRbuildDouble(pkt, pkt_len, offset, allow_realloc,
                                        var_val_type, (double *) var_val,
                                        var_val_len);
         break;
 
-    case ASN01_OPAQUE_I64:
+    case asnOPAQUE_I64:
         rc = Asn01_reallocRbuildSignedInt64(pkt, pkt_len, offset,
                                              allow_realloc, var_val_type,
                                              (Counter64 *) var_val,
@@ -355,8 +355,8 @@ Priot_reallocRbuildVarOp(u_char ** pkt, size_t * pkt_len,
 
     DEBUG_DUMPHEADER("send", "Name");
     rc = Asn01_reallocRbuildObjid(pkt, pkt_len, offset, allow_realloc,
-                                  (u_char) (ASN01_UNIVERSAL | ASN01_PRIMITIVE |
-                                            ASN01_OBJECT_ID), var_name,
+                                  (u_char) (asnUNIVERSAL | asnPRIMITIVE |
+                                            asnOBJECT_ID), var_name,
                                   *var_name_len);
     DEBUG_INDENTLESS();
     if (rc == 0) {
@@ -369,8 +369,8 @@ Priot_reallocRbuildVarOp(u_char ** pkt, size_t * pkt_len,
      */
 
     rc = Asn01_reallocRbuildSequence(pkt, pkt_len, offset, allow_realloc,
-                                     (u_char) (ASN01_SEQUENCE |
-                                               ASN01_CONSTRUCTOR),
+                                     (u_char) (asnSEQUENCE |
+                                               asnCONSTRUCTOR),
                                      *offset - start_offset);
     return rc;
 }

@@ -15,10 +15,10 @@ int header_complex_generate_varoid( VariableList* var )
          * assume cached value is correct 
          */
         switch ( var->type ) {
-        case ASN01_INTEGER:
-        case ASN01_COUNTER:
-        case ASN01_GAUGE:
-        case ASN01_TIMETICKS:
+        case asnINTEGER:
+        case asnCOUNTER:
+        case asnGAUGE:
+        case asnTIMETICKS:
             var->nameLength = 1;
             var->name = ( oid* )malloc( sizeof( oid ) );
             if ( var->name == NULL )
@@ -26,7 +26,7 @@ int header_complex_generate_varoid( VariableList* var )
             var->name[ 0 ] = *( var->value.integer );
             break;
 
-        case ASN01_PRIV_IMPLIED_OBJECT_ID:
+        case asnPRIV_IMPLIED_OBJECT_ID:
             var->nameLength = var->valueLength / sizeof( oid );
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
@@ -36,7 +36,7 @@ int header_complex_generate_varoid( VariableList* var )
                 var->name[ i ] = var->value.objectId[ i ];
             break;
 
-        case ASN01_OBJECT_ID:
+        case asnOBJECT_ID:
             var->nameLength = var->valueLength / sizeof( oid ) + 1;
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
@@ -47,7 +47,7 @@ int header_complex_generate_varoid( VariableList* var )
                 var->name[ i + 1 ] = var->value.objectId[ i ];
             break;
 
-        case ASN01_PRIV_IMPLIED_OCTET_STR:
+        case asnPRIV_IMPLIED_OCTET_STR:
             var->nameLength = var->valueLength;
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
@@ -57,8 +57,8 @@ int header_complex_generate_varoid( VariableList* var )
                 var->name[ i ] = ( oid )var->value.string[ i ];
             break;
 
-        case ASN01_OPAQUE:
-        case ASN01_OCTET_STR:
+        case asnOPAQUE:
+        case asnOCTET_STR:
             var->nameLength = var->valueLength + 1;
             var->name = ( oid* )malloc( sizeof( oid ) * ( var->nameLength ) );
             if ( var->name == NULL )
@@ -75,7 +75,7 @@ int header_complex_generate_varoid( VariableList* var )
             return ErrorCode_GENERR;
         }
     }
-    if ( var->nameLength > ASN01_MAX_OID_LEN ) {
+    if ( var->nameLength > asnMAX_OID_LEN ) {
         DEBUG_MSGTL( ( "header_complex_generate_varoid",
             "Something terribly wrong, namelen = %d\n",
             ( int )var->nameLength ) );
@@ -101,10 +101,10 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
 
     while ( var && oidLen > 0 ) {
         switch ( var->type ) {
-        case ASN01_INTEGER:
-        case ASN01_COUNTER:
-        case ASN01_GAUGE:
-        case ASN01_TIMETICKS:
+        case asnINTEGER:
+        case asnCOUNTER:
+        case asnGAUGE:
+        case asnTIMETICKS:
             var->value.integer = ( long* )calloc( 1, sizeof( long ) );
             if ( var->value.string == NULL )
                 return ErrorCode_GENERR;
@@ -117,9 +117,9 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
                 *var->value.integer ) );
             break;
 
-        case ASN01_OBJECT_ID:
-        case ASN01_PRIV_IMPLIED_OBJECT_ID:
-            if ( var->type == ASN01_PRIV_IMPLIED_OBJECT_ID ) {
+        case asnOBJECT_ID:
+        case asnPRIV_IMPLIED_OBJECT_ID:
+            if ( var->type == asnPRIV_IMPLIED_OBJECT_ID ) {
                 itmp = oidLen;
             } else {
                 itmp = ( long )*oidIndex++;
@@ -146,10 +146,10 @@ int header_complex_parse_oid( oid* oidIndex, size_t oidLen,
             DEBUG_MSG( ( "header_complex_parse_oid", "\n" ) );
             break;
 
-        case ASN01_OPAQUE:
-        case ASN01_OCTET_STR:
-        case ASN01_PRIV_IMPLIED_OCTET_STR:
-            if ( var->type == ASN01_PRIV_IMPLIED_OCTET_STR ) {
+        case asnOPAQUE:
+        case asnOCTET_STR:
+        case asnPRIV_IMPLIED_OCTET_STR:
+            if ( var->type == asnPRIV_IMPLIED_OCTET_STR ) {
                 itmp = oidLen;
             } else {
                 itmp = ( long )*oidIndex++;
@@ -228,7 +228,7 @@ void header_complex_generate_oid( oid* name, /* out */
 void* header_complex_get( struct header_complex_index* datalist,
     VariableList* index )
 {
-    oid searchfor[ ASN01_MAX_OID_LEN ];
+    oid searchfor[ asnMAX_OID_LEN ];
     size_t searchfor_len;
 
     header_complex_generate_oid( searchfor, /* out */
@@ -258,7 +258,7 @@ void* header_complex( struct header_complex_index* datalist,
 {
 
     struct header_complex_index *nptr, *found = NULL;
-    oid indexOid[ ASN01_MAX_OID_LEN ];
+    oid indexOid[ asnMAX_OID_LEN ];
     size_t len;
     int result;
 
@@ -322,7 +322,7 @@ header_complex_maybe_add_data( struct header_complex_index** thedata,
     VariableList* var, void* data,
     int dont_allow_duplicates )
 {
-    oid newoid[ ASN01_MAX_OID_LEN ];
+    oid newoid[ asnMAX_OID_LEN ];
     size_t newoid_len;
     struct header_complex_index* ret;
 

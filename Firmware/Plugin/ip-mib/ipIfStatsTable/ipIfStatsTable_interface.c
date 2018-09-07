@@ -143,9 +143,9 @@ void _ipIfStatsTable_initialize_interface( ipIfStatsTable_registration* reg_ptr,
     /*
      * Setting up the table's definition
      */
-    Table_helperAddIndexes( tbl_info, ASN01_INTEGER,
+    Table_helperAddIndexes( tbl_info, asnINTEGER,
         /** index: ipIfStatsIPVersion */
-        ASN01_INTEGER,
+        asnINTEGER,
         /** index: ipIfStatsIfIndex */
         0 );
 
@@ -279,11 +279,11 @@ void _ipIfStatsTable_initialize_interface( ipIfStatsTable_registration* reg_ptr,
     {
         oid lc_oid[] = { IPIFSTATSTABLELASTCHANGE_OID };
         Watcher_registerWatchedScalar2( AgentHandler_createHandlerRegistration( "ipIfStatsTableLastChanged", NULL,
-                                            lc_oid, ASN01_OID_LENGTH( lc_oid ),
+                                            lc_oid, asnOID_LENGTH( lc_oid ),
                                             HANDLER_CAN_RONLY ),
             Watcher_createWatcherInfo( ( void* )&ipIfStatsTable_if_ctx.last_changed,
                                             sizeof( u_long ),
-                                            ASN01_TIMETICKS,
+                                            asnTIMETICKS,
                                             WATCHER_FIXED_SIZE ) );
     }
 } /* _ipIfStatsTable_initialize_interface */
@@ -330,9 +330,9 @@ int ipIfStatsTable_index_to_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ipIfStatsIPVersion, 0x00, sizeof( var_ipIfStatsIPVersion ) );
-    var_ipIfStatsIPVersion.type = ASN01_INTEGER;
+    var_ipIfStatsIPVersion.type = asnINTEGER;
     memset( &var_ipIfStatsIfIndex, 0x00, sizeof( var_ipIfStatsIfIndex ) );
-    var_ipIfStatsIfIndex.type = ASN01_INTEGER;
+    var_ipIfStatsIfIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -397,9 +397,9 @@ int ipIfStatsTable_index_from_oid( Types_Index* oid_idx,
      * set up varbinds
      */
     memset( &var_ipIfStatsIPVersion, 0x00, sizeof( var_ipIfStatsIPVersion ) );
-    var_ipIfStatsIPVersion.type = ASN01_INTEGER;
+    var_ipIfStatsIPVersion.type = asnINTEGER;
     memset( &var_ipIfStatsIfIndex, 0x00, sizeof( var_ipIfStatsIfIndex ) );
-    var_ipIfStatsIfIndex.type = ASN01_INTEGER;
+    var_ipIfStatsIfIndex.type = asnINTEGER;
 
     /*
      * chain temp index varbinds together
@@ -652,7 +652,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINRECEIVES:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInReceives_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -662,7 +662,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINRECEIVES:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInReceives_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -672,7 +672,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINOCTETS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInOctets_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -681,7 +681,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINOCTETS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInOctets_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
@@ -690,7 +690,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINHDRERRORS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInHdrErrors_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -700,7 +700,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINNOROUTES:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInNoRoutes_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -710,7 +710,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINADDRERRORS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInAddrErrors_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -720,7 +720,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINUNKNOWNPROTOS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInUnknownProtos_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -730,7 +730,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINTRUNCATEDPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInTruncatedPkts_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -740,7 +740,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINFORWDATAGRAMS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInForwDatagrams_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -750,7 +750,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINFORWDATAGRAMS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInForwDatagrams_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -760,7 +760,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSREASMREQDS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsReasmReqds_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -770,7 +770,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSREASMOKS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsReasmOKs_get( rowreq_ctx, ( u_long* )var->value.string );
         break;
 
@@ -779,7 +779,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSREASMFAILS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsReasmFails_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -789,7 +789,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINDISCARDS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInDiscards_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -799,7 +799,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINDELIVERS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInDelivers_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -809,7 +809,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINDELIVERS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInDelivers_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -819,7 +819,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTREQUESTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutRequests_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -829,7 +829,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTREQUESTS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutRequests_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -839,7 +839,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTFORWDATAGRAMS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutForwDatagrams_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -849,7 +849,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTFORWDATAGRAMS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutForwDatagrams_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -859,7 +859,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTDISCARDS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutDiscards_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -869,7 +869,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTFRAGREQDS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutFragReqds_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -879,7 +879,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTFRAGOKS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutFragOKs_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -889,7 +889,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTFRAGFAILS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutFragFails_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -899,7 +899,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTFRAGCREATES:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutFragCreates_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -909,7 +909,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTTRANSMITS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutTransmits_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -919,7 +919,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTTRANSMITS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutTransmits_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -929,7 +929,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTOCTETS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutOctets_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -939,7 +939,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTOCTETS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutOctets_get( rowreq_ctx, ( Integer64* )var->value.string );
         break;
 
@@ -948,7 +948,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINMCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInMcastPkts_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -958,7 +958,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINMCASTPKTS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInMcastPkts_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -968,7 +968,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINMCASTOCTETS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInMcastOctets_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -978,7 +978,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINMCASTOCTETS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInMcastOctets_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -988,7 +988,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTMCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutMcastPkts_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -998,7 +998,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTMCASTPKTS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutMcastPkts_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -1008,7 +1008,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTMCASTOCTETS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutMcastOctets_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1018,7 +1018,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTMCASTOCTETS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutMcastOctets_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -1028,7 +1028,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSINBCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsInBcastPkts_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1038,7 +1038,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCINBCASTPKTS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCInBcastPkts_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -1048,7 +1048,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSOUTBCASTPKTS:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_COUNTER;
+        var->type = asnCOUNTER;
         rc = ipIfStatsOutBcastPkts_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1058,7 +1058,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSHCOUTBCASTPKTS:
         var->valueLength = sizeof( Integer64 );
-        var->type = ASN01_COUNTER64;
+        var->type = asnCOUNTER64;
         rc = ipIfStatsHCOutBcastPkts_get( rowreq_ctx,
             ( Integer64* )var->value.string );
         break;
@@ -1068,7 +1068,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSDISCONTINUITYTIME:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_TIMETICKS;
+        var->type = asnTIMETICKS;
         rc = ipIfStatsDiscontinuityTime_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1078,7 +1078,7 @@ _ipIfStatsTable_get_column( ipIfStatsTable_rowreq_ctx* rowreq_ctx,
          */
     case COLUMN_IPIFSTATSREFRESHRATE:
         var->valueLength = sizeof( u_long );
-        var->type = ASN01_UNSIGNED;
+        var->type = asnUNSIGNED;
         rc = ipIfStatsRefreshRate_get( rowreq_ctx,
             ( u_long* )var->value.string );
         break;
@@ -1322,7 +1322,7 @@ ipIfStatsTable_rowreq_ctx*
 ipIfStatsTable_row_find_by_mib_index( ipIfStatsTable_mib_index* mib_idx )
 {
     ipIfStatsTable_rowreq_ctx* rowreq_ctx;
-    oid oid_tmp[ ASN01_MAX_OID_LEN ];
+    oid oid_tmp[ asnMAX_OID_LEN ];
     Types_Index oid_idx;
     int rc;
 

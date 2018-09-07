@@ -23,7 +23,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ipIfStatsTable_oid[] = { IPIFSTATSTABLE_OID };
-const int ipIfStatsTable_oid_size = ASN01_OID_LENGTH( ipIfStatsTable_oid );
+const int ipIfStatsTable_oid_size = asnOID_LENGTH( ipIfStatsTable_oid );
 
 ipIfStatsTable_registration ipIfStatsTable_user_context;
 static ipIfStatsTable_registration* ipIfStatsTable_user_context_p;

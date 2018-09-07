@@ -54,7 +54,7 @@ int Restart_hook(int action,
 
     long            tmp = 0;
 
-    if (var_val_type != ASN01_INTEGER) {
+    if (var_val_type != asnINTEGER) {
         Logger_log(LOGGER_PRIORITY_NOTICE, "Wrong type != int\n");
         return PRIOT_ERR_WRONGTYPE;
     }

@@ -30,8 +30,8 @@ struct TrapSink* trap_sinks = NULL;
 
 const oid trap_objidEnterprisetrap[] = { NETSNMP_NOTIFICATION_MIB };
 const oid trap_trapVersionId[] = { NETSNMP_SYSTEM_MIB };
-const int trap_enterprisetrapLen = ASN01_OID_LENGTH( trap_objidEnterprisetrap );
-const int trap_trapVersionIdLen = ASN01_OID_LENGTH( trap_trapVersionId );
+const int trap_enterprisetrapLen = asnOID_LENGTH( trap_objidEnterprisetrap );
+const int trap_trapVersionIdLen = asnOID_LENGTH( trap_trapVersionId );
 
 #define SNMPV2_TRAPS_PREFIX PRIOT_OID_SNMPMODULES, 1, 1, 5
 const oid trap_trapPrefix[] = { SNMPV2_TRAPS_PREFIX };
@@ -41,15 +41,15 @@ const oid trap_coldStartOid[] = { SNMPV2_TRAPS_PREFIX, 1 }; /* SNMPv2-MIB */
 const oid trap_priotTrapOid[] = { SNMPV2_TRAP_OBJS_PREFIX, 1, 0 };
 const oid trap_priottrapenterpriseOid[] = { SNMPV2_TRAP_OBJS_PREFIX, 3, 0 };
 const oid trap_sysuptimeOid[] = { PRIOT_OID_MIB2, 1, 3, 0 };
-const size_t trap_priotTrapOidLen = ASN01_OID_LENGTH( trap_priotTrapOid );
-const size_t trap_priottrapenterpriseOidLen = ASN01_OID_LENGTH( trap_priottrapenterpriseOid );
-const size_t trap_sysuptimeOidLen = ASN01_OID_LENGTH( trap_sysuptimeOid );
+const size_t trap_priotTrapOidLen = asnOID_LENGTH( trap_priotTrapOid );
+const size_t trap_priottrapenterpriseOidLen = asnOID_LENGTH( trap_priottrapenterpriseOid );
+const size_t trap_sysuptimeOidLen = asnOID_LENGTH( trap_sysuptimeOid );
 
 #define SNMPV2_COMM_OBJS_PREFIX PRIOT_OID_SNMPMODULES, 18, 1
 const oid trap_agentaddrOid[] = { SNMPV2_COMM_OBJS_PREFIX, 3, 0 };
-const size_t trap_agentaddrOidLen = ASN01_OID_LENGTH( trap_agentaddrOid );
+const size_t trap_agentaddrOidLen = asnOID_LENGTH( trap_agentaddrOid );
 const oid trap_communityOid[] = { SNMPV2_COMM_OBJS_PREFIX, 4, 0 };
-const size_t trap_communityOidLen = ASN01_OID_LENGTH( trap_communityOid );
+const size_t trap_communityOidLen = asnOID_LENGTH( trap_communityOid );
 
 #define SNMP_AUTHENTICATED_TRAPS_ENABLED 1
 #define SNMP_AUTHENTICATED_TRAPS_DISABLED 2
@@ -227,7 +227,7 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
      * RFC 2576/3584 say to drop the trap completely.
      */
     for ( var = vblist->next; var; var = var->next ) {
-        if ( var->type == ASN01_COUNTER64 ) {
+        if ( var->type == asnCOUNTER64 ) {
             Logger_log( LOGGER_PRIORITY_WARNING,
                 "send_trap: v1 traps can't carry Counter64 varbinds\n" );
             Api_freePdu( template_v1pdu );
@@ -240,14 +240,14 @@ Trap_convertV2pduToV1( Types_Pdu* template_v2pdu )
      *    and the enterprise field from the v2 varbind list.
      * If there's an agentIPAddress varbind, set the agent_addr too
      */
-    if ( !Api_oidCompare( vblist->value.objectId, ASN01_OID_LENGTH( trap_trapPrefix ),
-             trap_trapPrefix, ASN01_OID_LENGTH( trap_trapPrefix ) ) ) {
+    if ( !Api_oidCompare( vblist->value.objectId, asnOID_LENGTH( trap_trapPrefix ),
+             trap_trapPrefix, asnOID_LENGTH( trap_trapPrefix ) ) ) {
         /*
          * For 'standard' traps, extract the generic trap type
          *   from the snmpTrapOID value, and take the enterprise
          *   value from the 'snmpEnterprise' varbind.
          */
-        template_v1pdu->trapType = vblist->value.objectId[ ASN01_OID_LENGTH( trap_trapPrefix ) ] - 1;
+        template_v1pdu->trapType = vblist->value.objectId[ asnOID_LENGTH( trap_trapPrefix ) ] - 1;
         template_v1pdu->specificType = 0;
 
         var = Client_findVarbindInList( vblist,
@@ -342,7 +342,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
     var = NULL;
     if ( !Api_varlistAddVariable( &var,
              trap_priotTrapOid, trap_priotTrapOidLen,
-             ASN01_OBJECT_ID,
+             asnOBJECT_ID,
              ( u_char* )enterprise, enterprise_len * sizeof( oid ) ) ) {
         Logger_log( LOGGER_PRIORITY_WARNING,
             "send_trap: failed to insert copied snmpTrapOID varbind\n" );
@@ -358,7 +358,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
     var = NULL;
     if ( !Api_varlistAddVariable( &var,
              trap_sysuptimeOid, trap_sysuptimeOidLen,
-             ASN01_TIMETICKS,
+             asnTIMETICKS,
              ( u_char* )&( template_v1pdu->time ),
              sizeof( template_v1pdu->time ) ) ) {
         Logger_log( LOGGER_PRIORITY_WARNING,
@@ -383,7 +383,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
                      || template_v1pdu->agentAddr[ 3 ] ) ) {
         if ( !Api_varlistAddVariable( &( template_v2pdu->variables ),
                  trap_agentaddrOid, trap_agentaddrOidLen,
-                 ASN01_IPADDRESS,
+                 asnIPADDRESS,
                  ( u_char* )&( template_v1pdu->agentAddr ),
                  sizeof( template_v1pdu->agentAddr ) ) )
             Logger_log( LOGGER_PRIORITY_WARNING,
@@ -394,7 +394,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
     if ( !var && template_v1pdu->community ) {
         if ( !Api_varlistAddVariable( &( template_v2pdu->variables ),
                  trap_communityOid, trap_communityOidLen,
-                 ASN01_OCTET_STR,
+                 asnOCTET_STR,
                  template_v1pdu->community,
                  template_v1pdu->communityLen ) )
             Logger_log( LOGGER_PRIORITY_WARNING,
@@ -406,7 +406,7 @@ Trap_convertV1pduToV2( Types_Pdu* template_v1pdu )
     if ( !var ) {
         if ( !Api_varlistAddVariable( &( template_v2pdu->variables ),
                  trap_priottrapenterpriseOid, trap_priottrapenterpriseOidLen,
-                 ASN01_OBJECT_ID,
+                 asnOBJECT_ID,
                  ( u_char* )template_v1pdu->enterprise,
                  template_v1pdu->enterpriseLength * sizeof( oid ) ) )
             Logger_log( LOGGER_PRIORITY_WARNING,
@@ -518,7 +518,7 @@ int Trap_sendTraps( int trap, int specific,
             var = NULL;
             Api_varlistAddVariable( &var,
                 trap_sysuptimeOid, trap_sysuptimeOidLen,
-                ASN01_TIMETICKS, ( u_char* )&uptime, sizeof( uptime ) );
+                asnTIMETICKS, ( u_char* )&uptime, sizeof( uptime ) );
             if ( !var ) {
                 Logger_log( LOGGER_PRIORITY_WARNING,
                     "send_trap: failed to insert sysUptime varbind\n" );
@@ -544,12 +544,12 @@ int Trap_sendTraps( int trap, int specific,
             Api_freePdu( template_v2pdu );
             return -1;
         }
-        if ( !Api_oidCompare( vblist->value.objectId, ASN01_OID_LENGTH( trap_trapPrefix ),
-                 trap_trapPrefix, ASN01_OID_LENGTH( trap_trapPrefix ) ) ) {
+        if ( !Api_oidCompare( vblist->value.objectId, asnOID_LENGTH( trap_trapPrefix ),
+                 trap_trapPrefix, asnOID_LENGTH( trap_trapPrefix ) ) ) {
             var = Client_findVarbindInList( template_v2pdu->variables,
                 trap_priottrapenterpriseOid,
                 trap_priottrapenterpriseOidLen );
-            if ( !var && !Api_varlistAddVariable( &( template_v2pdu->variables ), trap_priottrapenterpriseOid, trap_priottrapenterpriseOidLen, ASN01_OBJECT_ID, enterprise, enterprise_length * sizeof( oid ) ) ) {
+            if ( !var && !Api_varlistAddVariable( &( template_v2pdu->variables ), trap_priottrapenterpriseOid, trap_priottrapenterpriseOidLen, asnOBJECT_ID, enterprise, enterprise_length * sizeof( oid ) ) ) {
                 Logger_log( LOGGER_PRIORITY_WARNING,
                     "send_trap: failed to add snmpEnterprise to v2 trap\n" );
                 Api_freePdu( template_v2pdu );
@@ -760,10 +760,10 @@ void Trap_sendTrapVars( int trap, int specific, VariableList* vars )
 {
     if ( trap == PRIOT_TRAP_ENTERPRISESPECIFIC )
         Trap_sendEnterpriseTrapVars( trap, specific, trap_objidEnterprisetrap,
-            ASN01_OID_LENGTH( trap_objidEnterprisetrap ), vars );
+            asnOID_LENGTH( trap_objidEnterprisetrap ), vars );
     else
         Trap_sendEnterpriseTrapVars( trap, specific, trap_trapVersionId,
-            ASN01_OID_LENGTH( trap_trapVersionId ), vars );
+            asnOID_LENGTH( trap_trapVersionId ), vars );
 }
 
 /* Send a trap under a context */
@@ -772,11 +772,11 @@ void Trap_sendTrapVarsWithContext( int trap, int specific,
 {
     if ( trap == PRIOT_TRAP_ENTERPRISESPECIFIC )
         Trap_sendTraps( trap, specific, trap_objidEnterprisetrap,
-            ASN01_OID_LENGTH( trap_objidEnterprisetrap ), vars,
+            asnOID_LENGTH( trap_objidEnterprisetrap ), vars,
             context, 0 );
     else
         Trap_sendTraps( trap, specific, trap_trapVersionId,
-            ASN01_OID_LENGTH( trap_trapVersionId ), vars,
+            asnOID_LENGTH( trap_trapVersionId ), vars,
             context, 0 );
 }
 
@@ -851,7 +851,7 @@ void Trap_sendV2trap( VariableList* vars )
 void Trap_sendV3trap( VariableList* vars, const char* context )
 {
     Trap_sendTraps( -1, -1,
-        trap_trapVersionId, ASN01_OID_LENGTH( trap_trapVersionId ),
+        trap_trapVersionId, asnOID_LENGTH( trap_trapVersionId ),
         vars, context, 0 );
 }
 

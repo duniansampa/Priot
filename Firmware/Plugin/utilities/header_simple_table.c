@@ -36,7 +36,7 @@ int header_simple_table( struct Variable_s* vp, oid* name, size_t* length,
                                  *              1       If name > vp->name,
                                  *              0       Otherwise.
                                  */
-    oid newname[ ASN01_MAX_OID_LEN ];
+    oid newname[ asnMAX_OID_LEN ];
 
     for ( i = 0, rtest = 0;
           i < ( int )vp->namelen && i < ( int )( *length ) && !rtest; i++ ) {

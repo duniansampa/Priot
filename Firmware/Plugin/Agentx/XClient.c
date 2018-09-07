@@ -172,7 +172,7 @@ XClient_register(Types_Session * ss, oid start[], size_t startlen,
     }
 
     if (range_subid) {
-        Api_pduAddVariable(pdu, start, startlen, ASN01_OBJECT_ID,
+        Api_pduAddVariable(pdu, start, startlen, asnOBJECT_ID,
                               (u_char *) start, startlen * sizeof(oid));
         pdu->variables->value.objectId[range_subid - 1] = range_ubound;
     } else {
@@ -225,7 +225,7 @@ XClient_unregister(Types_Session * ss, oid start[], size_t startlen,
     }
 
     if (range_subid) {
-        Api_pduAddVariable(pdu, start, startlen, ASN01_OBJECT_ID,
+        Api_pduAddVariable(pdu, start, startlen, asnOBJECT_ID,
                               (u_char *) start, startlen * sizeof(oid));
         pdu->variables->value.objectId[range_subid - 1] = range_ubound;
     } else {

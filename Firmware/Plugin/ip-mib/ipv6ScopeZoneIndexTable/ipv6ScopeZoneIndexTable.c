@@ -23,7 +23,7 @@
 #include "siglog/agent/mfd.h"
 
 const oid ipv6ScopeZoneIndexTable_oid[] = { IPV6SCOPEZONEINDEXTABLE_OID };
-const int ipv6ScopeZoneIndexTable_oid_size = ASN01_OID_LENGTH( ipv6ScopeZoneIndexTable_oid );
+const int ipv6ScopeZoneIndexTable_oid_size = asnOID_LENGTH( ipv6ScopeZoneIndexTable_oid );
 
 ipv6ScopeZoneIndexTable_registration ipv6ScopeZoneIndexTable_user_context;
 static ipv6ScopeZoneIndexTable_registration* ipv6ScopeZoneIndexTable_user_context_p;
